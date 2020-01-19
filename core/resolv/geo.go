@@ -4,10 +4,10 @@ type Geo struct {
 	BasicContext
 }
 
-func NewGeo() *Geo {
+func NewGeo(value string) *Geo {
 	return &Geo{BasicContext{
 		Name:     "geo",
-		Value:    "",
+		Value:    value,
 		depth:    0,
 		Children: nil,
 	}}

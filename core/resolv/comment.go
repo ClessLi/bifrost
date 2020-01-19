@@ -8,3 +8,10 @@ type Comment struct {
 func (cmt *Comment) String() []string {
 	return []string{"# " + cmt.Comments + "\n"}
 }
+
+func NewComment(value string, inline bool) *Comment {
+	return &Comment{
+		Comments: value,
+		Inline:   inline,
+	}
+}
