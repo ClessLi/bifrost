@@ -5,15 +5,20 @@ package resolv
 
 import (
 	"fmt"
+	"strings"
 )
+
+var INDENT string = "    "
 
 // Context, 上下文接口对象，定义了上下文接口需实现的增、删、改等方法
 type Context interface {
-	Add(...interface{})
-	Remove(...interface{})
-	Modify(int, interface{}) error
+	Add(...Parser)
+	Remove(...Parser)
+	Modify(int, Parser) error
 	//Filter(string, string) *Context
 	//getReg() string
+	//Dict() map[string]interface{}
+	String() []string
 }
 
 // BasicContext, 上下文基础对象，定义了上下文类型的基本属性及基础方法
@@ -21,18 +26,18 @@ type BasicContext struct {
 	Name     string
 	Value    string
 	depth    int
-	Children []interface{}
+	Children []Parser
 }
 
 // Add, BasicContext 类新增子对象的方法， Context.Add(...interface{}) 的实现
-func (c *BasicContext) Add(contents ...interface{}) {
+func (c *BasicContext) Add(contents ...Parser) {
 	for _, content := range contents {
 		c.Children = append(c.Children, content)
 	}
 }
 
 // Remove, BasicContext 类删除子对象的方法， Context.Remove(...interface{}) 的实现
-func (c *BasicContext) Remove(contents ...interface{}) {
+func (c *BasicContext) Remove(contents ...Parser) {
 	for _, content := range contents {
 		for index, child := range c.Children {
 			if content == child {
@@ -43,13 +48,9 @@ func (c *BasicContext) Remove(contents ...interface{}) {
 }
 
 // Modify, BasicContext 类修改子对象的方法， Context.Modify(int, interface{}) error 的实现
-func (c *BasicContext) Modify(index int, content interface{}) error {
+func (c *BasicContext) Modify(index int, content Parser) error {
 	switch content.(type) {
-	case Context:
-		c.Children[index] = content
-	case Comment:
-		c.Children[index] = content
-	case Key:
+	case Context, *Comment, *Key:
 		c.Children[index] = content
 	default:
 		return fmt.Errorf("conf format not supported with: %T", content)
@@ -66,16 +67,60 @@ func (c *BasicContext) Modify(index int, content interface{}) error {
 //	return c.Value
 //}
 
+//func (c *BasicContext) Dict() map[string]interface{} {
+//}
+
+func (c *BasicContext) String() []string {
+	ret := make([]string, 0)
+
+	contextTitle := c.getTitle()
+
+	ret = append(ret, contextTitle)
+
+	for _, child := range c.Children {
+		switch child.(type) {
+		case *Key:
+			ret = append(ret, INDENT+child.String()[0])
+		case *Comment:
+			if child.(*Comment).Inline && len(ret) >= 1 {
+				ret[len(ret)-1] = strings.TrimRight(ret[len(ret)-1], "\n") + "  " + child.String()[0]
+			} else {
+				ret = append(ret, INDENT+child.String()[0])
+			}
+		case Context:
+			strs := child.String()
+			ret = append(ret, strs[0])
+			for _, str := range strs[1:] {
+				ret = append(ret, INDENT+str)
+			}
+		default:
+			str := child.String()
+			if str != nil {
+				ret = append(ret, str...)
+			}
+		}
+	}
+	ret[len(ret)-1] = RegEndWithCR.ReplaceAllString(ret[len(ret)-1], "}\n")
+	ret = append(ret, "}\n\n")
+
+	return ret
+}
+
 func (c *BasicContext) remove(index int) {
-	c.Children = append(c.Children[:index], c.Children[index+1:])
+	c.Children = append(c.Children[:index], c.Children[index+1:]...)
 }
 
-type Comment struct {
-	Comments string
-	inline   bool
-}
+func (c *BasicContext) getTitle() string {
+	contextTitle := ""
+	for i := 0; i < c.depth; i++ {
+		contextTitle += INDENT
+	}
+	contextTitle += c.Name
 
-type Key struct {
-	Name  string
-	Value string
+	if c.Value != "" {
+		contextTitle += " " + c.Value
+	}
+
+	contextTitle += " {{\n"
+	return contextTitle
 }
