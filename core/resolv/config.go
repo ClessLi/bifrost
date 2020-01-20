@@ -40,10 +40,10 @@ func (c *Config) String() []string {
 	return ret
 }
 
-func NewConf(conf []Parser) *Config {
+func NewConf(conf []Parser, value string) *Config {
 	return &Config{BasicContext{
 		Name:     "Config",
-		Value:    "",
+		Value:    value,
 		depth:    0,
 		Children: conf,
 	}}
