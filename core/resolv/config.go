@@ -7,18 +7,29 @@ type Config struct {
 	BasicContext
 }
 
-func (c *Config) Servers() []Parser {
-	svrs := make([]Parser, 0)
+func (c *Config) Servers() []*Server {
+	svrs := make([]*Server, 0)
 	for _, child := range c.Children {
-		switch child.(type) {
-		case *Server:
-			svrs = append(svrs, child)
-		}
+		svrs = appendServer(svrs, child)
 	}
 	return svrs
 }
 
-func (c *Config) Server() interface{} {
+func appendServer(svrs []*Server, p Parser) []*Server {
+	switch p.(type) {
+	case *Server:
+		return append(svrs, p.(*Server))
+	case *Http:
+		for _, child := range p.(*Http).Children {
+			svrs = appendServer(svrs, child)
+		}
+		return svrs
+	default:
+		return svrs
+	}
+}
+
+func (c *Config) Server() *Server {
 	return c.Servers()[0]
 }
 

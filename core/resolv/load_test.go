@@ -25,3 +25,14 @@ func TestLoadServers(t *testing.T) {
 		t.Log(server.String())
 	}
 }
+
+func TestLoadServer(t *testing.T) {
+	conf, err := Load("../../test/nginx.conf")
+
+	if err != nil {
+		t.Log(err)
+	}
+
+	t.Log(conf.Server().String())
+
+}

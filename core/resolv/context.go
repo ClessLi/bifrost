@@ -19,6 +19,7 @@ type Context interface {
 	//getReg() string
 	//Dict() map[string]interface{}
 	String() []string
+	//BumpChildDepth(int)
 }
 
 // BasicContext, 上下文基础对象，定义了上下文类型的基本属性及基础方法
@@ -32,8 +33,10 @@ type BasicContext struct {
 // Add, BasicContext 类新增子对象的方法， Context.Add(...interface{}) 的实现
 func (c *BasicContext) Add(contents ...Parser) {
 	for _, content := range contents {
+		/*if _, isBC := content.(Context); isBC {
+			content.(Context).BumpChildDepth(c.depth+1)
+		}*/
 		c.Children = append(c.Children, content)
-		BumpChildDepth(c, c.depth)
 	}
 }
 
@@ -126,11 +129,11 @@ func (c *BasicContext) getTitle() string {
 	return contextTitle
 }
 
-func BumpChildDepth(c *BasicContext, depth int) {
-	for i := 0; i < len(c.Children); i++ {
-		if bc, isBC := c.Children[i].(*BasicContext); isBC {
-			bc.depth = depth + 1
-			BumpChildDepth(bc, bc.depth)
-		}
-	}
-}
+//func (c *BasicContext) BumpChildDepth(depth int) {
+//	for i := 0; i < len(c.Children); i++ {
+//		if bc, isBC := c.Children[i].(*BasicContext); isBC {
+//			bc.depth = depth + 1
+//			c.BumpChildDepth(bc.depth)
+//		}
+//	}
+//}
