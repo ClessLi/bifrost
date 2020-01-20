@@ -33,6 +33,7 @@ type BasicContext struct {
 func (c *BasicContext) Add(contents ...Parser) {
 	for _, content := range contents {
 		c.Children = append(c.Children, content)
+		BumpChildDepth(c, c.depth)
 	}
 }
 
@@ -89,7 +90,7 @@ func (c *BasicContext) String() []string {
 			}
 		case Context:
 			strs := child.String()
-			ret = append(ret, strs[0])
+			ret = append(ret, INDENT+strs[0])
 			for _, str := range strs[1:] {
 				ret = append(ret, INDENT+str)
 			}
@@ -123,4 +124,13 @@ func (c *BasicContext) getTitle() string {
 
 	contextTitle += " {\n"
 	return contextTitle
+}
+
+func BumpChildDepth(c *BasicContext, depth int) {
+	for i := 0; i < len(c.Children); i++ {
+		if bc, isBC := c.Children[i].(*BasicContext); isBC {
+			bc.depth = depth + 1
+			BumpChildDepth(bc, bc.depth)
+		}
+	}
 }
