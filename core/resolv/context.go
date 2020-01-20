@@ -121,6 +121,6 @@ func (c *BasicContext) getTitle() string {
 		contextTitle += " " + c.Value
 	}
 
-	contextTitle += " {{\n"
+	contextTitle += " {\n"
 	return contextTitle
 }

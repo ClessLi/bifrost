@@ -34,7 +34,7 @@ func (c *Config) String() []string {
 	}
 
 	if ret != nil {
-		ret[len(ret)] = RegEndWithCR.ReplaceAllString(ret[len(ret)], "}\n")
+		ret[len(ret)-1] = RegEndWithCR.ReplaceAllString(ret[len(ret)-1], "}\n")
 	}
 
 	return ret
