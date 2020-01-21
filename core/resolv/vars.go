@@ -16,7 +16,7 @@ var (
 	RegLimitExceptHead = regexp.MustCompile(`^\s*limit_except\s*([^;]*?)\s*{`)
 	RegTypesHead       = regexp.MustCompile(`^\s*types\s*{`)
 	RegContextEnd      = regexp.MustCompile(`^\s*}`)
-	RegCommentHead     = regexp.MustCompile(`^(\s*)#[ \r\t\f]*(.*?)\n`)
+	RegCommentHead     = regexp.MustCompile(`^(\s*)#+[ \r\t\f]*(.*?)\n`)
 	RegKeyValue        = regexp.MustCompile(S)
 	RegKey             = regexp.MustCompile(`^\s*(\S+);`)
 )
