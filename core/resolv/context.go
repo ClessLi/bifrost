@@ -94,8 +94,9 @@ func (c *BasicContext) String() []string {
 			}
 		case Context:
 			strs := child.String()
-			ret = append(ret, INDENT+strs[0])
-			for _, str := range strs[1:] {
+			//ret = append(ret, INDENT+strs[0])
+			//for _, str := range strs[1:] {
+			for _, str := range strs {
 				ret = append(ret, INDENT+str)
 			}
 		default:
