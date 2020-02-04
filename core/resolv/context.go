@@ -20,6 +20,7 @@ type Context interface {
 	//Dict() map[string]interface{}
 	String() []string
 	//BumpChildDepth(int)
+	dump() ([]string, error)
 }
 
 // BasicContext, 上下文基础对象，定义了上下文类型的基本属性及基础方法
@@ -110,15 +111,52 @@ func (c *BasicContext) String() []string {
 	return ret
 }
 
+func (c *BasicContext) dump() ([]string, error) {
+	ret := make([]string, 0)
+	contextTitle := c.getTitle()
+	ret = append(ret, contextTitle)
+
+	for _, child := range c.Children {
+		switch child.(type) {
+		case *Key:
+			ret = append(ret, INDENT+child.String()[0])
+		case *Comment:
+			if child.(*Comment).Inline && len(ret) >= 1 {
+				ret[len(ret)-1] = strings.TrimRight(ret[len(ret)-1], "\n") + "  " + child.String()[0]
+			} else {
+				ret = append(ret, INDENT+child.String()[0])
+			}
+		case Context:
+			strs, err := child.(Context).dump()
+			if err != nil {
+				return ret, err
+			}
+
+			for _, str := range strs {
+				ret = append(ret, INDENT+str)
+			}
+		default:
+			str := child.String()
+			if str != nil {
+				ret = append(ret, str...)
+			}
+		}
+	}
+	ret[len(ret)-1] = RegEndWithCR.ReplaceAllString(ret[len(ret)-1], "}\n")
+	ret = append(ret, "}\n\n")
+
+	return ret, nil
+}
+
 func (c *BasicContext) remove(index int) {
 	c.Children = append(c.Children[:index], c.Children[index+1:]...)
 }
 
 func (c *BasicContext) getTitle() string {
 	contextTitle := ""
-	for i := 0; i < c.depth; i++ {
+	/*for i := 0; i < c.depth; i++ {
 		contextTitle += INDENT
-	}
+	}*/
 	contextTitle += c.Name
 
 	if c.Value != "" {

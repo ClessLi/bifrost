@@ -36,33 +36,46 @@ func (i *Include) load() error {
 			return lerr
 		}
 
-		if len(paths) == 1 && paths[0] == path {
-			i.Add(conf.Children...)
-		} else {
-			sub := NewInclude("", path)
-			sub.Add(conf.Children...)
-			i.Add(sub)
-		}
+		//if len(paths) == 1 && paths[0] == path {
+		//	i.Add(conf.Children...)
+		//} else {
+		//	sub := NewInclude("", path)
+		//	sub.Add(conf.Children...)
+		//	i.Add(sub)
+		//}
+
+		i.Add(conf)
 
 	}
 
 	return nil
 }
 
-func NewInclude(dir, value string) *Include {
+func (i *Include) dump() ([]string, error) {
+	for _, child := range i.Children {
+		err := Save(child.(*Config))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return i.Key.String(), nil
+}
+
+func NewInclude(dir, path string) *Include {
 	include := &Include{
 		BasicContext: BasicContext{
 			Name:     "include",
-			Value:    value,
+			Value:    path,
 			depth:    0,
 			Children: nil,
 		},
 		Key: &Key{
 			Name:  "include",
-			Value: value,
+			Value: path,
 		},
 		Comment: &Comment{
-			Comments: "include " + value,
+			Comments: "include " + path,
 			Inline:   false,
 		},
 		confDir: dir,

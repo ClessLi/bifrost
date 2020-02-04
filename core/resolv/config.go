@@ -1,5 +1,9 @@
 package resolv
 
+import (
+	"io/ioutil"
+)
+
 type Parser interface {
 	String() []string
 }
@@ -49,6 +53,46 @@ func (c *Config) String() []string {
 	}
 
 	return ret
+}
+
+func (c *Config) save() error {
+	conf, derr := c.dump()
+	if derr != nil {
+		return derr
+	}
+	data := make([]byte, 0)
+	for _, str := range conf {
+		data = append(data, []byte(str)...)
+	}
+
+	werr := ioutil.WriteFile(c.Value, data, 0755)
+	if werr != nil {
+		return werr
+	}
+
+	return nil
+
+}
+
+func (c *Config) dump() ([]string, error) {
+	ret := make([]string, 0)
+	for _, child := range c.Children {
+		switch child.(type) {
+		case *Key, *Comment:
+			ret = append(ret, child.String()...)
+		case Context:
+			strs, err := child.(Context).dump()
+
+			if err != nil {
+				return ret, err
+			}
+
+			ret = append(ret, strs...)
+		default:
+			ret = append(ret, child.String()...)
+		}
+	}
+	return ret, nil
 }
 
 func NewConf(conf []Parser, value string) *Config {
