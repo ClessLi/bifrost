@@ -39,6 +39,10 @@ func (c *Config) Server() *Server {
 
 func (c *Config) String() []string {
 	ret := make([]string, 0)
+
+	title := c.getTitle()
+	ret = append(ret, "# "+title)
+
 	for _, child := range c.Children {
 		switch child.(type) {
 		case *Key, *Comment:
@@ -51,6 +55,8 @@ func (c *Config) String() []string {
 	if ret != nil {
 		ret[len(ret)-1] = RegEndWithCR.ReplaceAllString(ret[len(ret)-1], "}\n")
 	}
+
+	ret = append(ret, "#End# "+c.Name+": "+c.Value+"}\n\n")
 
 	return ret
 }
