@@ -1,7 +1,7 @@
 package resolv
 
 type Geo struct {
-	BasicContext
+	BasicContext `json:"geo"`
 }
 
 func NewGeo(value string) *Geo {

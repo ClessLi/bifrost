@@ -6,9 +6,9 @@ import (
 
 type Include struct {
 	BasicContext
-	Key     *Key
-	Comment *Comment
-	confDir string
+	Key     *Key     `json:"-"`
+	Comment *Comment `json:"-"`
+	confDir string   `json:"conf_dir"`
 }
 
 func (i *Include) String() []string {

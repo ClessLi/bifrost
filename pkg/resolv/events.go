@@ -1,7 +1,7 @@
 package resolv
 
 type Events struct {
-	BasicContext
+	BasicContext `json:"events"`
 }
 
 func NewEvents() *Events {

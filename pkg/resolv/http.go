@@ -1,7 +1,7 @@
 package resolv
 
 type Http struct {
-	BasicContext
+	BasicContext `json:"http"`
 }
 
 func NewHttp() *Http {

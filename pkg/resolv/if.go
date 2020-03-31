@@ -1,7 +1,7 @@
 package resolv
 
 type If struct {
-	BasicContext
+	BasicContext `json:"if"`
 }
 
 func NewIf(value string) *If {

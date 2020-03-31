@@ -1,8 +1,8 @@
 package resolv
 
 type Comment struct {
-	Comments string
-	Inline   bool
+	Comments string `json:"comments"`
+	Inline   bool   `json:"inline"`
 }
 
 func (cmt *Comment) String() []string {
