@@ -30,6 +30,14 @@ func appendServer(svrs []*Server, p Parser) []*Server {
 			svrs = appendServer(svrs, child)
 		}
 		return svrs
+	case *Include:
+		for _, child := range p.(*Include).Children {
+			for _, includechild := range child.(*Config).Children {
+				svrs = appendServer(svrs, includechild)
+			}
+			//fmt.Println(len(child.(*Config).Servers()))
+		}
+		return svrs
 	default:
 		return svrs
 	}
