@@ -1,7 +1,13 @@
 package resolv
 
+import "encoding/json"
+
 type LimitExcept struct {
 	BasicContext
+}
+
+func (le *LimitExcept) UnmarshalJSON(b []byte) error {
+	return json.Unmarshal(b, le)
 }
 
 func NewLimitExcept(value string) *LimitExcept {

@@ -1,6 +1,7 @@
 package resolv
 
 import (
+	"encoding/json"
 	"path/filepath"
 )
 
@@ -8,7 +9,54 @@ type Include struct {
 	BasicContext
 	Key     *Key     `json:"-"`
 	Comment *Comment `json:"-"`
-	confDir string   `json:"conf_dir"`
+	confPWD string   `json:"conf_pwd"`
+}
+
+func (i *Include) MarshalJSON() ([]byte, error) {
+	includes := struct {
+		ConfPWD  string `json:"conf_pwd"`
+		Paths    string `json:"paths"`
+		Includes []struct {
+			Path    string   `json:"path"`
+			Include []Parser `json:"include"`
+		} `json:"includes"`
+	}{ConfPWD: i.confPWD, Paths: i.Key.Value}
+
+	for _, child := range i.Children {
+		includes.Includes = append(includes.Includes, struct {
+			Path    string   `json:"path"`
+			Include []Parser `json:"include"`
+		}{Path: child.(*Config).Value, Include: child.(*Config).Children})
+	}
+
+	return json.Marshal(includes)
+}
+
+func (i *Include) UnmarshalJSON(b []byte) error {
+	includes := &struct {
+		ConfPWD  string `json:"conf_pwd"`
+		Paths    string `json:"paths"`
+		Includes []struct {
+			Path    string   `json:"path"`
+			Include []Parser `json:"include"`
+		} `json:"includes"`
+	}{}
+
+	err := json.Unmarshal(b, &includes)
+	if err != nil {
+		return err
+	}
+
+	for _, include := range includes.Includes {
+		i.Add(NewConf(include.Include, include.Path))
+	}
+
+	i.Name = "include"
+	i.Value = includes.Paths
+	i.confPWD = includes.ConfPWD
+	i.Key = NewKey("include", i.Value)
+	i.Comment = NewComment("include "+i.Value, false)
+	return nil
 }
 
 func (i *Include) String() []string {
@@ -24,7 +72,7 @@ func (i *Include) String() []string {
 
 func (i *Include) load() error {
 
-	paths, err := filepath.Glob(filepath.Join(i.confDir, i.Value))
+	paths, err := filepath.Glob(filepath.Join(i.confPWD, i.Value))
 	if err != nil {
 		return err
 	}
@@ -70,15 +118,9 @@ func NewInclude(dir, path string) *Include {
 			depth:    0,
 			Children: nil,
 		},
-		Key: &Key{
-			Name:  "include",
-			Value: path,
-		},
-		Comment: &Comment{
-			Comments: "include " + path,
-			Inline:   false,
-		},
-		confDir: dir,
+		Key:     NewKey("include", path),
+		Comment: NewComment("include "+path, false),
+		confPWD: dir,
 	}
 
 	err := include.load()

@@ -19,6 +19,7 @@ type Context interface {
 	//getReg() string
 	//Dict() map[string]interface{}
 	String() []string
+	//UnmarshalJSON(b []byte) error
 	//BumpChildDepth(int)
 	dump() ([]string, error)
 }

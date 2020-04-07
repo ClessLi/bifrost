@@ -60,6 +60,7 @@ func TestMarshalJSON(t *testing.T) {
 	//h.Add(s1)
 	//conf.Add(h)
 
+	//j, jerr := json.MarshalIndent(conf, "", "    ")
 	j, jerr := json.Marshal(conf)
 
 	if jerr != nil {
@@ -67,4 +68,16 @@ func TestMarshalJSON(t *testing.T) {
 	}
 
 	t.Log(string(j))
+}
+
+func TestConfig_UnmarshalJSON(t *testing.T) {
+	jdata := ``
+	conf := NewConf(nil, "")
+	//err := conf.UnmarshalJSON([]byte(jdata))
+	err := json.Unmarshal([]byte(jdata), &conf)
+	if err != nil {
+		t.Log(err)
+	}
+
+	t.Log(conf)
 }

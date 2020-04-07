@@ -1,11 +1,13 @@
 package resolv
 
 import (
+	"encoding/json"
 	"io/ioutil"
 )
 
 type Parser interface {
 	String() []string
+	//UnmarshalJSON(b []byte) error
 }
 type Config struct {
 	BasicContext
@@ -100,6 +102,48 @@ func (c *Config) dump() ([]string, error) {
 	}
 	return ret, nil
 }
+
+func (c *Config) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Path   string   `json:"path"`
+		Config []Parser `json:"config"`
+	}{Path: c.Value, Config: c.Children})
+}
+
+func (c *Config) UnmarshalJSON(b []byte) error {
+	// TODO:json 反序列化方法
+	var config struct {
+		Path   string   `json:"path"`
+		Config []Parser `json:"config"`
+	}
+	//err := unmarshal(b, c)
+	err := json.Unmarshal(b, &config)
+	if err != nil {
+		return err
+	}
+
+	//err := json.Unmarshal(b, &config)
+	//if err != nil {
+	//	return err
+	//}
+
+	c.Name = "Config"
+	c.Value = config.Path
+	c.Children = config.Config
+
+	return nil
+}
+
+//func childrenUnmarshal(maps [][]byte) (children []Parser, error) {
+//	for _, child := range maps {
+//
+//	}
+//	err := json.Unmarshal(b, p)
+//	if err != nil {
+//		return err
+//	}
+
+//}
 
 func NewConf(conf []Parser, value string) *Config {
 	return &Config{BasicContext{
