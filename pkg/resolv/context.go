@@ -26,10 +26,10 @@ type Context interface {
 
 // BasicContext, 上下文基础对象，定义了上下文类型的基本属性及基础方法
 type BasicContext struct {
-	Name     string   `json:"Name"`
-	Value    string   `json:"value"`
-	depth    int      `json:"-"`
-	Children []Parser `json:"children"`
+	Name     string   `json:"-"`
+	Value    string   `json:"value,omitempty"`
+	depth    int      `json:"depth,omitempty"`
+	Children []Parser `json:"param,omitempty"`
 }
 
 // Add, BasicContext 类新增子对象的方法， Context.Add(...interface{}) 的实现

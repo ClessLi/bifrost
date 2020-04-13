@@ -1,62 +1,14 @@
 package resolv
 
 import (
-	"encoding/json"
 	"path/filepath"
 )
 
 type Include struct {
-	BasicContext
-	Key     *Key     `json:"-"`
-	Comment *Comment `json:"-"`
-	confPWD string   `json:"conf_pwd"`
-}
-
-func (i *Include) MarshalJSON() ([]byte, error) {
-	includes := struct {
-		ConfPWD  string `json:"conf_pwd"`
-		Paths    string `json:"paths"`
-		Includes []struct {
-			Path    string   `json:"path"`
-			Include []Parser `json:"include"`
-		} `json:"includes"`
-	}{ConfPWD: i.confPWD, Paths: i.Key.Value}
-
-	for _, child := range i.Children {
-		includes.Includes = append(includes.Includes, struct {
-			Path    string   `json:"path"`
-			Include []Parser `json:"include"`
-		}{Path: child.(*Config).Value, Include: child.(*Config).Children})
-	}
-
-	return json.Marshal(includes)
-}
-
-func (i *Include) UnmarshalJSON(b []byte) error {
-	includes := &struct {
-		ConfPWD  string `json:"conf_pwd"`
-		Paths    string `json:"paths"`
-		Includes []struct {
-			Path    string   `json:"path"`
-			Include []Parser `json:"include"`
-		} `json:"includes"`
-	}{}
-
-	err := json.Unmarshal(b, &includes)
-	if err != nil {
-		return err
-	}
-
-	for _, include := range includes.Includes {
-		i.Add(NewConf(include.Include, include.Path))
-	}
-
-	i.Name = "include"
-	i.Value = includes.Paths
-	i.confPWD = includes.ConfPWD
-	i.Key = NewKey("include", i.Value)
-	i.Comment = NewComment("include "+i.Value, false)
-	return nil
+	BasicContext `json:"include"`
+	Key          *Key     `json:"tags"`
+	Comment      *Comment `json:"comments"`
+	ConfPWD      string   `json:"conf_pwd"`
 }
 
 func (i *Include) String() []string {
@@ -72,7 +24,7 @@ func (i *Include) String() []string {
 
 func (i *Include) load() error {
 
-	paths, err := filepath.Glob(filepath.Join(i.confPWD, i.Value))
+	paths, err := filepath.Glob(filepath.Join(i.ConfPWD, i.Value))
 	if err != nil {
 		return err
 	}
@@ -110,17 +62,17 @@ func (i *Include) dump() ([]string, error) {
 	return i.Key.String(), nil
 }
 
-func NewInclude(dir, path string) *Include {
+func NewInclude(dir, paths string) *Include {
 	include := &Include{
 		BasicContext: BasicContext{
 			Name:     "include",
-			Value:    path,
+			Value:    paths,
 			depth:    0,
 			Children: nil,
 		},
-		Key:     NewKey("include", path),
-		Comment: NewComment("include "+path, false),
-		confPWD: dir,
+		Key:     NewKey("include", paths),
+		Comment: NewComment("include "+paths, false),
+		ConfPWD: dir,
 	}
 
 	err := include.load()

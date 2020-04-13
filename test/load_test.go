@@ -1,12 +1,15 @@
-package resolv
+package test
 
 import (
 	"encoding/json"
+	ngJson "github.com/ClessLi/go-nginx-conf-parser/pkg/json"
+	"github.com/ClessLi/go-nginx-conf-parser/pkg/resolv"
+	"io/ioutil"
 	"testing"
 )
 
 func TestLoad(t *testing.T) {
-	conf, err := Load("../../test/nginx.conf")
+	conf, err := resolv.Load("nginx.conf")
 
 	if err != nil {
 		t.Log(err)
@@ -16,7 +19,7 @@ func TestLoad(t *testing.T) {
 }
 
 func TestLoadServers(t *testing.T) {
-	conf, err := Load("../../test/nginx.conf")
+	conf, err := resolv.Load("nginx.conf")
 
 	if err != nil {
 		t.Log(err)
@@ -30,7 +33,7 @@ func TestLoadServers(t *testing.T) {
 }
 
 func TestLoadServer(t *testing.T) {
-	conf, err := Load("../../test/nginx.conf")
+	conf, err := resolv.Load("nginx.conf")
 
 	if err != nil {
 		t.Log(err)
@@ -41,7 +44,7 @@ func TestLoadServer(t *testing.T) {
 }
 
 func TestMarshalJSON(t *testing.T) {
-	conf, err := Load("../../test/nginx.conf")
+	conf, err := resolv.Load("nginx.conf")
 
 	if err != nil {
 		t.Log(err)
@@ -60,8 +63,8 @@ func TestMarshalJSON(t *testing.T) {
 	//h.Add(s1)
 	//conf.Add(h)
 
-	//j, jerr := json.MarshalIndent(conf, "", "    ")
-	j, jerr := json.Marshal(conf)
+	j, jerr := json.MarshalIndent(conf, "", "    ")
+	//j, jerr := json.Marshal(conf)
 
 	if jerr != nil {
 		t.Log(jerr)
@@ -69,15 +72,19 @@ func TestMarshalJSON(t *testing.T) {
 
 	t.Log(string(j))
 }
-
 func TestConfig_UnmarshalJSON(t *testing.T) {
-	jdata := ``
-	conf := NewConf(nil, "")
+	jdata, rerr := ioutil.ReadFile("test.json")
+	if rerr != nil {
+		t.Log(rerr)
+	}
+	//conf := NewConf(nil, "")
 	//err := conf.UnmarshalJSON([]byte(jdata))
-	err := json.Unmarshal([]byte(jdata), &conf)
+	//err := json.Unmarshal([]byte(jdata), &conf)
+	conf, err := ngJson.Unmarshal(jdata, &ngJson.Config{})
 	if err != nil {
 		t.Log(err)
 	}
 
 	t.Log(conf)
+	t.Log(conf.String())
 }
