@@ -7,7 +7,7 @@ go-nginx-conf-parser 是基于golang语言开发的项目，它目前还处于�
 提供配置文件展示和修改的接口
 
 # 使用方法
-## 下载
+## 下载地址
 Windows:  [go-nginx-conf-parser.v0_0_1.win_x64.zip](https://github.com/ClessLi/go-nginx-conf-parser/releases/download/v0.0.1/go-nginx-conf-parser.v0_0_1.win_x64.zip)
 
 Linux: [go-nginx-conf-parser.v0_0_1.linux_x64.zip](https://github.com/ClessLi/go-nginx-conf-parser/releases/download/v0.0.1/go-nginx-conf-parser.v0_0_1.linux_x64.zip)
