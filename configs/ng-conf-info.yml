@@ -2,11 +2,12 @@ configs:
   -
     name: "nginx-conf-test"
     relativePath: "/ng_conf"
-    port: 8080
+    port: 18080
     confPath: "/usr/local/openresty/nginx/conf/nginx.conf"
     nginxBin: "/usr/local/openresty/nginx/sbin/nginx"
-  -
-    name: "ng-conf-test2"
-    relativePath: "/ng_conf"
-    port: 8080
-    confPath: "/GO_Project/src/go-nginx-conf-parser/test/config_test/nginx.conf"
+#  -
+#    name: "ng-conf-test2"
+#    relativePath: "/ng_conf"
+#    port: 28080
+#    confPath: "/GO_Project/src/go-nginx-conf-parser/test/config_test/nginx.conf"
+#    nginxBin: "xxxxxxxxxxxx/nginx"
