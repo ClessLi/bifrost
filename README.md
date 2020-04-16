@@ -1,5 +1,5 @@
 # 项目介绍
-go-nginx-conf-parser 是基于golang语言开发的项目，它目前还处于测试阶段，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互相互转换。该项目持续更新中。目前可用版本为[v0.0.1]()。
+go-nginx-conf-parser 是基于golang语言开发的项目，它目前还处于测试阶段，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互相互转换。该项目持续更新中。目前可用版本为[v0.0.1](https://github.com/ClessLi/go-nginx-conf-parser/tree/v0.0.1)。
 
 # 项目特点
 支持将配置文件、json数据、字符串与配置结构体相互转换
