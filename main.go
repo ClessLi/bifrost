@@ -1,5 +1,9 @@
 package main
 
+// TODO:1.权限管理
+// TODO:2.nginx配置定期备份机制
+// TODO:3.日志规范化输出
+
 import (
 	"encoding/json"
 	"flag"
@@ -13,7 +17,10 @@ import (
 	"time"
 )
 
-var confPath = flag.String("f", "", "jenkins `conf`.y(a)ml path.")
+var (
+	confPath = flag.String("f", "./configs/ng-conf-info.yml", "go-nginx-conf-parser ng-`conf`-info.y(a)ml path.")
+	help     = flag.Bool("h", false, "this `help`")
+)
 
 const (
 	ERROR      = "ERROR"
@@ -40,29 +47,44 @@ type ParserConfigs struct {
 	Configs []ParserConfig `yaml:"configs"`
 }
 
+//func init() {
+//	flag.Usage = usage
+//}
+
+//func usage() {
+//	fmt.Fprintf(os.Stdout, `go-nginx-conf-parser version: v0.0.1`)
+//	flag.Usage()
+//}
+
 func main() {
-	//flag.Parse()
-	//if *confPath == "" {
-	//	*confPath = "./configs/ng-conf-info.yml"
-	//}
+	flag.Parse()
+	if *confPath == "" {
+		*confPath = "./configs/ng-conf-info.yml"
+	}
+
+	if *help {
+		flag.Usage()
+		os.Exit(0)
+	}
 
 	//confPath := "./configs/ng-conf-info.json"
-	confPath := "./configs/ng-conf-info.yml"
-	//isExist, pathErr := PathExists(*confPath)
-	isExist, pathErr := PathExists(confPath)
+	//confPath := "./configs/ng-conf-info.yml"
+	isExist, pathErr := PathExists(*confPath)
+	//isExist, pathErr := PathExists(confPath)
 	if !isExist {
 		if pathErr != nil {
-			fmt.Println("The config file", confPath, "is not found.")
+			fmt.Println("The config file", "'"+*confPath+"'", "is not found.")
 		} else {
 			fmt.Println("Unkown error of the config file.")
 		}
-		//flag.Usage()
+		flag.Usage()
 		os.Exit(1)
 	}
-	//confData,readErr := readFile(*confPath)
-	confData, readErr := readFile(confPath)
+	confData, readErr := readFile(*confPath)
+	//confData, readErr := readFile(confPath)
 	if readErr != nil {
 		fmt.Println(readErr)
+		flag.Usage()
 		os.Exit(1)
 	}
 
@@ -71,8 +93,10 @@ func main() {
 	jsonErr := yaml.Unmarshal(confData, configs)
 	if jsonErr != nil {
 		fmt.Println(jsonErr)
+		flag.Usage()
 		os.Exit(1)
 	}
+
 	for _, config := range configs.Configs {
 		conf, err := resolv.Load(config.ConfPath)
 
@@ -92,21 +116,6 @@ func main() {
 		}
 	}
 
-	//nginxConfPath := "test/tmp/nginx.conf"
-	//nginxConfPath := "test/config_test/nginx.conf"
-	//conf := NewConf(nil, "test.conf")
-	//h := NewHttp()
-	//s1 := NewServer()
-	//l := NewLocation("/")
-	//k := NewKey("$test","$testV")
-	//k2 := NewKey("$remote_addr - $remote_user [$time_local] \"$request\" ","")
-	//i := NewInclude("../../test/mime.types","../../test/mime.types")
-	//l.Add(k)
-	//l.Add(k2)
-	//s1.Add(l)
-	//h.Add(i)
-	//h.Add(s1)
-	//conf.Add(h)
 }
 
 func readFile(path string) ([]byte, error) {
