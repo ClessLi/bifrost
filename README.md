@@ -41,3 +41,6 @@ Usage of ./go-nginx-conf-parser:
   -h help
     	this help
 ```
+
+## 应用接口调用方式
+（相关文档待完善）
