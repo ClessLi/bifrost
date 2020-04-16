@@ -1,0 +1,10 @@
+{
+  "configs": [
+    {
+      "name": "nginx-conf-test",
+      "relative_path": "/ng_conf",
+      "port": 8080,
+      "conf_path": "/usr/local/openresty/nginx/conf/nginx.conf"
+    }
+  ]
+}

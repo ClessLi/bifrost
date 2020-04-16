@@ -22,6 +22,7 @@ type Context interface {
 	//UnmarshalJSON(b []byte) error
 	//BumpChildDepth(int)
 	dump() ([]string, error)
+	List() ([]string, error)
 }
 
 // BasicContext, 上下文基础对象，定义了上下文类型的基本属性及基础方法
@@ -147,6 +148,22 @@ func (c *BasicContext) dump() ([]string, error) {
 	ret[len(ret)-1] = RegEndWithCR.ReplaceAllString(ret[len(ret)-1], "}\n")
 	ret = append(ret, "}\n\n")
 
+	return ret, nil
+}
+
+func (c *BasicContext) List() (ret []string, err error) {
+	for _, child := range c.Children {
+		switch child.(type) {
+		case Context:
+			//fmt.Println("farther", c.Name, "child", child)
+			l, err := child.(Context).List()
+			if err != nil {
+				return nil, err
+			}
+
+			ret = append(ret, l...)
+		}
+	}
 	return ret, nil
 }
 

@@ -1,7 +1,7 @@
 package resolv
 
 func Save(conf *Config) error {
-	err := conf.save()
+	err := conf.Save()
 	if err != nil {
 		return err
 	}

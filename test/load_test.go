@@ -9,7 +9,7 @@ import (
 )
 
 func TestLoad(t *testing.T) {
-	conf, err := resolv.Load("nginx.conf")
+	conf, err := resolv.Load("config_test/nginx.conf")
 
 	if err != nil {
 		t.Log(err)
@@ -44,7 +44,7 @@ func TestLoadServer(t *testing.T) {
 }
 
 func TestMarshalJSON(t *testing.T) {
-	conf, err := resolv.Load("nginx.conf")
+	conf, err := resolv.Load("config_test/nginx.conf")
 
 	if err != nil {
 		t.Log(err)

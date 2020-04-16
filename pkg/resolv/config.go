@@ -71,7 +71,7 @@ func (c *Config) String() []string {
 	return ret
 }
 
-func (c *Config) save() error {
+func (c *Config) Save() error {
 	conf, derr := c.dump()
 	if derr != nil {
 		return derr
@@ -106,6 +106,29 @@ func (c *Config) dump() ([]string, error) {
 			ret = append(ret, strs...)
 		default:
 			ret = append(ret, child.String()...)
+		}
+	}
+	return ret, nil
+}
+
+func (c *Config) List() (ret []string, err error) {
+	//absPath, err := filepath.Abs(c.Value)
+	//if err != nil {
+	//	return
+	//}
+	//ret = []string{absPath}
+	ret = []string{c.Value}
+	//fmt.Println(c.Value)
+	//fmt.Println("list: ", ret)
+	for _, child := range c.Children {
+		switch child.(type) {
+		case Context:
+			l, err := child.(Context).List()
+			if err != nil {
+				return nil, err
+			} else if l != nil {
+				ret = append(ret, l...)
+			}
 		}
 	}
 	return ret, nil

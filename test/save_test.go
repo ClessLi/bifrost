@@ -6,7 +6,7 @@ import (
 )
 
 func TestSave(t *testing.T) {
-	conf, err := resolv.Load("nginx.conf")
+	conf, err := resolv.Load("./config_test/nginx.conf")
 
 	if err != nil {
 		t.Log(err)
@@ -17,4 +17,18 @@ func TestSave(t *testing.T) {
 	if serr != nil {
 		t.Log(serr)
 	}
+}
+
+func TestVerifyAndSave(t *testing.T) {
+	conf, err := resolv.Load("./config_test/nginx.conf")
+
+	if err != nil {
+		t.Log(err)
+	}
+
+	tmpConf := conf
+
+	conf = resolv.NewConf(nil, "./config_test/nginx.conf")
+	t.Log(tmpConf.String())
+	t.Log(conf.String())
 }
