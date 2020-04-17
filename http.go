@@ -107,13 +107,14 @@ func POST(ngBin string, config *resolv.Config, c *gin.Context) (h gin.H) {
 		if checkErr != nil {
 			//log(WARN, fmt.Sprintf("Nginx config verify failed. <%s>", checkErr))
 			message = fmt.Sprintf("Nginx config verify failed. <%s>", checkErr)
+			log(ERROR, message)
 			status = "failed"
 
 			log(DEBUG, fmt.Sprintf("Delete new nginx config."))
 			delErr := resolv.Delete(newConfig.(*resolv.Config))
 			//fmt.Println(newConfig.String())
 			if delErr != nil {
-				log(WARN, fmt.Sprintf("Delete new nginx config failed. <%s>", delErr))
+				log(ERROR, fmt.Sprintf("Delete new nginx config failed. <%s>", delErr))
 				//message = fmt.Sprintf("Delete new nginx config failed. <%s>", delErr)
 				//log(WARN, message)
 				status = "failed"
