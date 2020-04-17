@@ -8,7 +8,7 @@ import (
 	"io/ioutil"
 )
 
-func GET(config *resolv.Config, c *gin.Context) (h gin.H) {
+func view(config *resolv.Config, c *gin.Context) (h gin.H) {
 	t, ok := c.GetQuery("type")
 	if !ok {
 		t = "string"
@@ -27,12 +27,12 @@ func GET(config *resolv.Config, c *gin.Context) (h gin.H) {
 		h["message"] = config
 	default:
 		h["status"] = "failed"
-		h["message"] = fmt.Sprintf("GET message type <%s> invalid", t)
+		h["message"] = fmt.Sprintf("view message type <%s> invalid", t)
 	}
 	return
 }
 
-func POST(ngBin string, config *resolv.Config, c *gin.Context) (h gin.H) {
+func update(ngBin string, config *resolv.Config, c *gin.Context) (h gin.H) {
 	status := "unkown"
 	message := "null"
 	h = gin.H{

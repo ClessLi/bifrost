@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"time"
@@ -20,6 +21,7 @@ import (
 var (
 	confPath = flag.String("f", "./configs/ng-conf-info.yml", "go-nginx-conf-parser ng-`conf`-info.y(a)ml path.")
 	help     = flag.Bool("h", false, "this `help`")
+	dbConfig DBConfig
 )
 
 const (
@@ -42,9 +44,19 @@ type ParserConfig struct {
 	NginxBin     string `yaml:"nginxBin"`
 }
 
+type DBConfig struct {
+	DBName   string `yaml:"DBName"`
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+	Protocol string `yaml:"protocol"`
+	User     string `yaml:"user"`
+	Password string `yaml:"password"`
+}
+
 type ParserConfigs struct {
 	//Configs []ParserConfig `json:"configs"`
-	Configs []ParserConfig `yaml:"configs"`
+	Configs  []ParserConfig `yaml:"configs"`
+	DBConfig `yaml:"DBConfig"`
 }
 
 //func init() {
@@ -97,8 +109,10 @@ func main() {
 		os.Exit(1)
 	}
 
+	dbConfig = configs.DBConfig
+
 	for _, config := range configs.Configs {
-		conf, err := resolv.Load(config.ConfPath)
+		ng, err := resolv.Load(config.ConfPath)
 
 		if err != nil {
 			fmt.Println(err)
@@ -107,7 +121,7 @@ func main() {
 
 		errChan := make(chan error)
 
-		go run(conf, config.RelativePath, config.Port, config.NginxBin, errChan)
+		go run(ng, &config, errChan)
 
 		err = <-errChan
 		if err != nil {
@@ -131,41 +145,43 @@ func readFile(path string) ([]byte, error) {
 	return fd, nil
 }
 
-func run(conf *resolv.Config, relativePath string, port int, ngBin string, errChan chan error) {
-	_, jerr := json.Marshal(conf)
-	//confBytes, jerr := json.Marshal(conf)
-	//confBytes, jerr := json.MarshalIndent(conf, "", "    ")
+func run(ngConfig *resolv.Config, appConfig *ParserConfig, errChan chan error) {
+	_, jerr := json.Marshal(ngConfig)
+	//confBytes, jerr := json.Marshal(ngConfig)
+	//confBytes, jerr := json.MarshalIndent(ngConfig, "", "    ")
 	if jerr != nil {
 		errChan <- jerr
 	}
 
-	ngBin, absErr := filepath.Abs(ngBin)
+	loginURI := "/login/:username/:password"
+	verifyURI := "/verify/:token"
+	refreshURI := "/refresh/:token"
+	apiURI := fmt.Sprintf("%s/:token", appConfig.RelativePath)
+
+	ngBin, absErr := filepath.Abs(appConfig.NginxBin)
 	if absErr != nil {
 		errChan <- absErr
 	}
 
 	router := gin.Default()
-	router.GET(relativePath, func(c *gin.Context) {
-		h := GET(conf, c)
-		c.JSON(200, &h)
+	// login
+	router.GET(loginURI, login)
+	// verify
+	router.GET(verifyURI, verify)
+	// refresh
+	router.GET(refreshURI, refresh)
+	// view
+	router.GET(apiURI, func(c *gin.Context) {
+		h := view(ngConfig, c)
+		c.JSON(http.StatusOK, &h)
+	})
+	// update
+	router.POST(apiURI, func(c *gin.Context) {
+		h := update(ngBin, ngConfig, c)
+		c.JSON(http.StatusOK, &h)
 	})
 
-	router.POST(relativePath, func(c *gin.Context) {
-		//var confBrif string
-		//confBytes := make([]byte, 1024)
-		//n, _ := c.Request.Body.Read(confBytes)
-		//if n > 200 {
-		//	confBrif = fmt.Sprintf("%s...%s", string(confBytes[0:50]), string(confBytes[n-50:n]))
-		//} else {
-		//	confBrif = string(confBytes[0:n])
-		//}
-		//confStr := string(confBytes[0:n])
-		h := POST(ngBin, conf, c)
-		c.JSON(200, &h)
-
-	})
-
-	rErr := router.Run(fmt.Sprintf(":%d", port))
+	rErr := router.Run(fmt.Sprintf(":%d", appConfig.Port))
 	if rErr != nil {
 		errChan <- rErr
 	}
