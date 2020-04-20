@@ -9,25 +9,48 @@ import (
 )
 
 func view(config *resolv.Config, c *gin.Context) (h gin.H) {
-	t, ok := c.GetQuery("type")
-	if !ok {
+	status := "unkown"
+	var message interface{} = "null"
+	h = gin.H{
+		"status":  &status,
+		"message": &message,
+	}
+	//token, tokenOK := c.GetQuery("token")
+	//if tokenOK {
+	//	_, verifyErr := verifyAction(token)
+	//	if verifyErr != nil {
+	//		status = "failed"
+	//		message = verifyErr
+	//		return
+	//	}
+	//} else {
+	//	status = "failed"
+	//	message = ErrorReasonNoneToken
+	//	return
+	//}
+	token := c.Param("token")
+	_, verifyErr := verifyAction(token)
+	if verifyErr != nil {
+		status = "failed"
+		message = verifyErr
+		return
+	}
+
+	t, typeOK := c.GetQuery("type")
+	if !typeOK {
 		t = "string"
 	}
 
-	h = gin.H{
-		"status":  "unkown",
-		"message": "null",
-	}
 	switch t {
 	case "string":
-		h["status"] = "success"
-		h["message"] = config.String()
+		status = "success"
+		message = config.String()
 	case "json":
-		h["status"] = "success"
-		h["message"] = config
+		status = "success"
+		message = config
 	default:
-		h["status"] = "failed"
-		h["message"] = fmt.Sprintf("view message type <%s> invalid", t)
+		status = "failed"
+		message = fmt.Sprintf("view message type <%s> invalid", t)
 	}
 	return
 }
@@ -39,14 +62,33 @@ func update(ngBin string, config *resolv.Config, c *gin.Context) (h gin.H) {
 		"status":  &status,
 		"message": &message,
 	}
+	//token, tokenOK := c.GetQuery("token")
+	//if tokenOK {
+	//	_, verifyErr := verifyAction(token)
+	//	if verifyErr != nil {
+	//		status = "failed"
+	//		message = verifyErr.Error()
+	//		return
+	//	}
+	//} else {
+	//	status = "failed"
+	//	message = ErrorReasonNoneToken
+	//	return
+	//}
+	token := c.Param("token")
+	_, verifyErr := verifyAction(token)
+	if verifyErr != nil {
+		status = "failed"
+		message = verifyErr.Error()
+		return
+	}
 
 	//confBytes := c.DefaultPostForm("data", "null")
 	file, formFileErr := c.FormFile("data")
 	if formFileErr != nil {
-		message := fmt.Sprintf("FormFile option invalid: <%s>.", formFileErr)
+		message = fmt.Sprintf("FormFile option invalid: <%s>.", formFileErr)
 		log(WARN, message)
-		h["massage"] = message
-		h["status"] = "failed"
+		status = "failed"
 		return
 	}
 
