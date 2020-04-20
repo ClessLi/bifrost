@@ -123,12 +123,15 @@ func validUser(claims *JWTClaims) bool {
 }
 
 func getPasswd(sqlStr string) (string, error) {
-	mysqlUrl := fmt.Sprintf("%s:@%s(%s:%d)/%s", dbConfig.User, dbConfig.Protocol, dbConfig.Host, dbConfig.Port, dbConfig.DBName)
+	mysqlUrl := fmt.Sprintf("%s:%s@%s(%s:%d)/%s?charset=utf8", dbConfig.User, dbConfig.Password, dbConfig.Protocol, dbConfig.Host, dbConfig.Port, dbConfig.DBName)
+	//fmt.Println(mysqlUrl)
 	db, dbConnErr := sql.Open("mysql", mysqlUrl)
 	if dbConnErr != nil {
 		log(ERROR, dbConnErr.Error())
 		return "", dbConnErr
 	}
+
+	defer db.Close()
 
 	rows, queryErr := db.Query(sqlStr)
 	if queryErr != nil {
