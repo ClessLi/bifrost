@@ -25,14 +25,21 @@ func Backup(config *Config, name string) (path string, err error) {
 		dir := filepath.Dir(list[0])
 		name = filepath.Join(dir, fmt.Sprintf("nginx.conf.bak%s.tgz", dt))
 	}
-	path, err = filepath.Abs(name)
-	if err != nil {
-		return "", err
-	}
 	list, err := config.List()
 	if err != nil {
 		return "", err
 	}
+	path = filepath.Join(list[0], name)
+	path, err = filepath.Abs(path)
+	if err != nil {
+		return "", err
+	}
+
+	if _, stat := os.Stat(path); os.IsExist(stat) {
+		err = stat
+		return
+	}
+
 	err = tgz(path, list)
 	return
 }

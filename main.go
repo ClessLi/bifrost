@@ -1,7 +1,7 @@
 package main
 
-// TODO:1.权限管理
-// TODO:2.nginx配置定期备份机制
+// DONE:1.权限管理
+// DOING:2.nginx配置定期备份机制
 // TODO:3.日志规范化输出
 
 import (
@@ -21,6 +21,7 @@ import (
 var (
 	confPath = flag.String("f", "./configs/ng-conf-info.yml", "go-nginx-conf-parser ng-`conf`-info.y(a)ml path.")
 	help     = flag.Bool("h", false, "this `help`")
+	//confBackupDelay = flag.Duration("b", 10, "how many minutes `delay` for backup nginx config")
 	dbConfig DBConfig
 )
 
@@ -121,12 +122,13 @@ func main() {
 
 		errChan := make(chan error)
 
-		go run(ng, &config, errChan)
+		go run(&config, ng, errChan)
 
 		err = <-errChan
 		if err != nil {
-			fmt.Println(err)
-			continue
+			log(ERROR, fmt.Sprintf("%s's coroutine has been stoped. Cased by <%s>", config.Name, err))
+		} else {
+			log(INFO, fmt.Sprintf("%s's coroutine has been stoped", config.Name))
 		}
 	}
 
@@ -145,7 +147,7 @@ func readFile(path string) ([]byte, error) {
 	return fd, nil
 }
 
-func run(ngConfig *resolv.Config, appConfig *ParserConfig, errChan chan error) {
+func run(appConfig *ParserConfig, ngConfig *resolv.Config, errChan chan error) {
 	_, jerr := json.Marshal(ngConfig)
 	//confBytes, jerr := json.Marshal(ngConfig)
 	//confBytes, jerr := json.MarshalIndent(ngConfig, "", "    ")
@@ -163,6 +165,10 @@ func run(ngConfig *resolv.Config, appConfig *ParserConfig, errChan chan error) {
 		errChan <- absErr
 	}
 
+	// 创建备份协程管道及启动备份协程
+	bakChan := make(chan int)
+	go bak(appConfig, ngConfig, bakChan)
+
 	router := gin.Default()
 	// login
 	router.GET(loginURI, login)
@@ -172,22 +178,55 @@ func run(ngConfig *resolv.Config, appConfig *ParserConfig, errChan chan error) {
 	router.GET(refreshURI, refresh)
 	// view
 	router.GET(apiURI, func(c *gin.Context) {
-		h := view(ngConfig, c)
+		h := view(appConfig.Name, ngConfig, c)
 		c.JSON(http.StatusOK, &h)
 	})
 	// update
 	router.POST(apiURI, func(c *gin.Context) {
-		h := update(ngBin, ngConfig, c)
+		h := update(appConfig.Name, ngBin, ngConfig, c)
 		c.JSON(http.StatusOK, &h)
 	})
 
 	rErr := router.Run(fmt.Sprintf(":%d", appConfig.Port))
 	if rErr != nil {
+		// 关闭备份
+		bakChan <- 9
+		// 输出子任务运行错误
 		errChan <- rErr
 	}
 
+	// 关闭备份
+	bakChan <- 9
 	errChan <- nil
 
+}
+
+func bak(appConfig *ParserConfig, ngConfig *resolv.Config, bakChan chan int) {
+	for {
+		k, ok := <-bakChan
+		if ok && k == 9 {
+			log(INFO, fmt.Sprintf("[%s] Nginx Config backup is stop.", appConfig.Name))
+			break
+		}
+
+		bakDate := time.Now().Format("20060102")
+		bakName := fmt.Sprintf("nginx.conf.%s.tgz", bakDate)
+
+		bakPath, bErr := resolv.Backup(ngConfig, bakName)
+		if bErr != nil && !os.IsExist(bErr) {
+			//log(WARN, fmt.Sprintf("Nginx Config backup to %s, but failed. <%s>\n", bakPath, bErr))
+			message := fmt.Sprintf("[%s] Nginx Config backup to %s, but failed. <%s>", appConfig.Name, bakPath, bErr)
+			log(ERROR, message)
+			log(INFO, fmt.Sprintf("[%s] Nginx Config backup is stop.", appConfig.Name))
+			//errChan <- bErr
+			break
+		} else if os.IsExist(bErr) {
+			time.Sleep(5 * time.Minute)
+		} else {
+			log(INFO, fmt.Sprintf("[%s] Nginx Config backup to %s", appConfig.Name, bakPath))
+		}
+
+	}
 }
 
 func PathExists(path string) (bool, error) {
