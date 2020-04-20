@@ -18,18 +18,14 @@ func Backup(config *Config, name string) (path string, err error) {
 		}
 	} else {
 		dt := time.Now().Format("2006-01-02_150405")
-		list, err := config.List()
-		if err != nil {
-			return "", err
-		}
-		dir := filepath.Dir(list[0])
-		name = filepath.Join(dir, fmt.Sprintf("nginx.conf.bak%s.tgz", dt))
+		name = fmt.Sprintf("nginx.conf.bak%s.tgz", dt)
 	}
 	list, err := config.List()
 	if err != nil {
 		return "", err
 	}
-	path = filepath.Join(list[0], name)
+	dir := filepath.Dir(list[0])
+	path = filepath.Join(dir, name)
 	path, err = filepath.Abs(path)
 	if err != nil {
 		return "", err

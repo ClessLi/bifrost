@@ -167,7 +167,7 @@ func run(appConfig *ParserConfig, ngConfig *resolv.Config, errChan chan error) {
 
 	// 创建备份协程管道及启动备份协程
 	bakChan := make(chan int)
-	go bak(appConfig, ngConfig, bakChan)
+	go Bak(appConfig, ngConfig, bakChan)
 
 	router := gin.Default()
 	// login
@@ -201,32 +201,34 @@ func run(appConfig *ParserConfig, ngConfig *resolv.Config, errChan chan error) {
 
 }
 
-func bak(appConfig *ParserConfig, ngConfig *resolv.Config, bakChan chan int) {
+func Bak(appConfig *ParserConfig, ngConfig *resolv.Config, c chan int) {
 	for {
-		k, ok := <-bakChan
-		if ok && k == 9 {
-			log(INFO, fmt.Sprintf("[%s] Nginx Config backup is stop.", appConfig.Name))
-			break
+		select {
+		case <-time.NewTicker(5 * time.Minute).C:
+			bak(appConfig, ngConfig)
+		case signal := <-c:
+			if signal == 9 {
+				log(INFO, fmt.Sprintf("[%s] Nginx Config backup is stop.", appConfig.Name))
+				break
+			}
+
 		}
-
-		bakDate := time.Now().Format("20060102")
-		bakName := fmt.Sprintf("nginx.conf.%s.tgz", bakDate)
-
-		bakPath, bErr := resolv.Backup(ngConfig, bakName)
-		if bErr != nil && !os.IsExist(bErr) {
-			//log(WARN, fmt.Sprintf("Nginx Config backup to %s, but failed. <%s>\n", bakPath, bErr))
-			message := fmt.Sprintf("[%s] Nginx Config backup to %s, but failed. <%s>", appConfig.Name, bakPath, bErr)
-			log(ERROR, message)
-			log(INFO, fmt.Sprintf("[%s] Nginx Config backup is stop.", appConfig.Name))
-			//errChan <- bErr
-			break
-		} else if os.IsExist(bErr) {
-			time.Sleep(5 * time.Minute)
-		} else {
-			log(INFO, fmt.Sprintf("[%s] Nginx Config backup to %s", appConfig.Name, bakPath))
-		}
-
 	}
+}
+
+func bak(appConfig *ParserConfig, ngConfig *resolv.Config) {
+	bakDate := time.Now().Format("20060102")
+	bakName := fmt.Sprintf("nginx.conf.%s.tgz", bakDate)
+
+	bakPath, bErr := resolv.Backup(ngConfig, bakName)
+	if bErr != nil && !os.IsExist(bErr) {
+		message := fmt.Sprintf("[%s] Nginx Config backup to %s, but failed. <%s>", appConfig.Name, bakPath, bErr)
+		log(ERROR, message)
+		log(INFO, fmt.Sprintf("[%s] Nginx Config backup is stop.", appConfig.Name))
+	} else if bErr == nil {
+		log(INFO, fmt.Sprintf("[%s] Nginx Config backup to %s", appConfig.Name, bakPath))
+	}
+
 }
 
 func PathExists(path string) (bool, error) {
