@@ -13,9 +13,10 @@ import (
 )
 
 const (
-	ErrorreasonServerbusy    = "服务器繁忙"
-	ErrorreasonRelogin       = "请重新登陆"
-	ErrorreasonWrongpassword = "用户或密码错误"
+	ErrorReasonServerBusy    = "服务器繁忙"
+	ErrorReasonRelogin       = "请重新登陆"
+	ErrorReasonWrongPassword = "用户或密码错误"
+	//ErrorReasonNoneToken     = "请通过认证"
 )
 
 type JWTClaims struct { // token里面添加用户信息，验证token后可能会用到用户信息
@@ -82,14 +83,14 @@ func verifyAction(strToken string) (*JWTClaims, error) {
 		return []byte(password.Secret), nil
 	})
 	if err != nil {
-		return nil, errors.New(ErrorreasonServerbusy)
+		return nil, errors.New(ErrorReasonServerBusy)
 	}
 	claims, ok := token.Claims.(*JWTClaims)
 	if !ok {
-		return nil, errors.New(ErrorreasonRelogin)
+		return nil, errors.New(ErrorReasonRelogin)
 	}
 	if err := token.Claims.Valid(); err != nil {
-		return nil, errors.New(ErrorreasonRelogin)
+		return nil, errors.New(ErrorReasonRelogin)
 	}
 	fmt.Println("verify")
 	return claims, nil
@@ -97,12 +98,12 @@ func verifyAction(strToken string) (*JWTClaims, error) {
 
 func getToken(claims *JWTClaims) (string, error) {
 	if !validUser(claims) {
-		return "", errors.New(ErrorreasonWrongpassword)
+		return "", errors.New(ErrorReasonWrongPassword)
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signedToken, err := token.SignedString([]byte(password.Secret))
 	if err != nil {
-		return "", errors.New(ErrorreasonServerbusy)
+		return "", errors.New(ErrorReasonServerBusy)
 	}
 	return signedToken, nil
 }
