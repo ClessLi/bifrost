@@ -25,15 +25,6 @@ func Backup(config *Config, name string) (path string, err error) {
 		return "", err
 	}
 	dir := filepath.Dir(list[0])
-	// 各配置文件相对路径
-	var relList []string
-	for _, s := range list {
-		relPath, relErr := filepath.Rel(dir, s)
-		if relErr != nil {
-			return "", relErr
-		}
-		relList = append(relList, relPath)
-	}
 
 	path = filepath.Join(dir, name)
 	path, err = filepath.Abs(path)
@@ -41,14 +32,25 @@ func Backup(config *Config, name string) (path string, err error) {
 		return "", err
 	}
 
-	if _, stat := os.Stat(path); os.IsExist(stat) {
+	if _, stat := os.Stat(path); os.IsNotExist(stat) {
+
+		// 各配置文件相对路径
+		var relList []string
+		for _, s := range list {
+			relPath, relErr := filepath.Rel(dir, s)
+			if relErr != nil {
+				return "", relErr
+			}
+			relList = append(relList, relPath)
+		}
+		//err = tgz(path, list)
+		err = tgz(path, relList)
+
+		return
+	} else {
 		err = stat
 		return
 	}
-
-	//err = tgz(path, list)
-	err = tgz(path, relList)
-	return
 }
 
 func tgz(path string, list []string) (err error) {
