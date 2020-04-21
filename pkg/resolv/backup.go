@@ -47,8 +47,11 @@ func Backup(config *Config, name string) (path string, err error) {
 		err = tgz(path, relList)
 
 		return
-	} else {
+	} else if !os.IsNotExist(stat) && stat != nil {
 		err = stat
+		return
+	} else {
+		err = os.ErrExist
 		return
 	}
 }
