@@ -61,7 +61,7 @@ func tgz(path string, list []string) (err error) {
 	args := append([]string{"-zcf", path}, list...)
 	cmd := exec.Command(tar, args...)
 	cmd.Stderr = os.Stderr
-	cmd.Path = filepath.Dir(path)
+	cmd.Dir = filepath.Dir(path)
 	err = cmd.Run()
 	return
 }
