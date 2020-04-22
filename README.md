@@ -10,14 +10,14 @@ go-nginx-conf-parser 是基于golang语言开发的项目，它目前还处于�
 
 # 使用方法
 ## 下载地址
-Windows:  [go-nginx-conf-parser.v0_0_1.win_x64.zip](https://github.com/ClessLi/go-nginx-conf-parser/releases/download/v0.0.1/go-nginx-conf-parser.v0_0_1.win_x64.zip)
+Windows:  [go-nginx-conf-parser.v0_0_2_alpha_3.win_x64](https://github.com/ClessLi/go-nginx-conf-parser/releases/download/v0.0.2-alpha.3/go-nginx-conf-parser.v0_0_2_alpha_3.win_x64.zip)
 
-Linux: [go-nginx-conf-parser.v0_0_1.linux_x64.zip](https://github.com/ClessLi/go-nginx-conf-parser/releases/download/v0.0.1/go-nginx-conf-parser.v0_0_1.linux_x64.zip)
+Linux: [go-nginx-conf-parser.v0_0_2_alpha_3.linux_x64](https://github.com/ClessLi/go-nginx-conf-parser/releases/download/v0.0.2-alpha.3/go-nginx-conf-parser.v0_0_2_alpha_3.linux_x64.zip)
 
 ## 应用配置
 > configs/ng-conf-info.yml
 ```
-configs:
+NGConfigs:
   -
     name: "nginx-conf-test"
     relativePath: "/ng_conf"
@@ -30,6 +30,16 @@ configs:
 #    port: 28080
 #    confPath: "/GO_Project/src/go-nginx-conf-parser/test/config_test/nginx.conf"
 #    nginxBin: "xxxxxxxxxxxx/nginx"
+DBConfig:
+  DBName: "nginx_admin"
+  host: "127.0.0.1"
+  port: 3306
+  protocol: "tcp"
+  user: "ngadmin"
+  password: "ngadmin"
+logConfig:
+  logDir: "./logs"
+  level: 2
 ```
 
 ## 命令帮助

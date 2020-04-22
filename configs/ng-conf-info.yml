@@ -1,4 +1,4 @@
-configs:
+NGConfigs:
   -
     name: "nginx-conf-test"
     relativePath: "/ng_conf"
@@ -18,3 +18,6 @@ DBConfig:
   protocol: "tcp"
   user: "ngadmin"
   password: "ngadmin"
+logConfig:
+  logDir: "./logs"
+  level: 2
