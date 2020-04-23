@@ -49,6 +49,7 @@ func login(c *gin.Context) {
 		c.String(http.StatusNotFound, err.Error())
 		return
 	}
+	log(NOTICE, fmt.Sprintf("user <%s> is login, token is : %s", username, signedToken))
 	c.String(http.StatusOK, signedToken)
 }
 
