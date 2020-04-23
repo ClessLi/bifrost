@@ -44,39 +44,90 @@ func login(c *gin.Context) {
 	}
 	claims.IssuedAt = time.Now().Unix()
 	claims.ExpiresAt = time.Now().Add(time.Second * time.Duration(ExpireTime)).Unix()
+
+	status := "unkown"
+	var token interface{} = "null"
+	var message interface{} = "null"
+	h := gin.H{
+		"status":  &status,
+		"token":   &token,
+		"message": &message,
+	}
+
 	signedToken, err := getToken(claims)
 	if err != nil {
-		c.String(http.StatusNotFound, err.Error())
+		//c.String(http.StatusNotFound, err.Error())
+		status = "failed"
+		message = err
+		log(NOTICE, fmt.Sprintf("[%s] user <%s> login failed, message is: <%s>", c.ClientIP(), username, message))
+		c.JSON(http.StatusNotFound, &h)
 		return
 	}
-	log(NOTICE, fmt.Sprintf("user <%s> is login, token is : %s", username, signedToken))
-	c.String(http.StatusOK, signedToken)
+	log(NOTICE, fmt.Sprintf("[%s] user <%s> is login, token is: %s", c.ClientIP(), username, signedToken))
+
+	status = "success"
+	token = signedToken
+	//c.String(http.StatusOK, signedToken)
+	c.JSON(http.StatusOK, &h)
 }
 
 func verify(c *gin.Context) {
 	strToken := c.Param("token")
+	status := "unkown"
+	message := "null"
+	h := gin.H{
+		"status":  &status,
+		"message": &message,
+	}
 	claim, err := verifyAction(strToken)
 	if err != nil {
-		c.String(http.StatusNotFound, err.Error())
+		//c.String(http.StatusNotFound, err.Error())
+		status = "failed"
+		message = err.Error()
+		log(NOTICE, fmt.Sprintf("[%s] Verified failed", c.ClientIP()))
+		c.JSON(http.StatusNotFound, &h)
 		return
 	}
-	c.String(http.StatusOK, "verify,", claim.Username)
+	//c.String(http.StatusOK, "Certified user ", claim.Username)
+	status = "success"
+	message = fmt.Sprintf("Certified user <%s>", claim.Username)
+	log(NOTICE, fmt.Sprintf("[%s] %s", c.ClientIP(), message))
+	c.JSON(http.StatusOK, &h)
 }
 
 func refresh(c *gin.Context) {
 	strToken := c.Param("token")
+	status := "unkown"
+	var token interface{} = "null"
+	var message interface{} = "null"
+	h := gin.H{
+		"status":  &status,
+		"token":   &token,
+		"message": &message,
+	}
 	claims, err := verifyAction(strToken)
 	if err != nil {
-		c.String(http.StatusNotFound, err.Error())
+		//c.String(http.StatusNotFound, err.Error())
+		status = "failed"
+		message = err
+		log(NOTICE, fmt.Sprintf("[%s] Verified failed", c.ClientIP()))
+		c.JSON(http.StatusNotFound, &h)
 		return
 	}
 	claims.ExpiresAt = time.Now().Unix() + (claims.ExpiresAt - claims.IssuedAt)
 	signedToken, err := getToken(claims)
 	if err != nil {
-		c.String(http.StatusNotFound, err.Error())
+		//c.String(http.StatusNotFound, err.Error())
+		status = "failed"
+		message = err
+		log(NOTICE, fmt.Sprintf("[%s] refresh token failed", c.ClientIP()))
+		c.JSON(http.StatusNotFound, &h)
 		return
 	}
-	c.String(http.StatusOK, signedToken)
+	//c.String(http.StatusOK, signedToken)
+	status = "success"
+	token = signedToken
+	c.JSON(http.StatusOK, &h)
 }
 
 func verifyAction(strToken string) (*JWTClaims, error) {
@@ -102,7 +153,7 @@ func verifyAction(strToken string) (*JWTClaims, error) {
 
 func getToken(claims *JWTClaims) (string, error) {
 	if !validUser(claims) {
-		log(WARN, fmt.Sprintf("user <%s> or password <%s> is not valid.", claims.Username, claims.Password))
+		log(WARN, fmt.Sprintf("invalid user <%s> or password <%s>.", claims.Username, claims.Password))
 		return "", errors.New(ErrorReasonWrongPassword)
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

@@ -110,7 +110,7 @@ func view(appName string, config *resolv.Config, c *gin.Context) (h gin.H) {
 		status = "failed"
 		message = fmt.Sprintf("view message type <%s> invalid", t)
 	}
-	log(NOTICE, fmt.Sprintf("[%s] %s", appName, message))
+	log(INFO, fmt.Sprintf("[%s] %s", appName, message))
 	return
 }
 
