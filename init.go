@@ -16,14 +16,15 @@ var (
 	configs  *ParserConfigs
 	dbConfig DBConfig
 	myLogger *logger.Logger
+	logf     *os.File
 )
 
 const (
 	CRITICAL = logger.CriticalLevel
 	ERROR    = logger.ErrorLevel
 	WARN     = logger.WarningLevel
-	INFO     = logger.InfoLevel
 	NOTICE   = logger.NoticeLevel
+	INFO     = logger.InfoLevel
 	DEBUG    = logger.DebugLevel
 )
 
@@ -50,7 +51,7 @@ type DBConfig struct {
 
 type LogConfig struct {
 	LogDir string          `yaml:"logDir"`
-	Level  logger.LogLevel `yaml:"level, int"`
+	Level  logger.LogLevel `yaml:"level"`
 }
 
 type ParserConfigs struct {
@@ -135,5 +136,5 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	myLogger.SetFormat("%{time:2006-01-02 15:04:05.012} [%{module}] [%{level}] %{message}\n")
+	myLogger.SetFormat("[%{module}] %{time:2006-01-02 15:04:05.000} [%{level}] %{message}\n")
 }

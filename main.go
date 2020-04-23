@@ -12,7 +12,7 @@ import (
 const (
 //ERROR      = "ERROR"
 //WARN       = "WARN"
-//INFO       = "INFO"
+//NOTICE       = "NOTICE"
 //DEBUG      = "DEBUG"
 //timeFormat = "2006-01-02 15:04:05.013"
 )
@@ -27,7 +27,7 @@ const (
 //}
 
 func main() {
-
+	defer logf.Close()
 	for _, ngConfig := range configs.NGConfigs {
 		ng, err := resolv.Load(ngConfig.ConfPath)
 
@@ -44,7 +44,7 @@ func main() {
 		if err != nil {
 			log(CRITICAL, fmt.Sprintf("%s's coroutine has been stoped. Cased by <%s>", ngConfig.Name, err))
 		} else {
-			log(INFO, fmt.Sprintf("%s's coroutine has been stoped", ngConfig.Name))
+			log(NOTICE, fmt.Sprintf("%s's coroutine has been stoped", ngConfig.Name))
 		}
 	}
 

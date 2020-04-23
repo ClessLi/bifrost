@@ -29,7 +29,7 @@ func Bak(appConfig *NGConfig, ngConfig *resolv.Config, c chan int) {
 			bak(appConfig, ngConfig)
 		case signal := <-c:
 			if signal == 9 {
-				log(INFO, fmt.Sprintf("[%s] Nginx Config backup is stop.", appConfig.Name))
+				log(NOTICE, fmt.Sprintf("[%s] Nginx Config backup is stop.", appConfig.Name))
 				break
 			}
 
@@ -45,9 +45,9 @@ func bak(appConfig *NGConfig, ngConfig *resolv.Config) {
 	if bErr != nil && !os.IsExist(bErr) {
 		message := fmt.Sprintf("[%s] Nginx Config backup to %s, but failed. <%s>", appConfig.Name, bakPath, bErr)
 		log(CRITICAL, message)
-		log(INFO, fmt.Sprintf("[%s] Nginx Config backup is stop.", appConfig.Name))
+		log(NOTICE, fmt.Sprintf("[%s] Nginx Config backup is stop.", appConfig.Name))
 	} else if bErr == nil {
-		log(INFO, fmt.Sprintf("[%s] Nginx Config backup to %s", appConfig.Name, bakPath))
+		log(NOTICE, fmt.Sprintf("[%s] Nginx Config backup to %s", appConfig.Name, bakPath))
 	}
 
 }

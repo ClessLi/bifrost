@@ -110,7 +110,7 @@ func view(appName string, config *resolv.Config, c *gin.Context) (h gin.H) {
 		status = "failed"
 		message = fmt.Sprintf("view message type <%s> invalid", t)
 	}
-	log(INFO, fmt.Sprintf("[%s] %s", appName, message))
+	log(NOTICE, fmt.Sprintf("[%s] %s", appName, message))
 	return
 }
 
@@ -191,15 +191,15 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H) 
 			return
 		}
 
-		log(NOTICE, fmt.Sprintf("[%s] Deleted old nginx ng.", appName))
-		log(NOTICE, fmt.Sprintf("[%s] Verify new nginx ng.", appName))
+		log(INFO, fmt.Sprintf("[%s] Deleted old nginx ng.", appName))
+		log(INFO, fmt.Sprintf("[%s] Verify new nginx ng.", appName))
 		checkErr := resolv.Check(newConfig.(*resolv.Config), ngBin)
 		if checkErr != nil {
 			message = fmt.Sprintf("Nginx ng verify failed. <%s>", checkErr)
 			log(WARN, fmt.Sprintf("[%s] %s", appName, message))
 			status = "failed"
 
-			log(NOTICE, fmt.Sprintf("[%s] Delete new nginx ng.", appName))
+			log(INFO, fmt.Sprintf("[%s] Delete new nginx ng.", appName))
 			delErr := resolv.Delete(newConfig.(*resolv.Config))
 			if delErr != nil {
 				log(ERROR, fmt.Sprintf("[%s] Delete new nginx ng failed. <%s>", appName, delErr))
@@ -208,7 +208,7 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H) 
 				return
 			}
 
-			log(NOTICE, fmt.Sprintf("[%s] Rollback nginx ng.", appName))
+			log(INFO, fmt.Sprintf("[%s] Rollback nginx ng.", appName))
 			rollbackErr := resolv.Save(ng)
 			if rollbackErr != nil {
 				log(CRITICAL, fmt.Sprintf("[%s] Nginx ng rollback failed. <%s>", appName, rollbackErr))
@@ -223,7 +223,7 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H) 
 		ng.Value = newConfig.(*resolv.Config).Value
 		ng.Children = newConfig.(*resolv.Config).Children
 		//ng = newConfig.(*resolv.Config)
-		log(INFO, fmt.Sprintf("[%s] Nginx Config saved successfully", appName))
+		log(NOTICE, fmt.Sprintf("[%s] Nginx Config saved successfully", appName))
 	} else {
 		status = "failed"
 		message = fmt.Sprintf("Wrong data: <%s>", confBytes)

@@ -83,7 +83,9 @@ func verifyAction(strToken string) (*JWTClaims, error) {
 		return []byte(password.Secret), nil
 	})
 	if err != nil {
-		return nil, errors.New(ErrorReasonServerBusy)
+		log(WARN, err.Error())
+		//return nil, errors.New(ErrorReasonServerBusy)
+		return nil, errors.New(ErrorReasonRelogin)
 	}
 	claims, ok := token.Claims.(*JWTClaims)
 	if !ok {
@@ -92,17 +94,20 @@ func verifyAction(strToken string) (*JWTClaims, error) {
 	if err := token.Claims.Valid(); err != nil {
 		return nil, errors.New(ErrorReasonRelogin)
 	}
-	fmt.Println("verify")
+	log(INFO, fmt.Sprintf("Verify user <%s>...", claims.Username))
+	//fmt.Println("verify")
 	return claims, nil
 }
 
 func getToken(claims *JWTClaims) (string, error) {
 	if !validUser(claims) {
+		log(WARN, fmt.Sprintf("user <%s> or password <%s> is not valid.", claims.Username, claims.Password))
 		return "", errors.New(ErrorReasonWrongPassword)
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signedToken, err := token.SignedString([]byte(password.Secret))
 	if err != nil {
+		log(WARN, err.Error())
 		return "", errors.New(ErrorReasonServerBusy)
 	}
 	return signedToken, nil
@@ -115,7 +120,7 @@ func validUser(claims *JWTClaims) bool {
 		log(ERROR, err.Error())
 		return false
 	} else if err == sql.ErrNoRows {
-		log(INFO, fmt.Sprintf("user <%s> of nginx_admin is not exist", claims.Username))
+		log(NOTICE, fmt.Sprintf("user <%s> is not exist in ng_admin", claims.Username))
 		return false
 	}
 
@@ -137,6 +142,11 @@ func getPasswd(sqlStr string) (string, error) {
 	if queryErr != nil {
 		log(WARN, queryErr.Error())
 		return "", queryErr
+	}
+
+	_, rowErr := rows.Columns()
+	if rowErr == sql.ErrNoRows {
+		return "", rowErr
 	}
 
 	for rows.Next() {
