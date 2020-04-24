@@ -5,20 +5,22 @@ package resolv
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
 
-var INDENT string = "    "
+var INDENT = "    "
 
 // Context, 上下文接口对象，定义了上下文接口需实现的增、删、改等方法
 type Context interface {
+	Parser
 	Add(...Parser)
 	Remove(...Parser)
 	Modify(int, Parser) error
-	//Filter(string, string) *Context
+	Servers() []*Server
+	Server() *Server
 	//getReg() string
 	//Dict() map[string]interface{}
-	String() []string
 	//UnmarshalJSON(b []byte) error
 	//BumpChildDepth(int)
 	dump() ([]string, error)
@@ -65,10 +67,99 @@ func (c *BasicContext) Modify(index int, content Parser) error {
 	return nil
 }
 
-// Filter, BasicContext 类生成过滤对象的方法， Context.Filter(string, string) []*Context 的实现
-//TODO: 过滤器
-//func (c *BasicContext) Filter(btype, name string) *Context {
-//}
+func (c *BasicContext) Servers() []*Server {
+	svrs := make([]*Server, 0)
+	for _, child := range c.Children {
+
+		switch child.(type) {
+		case Context:
+			switch child.(type) {
+			case *Server:
+				svrs = append(svrs, child.(*Server))
+			default:
+				svrs = append(svrs, child.(Context).Servers()...)
+			}
+		}
+
+	}
+	return svrs
+}
+
+func (c *BasicContext) Server() *Server {
+	for _, child := range c.Children {
+
+		switch child.(type) {
+		case Context:
+			switch child.(type) {
+			case *Server:
+				return child.(*Server)
+			default:
+				if s := child.(Context).Server(); s != nil {
+					return s
+				}
+			}
+		}
+
+	}
+	return nil
+	//return c.Servers()[0]
+}
+
+// Filter, BasicContext 类生成过滤对象的方法， Parser.Filter(KeyWords) []Parser 的实现
+//DOING: 过滤器
+func (c *BasicContext) Filter(kw KeyWords) (parsers []Parser) {
+	var (
+		selfMatch = false
+		subMatch  = true
+	)
+	switch kw.Type {
+	case "key", "comments":
+	default:
+		switch kw.Type {
+		case "events", "http", "server", "stream", "types":
+			kw.Value = ""
+		}
+
+		if !kw.IsReg {
+			if kw.Type == c.Name && kw.Value == c.Value {
+				selfMatch = true
+			}
+		} else {
+			if regexp.MustCompile(kw.Type).MatchString(c.Name) && regexp.MustCompile(kw.Value).MatchString(c.Value) {
+				selfMatch = true
+			}
+		}
+
+		if selfMatch {
+
+			for _, childKW := range kw.ChildKWs {
+				subMatch = false
+				for _, child := range c.Children {
+					if child.Filter(childKW) != nil {
+						subMatch = true
+					}
+				}
+
+				if !subMatch {
+					break
+				}
+			}
+
+		}
+		if selfMatch && subMatch {
+			parsers = append(parsers, c)
+		}
+	}
+
+	for _, child := range c.Children {
+		//parsers = append(parsers, child.Filter(kw)...)
+		if tmpParsers := child.Filter(kw); tmpParsers != nil {
+			parsers = append(parsers, tmpParsers...)
+		}
+	}
+
+	return
+}
 
 //func (c *BasicContext) getReg() string {
 //	return c.Value

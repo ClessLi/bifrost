@@ -6,45 +6,11 @@ import (
 
 type Parser interface {
 	String() []string
-	//UnmarshalJSON(b []byte) error
+	Filter(KeyWords) []Parser
 }
 
 type Config struct {
 	BasicContext `json:"config"`
-}
-
-func (c *Config) Servers() []*Server {
-	svrs := make([]*Server, 0)
-	for _, child := range c.Children {
-		svrs = appendServer(svrs, child)
-	}
-	return svrs
-}
-
-func appendServer(svrs []*Server, p Parser) []*Server {
-	switch p.(type) {
-	case *Server:
-		return append(svrs, p.(*Server))
-	case *Http:
-		for _, child := range p.(*Http).Children {
-			svrs = appendServer(svrs, child)
-		}
-		return svrs
-	case *Include:
-		for _, child := range p.(*Include).Children {
-			for _, includechild := range child.(*Config).Children {
-				svrs = appendServer(svrs, includechild)
-			}
-			//fmt.Println(len(child.(*Config).Servers()))
-		}
-		return svrs
-	default:
-		return svrs
-	}
-}
-
-func (c *Config) Server() *Server {
-	return c.Servers()[0]
 }
 
 func (c *Config) String() []string {

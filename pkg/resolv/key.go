@@ -1,6 +1,7 @@
 package resolv
 
 import (
+	"regexp"
 	"strings"
 )
 
@@ -16,6 +17,24 @@ func (k *Key) String() []string {
 		return []string{k.Name + " \"" + k.Value + "\";\n"}
 	}
 	return []string{k.Name + " " + k.Value + ";\n"}
+}
+
+func (k *Key) Filter(kw KeyWords) (parsers []Parser) {
+	if !kw.IsReg {
+		if kw.Type == "key" && kw.Name == k.Name && kw.Value == k.Value {
+			parsers = append(parsers, k)
+		} else {
+			parsers = nil
+		}
+	} else {
+
+		if kw.Type == "key" && regexp.MustCompile(kw.Name).MatchString(k.Name) && regexp.MustCompile(kw.Value).MatchString(k.Value) {
+			parsers = append(parsers, k)
+		} else {
+			parsers = nil
+		}
+	}
+	return
 }
 
 func inString(str string, s string) bool {

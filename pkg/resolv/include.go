@@ -11,6 +11,17 @@ type Include struct {
 	ConfPWD      string   `json:"conf_pwd"`
 }
 
+func (i *Include) Filter(kw KeyWords) (parsers []Parser) {
+	for _, conf := range i.Children {
+		for _, child := range conf.(*Config).Children {
+			if tmpParsers := child.Filter(kw); tmpParsers != nil {
+				parsers = append(parsers, tmpParsers...)
+			}
+		}
+	}
+	return
+}
+
 func (i *Include) String() []string {
 	var strs []string
 	strs = append(strs, i.Comment.String()[0])
