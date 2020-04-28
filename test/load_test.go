@@ -78,7 +78,7 @@ func TestConfig_UnmarshalJSON(t *testing.T) {
 		t.Log(rerr)
 	}
 	//conf := NewConf(nil, "")
-	//err := conf.UnmarshalJSON([]byte(jdata))
+	//err := conf.UnmarshalToJSON([]byte(jdata))
 	//err := json.Unmarshal([]byte(jdata), &conf)
 	conf, err := ngJson.Unmarshal(jdata, &ngJson.Config{})
 	if err != nil {

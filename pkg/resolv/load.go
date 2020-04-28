@@ -13,7 +13,6 @@ func Load(path string) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return load(absPath)
 }
 
@@ -24,12 +23,18 @@ func load(path string) (*Config, error) {
 		return nil, dirErr
 	}
 
+	f, err := NewConf(nil, path)
+	if err == ErrConfigIsExist {
+		return f, nil
+	} else if err != nil && err != ErrConfigIsExist {
+		return nil, err
+	}
+
 	data, err := readConf(path)
 	if err != nil {
 		return nil, err
 	}
 
-	f := NewConf(nil, path)
 	index := 0
 	var lopen []Parser
 

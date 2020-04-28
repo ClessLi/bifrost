@@ -8,7 +8,6 @@ func NewUpstream(value string) *Upstream {
 	return &Upstream{BasicContext{
 		Name:     "upstream",
 		Value:    value,
-		depth:    0,
 		Children: nil,
 	}}
 }

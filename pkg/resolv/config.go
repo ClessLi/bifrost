@@ -1,8 +1,11 @@
 package resolv
 
 import (
+	"errors"
 	"io/ioutil"
 )
+
+var ErrConfigIsExist = errors.New("config is exsit")
 
 type Parser interface {
 	String() []string
@@ -12,6 +15,9 @@ type Parser interface {
 type Config struct {
 	BasicContext `json:"config"`
 }
+
+// 记录所有加载过的*Config对象
+var configs []*Config
 
 func (c *Config) String() []string {
 	ret := make([]string, 0)
@@ -100,11 +106,20 @@ func (c *Config) List() (ret []string, err error) {
 	return ret, nil
 }
 
-func NewConf(conf []Parser, value string) *Config {
-	return &Config{BasicContext{
+func NewConf(conf []Parser, value string) (*Config, error) {
+	// 确定*Config的唯一性，防止多次加载
+	for _, c := range configs {
+		if c.Value == value {
+			return c, ErrConfigIsExist
+		}
+	}
+	f := &Config{BasicContext{
 		Name:     "Config",
 		Value:    value,
-		depth:    0,
 		Children: conf,
 	}}
+
+	// 确保*Config的唯一性，将新加载的*Config加入configs
+	configs = append(configs, f)
+	return f, nil
 }

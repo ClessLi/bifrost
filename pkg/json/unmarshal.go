@@ -11,7 +11,7 @@ import (
 
 // unmarshaler, json反序列化内部接口对象，定义了用于nginx配置对象json反序列化所需实现的方法
 type unmarshaler interface {
-	UnmarshalJSON(b []byte) (resolv.Parser, error)            // json反序列化方法
+	UnmarshalToJSON(b []byte) (resolv.Parser, error)          // json反序列化方法
 	getChildren() []*json.RawMessage                          // 统一输出对象子对象json串内部方法
 	toParser(children []resolv.Parser) (resolv.Parser, error) // 统一解析并返回nginx配置对象的内部方法
 }
@@ -20,7 +20,6 @@ type unmarshaler interface {
 type BasicContext struct {
 	Name     string             `json:"-"`
 	Value    string             `json:"value,omitempty"`
-	depth    int                `json:"depth,omitempty"`
 	Children []*json.RawMessage `json:"param,omitempty"`
 }
 
@@ -32,13 +31,13 @@ type Config struct {
 	BasicContext `json:"config"`
 }
 
-func (conf *Config) UnmarshalJSON(b []byte) (resolv.Parser, error) {
+func (conf *Config) UnmarshalToJSON(b []byte) (resolv.Parser, error) {
 	return Unmarshal(b, conf)
 	//return Unmarshal(b)
 }
 
 func (conf *Config) toParser(children []resolv.Parser) (resolv.Parser, error) {
-	return resolv.NewConf(children, conf.Value), nil
+	return resolv.NewConf(children, conf.Value)
 }
 
 type Include struct {
@@ -48,7 +47,7 @@ type Include struct {
 	ConfPWD      string   `json:"conf_pwd"`
 }
 
-func (i *Include) UnmarshalJSON(b []byte) (resolv.Parser, error) {
+func (i *Include) UnmarshalToJSON(b []byte) (resolv.Parser, error) {
 	return Unmarshal(b, i)
 	//return Unmarshal(b)
 }
@@ -63,7 +62,7 @@ type Types struct {
 	BasicContext `json:"types"`
 }
 
-func (t *Types) UnmarshalJSON(b []byte) (resolv.Parser, error) {
+func (t *Types) UnmarshalToJSON(b []byte) (resolv.Parser, error) {
 	return Unmarshal(b, t)
 	//return Unmarshal(b)
 }
@@ -78,7 +77,7 @@ type Map struct {
 	BasicContext `json:"map"`
 }
 
-func (m *Map) UnmarshalJSON(b []byte) (resolv.Parser, error) {
+func (m *Map) UnmarshalToJSON(b []byte) (resolv.Parser, error) {
 	return Unmarshal(b, m)
 	//return Unmarshal(b)
 }
@@ -93,7 +92,7 @@ type LimitExcept struct {
 	BasicContext `json:"limit_except"`
 }
 
-func (le *LimitExcept) UnmarshalJSON(b []byte) (resolv.Parser, error) {
+func (le *LimitExcept) UnmarshalToJSON(b []byte) (resolv.Parser, error) {
 	return Unmarshal(b, le)
 	//return Unmarshal(b)
 }
@@ -108,7 +107,7 @@ type Events struct {
 	BasicContext `json:"events"`
 }
 
-func (e *Events) UnmarshalJSON(b []byte) (resolv.Parser, error) {
+func (e *Events) UnmarshalToJSON(b []byte) (resolv.Parser, error) {
 	return Unmarshal(b, e)
 	//return Unmarshal(b)
 }
@@ -123,7 +122,7 @@ type Geo struct {
 	BasicContext `json:"geo"`
 }
 
-func (g *Geo) UnmarshalJSON(b []byte) (resolv.Parser, error) {
+func (g *Geo) UnmarshalToJSON(b []byte) (resolv.Parser, error) {
 	return Unmarshal(b, g)
 	//return Unmarshal(b)
 }
@@ -138,7 +137,7 @@ type Http struct {
 	BasicContext `json:"http"`
 }
 
-func (h *Http) UnmarshalJSON(b []byte) (resolv.Parser, error) {
+func (h *Http) UnmarshalToJSON(b []byte) (resolv.Parser, error) {
 	return Unmarshal(b, h)
 	//return Unmarshal(b)
 }
@@ -153,7 +152,7 @@ type Stream struct {
 	BasicContext `json:"stream"`
 }
 
-func (st *Stream) UnmarshalJSON(b []byte) (resolv.Parser, error) {
+func (st *Stream) UnmarshalToJSON(b []byte) (resolv.Parser, error) {
 	return Unmarshal(b, st)
 	//return Unmarshal(b)
 }
@@ -168,7 +167,7 @@ type Upstream struct {
 	BasicContext `json:"upstream"`
 }
 
-func (u *Upstream) UnmarshalJSON(b []byte) (resolv.Parser, error) {
+func (u *Upstream) UnmarshalToJSON(b []byte) (resolv.Parser, error) {
 	return Unmarshal(b, u)
 	//return Unmarshal(b)
 }
@@ -183,7 +182,7 @@ type Server struct {
 	BasicContext `json:"server"`
 }
 
-func (s *Server) UnmarshalJSON(b []byte) (resolv.Parser, error) {
+func (s *Server) UnmarshalToJSON(b []byte) (resolv.Parser, error) {
 	return Unmarshal(b, s)
 	//return Unmarshal(b)
 }
@@ -198,7 +197,7 @@ type Location struct {
 	BasicContext `json:"location"`
 }
 
-func (l *Location) UnmarshalJSON(b []byte) (resolv.Parser, error) {
+func (l *Location) UnmarshalToJSON(b []byte) (resolv.Parser, error) {
 	return Unmarshal(b, l)
 	//return Unmarshal(b)
 }
@@ -213,7 +212,7 @@ type If struct {
 	BasicContext `json:"if"`
 }
 
-func (i *If) UnmarshalJSON(b []byte) (resolv.Parser, error) {
+func (i *If) UnmarshalToJSON(b []byte) (resolv.Parser, error) {
 	return Unmarshal(b, i)
 	//return Unmarshal(b)
 }
@@ -228,7 +227,7 @@ type Key struct {
 	resolv.Key
 }
 
-func (k *Key) UnmarshalJSON(b []byte) (resolv.Parser, error) {
+func (k *Key) UnmarshalToJSON(b []byte) (resolv.Parser, error) {
 	err := json.Unmarshal(b, k)
 	return &k.Key, err
 }
@@ -245,7 +244,7 @@ type Comment struct {
 	resolv.Comment
 }
 
-func (c *Comment) UnmarshalJSON(b []byte) (resolv.Parser, error) {
+func (c *Comment) UnmarshalToJSON(b []byte) (resolv.Parser, error) {
 	err := json.Unmarshal(b, c)
 	return &c.Comment, err
 }
@@ -262,7 +261,7 @@ func (c *Comment) toParser(_ []resolv.Parser) (resolv.Parser, error) {
 func Unmarshal(b []byte, p unmarshaler) (resolv.Parser, error) {
 	switch p.(type) {
 	case *Key, *Comment:
-		return p.UnmarshalJSON(b)
+		return p.UnmarshalToJSON(b)
 	default:
 		err := json.Unmarshal(b, p)
 		if err != nil {

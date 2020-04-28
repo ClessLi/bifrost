@@ -34,7 +34,6 @@ func (i *Include) String() []string {
 }
 
 func (i *Include) load() error {
-	// TODO:多个配置读取同一个include配置文件时，定义为同一指针，防止多个include对象指向同一配置文件
 
 	paths, err := filepath.Glob(filepath.Join(i.ConfPWD, i.Value))
 	if err != nil {
@@ -79,7 +78,6 @@ func NewInclude(dir, paths string) *Include {
 		BasicContext: BasicContext{
 			Name:     "include",
 			Value:    paths,
-			depth:    0,
 			Children: nil,
 		},
 		Key:     NewKey("include", paths),

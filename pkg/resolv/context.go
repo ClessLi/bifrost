@@ -21,7 +21,7 @@ type Context interface {
 	Server() *Server
 	//getReg() string
 	//Dict() map[string]interface{}
-	//UnmarshalJSON(b []byte) error
+	//UnmarshalToJSON(b []byte) error
 	//BumpChildDepth(int)
 	dump() ([]string, error)
 	List() ([]string, error)
@@ -31,7 +31,6 @@ type Context interface {
 type BasicContext struct {
 	Name     string   `json:"-"`
 	Value    string   `json:"value,omitempty"`
-	depth    int      `json:"depth,omitempty"`
 	Children []Parser `json:"param,omitempty"`
 }
 
@@ -137,6 +136,7 @@ func (c *BasicContext) Filter(kw KeyWords) (parsers []Parser) {
 				for _, child := range c.Children {
 					if child.Filter(childKW) != nil {
 						subMatch = true
+						break
 					}
 				}
 
