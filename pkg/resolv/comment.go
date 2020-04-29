@@ -13,13 +13,13 @@ func (cmt *Comment) String() []string {
 
 func (cmt *Comment) Filter(kw KeyWords) (parsers []Parser) {
 	if !kw.IsReg {
-		if kw.Type == "comments" && kw.Value == cmt.Comments {
+		if kw.Type == TypeComment && kw.Value == cmt.Comments {
 			parsers = append(parsers, cmt)
 		} else {
 			parsers = nil
 		}
 	} else {
-		if kw.Type == "comments" && regexp.MustCompile(kw.Value).MatchString(cmt.Comments) {
+		if kw.Type == TypeComment && regexp.MustCompile(kw.Value).MatchString(cmt.Comments) {
 			parsers = append(parsers, cmt)
 		} else {
 			parsers = nil

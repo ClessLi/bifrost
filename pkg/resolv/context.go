@@ -104,18 +104,16 @@ func (c *BasicContext) Server() *Server {
 	//return c.Servers()[0]
 }
 
-// Filter, BasicContext 类生成过滤对象的方法， Parser.Filter(KeyWords) []Parser 的实现
-//DOING: 过滤器
-func (c *BasicContext) Filter(kw KeyWords) (parsers []Parser) {
+func (c *BasicContext) filter(kw KeyWords) bool {
 	var (
 		selfMatch = false
 		subMatch  = true
 	)
 	switch kw.Type {
-	case "key", "comments":
+	case TypeKey, TypeComment:
 	default:
 		switch kw.Type {
-		case "events", "http", "server", "stream", "types":
+		case TypeEvents, TypeHttp, TypeServer, TypeStream, TypeTypes:
 			kw.Value = ""
 		}
 
@@ -136,29 +134,30 @@ func (c *BasicContext) Filter(kw KeyWords) (parsers []Parser) {
 				for _, child := range c.Children {
 					if child.Filter(childKW) != nil {
 						subMatch = true
-						break
+						return selfMatch && subMatch
 					}
 				}
 
 				if !subMatch {
-					break
+					return selfMatch && subMatch
 				}
 			}
 
 		}
-		if selfMatch && subMatch {
-			parsers = append(parsers, c)
-		}
+
 	}
 
+	return selfMatch && subMatch
+}
+
+func (c *BasicContext) subFilter(parsers []Parser, kw KeyWords) []Parser {
 	for _, child := range c.Children {
 		//parsers = append(parsers, child.Filter(kw)...)
 		if tmpParsers := child.Filter(kw); tmpParsers != nil {
 			parsers = append(parsers, tmpParsers...)
 		}
 	}
-
-	return
+	return parsers
 }
 
 //func (c *BasicContext) getReg() string {

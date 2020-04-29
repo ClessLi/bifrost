@@ -1,6 +1,7 @@
 package resolv
 
 import (
+	"fmt"
 	"path/filepath"
 )
 
@@ -12,14 +13,15 @@ type Include struct {
 }
 
 func (i *Include) Filter(kw KeyWords) (parsers []Parser) {
-	for _, conf := range i.Children {
-		for _, child := range conf.(*Config).Children {
-			if tmpParsers := child.Filter(kw); tmpParsers != nil {
-				parsers = append(parsers, tmpParsers...)
-			}
-		}
-	}
-	return
+	//for _, conf := range i.Children {
+	//	for _, child := range conf.(*Config).Children {
+	//		if tmpParsers := child.Filter(kw); tmpParsers != nil {
+	//			parsers = append(parsers, tmpParsers...)
+	//		}
+	//	}
+	//}
+	//return
+	return i.subFilter(parsers, kw)
 }
 
 func (i *Include) String() []string {
@@ -76,12 +78,12 @@ func (i *Include) dump() ([]string, error) {
 func NewInclude(dir, paths string) *Include {
 	include := &Include{
 		BasicContext: BasicContext{
-			Name:     "include",
+			Name:     TypeInclude,
 			Value:    paths,
 			Children: nil,
 		},
-		Key:     NewKey("include", paths),
-		Comment: NewComment("include "+paths, false),
+		Key:     NewKey(TypeInclude, paths),
+		Comment: NewComment(fmt.Sprintf("%s %s", TypeInclude, paths), false),
 		ConfPWD: dir,
 	}
 

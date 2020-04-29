@@ -163,7 +163,7 @@ func load(path string) (*Config, error) {
 }
 
 func checkInclude(k *Key, dir string) Parser {
-	if k.Name == "include" {
+	if k.Name == TypeInclude {
 		return NewInclude(dir, k.Value)
 	}
 	return k

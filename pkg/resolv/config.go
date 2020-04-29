@@ -106,6 +106,14 @@ func (c *Config) List() (ret []string, err error) {
 	return ret, nil
 }
 
+func (c *Config) Filter(kw KeyWords) (parsers []Parser) {
+	if c.filter(kw) {
+		parsers = append(parsers, c)
+	}
+	return c.subFilter(parsers, kw)
+
+}
+
 func NewConf(conf []Parser, value string) (*Config, error) {
 	// 确定*Config的唯一性，防止多次加载
 	for _, c := range configs {
@@ -114,7 +122,7 @@ func NewConf(conf []Parser, value string) (*Config, error) {
 		}
 	}
 	f := &Config{BasicContext{
-		Name:     "Config",
+		Name:     TypeConfig,
 		Value:    value,
 		Children: conf,
 	}}

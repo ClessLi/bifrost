@@ -14,7 +14,7 @@ type KeyWords struct {
 
 func NewKeyWords(contextType, name, value string, isReg bool, subKWs ...interface{}) KeyWords {
 	switch contextType {
-	case "key", "comments":
+	case TypeKey, TypeComment:
 	default:
 		name = contextType
 	}

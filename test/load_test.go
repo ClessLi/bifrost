@@ -73,7 +73,7 @@ func TestMarshalJSON(t *testing.T) {
 	t.Log(string(j))
 }
 func TestConfig_UnmarshalJSON(t *testing.T) {
-	jdata, rerr := ioutil.ReadFile("test.json")
+	jdata, rerr := ioutil.ReadFile("config_test/test.json")
 	if rerr != nil {
 		t.Log(rerr)
 	}

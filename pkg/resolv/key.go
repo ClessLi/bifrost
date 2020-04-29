@@ -21,14 +21,14 @@ func (k *Key) String() []string {
 
 func (k *Key) Filter(kw KeyWords) (parsers []Parser) {
 	if !kw.IsReg {
-		if kw.Type == "key" && kw.Name == k.Name && kw.Value == k.Value {
+		if kw.Type == TypeKey && kw.Name == k.Name && kw.Value == k.Value {
 			parsers = append(parsers, k)
 		} else {
 			parsers = nil
 		}
 	} else {
 
-		if kw.Type == "key" && regexp.MustCompile(kw.Name).MatchString(k.Name) && regexp.MustCompile(kw.Value).MatchString(k.Value) {
+		if kw.Type == TypeKey && regexp.MustCompile(kw.Name).MatchString(k.Name) && regexp.MustCompile(kw.Value).MatchString(k.Value) {
 			parsers = append(parsers, k)
 		} else {
 			parsers = nil
