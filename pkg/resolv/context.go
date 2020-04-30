@@ -134,7 +134,7 @@ func (c *BasicContext) filter(kw KeyWords) bool {
 				for _, child := range c.Children {
 					if child.Filter(childKW) != nil {
 						subMatch = true
-						return selfMatch && subMatch
+						break
 					}
 				}
 
