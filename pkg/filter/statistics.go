@@ -9,7 +9,7 @@ func HTTPServers(ctx resolv.Context) int {
 func HTTPPorts(ctx resolv.Context) []string {
 	var ports []string
 	for _, parser := range GetPorts(GetHTTP(ctx)) {
-		ports = appendIfNotExist(ports, parser.(*resolv.Key).Value)
+		ports = appendNewString(ports, parser.(*resolv.Key).Value)
 	}
 	return ports
 }
@@ -17,7 +17,7 @@ func HTTPPorts(ctx resolv.Context) []string {
 func HTTPServerNames(ctx resolv.Context) []string {
 	var serverNames []string
 	for _, parser := range GetServerName(GetHTTP(ctx)) {
-		serverNames = appendIfNotExist(serverNames, parser.(*resolv.Key).Value)
+		serverNames = appendNewString(serverNames, parser.(*resolv.Key).Value)
 	}
 	return serverNames
 }
@@ -33,7 +33,7 @@ func StreamServers(ctx resolv.Context) int {
 func StreamPorts(ctx resolv.Context) []string {
 	var ports []string
 	for _, parser := range GetPorts(GetStream(ctx)) {
-		ports = appendIfNotExist(ports, parser.(*resolv.Key).Value)
+		ports = appendNewString(ports, parser.(*resolv.Key).Value)
 	}
 	return ports
 }
