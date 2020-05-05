@@ -2,41 +2,76 @@ package filter
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/ClessLi/go-nginx-conf-parser/pkg/resolv"
 	"regexp"
+	"strconv"
 )
 
-func GetHTTP(context resolv.Context) *resolv.Http {
-	return (context.Filter(KeywordHTTP)[0]).(*resolv.Http)
+func GetHTTP(ctx resolv.Context) *resolv.Http {
+	return (ctx.Filter(KeywordHTTP)[0]).(*resolv.Http)
 }
 
-func GetStream(context resolv.Context) *resolv.Stream {
-	return context.Filter(KeywordStream)[0].(*resolv.Stream)
+func GetHTTPServers(ctx resolv.Context, tagger func([]*resolv.Server) []int) []*resolv.Server {
+	servers := GetHTTP(ctx).Servers()
+	if tagger != nil {
+		tags := tagger(servers)
+		servers = ServersInsertionSort(tags, servers)
+	}
+	return servers
+}
+
+func ServersInsertionSort(tags []int, servers []*resolv.Server) []*resolv.Server {
+	n := len(tags)
+	m := len(servers)
+	if n <= 1 {
+		return servers
+	} else if n != m {
+		return servers
+	}
+	for i := 1; i < n; i++ {
+		tag := tags[i]
+		server := servers[i]
+		j := i - 1
+		for ; j >= 0; j-- {
+			if tags[j] > tag {
+				tags[j+1] = tags[j]
+				servers[j+1] = servers[j]
+			} else {
+				break
+			}
+		}
+		tags[j+1] = tag
+		servers[j+1] = server
+	}
+	return servers
+}
+
+func GetStream(ctx resolv.Context) *resolv.Stream {
+	return ctx.Filter(KeywordStream)[0].(*resolv.Stream)
 }
 
 //func GetServers(context resolv.Context) []*resolv.Server {
 //	return context.Servers()
 //}
 
-func GetServerName(context resolv.Context) []resolv.Parser {
-	return context.Filter(KeywordSvrName)
+func GetServerName(ctx resolv.Context) []resolv.Parser {
+	return ctx.Filter(KeywordSvrName)
 }
 
-func GetPorts(context resolv.Context) []resolv.Parser {
-	return context.Filter(KeywordPorts)
+func GetPorts(ctx resolv.Context) []resolv.Parser {
+	return ctx.Filter(KeywordPorts)
 }
 
-func GetLocations(context resolv.Context) []resolv.Parser {
-	return context.Filter(keywordLocations)
+func GetLocations(ctx resolv.Context) []resolv.Parser {
+	return ctx.Filter(keywordLocations)
 }
 
-func appendNewString(list []string, elem string) []string {
+func appendNewString(slice []string, elem string) []string {
 	elem = stripSpace(elem)
 	var tmp []string
-	for _, s := range list {
+	for _, s := range slice {
 		if s == elem {
-			return list
+			return slice
 		}
 		tmp = append(tmp, s)
 	}
@@ -44,27 +79,83 @@ func appendNewString(list []string, elem string) []string {
 	return tmp
 }
 
-func SortInsertInt(list []int, ints ...int) []int {
-	n := len(list)
+func SortInsertInt(slice []int, ints ...int) []int {
+	n := len(slice)
 	for _, num := range ints {
-		list = append(list, num+1)
+		slice = append(slice, num+1)
 
 		i := 0
-		for list[i] <= num {
+		for slice[i] <= num {
 			i++
 		}
 
 		for j := n; i < j; j-- {
-			list[j] = list[j-1]
+			slice[j] = slice[j-1]
 		}
 
-		list[i] = num
+		slice[i] = num
 		n++
 
 	}
 
-	fmt.Println(list)
-	return list
+	return slice
+}
+
+func SortInsertUniqInt(slice []int, ints ...int) []int {
+	n := len(slice)
+	for _, num := range ints {
+		if n <= 0 {
+			slice = append(slice, num)
+			n++
+			continue
+		}
+
+		if slice[n-1] == num {
+			continue
+		} else if slice[n-1] < num {
+			slice = append(slice, num)
+			n++
+			continue
+		}
+
+		tmp := slice[n-1]
+		slice[n-1] = num
+
+		i := 0
+		for slice[i] < num {
+			i++
+		}
+
+		if slice[i] == num {
+			slice[n-1] = tmp
+			continue
+		}
+
+		for j := n - 1; i < j; j-- {
+			slice[j] = slice[j-1]
+		}
+
+		slice[i] = num
+		slice = append(slice, tmp)
+		n++
+
+	}
+
+	return slice
+}
+
+func ServersTaggerByPort(servers []*resolv.Server) []int {
+	tags := make([]int, 0, 1)
+	for _, server := range servers {
+		tag, err := strconv.Atoi(stripSpace(GetPorts(server)[0].(*resolv.Key).Value))
+		if err != nil {
+			return nil
+		}
+
+		//tags = SortInsertInt(tags, tag)
+		tags = append(tags, tag)
+	}
+	return tags
 }
 
 func stripSpace(s string) string {

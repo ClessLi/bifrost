@@ -16,6 +16,7 @@ func TestStatistics(t *testing.T) {
 	t.Log(filter.HTTPServers(conf))
 	t.Log(filter.HTTPServerNames(conf))
 	t.Log(filter.HTTPPorts(conf))
+	//t.Log(filter.HTTPPortsSTR(conf))
 	t.Log(filter.HTTPLocations(conf))
 	t.Log(filter.StreamServers(conf))
 	t.Log(filter.StreamPorts(conf))
