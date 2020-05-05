@@ -2,6 +2,7 @@ package filter
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/ClessLi/go-nginx-conf-parser/pkg/resolv"
 	"regexp"
 )
@@ -30,7 +31,7 @@ func GetLocations(context resolv.Context) []resolv.Parser {
 	return context.Filter(keywordLocations)
 }
 
-func appendIfNotExist(list []string, elem string) []string {
+func appendNewString(list []string, elem string) []string {
 	elem = stripSpace(elem)
 	var tmp []string
 	for _, s := range list {
@@ -41,6 +42,29 @@ func appendIfNotExist(list []string, elem string) []string {
 	}
 	tmp = append(tmp, elem)
 	return tmp
+}
+
+func SortInsertInt(list []int, ints ...int) []int {
+	n := len(list)
+	for _, num := range ints {
+		list = append(list, num+1)
+
+		i := 0
+		for list[i] <= num {
+			i++
+		}
+
+		for j := n; i < j; j-- {
+			list[j] = list[j-1]
+		}
+
+		list[i] = num
+		n++
+
+	}
+
+	fmt.Println(list)
+	return list
 }
 
 func stripSpace(s string) string {
