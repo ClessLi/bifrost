@@ -2,7 +2,6 @@ package resolv
 
 import (
 	"regexp"
-	"strings"
 )
 
 type Key struct {
@@ -13,8 +12,8 @@ type Key struct {
 func (k *Key) String() []string {
 	if k.Value == "" {
 		return []string{k.Name + ";\n"}
-	} else if !inString(k.Value, "\"") && (inString(k.Value, ";") || inString(k.Value, "#")) {
-		return []string{k.Name + " \"" + k.Value + "\";\n"}
+		//} else if !inString(k.Value, "\"") && (inString(k.Value, ";") || inString(k.Value, "#")) {
+		//	return []string{k.Name + " \"" + k.Value + "\";\n"}
 	}
 	return []string{k.Name + " " + k.Value + ";\n"}
 }
@@ -37,12 +36,12 @@ func (k *Key) Filter(kw KeyWords) (parsers []Parser) {
 	return
 }
 
-func inString(str string, s string) bool {
-	if strings.Index(str, s) >= 0 {
-		return true
-	}
-	return false
-}
+//func inString(str string, s string) bool {
+//	if strings.Index(str, s) >= 0 {
+//		return true
+//	}
+//	return false
+//}
 
 func NewKey(name, value string) *Key {
 	return &Key{

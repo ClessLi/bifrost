@@ -26,11 +26,13 @@ func (i *Include) Filter(kw KeyWords) (parsers []Parser) {
 
 func (i *Include) String() []string {
 	var strs []string
-	strs = append(strs, i.Comment.String()[0])
+	// 暂取消include对象自身信息
+	//strs = append(strs, i.Comment.String()[0])
 	for _, child := range i.Children {
 		strs = append(strs, child.String()...)
 	}
-	strs = append(strs, "#End"+i.Comment.String()[0])
+	// 暂取消include对象自身信息
+	//strs = append(strs, "#End"+i.Comment.String()[0])
 
 	return strs
 }

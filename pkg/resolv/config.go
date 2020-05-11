@@ -22,8 +22,9 @@ var configs []*Config
 func (c *Config) String() []string {
 	ret := make([]string, 0)
 
-	title := c.getTitle()
-	ret = append(ret, "# "+title)
+	// 暂取消config对象输出自身对象信息
+	//title := c.getTitle()
+	//ret = append(ret, "# "+title)
 
 	for _, child := range c.Children {
 		switch child.(type) {
@@ -38,7 +39,8 @@ func (c *Config) String() []string {
 		ret[len(ret)-1] = RegEndWithCR.ReplaceAllString(ret[len(ret)-1], "}\n")
 	}
 
-	ret = append(ret, "#End# "+c.Name+": "+c.Value+"}\n\n")
+	// 暂取消config对象输出自身对象信息
+	//ret = append(ret, "#End# "+c.Name+": "+c.Value+"}\n\n")
 
 	return ret
 }
