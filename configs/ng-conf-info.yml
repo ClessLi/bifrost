@@ -12,7 +12,7 @@ NGConfigs:
 #    confPath: "/GO_Project/src/go-nginx-conf-parser/test/config_test/nginx.conf"
 #    nginxBin: "xxxxxxxxxxxx/nginx"
 DBConfig:
-  DBName: "nginx_admin"
+  DBName: "ng_conf_admin"
   host: "127.0.0.1"
   port: 3306
   protocol: "tcp"

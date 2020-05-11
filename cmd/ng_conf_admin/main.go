@@ -6,6 +6,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/ClessLi/go-nginx-conf-parser/internal/pkg/ng_conf_admin"
 	"github.com/ClessLi/go-nginx-conf-parser/pkg/resolv"
 )
 
@@ -27,8 +28,8 @@ const (
 //}
 
 func main() {
-	defer logf.Close()
-	for _, ngConfig := range configs.NGConfigs {
+	defer ng_conf_admin.Logf.Close()
+	for _, ngConfig := range ng_conf_admin.Configs.NGConfigs {
 		ng, err := resolv.Load(ngConfig.ConfPath)
 
 		if err != nil {
@@ -38,13 +39,13 @@ func main() {
 
 		errChan := make(chan error)
 
-		go run(&ngConfig, ng, errChan)
+		go ng_conf_admin.Run(&ngConfig, ng, errChan)
 
 		err = <-errChan
 		if err != nil {
-			log(CRITICAL, fmt.Sprintf("%s's coroutine has been stoped. Cased by <%s>", ngConfig.Name, err))
+			ng_conf_admin.Log(ng_conf_admin.CRITICAL, fmt.Sprintf("%s's coroutine has been stoped. Cased by <%s>", ngConfig.Name, err))
 		} else {
-			log(NOTICE, fmt.Sprintf("%s's coroutine has been stoped", ngConfig.Name))
+			ng_conf_admin.Log(ng_conf_admin.NOTICE, fmt.Sprintf("%s's coroutine has been stoped", ngConfig.Name))
 		}
 	}
 

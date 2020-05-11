@@ -1,12 +1,12 @@
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 -- ----------------------------
--- Database structure for nginx_admin
+-- Database structure for ng_conf_admin
 -- ----------------------------
 CREATE DATABASE `nginx_admin` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci */;
 
 -- ----------------------------
--- Table structure for nginx_admin.user
+-- Table structure for ng_conf_admin.user
 -- ----------------------------
 DROP TABLE IF EXISTS `nginx_admin`.`user`;
 CREATE TABLE `nginx_admin`.`user` (

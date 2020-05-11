@@ -1,4 +1,4 @@
-package main
+package ng_conf_admin
 
 import (
 	"flag"
@@ -13,10 +13,10 @@ var (
 	confPath = flag.String("f", "./configs/ng-conf-info.yml", "go-nginx-conf-parser ng-`conf`-info.y(a)ml path.")
 	help     = flag.Bool("h", false, "this `help`")
 	//confBackupDelay = flag.Duration("b", 10, "how many minutes `delay` for backup nginx config")
-	configs  *ParserConfigs
+	Configs  *ParserConfigs
 	dbConfig DBConfig
 	myLogger *logger.Logger
-	logf     *os.File
+	Logf     *os.File
 )
 
 const (
@@ -109,9 +109,9 @@ func init() {
 		os.Exit(1)
 	}
 
-	configs = &ParserConfigs{}
+	Configs = &ParserConfigs{}
 	//jsonErr := json.Unmarshal(confData, configs)
-	jsonErr := yaml.Unmarshal(confData, configs)
+	jsonErr := yaml.Unmarshal(confData, Configs)
 	if jsonErr != nil {
 		fmt.Println(jsonErr)
 		flag.Usage()
@@ -119,10 +119,10 @@ func init() {
 	}
 
 	// 初始化数据库信息
-	dbConfig = configs.DBConfig
+	dbConfig = Configs.DBConfig
 
 	// 初始化日志
-	logDir, absErr := filepath.Abs(configs.LogDir)
+	logDir, absErr := filepath.Abs(Configs.LogDir)
 	if absErr != nil {
 		panic(absErr)
 	}
@@ -132,7 +132,7 @@ func init() {
 		panic(openErr)
 	}
 
-	myLogger, err = logger.New("NG_ADMIN", configs.Level, logf)
+	myLogger, err = logger.New("NG_ADMIN", Configs.Level, logf)
 	if err != nil {
 		panic(err)
 	}

@@ -1,4 +1,4 @@
-package main
+package ng_conf_admin
 
 import (
 	"encoding/json"
@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 )
 
-func run(appConfig *NGConfig, ngConfig *resolv.Config, errChan chan error) {
+func Run(appConfig *NGConfig, ngConfig *resolv.Config, errChan chan error) {
 	_, jerr := json.Marshal(ngConfig)
 	//confBytes, jerr := json.Marshal(ngConfig)
 	//confBytes, jerr := json.MarshalIndent(ngConfig, "", "    ")
@@ -90,7 +90,7 @@ func view(appName string, config *resolv.Config, c *gin.Context) (h gin.H) {
 	if verifyErr != nil {
 		status = "failed"
 		message = verifyErr
-		log(WARN, fmt.Sprintf("[%s] %s", appName, message))
+		Log(WARN, fmt.Sprintf("[%s] %s", appName, message))
 		return
 	}
 
@@ -110,7 +110,7 @@ func view(appName string, config *resolv.Config, c *gin.Context) (h gin.H) {
 		status = "failed"
 		message = fmt.Sprintf("view message type <%s> invalid", t)
 	}
-	log(INFO, fmt.Sprintf("[%s] %s", appName, message))
+	Log(INFO, fmt.Sprintf("[%s] %s", appName, message))
 	return
 }
 
@@ -139,7 +139,7 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H) 
 	if verifyErr != nil {
 		status = "failed"
 		message = verifyErr.Error()
-		log(WARN, fmt.Sprintf("[%s] [%s] %s", appName, c.ClientIP(), message))
+		Log(WARN, fmt.Sprintf("[%s] [%s] %s", appName, c.ClientIP(), message))
 		return
 	}
 
@@ -147,7 +147,7 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H) 
 	file, formFileErr := c.FormFile("data")
 	if formFileErr != nil {
 		message = fmt.Sprintf("FormFile option invalid: <%s>.", formFileErr)
-		log(WARN, fmt.Sprintf("[%s] [%s] %s", appName, c.ClientIP(), message))
+		Log(WARN, fmt.Sprintf("[%s] [%s] %s", appName, c.ClientIP(), message))
 		status = "failed"
 		return
 	}
@@ -155,7 +155,7 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H) 
 	f, fErr := file.Open()
 	if fErr != nil {
 		message = fmt.Sprintf("Open file failed: <%s>.", fErr)
-		log(CRITICAL, fmt.Sprintf("[%s] [%s] %s", appName, c.ClientIP(), message))
+		Log(CRITICAL, fmt.Sprintf("[%s] [%s] %s", appName, c.ClientIP(), message))
 		status = "failed"
 		return
 	}
@@ -164,7 +164,7 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H) 
 	confBytes, rErr := ioutil.ReadAll(f)
 	if rErr != nil {
 		message := fmt.Sprintf("Read file failed: <%s>.", rErr)
-		log(CRITICAL, fmt.Sprintf("[%s] [%s] %s", appName, c.ClientIP(), message))
+		Log(CRITICAL, fmt.Sprintf("[%s] [%s] %s", appName, c.ClientIP(), message))
 		h["status"] = "failed"
 		h["message"] = message
 		return
@@ -172,11 +172,11 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H) 
 
 	if len(confBytes) > 0 {
 
-		log(NOTICE, fmt.Sprintf("[%s] [%s] Unmarshal nginx ng.", c.ClientIP(), appName))
+		Log(NOTICE, fmt.Sprintf("[%s] [%s] Unmarshal nginx ng.", c.ClientIP(), appName))
 		newConfig, ujErr := ngJson.Unmarshal(confBytes, &ngJson.Config{})
 		if ujErr != nil || len(newConfig.(*resolv.Config).Children) <= 0 || newConfig.(*resolv.Config).Value == "" {
 			message = fmt.Sprintf("UnmarshalJson failed. <%s>, data: <%s>", ujErr, confBytes)
-			log(WARN, fmt.Sprintf("[%s] [%s] %s", appName, c.ClientIP(), message))
+			Log(WARN, fmt.Sprintf("[%s] [%s] %s", appName, c.ClientIP(), message))
 			h["status"] = "failed"
 			status = "failed"
 			//errChan <- ujErr
@@ -186,32 +186,32 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H) 
 		delErr := resolv.Delete(ng)
 		if delErr != nil {
 			message = fmt.Sprintf("Delete nginx ng failed. <%s>", delErr)
-			log(ERROR, fmt.Sprintf("[%s] [%s] %s", appName, c.ClientIP(), message))
+			Log(ERROR, fmt.Sprintf("[%s] [%s] %s", appName, c.ClientIP(), message))
 			status = "failed"
 			return
 		}
 
-		log(INFO, fmt.Sprintf("[%s] Deleted old nginx ng.", appName))
-		log(INFO, fmt.Sprintf("[%s] Verify new nginx ng.", appName))
+		Log(INFO, fmt.Sprintf("[%s] Deleted old nginx ng.", appName))
+		Log(INFO, fmt.Sprintf("[%s] Verify new nginx ng.", appName))
 		checkErr := resolv.Check(newConfig.(*resolv.Config), ngBin)
 		if checkErr != nil {
 			message = fmt.Sprintf("Nginx ng verify failed. <%s>", checkErr)
-			log(WARN, fmt.Sprintf("[%s] %s", appName, message))
+			Log(WARN, fmt.Sprintf("[%s] %s", appName, message))
 			status = "failed"
 
-			log(INFO, fmt.Sprintf("[%s] Delete new nginx ng.", appName))
+			Log(INFO, fmt.Sprintf("[%s] Delete new nginx ng.", appName))
 			delErr := resolv.Delete(newConfig.(*resolv.Config))
 			if delErr != nil {
-				log(ERROR, fmt.Sprintf("[%s] Delete new nginx ng failed. <%s>", appName, delErr))
+				Log(ERROR, fmt.Sprintf("[%s] Delete new nginx ng failed. <%s>", appName, delErr))
 				status = "failed"
 				message = "New nginx ng verify failed. And delete new nginx ng failed."
 				return
 			}
 
-			log(INFO, fmt.Sprintf("[%s] Rollback nginx ng.", appName))
+			Log(INFO, fmt.Sprintf("[%s] Rollback nginx ng.", appName))
 			rollbackErr := resolv.Save(ng)
 			if rollbackErr != nil {
-				log(CRITICAL, fmt.Sprintf("[%s] Nginx ng rollback failed. <%s>", appName, rollbackErr))
+				Log(CRITICAL, fmt.Sprintf("[%s] Nginx ng rollback failed. <%s>", appName, rollbackErr))
 				status = "failed"
 				message = "New nginx ng verify failed. And nginx ng rollback failed."
 				return
@@ -223,11 +223,11 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H) 
 		ng.Value = newConfig.(*resolv.Config).Value
 		ng.Children = newConfig.(*resolv.Config).Children
 		//ng = newConfig.(*resolv.Config)
-		log(NOTICE, fmt.Sprintf("[%s] [%s] Nginx Config saved successfully", appName, c.ClientIP()))
+		Log(NOTICE, fmt.Sprintf("[%s] [%s] Nginx Config saved successfully", appName, c.ClientIP()))
 	} else {
 		status = "failed"
 		message = fmt.Sprintf("Wrong data: <%s>", confBytes)
-		log(WARN, fmt.Sprintf("[%s] [%s] %s", appName, c.ClientIP(), message))
+		Log(WARN, fmt.Sprintf("[%s] [%s] %s", appName, c.ClientIP(), message))
 		return
 	}
 
