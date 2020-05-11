@@ -11,55 +11,112 @@ func GetHTTP(ctx resolv.Context) *resolv.Http {
 	return (ctx.Filter(KeywordHTTP)[0]).(*resolv.Http)
 }
 
-func GetHTTPServers(ctx resolv.Context, tagger func([]*resolv.Server) []int) []*resolv.Server {
+//func GetHTTPServers(ctx resolv.Context, tagger func([]*resolv.Server) []int) []*resolv.Server {
+//	servers := GetHTTP(ctx).Servers()
+//	if tagger != nil {
+//		tags := tagger(servers)
+//		servers = ServersInsertionSort(tags, servers)
+//	}
+//	return servers
+//}
+
+func GetHTTPServers(ctx resolv.Context, orders ...func(*resolv.Server) int) []*resolv.Server {
 	servers := GetHTTP(ctx).Servers()
-	if tagger != nil {
-		tags := tagger(servers)
-		servers = ServersInsertionSort(tags, servers)
-	}
+	//if orders != nil {
+	//	ServersInsertionSort(&servers, orders...)
+	//}
+	ServersInsertionSort(&servers, orders...)
 	return servers
 }
 
-func ServersInsertionSort(tags []int, servers []*resolv.Server) []*resolv.Server {
-	n := len(tags)
-	m := len(servers)
-	if n <= 1 {
-		return servers
-	} else if n != m {
-		return servers
-	}
-	for i := 1; i < n; i++ {
-		tag := tags[i]
-		server := servers[i]
-		j := i - 1
-		for ; j >= 0; j-- {
-			if tags[j] > tag {
-				tags[j+1] = tags[j]
-				servers[j+1] = servers[j]
-			} else {
-				break
-			}
+func ServersInsertionSort(slice *[]*resolv.Server, orders ...func(*resolv.Server) int) {
+	n := len(*slice)
+	for _, order := range orders {
+
+		if order == nil {
+			break
 		}
-		tags[j+1] = tag
-		servers[j+1] = server
+		//cache := map[resolv.Parser]int{}
+		cache := map[*resolv.Server]int{}
+		if n <= 1 {
+			return
+		}
+
+		for i := 1; i < n; i++ {
+			tmp := (*slice)[i]
+			d, tmpOK := cache[tmp]
+			if !tmpOK {
+				d = order(tmp)
+				cache[tmp] = d
+			}
+			j := i - 1
+			for ; j >= 0; j-- {
+				c, ok := cache[(*slice)[j]]
+				if !ok {
+					c = order((*slice)[j])
+					cache[(*slice)[j]] = c
+				}
+
+				if c > d {
+					(*slice)[j+1] = (*slice)[j]
+				} else {
+					break
+				}
+
+			}
+			(*slice)[j+1] = tmp
+		}
 	}
-	return servers
+	return
 }
+
+func OrderByPort(server *resolv.Server) int {
+	weight, err := strconv.Atoi(stripSpace(GetPorts(server)[0].(*resolv.Key).Value))
+	if err != nil {
+		weight = 0
+	}
+	return weight
+}
+
+//func OrderByServerName(server *resolv.Server) int {
+//	serverName := GetServerName(server)
+//	if serverName == nil {
+//		return 0
+//	}
+//	sn := stripSpace(serverName[0].(*resolv.Key).Value)
+//	//var weightSTR string
+//	//for _, b := range sn {
+//	//	weightSTR = fmt.Sprintf("%s%d", weightSTR, b)
+//	//}
+//	//bs := []byte(sn)
+//	//n := len(bs)
+//	//weight := 0
+//	//for i := n; i > 0; i-- {
+//	//	m := int(bs[n-i])
+//	//	weight += m * int(math.Pow(float64(1000), float64(i)))
+//	//}
+//	//weight, err := strconv.ParseInt(weightSTR, 10, 64)
+//	//weight64, err := base64.RawURLEncoding.DecodeString(sn)
+//	weight64, _ := base64.RawURLEncoding.DecodeString(sn)
+//	//if err != nil {
+//	//	return 0
+//	//}
+//	weightBig := new(big.Int)
+//	weightBig.SetBytes(weight64)
+//	weight := int(weightBig.Int64())
+//	return weight
+//}
 
 func GetStream(ctx resolv.Context) *resolv.Stream {
 	return ctx.Filter(KeywordStream)[0].(*resolv.Stream)
 }
-
-//func GetServers(context resolv.Context) []*resolv.Server {
-//	return context.Servers()
-//}
 
 func GetServerName(ctx resolv.Context) []resolv.Parser {
 	return ctx.Filter(KeywordSvrName)
 }
 
 func GetPorts(ctx resolv.Context) []resolv.Parser {
-	return ctx.Filter(KeywordPorts)
+	return ctx.Filter(KeywordPort)
 }
 
 func GetLocations(ctx resolv.Context) []resolv.Parser {
@@ -142,20 +199,6 @@ func SortInsertUniqInt(slice []int, ints ...int) []int {
 	}
 
 	return slice
-}
-
-func ServersTaggerByPort(servers []*resolv.Server) []int {
-	tags := make([]int, 0, 1)
-	for _, server := range servers {
-		tag, err := strconv.Atoi(stripSpace(GetPorts(server)[0].(*resolv.Key).Value))
-		if err != nil {
-			return nil
-		}
-
-		//tags = SortInsertInt(tags, tag)
-		tags = append(tags, tag)
-	}
-	return tags
 }
 
 func stripSpace(s string) string {

@@ -27,7 +27,8 @@ func TestGetSortServers(t *testing.T) {
 		t.Log(err)
 	}
 
-	servers := filter.GetHTTPServers(conf, filter.ServersTaggerByPort)
+	servers := filter.GetHTTPServers(conf, filter.OrderByPort)
+	//servers := filter.GetHTTPServers(conf, filter.OrderByServerName)
 	for _, server := range servers {
 		t.Log(server.String())
 	}
