@@ -19,4 +19,10 @@ var (
 	RegCommentHead     = regexp.MustCompile(`^(\s*)#+[ \r\t\f]*(.*?)\n`)
 	RegKeyValue        = regexp.MustCompile(S)
 	RegKey             = regexp.MustCompile(`^\s*(\S+);`)
+
+	KeywordHTTP      = NewKeyWords(TypeHttp, "", "", false)
+	KeywordStream    = NewKeyWords(TypeStream, "", "", false)
+	KeywordSvrName   = NewKeyWords(TypeKey, `server_name`, `.*`, false)
+	KeywordPort      = NewKeyWords(TypeKey, `^listen$`, `.*`, true)
+	KeywordLocations = NewKeyWords(TypeLocation, "", `.*`, true)
 )

@@ -22,3 +22,13 @@ const (
 	TypeUpstream    = "upstream"
 	TypeComment     = "comment"
 )
+
+// 整型order
+const (
+	ServerPort Order = iota
+)
+
+// 字符串型order
+const (
+	ServerName Order = 1000 + iota
+)

@@ -10,13 +10,13 @@ import (
 	"github.com/ClessLi/go-nginx-conf-parser/pkg/resolv"
 )
 
-const (
+//const (
 //ERROR      = "ERROR"
 //WARN       = "WARN"
 //NOTICE       = "NOTICE"
 //DEBUG      = "DEBUG"
 //timeFormat = "2006-01-02 15:04:05.013"
-)
+//)
 
 //func init() {
 //	flag.Usage = usage

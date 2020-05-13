@@ -17,7 +17,7 @@ type Context interface {
 	Add(...Parser)
 	Remove(...Parser)
 	Modify(int, Parser) error
-	Servers() []*Server
+	Servers() []Parser
 	Server() *Server
 	//getReg() string
 	//Dict() map[string]interface{}
@@ -66,15 +66,15 @@ func (c *BasicContext) Modify(index int, content Parser) error {
 	return nil
 }
 
-func (c *BasicContext) Servers() []*Server {
-	svrs := make([]*Server, 0)
+func (c *BasicContext) Servers() []Parser {
+	svrs := make([]Parser, 0)
 	for _, child := range c.Children {
 
 		switch child.(type) {
 		case Context:
 			switch child.(type) {
 			case *Server:
-				svrs = append(svrs, child.(*Server))
+				svrs = append(svrs, child)
 			default:
 				svrs = append(svrs, child.(Context).Servers()...)
 			}
@@ -132,7 +132,7 @@ func (c *BasicContext) filter(kw KeyWords) bool {
 			for _, childKW := range kw.ChildKWs {
 				subMatch = false
 				for _, child := range c.Children {
-					if child.Filter(childKW) != nil {
+					if child.QueryAll(childKW) != nil {
 						subMatch = true
 						break
 					}
@@ -150,14 +150,24 @@ func (c *BasicContext) filter(kw KeyWords) bool {
 	return selfMatch && subMatch
 }
 
-func (c *BasicContext) subFilter(parsers []Parser, kw KeyWords) []Parser {
+func (c *BasicContext) subQueryAll(parsers []Parser, kw KeyWords) []Parser {
 	for _, child := range c.Children {
-		//parsers = append(parsers, child.Filter(kw)...)
-		if tmpParsers := child.Filter(kw); tmpParsers != nil {
+		//parsers = append(parsers, child.QueryAll(kw)...)
+		if tmpParsers := child.QueryAll(kw); tmpParsers != nil {
 			parsers = append(parsers, tmpParsers...)
 		}
 	}
 	return parsers
+}
+
+func (c *BasicContext) subQuery(kw KeyWords) Parser {
+	for _, child := range c.Children {
+		//parsers = append(parsers, child.QueryAll(kw)...)
+		if tmpParser := child.Query(kw); tmpParser != nil {
+			return tmpParser
+		}
+	}
+	return nil
 }
 
 //func (c *BasicContext) getReg() string {
@@ -275,12 +285,3 @@ func (c *BasicContext) getTitle() string {
 	contextTitle += " {\n"
 	return contextTitle
 }
-
-//func (c *BasicContext) BumpChildDepth(depth int) {
-//	for i := 0; i < len(c.Children); i++ {
-//		if bc, isBC := c.Children[i].(*BasicContext); isBC {
-//			bc.depth = depth + 1
-//			c.BumpChildDepth(bc.depth)
-//		}
-//	}
-//}

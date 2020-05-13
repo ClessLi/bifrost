@@ -18,7 +18,7 @@ func (k *Key) String() []string {
 	return []string{k.Name + " " + k.Value + ";\n"}
 }
 
-func (k *Key) Filter(kw KeyWords) (parsers []Parser) {
+func (k *Key) QueryAll(kw KeyWords) (parsers []Parser) {
 	if !kw.IsReg {
 		if kw.Type == TypeKey && kw.Name == k.Name && kw.Value == k.Value {
 			parsers = append(parsers, k)
@@ -34,6 +34,36 @@ func (k *Key) Filter(kw KeyWords) (parsers []Parser) {
 		}
 	}
 	return
+}
+
+func (k *Key) Query(kw KeyWords) (parser Parser) {
+	if !kw.IsReg {
+		if kw.Type == TypeKey && kw.Name == k.Name && (kw.Value == k.Value || kw.Value == `.*`) {
+			parser = k
+		} else {
+			parser = nil
+		}
+	} else {
+
+		if kw.Type == TypeKey && regexp.MustCompile(kw.Name).MatchString(k.Name) && regexp.MustCompile(kw.Value).MatchString(k.Value) {
+			parser = k
+		} else {
+			parser = nil
+		}
+	}
+	return
+}
+
+func (k *Key) BitSize(order Order, bit int) byte {
+	return 0
+}
+
+func (k *Key) BitLen(order Order) int {
+	return 0
+}
+
+func (k *Key) Size(order Order) int {
+	return 0
 }
 
 //func inString(str string, s string) bool {

@@ -7,9 +7,15 @@ import (
 
 var ErrConfigIsExist = errors.New("config is exsit")
 
+type Order int
+
 type Parser interface {
 	String() []string
-	Filter(KeyWords) []Parser
+	Query(KeyWords) Parser
+	QueryAll(KeyWords) []Parser
+	BitSize(Order, int) byte
+	BitLen(Order) int
+	Size(Order) int
 }
 
 type Config struct {
@@ -108,12 +114,31 @@ func (c *Config) List() (ret []string, err error) {
 	return ret, nil
 }
 
-func (c *Config) Filter(kw KeyWords) (parsers []Parser) {
+func (c *Config) QueryAll(kw KeyWords) (parsers []Parser) {
 	if c.filter(kw) {
 		parsers = append(parsers, c)
 	}
-	return c.subFilter(parsers, kw)
+	return c.subQueryAll(parsers, kw)
 
+}
+
+func (c *Config) Query(kw KeyWords) Parser {
+	if c.filter(kw) {
+		return c
+	}
+	return c.subQuery(kw)
+}
+
+func (c *Config) BitSize(order Order, bit int) byte {
+	return 0
+}
+
+func (c *Config) BitLen(order Order) int {
+	return 0
+}
+
+func (c *Config) Size(order Order) int {
+	return 0
 }
 
 func NewConf(conf []Parser, value string) (*Config, error) {

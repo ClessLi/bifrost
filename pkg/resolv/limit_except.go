@@ -4,11 +4,30 @@ type LimitExcept struct {
 	BasicContext `json:"limit_except"`
 }
 
-func (l *LimitExcept) Filter(kw KeyWords) (parsers []Parser) {
+func (l *LimitExcept) QueryAll(kw KeyWords) (parsers []Parser) {
 	if l.filter(kw) {
 		parsers = append(parsers, l)
 	}
-	return l.subFilter(parsers, kw)
+	return l.subQueryAll(parsers, kw)
+}
+
+func (l *LimitExcept) Query(kw KeyWords) (parser Parser) {
+	if l.filter(kw) {
+		parser = l
+	}
+	return l.subQuery(kw)
+}
+
+func (l *LimitExcept) BitSize(order Order, bit int) byte {
+	return 0
+}
+
+func (l *LimitExcept) BitLen(order Order) int {
+	return 0
+}
+
+func (l *LimitExcept) Size(order Order) int {
+	return 0
 }
 
 func NewLimitExcept(value string) *LimitExcept {

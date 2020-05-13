@@ -12,16 +12,32 @@ type Include struct {
 	ConfPWD      string   `json:"conf_pwd"`
 }
 
-func (i *Include) Filter(kw KeyWords) (parsers []Parser) {
+func (i *Include) QueryAll(kw KeyWords) (parsers []Parser) {
 	//for _, conf := range i.Children {
 	//	for _, child := range conf.(*Config).Children {
-	//		if tmpParsers := child.Filter(kw); tmpParsers != nil {
+	//		if tmpParsers := child.QueryAll(kw); tmpParsers != nil {
 	//			parsers = append(parsers, tmpParsers...)
 	//		}
 	//	}
 	//}
 	//return
-	return i.subFilter(parsers, kw)
+	return i.subQueryAll(parsers, kw)
+}
+
+func (i *Include) Query(kw KeyWords) (parser Parser) {
+	return i.subQuery(kw)
+}
+
+func (i *Include) BitSize(order Order, bit int) byte {
+	return 0
+}
+
+func (i *Include) BitLen(order Order) int {
+	return 0
+}
+
+func (i *Include) Size(order Order) int {
+	return 0
 }
 
 func (i *Include) String() []string {

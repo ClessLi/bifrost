@@ -1,6 +1,8 @@
 package resolv
 
-import "regexp"
+import (
+	"regexp"
+)
 
 type Comment struct {
 	Comments string `json:"comments"`
@@ -11,7 +13,7 @@ func (cmt *Comment) String() []string {
 	return []string{"# " + cmt.Comments + "\n"}
 }
 
-func (cmt *Comment) Filter(kw KeyWords) (parsers []Parser) {
+func (cmt *Comment) QueryAll(kw KeyWords) (parsers []Parser) {
 	if !kw.IsReg {
 		if kw.Type == TypeComment && kw.Value == cmt.Comments {
 			parsers = append(parsers, cmt)
@@ -26,6 +28,35 @@ func (cmt *Comment) Filter(kw KeyWords) (parsers []Parser) {
 		}
 	}
 	return
+}
+
+func (cmt *Comment) Query(kw KeyWords) (parser Parser) {
+	if !kw.IsReg {
+		if kw.Type == TypeComment && kw.Value == cmt.Comments {
+			parser = cmt
+		} else {
+			parser = nil
+		}
+	} else {
+		if kw.Type == TypeComment && regexp.MustCompile(kw.Value).MatchString(cmt.Comments) {
+			parser = cmt
+		} else {
+			parser = nil
+		}
+	}
+	return
+}
+
+func (cmt *Comment) BitSize(order Order, bit int) byte {
+	return 0
+}
+
+func (cmt *Comment) BitLen(order Order) int {
+	return 0
+}
+
+func (cmt *Comment) Size(order Order) int {
+	return 0
 }
 
 func NewComment(value string, inline bool) *Comment {
