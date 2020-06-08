@@ -22,7 +22,7 @@ type Config struct {
 	BasicContext `json:"config"`
 }
 
-// 记录所有加载过的*Config对象
+// 记录当前加载的*Config对象
 var configs []*Config
 
 func (c *Config) String() []string {

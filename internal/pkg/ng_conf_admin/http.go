@@ -115,6 +115,7 @@ func view(appName string, config *resolv.Config, c *gin.Context) (h gin.H) {
 }
 
 func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H) {
+	defer resolv.ReleaseConfigsCache()
 	status := "unkown"
 	message := "null"
 	h = gin.H{

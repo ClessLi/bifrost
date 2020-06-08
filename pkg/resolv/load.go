@@ -185,3 +185,8 @@ func readConf(path string) (string, error) {
 	}
 	return string(data), nil
 }
+
+// 解析、加载配置文件对象后，方便清除相关缓存
+func ReleaseConfigsCache() {
+	configs = []*Config{}
+}
