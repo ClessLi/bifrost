@@ -20,7 +20,7 @@ func (k *Key) String() []string {
 
 func (k *Key) QueryAll(kw KeyWords) (parsers []Parser) {
 	if !kw.IsReg {
-		if kw.Type == TypeKey && kw.Name == k.Name && kw.Value == k.Value {
+		if kw.Type == TypeKey && kw.Name == k.Name && (kw.Value == k.Value || kw.Value == `*`) {
 			parsers = append(parsers, k)
 		} else {
 			parsers = nil
@@ -38,7 +38,7 @@ func (k *Key) QueryAll(kw KeyWords) (parsers []Parser) {
 
 func (k *Key) Query(kw KeyWords) (parser Parser) {
 	if !kw.IsReg {
-		if kw.Type == TypeKey && kw.Name == k.Name && (kw.Value == k.Value || kw.Value == `.*`) {
+		if kw.Type == TypeKey && kw.Name == k.Name && (kw.Value == k.Value || kw.Value == `*`) {
 			parser = k
 		} else {
 			parser = nil

@@ -22,7 +22,7 @@ var (
 
 	KeywordHTTP      = NewKeyWords(TypeHttp, "", "", false)
 	KeywordStream    = NewKeyWords(TypeStream, "", "", false)
-	KeywordSvrName   = NewKeyWords(TypeKey, `server_name`, `.*`, false)
+	KeywordSvrName   = NewKeyWords(TypeKey, `server_name`, `*`, false)
 	KeywordPort      = NewKeyWords(TypeKey, `^listen$`, `.*`, true)
 	KeywordLocations = NewKeyWords(TypeLocation, "", `.*`, true)
 )

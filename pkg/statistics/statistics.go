@@ -21,12 +21,13 @@ func HTTPPorts(ctx resolv.Context) []int {
 	return ports
 }
 
-func HTTPServerNames(ctx resolv.Context) []string {
-	var serverNames []string
-	for _, parser := range resolv.GetServerNames(resolv.GetHTTP(ctx)) {
-		serverNames = resolv.AppendNewString(serverNames, parser.(*resolv.Key).Value)
+func HTTPServerNames(ctx resolv.Context) (serverNames []string) {
+	for _, parser := range resolv.GetHTTPServers(ctx, resolv.ServerName) {
+		if serverNameKey := resolv.GetServerName(parser.(*resolv.Server)); serverNameKey != nil {
+			serverNames = resolv.AppendNewString(serverNames, serverNameKey.(*resolv.Key).Value)
+		}
 	}
-	return serverNames
+	return
 }
 
 func HTTPLocations(ctx resolv.Context) int {
