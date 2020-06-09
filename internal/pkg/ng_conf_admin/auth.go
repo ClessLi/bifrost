@@ -33,8 +33,27 @@ var (
 )
 
 func login(c *gin.Context) {
-	username := c.Param("username")
-	passwd := c.Param("password")
+	status := "unkown"
+	var token interface{} = "null"
+	var message interface{} = "null"
+	h := gin.H{
+		"status":  &status,
+		"token":   &token,
+		"message": &message,
+	}
+
+	//username := c.Param("username")
+	username, hasusername := c.GetQuery("username")
+	//passwd := c.Param("password")
+	passwd, haspasswd := c.GetQuery("password")
+	if !hasusername || !haspasswd {
+		status = "failed"
+		message = "check your username or password"
+		Log(NOTICE, fmt.Sprintf("[%s] login failed, message is: <%s>", c.ClientIP(), message))
+		c.JSON(http.StatusBadRequest, &h)
+		return
+	}
+
 	claims := &JWTClaims{
 		UserID:      1,
 		Username:    username,
@@ -44,15 +63,6 @@ func login(c *gin.Context) {
 	}
 	claims.IssuedAt = time.Now().Unix()
 	claims.ExpiresAt = time.Now().Add(time.Second * time.Duration(ExpireTime)).Unix()
-
-	status := "unkown"
-	var token interface{} = "null"
-	var message interface{} = "null"
-	h := gin.H{
-		"status":  &status,
-		"token":   &token,
-		"message": &message,
-	}
 
 	signedToken, err := getToken(claims)
 	if err != nil {
@@ -72,13 +82,22 @@ func login(c *gin.Context) {
 }
 
 func verify(c *gin.Context) {
-	strToken := c.Param("token")
+	//strToken := c.Param("token")
 	status := "unkown"
 	message := "null"
 	h := gin.H{
 		"status":  &status,
 		"message": &message,
 	}
+	strToken, hasToken := c.GetQuery("token")
+	if !hasToken {
+		status = "failed"
+		message = "Token cannot be empty"
+		Log(NOTICE, fmt.Sprintf("[%s] token verify failed, message is: <%s>", c.ClientIP(), message))
+		c.JSON(http.StatusBadRequest, &h)
+		return
+	}
+
 	claim, err := verifyAction(strToken)
 	if err != nil {
 		//c.String(http.StatusNotFound, err.Error())
@@ -96,7 +115,7 @@ func verify(c *gin.Context) {
 }
 
 func refresh(c *gin.Context) {
-	strToken := c.Param("token")
+	//strToken := c.Param("token")
 	status := "unkown"
 	var token interface{} = "null"
 	var message interface{} = "null"
@@ -105,6 +124,16 @@ func refresh(c *gin.Context) {
 		"token":   &token,
 		"message": &message,
 	}
+
+	strToken, hasToken := c.GetQuery("token")
+	if !hasToken {
+		status = "failed"
+		message = "Token cannot be empty"
+		Log(NOTICE, fmt.Sprintf("[%s] token refresh failed, message is: <%s>", c.ClientIP(), message))
+		c.JSON(http.StatusBadRequest, &h)
+		return
+	}
+
 	claims, err := verifyAction(strToken)
 	if err != nil {
 		//c.String(http.StatusNotFound, err.Error())

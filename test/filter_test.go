@@ -13,8 +13,8 @@ func TestFilter(t *testing.T) {
 	}
 
 	keykw := resolv.NewKeyWords("key", "server_name", `^.*com.*`, true)
-	srvkw := resolv.NewKeyWords("server", "", "", true, keykw)
-	servers := conf.QueryAll(srvkw)
+	svrkw := resolv.NewKeyWords("server", "", "", true, keykw)
+	servers := conf.QueryAll(svrkw)
 	for _, server := range servers {
 		t.Log(server.String())
 	}

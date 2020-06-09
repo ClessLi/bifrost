@@ -6,7 +6,11 @@ import (
 )
 
 func GetHTTP(ctx Context) *Http {
-	return (ctx.QueryAll(KeywordHTTP)[0]).(*Http)
+	http := ctx.QueryAll(KeywordHTTP)
+	if len(http) == 0 {
+		return nil
+	}
+	return http[0].(*Http)
 }
 
 func GetHTTPServers(ctx Context, orders ...Order) []Parser {
@@ -18,7 +22,11 @@ func GetHTTPServers(ctx Context, orders ...Order) []Parser {
 }
 
 func GetStream(ctx Context) *Stream {
-	return ctx.QueryAll(KeywordStream)[0].(*Stream)
+	stream := ctx.QueryAll(KeywordStream)
+	if len(stream) == 0 {
+		return nil
+	}
+	return stream[0].(*Stream)
 }
 
 //func GetServerNames(ctx Context) []Parser {

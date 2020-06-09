@@ -5,6 +5,7 @@ import (
 	"fmt"
 	ngJson "github.com/ClessLi/go-nginx-conf-parser/pkg/json"
 	"github.com/ClessLi/go-nginx-conf-parser/pkg/resolv"
+	"github.com/ClessLi/go-nginx-conf-parser/pkg/statistics"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"net/http"
@@ -19,10 +20,15 @@ func Run(appConfig *NGConfig, ngConfig *resolv.Config, errChan chan error) {
 		errChan <- jerr
 	}
 
-	loginURI := "/login/:username/:password"
-	verifyURI := "/verify/:token"
-	refreshURI := "/refresh/:token"
-	apiURI := fmt.Sprintf("%s/:token", appConfig.RelativePath)
+	//loginURI := "/login/:username/:password"
+	//verifyURI := "/verify/:token"
+	//refreshURI := "/refresh/:token"
+	loginURI := "/login"
+	verifyURI := "/verify"
+	refreshURI := "/refresh"
+	//apiURI := fmt.Sprintf("%s/:token", appConfig.RelativePath)
+	apiURI := appConfig.RelativePath
+	statisticsURI := fmt.Sprintf("%s/statistics", apiURI)
 
 	ngBin, absErr := filepath.Abs(appConfig.NginxBin)
 	if absErr != nil {
@@ -42,13 +48,19 @@ func Run(appConfig *NGConfig, ngConfig *resolv.Config, errChan chan error) {
 	router.GET(refreshURI, refresh)
 	// view
 	router.GET(apiURI, func(c *gin.Context) {
-		h := view(appConfig.Name, ngConfig, c)
-		c.JSON(http.StatusOK, &h)
+		h, status := view(appConfig.Name, ngConfig, c)
+		c.JSON(status, &h)
 	})
 	// update
 	router.POST(apiURI, func(c *gin.Context) {
-		h := update(appConfig.Name, ngBin, ngConfig, c)
-		c.JSON(http.StatusOK, &h)
+		h, status := update(appConfig.Name, ngBin, ngConfig, c)
+		c.JSON(status, &h)
+	})
+
+	// statistics
+	router.GET(statisticsURI, func(c *gin.Context) {
+		h, status := statisticsView(appConfig.Name, ngConfig, c)
+		c.JSON(status, &h)
 	})
 
 	rErr := router.Run(fmt.Sprintf(":%d", appConfig.Port))
@@ -65,31 +77,128 @@ func Run(appConfig *NGConfig, ngConfig *resolv.Config, errChan chan error) {
 
 }
 
-func view(appName string, config *resolv.Config, c *gin.Context) (h gin.H) {
+func statisticsView(appName string, config *resolv.Config, c *gin.Context) (h gin.H, s int) {
+	status := "unkown"
+	message := make(gin.H, 0)
+	h = gin.H{
+		"status":  &status,
+		"message": &message,
+	}
+
+	token, hasToken := c.GetQuery("token")
+	if !hasToken {
+		status = "failed"
+		h["message"] = "Token cannot be empty"
+		s = http.StatusBadRequest
+		Log(NOTICE, fmt.Sprintf("[%s] request without token", c.ClientIP()))
+		return
+	}
+
+	_, verifyErr := verifyAction(token)
+	if verifyErr != nil {
+		status = "failed"
+		h["message"] = verifyErr
+		s = http.StatusBadRequest
+		Log(WARN, fmt.Sprintf("[%s] %s", appName, message))
+		return
+	}
+
+	noHttpSvrsNum, notHasHttpSvrsNum := c.GetQuery("NoHttpSvrsNum")
+	if !notHasHttpSvrsNum {
+		noHttpSvrsNum = "false"
+	}
+
+	noHttpSvrNames, notHasHttpSvrNames := c.GetQuery("NoHttpSvrNames")
+	if !notHasHttpSvrNames {
+		noHttpSvrNames = "false"
+	}
+
+	noHttpPorts, notHasHttpPorts := c.GetQuery("NoHttpPorts")
+	if !notHasHttpPorts {
+		noHttpPorts = "false"
+	}
+
+	noLocNum, notHasLocationsNum := c.GetQuery("NoLocsNum")
+	if !notHasLocationsNum {
+		noLocNum = "false"
+	}
+
+	noStreamSvrsNum, notHasStreamSvrsNum := c.GetQuery("NoStreamSvrsNum")
+	if !notHasStreamSvrsNum {
+		noStreamSvrsNum = "false"
+	}
+
+	noStreamPorts, notHasStreamPorts := c.GetQuery("NoStreamPorts")
+	if !notHasStreamPorts {
+		noStreamPorts = "false"
+	}
+
+	if (noHttpSvrsNum == "true" || noHttpSvrsNum == "false") && (noHttpSvrNames == "true" || noHttpSvrNames == "false") && (noHttpPorts == "true" || noHttpPorts == "false") && (noLocNum == "true" || noLocNum == "false") && (noStreamSvrsNum == "true" || noStreamSvrsNum == "false") && (noStreamPorts == "true" || noStreamPorts == "false") {
+		switch {
+		case noHttpSvrsNum == "false":
+			message["httpSvrsNum"] = statistics.HTTPServersNum(config)
+			fallthrough
+		case noHttpSvrNames == "false":
+			message["httpSvrNames"] = statistics.HTTPServerNames(config)
+			fallthrough
+		case noHttpPorts == "false":
+			message["httpPorts"] = statistics.HTTPPorts(config)
+			fallthrough
+		case noLocNum == "false":
+			message["locNum"] = statistics.HTTPLocationsNum(config)
+			fallthrough
+		case noStreamSvrsNum == "false":
+			message["streamSvrsNum"] = statistics.StreamServersNum(config)
+			fallthrough
+		case noStreamPorts == "false":
+			message["streamPorts"] = statistics.StreamPorts(config)
+		default:
+			status = "failed"
+			h["message"] = "invalid params."
+			s = http.StatusBadRequest
+			return
+		}
+		if len(message) == 0 {
+			status = "failed"
+			h["message"] = "no data"
+			s = http.StatusOK
+			return
+		}
+	} else {
+		status = "failed"
+		h["message"] = "invalid params."
+		s = http.StatusBadRequest
+		return
+	}
+
+	status = "successful"
+	s = http.StatusOK
+	fmt.Println(h)
+	return
+}
+
+func view(appName string, config *resolv.Config, c *gin.Context) (h gin.H, s int) {
 	status := "unkown"
 	var message interface{} = "null"
 	h = gin.H{
 		"status":  &status,
 		"message": &message,
 	}
-	//token, tokenOK := c.GetQuery("token")
-	//if tokenOK {
-	//	_, verifyErr := verifyAction(token)
-	//	if verifyErr != nil {
-	//		status = "failed"
-	//		message = verifyErr
-	//		return
-	//	}
-	//} else {
-	//	status = "failed"
-	//	message = ErrorReasonNoneToken
-	//	return
-	//}
-	token := c.Param("token")
+
+	token, hasToken := c.GetQuery("token")
+	if !hasToken {
+		status = "failed"
+		message = "Token cannot be empty"
+		s = http.StatusBadRequest
+		Log(NOTICE, fmt.Sprintf("[%s] request without token", c.ClientIP()))
+		return
+	}
+
 	_, verifyErr := verifyAction(token)
 	if verifyErr != nil {
 		status = "failed"
 		message = verifyErr
+		s = http.StatusBadRequest
 		Log(WARN, fmt.Sprintf("[%s] %s", appName, message))
 		return
 	}
@@ -99,6 +208,7 @@ func view(appName string, config *resolv.Config, c *gin.Context) (h gin.H) {
 		t = "string"
 	}
 
+	s = http.StatusOK
 	switch t {
 	case "string":
 		status = "success"
@@ -109,12 +219,14 @@ func view(appName string, config *resolv.Config, c *gin.Context) (h gin.H) {
 	default:
 		status = "failed"
 		message = fmt.Sprintf("view message type <%s> invalid", t)
+		s = http.StatusBadRequest
 	}
+
 	Log(INFO, fmt.Sprintf("[%s] %s", appName, message))
 	return
 }
 
-func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H) {
+func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H, s int) {
 	defer resolv.ReleaseConfigsCache()
 	status := "unkown"
 	message := "null"
@@ -122,24 +234,21 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H) 
 		"status":  &status,
 		"message": &message,
 	}
-	//token, tokenOK := c.GetQuery("token")
-	//if tokenOK {
-	//	_, verifyErr := verifyAction(token)
-	//	if verifyErr != nil {
-	//		status = "failed"
-	//		message = verifyErr.Error()
-	//		return
-	//	}
-	//} else {
-	//	status = "failed"
-	//	message = ErrorReasonNoneToken
-	//	return
-	//}
-	token := c.Param("token")
+
+	token, hasToken := c.GetQuery("token")
+	if !hasToken {
+		status = "failed"
+		message = "Token cannot be empty"
+		Log(NOTICE, fmt.Sprintf("[%s] request without token", c.ClientIP()))
+		s = http.StatusBadRequest
+		return
+	}
+
 	_, verifyErr := verifyAction(token)
 	if verifyErr != nil {
 		status = "failed"
 		message = verifyErr.Error()
+		s = http.StatusBadRequest
 		Log(WARN, fmt.Sprintf("[%s] [%s] %s", appName, c.ClientIP(), message))
 		return
 	}
@@ -150,6 +259,7 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H) 
 		message = fmt.Sprintf("FormFile option invalid: <%s>.", formFileErr)
 		Log(WARN, fmt.Sprintf("[%s] [%s] %s", appName, c.ClientIP(), message))
 		status = "failed"
+		s = http.StatusBadRequest
 		return
 	}
 
@@ -158,6 +268,7 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H) 
 		message = fmt.Sprintf("Open file failed: <%s>.", fErr)
 		Log(CRITICAL, fmt.Sprintf("[%s] [%s] %s", appName, c.ClientIP(), message))
 		status = "failed"
+		s = http.StatusInternalServerError
 		return
 	}
 
@@ -168,6 +279,7 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H) 
 		Log(CRITICAL, fmt.Sprintf("[%s] [%s] %s", appName, c.ClientIP(), message))
 		h["status"] = "failed"
 		h["message"] = message
+		s = http.StatusInternalServerError
 		return
 	}
 
@@ -181,6 +293,7 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H) 
 			h["status"] = "failed"
 			status = "failed"
 			//errChan <- ujErr
+			s = http.StatusBadRequest
 			return
 		}
 
@@ -189,6 +302,7 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H) 
 			message = fmt.Sprintf("Delete nginx ng failed. <%s>", delErr)
 			Log(ERROR, fmt.Sprintf("[%s] [%s] %s", appName, c.ClientIP(), message))
 			status = "failed"
+			s = http.StatusInternalServerError
 			return
 		}
 
@@ -196,6 +310,7 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H) 
 		Log(INFO, fmt.Sprintf("[%s] Verify new nginx ng.", appName))
 		checkErr := resolv.Check(newConfig.(*resolv.Config), ngBin)
 		if checkErr != nil {
+			s = http.StatusInternalServerError
 			message = fmt.Sprintf("Nginx ng verify failed. <%s>", checkErr)
 			Log(WARN, fmt.Sprintf("[%s] %s", appName, message))
 			status = "failed"
@@ -229,10 +344,12 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H) 
 		status = "failed"
 		message = fmt.Sprintf("Wrong data: <%s>", confBytes)
 		Log(WARN, fmt.Sprintf("[%s] [%s] %s", appName, c.ClientIP(), message))
+		s = http.StatusBadRequest
 		return
 	}
 
 	status = "success"
 	message = "Nginx ng update."
+	s = http.StatusOK
 	return
 }
