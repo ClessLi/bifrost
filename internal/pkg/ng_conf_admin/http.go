@@ -171,7 +171,7 @@ func statisticsView(appName string, config *resolv.Config, c *gin.Context) (h gi
 		return
 	}
 
-	status = "successful"
+	status = "success"
 	s = http.StatusOK
 	fmt.Println(h)
 	return
