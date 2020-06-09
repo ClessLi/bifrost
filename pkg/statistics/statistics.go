@@ -5,7 +5,7 @@ import (
 	"strconv"
 )
 
-func HTTPServers(ctx resolv.Context) int {
+func HTTPServersNum(ctx resolv.Context) int {
 	return len(resolv.GetHTTP(ctx).Servers())
 }
 
@@ -30,11 +30,11 @@ func HTTPServerNames(ctx resolv.Context) (serverNames []string) {
 	return
 }
 
-func HTTPLocations(ctx resolv.Context) int {
+func HTTPLocationsNum(ctx resolv.Context) int {
 	return len(resolv.GetLocations(resolv.GetHTTP(ctx)))
 }
 
-func StreamServers(ctx resolv.Context) int {
+func StreamServersNum(ctx resolv.Context) int {
 	return len(resolv.GetStream(ctx).Servers())
 }
 

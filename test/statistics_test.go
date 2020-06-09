@@ -13,11 +13,11 @@ func TestStatistics(t *testing.T) {
 		t.Log(err)
 	}
 
-	t.Log(statistics.HTTPServers(conf))
+	t.Log(statistics.HTTPServersNum(conf))
 	t.Log(statistics.HTTPServerNames(conf))
 	t.Log(statistics.HTTPPorts(conf))
 	//t.Log(statistics.HTTPPortsSTR(conf))
-	t.Log(statistics.HTTPLocations(conf))
-	t.Log(statistics.StreamServers(conf))
+	t.Log(statistics.HTTPLocationsNum(conf))
+	t.Log(statistics.StreamServersNum(conf))
 	t.Log(statistics.StreamPorts(conf))
 }
