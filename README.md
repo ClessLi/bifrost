@@ -50,8 +50,8 @@ logConfig:
 ## 命令帮助
 
 ```
-> ./go-nginx-conf-parser -h
-Usage of ./go-nginx-conf-parser:
+> ./ng_conf_admin -h
+Usage of ./ng_conf_admin:
   -f conf
     	go-nginx-conf-parser ng-conf-info.y(a)ml path. (default "./configs/ng-conf-info.yml")
   -h help
