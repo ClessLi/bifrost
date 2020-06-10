@@ -8,6 +8,7 @@ import (
 )
 
 func Load(path string) (*Config, error) {
+	defer ReleaseConfigsCache()
 
 	absPath, err := filepath.Abs(path)
 	if err != nil {

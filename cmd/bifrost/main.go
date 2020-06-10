@@ -31,7 +31,6 @@ func main() {
 	defer ng_conf_admin.Logf.Close()
 	for _, ngConfig := range ng_conf_admin.Configs.NGConfigs {
 		ng, err := resolv.Load(ngConfig.ConfPath)
-		resolv.ReleaseConfigsCache()
 
 		if err != nil {
 			fmt.Println(err)
