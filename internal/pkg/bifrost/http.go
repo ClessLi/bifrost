@@ -97,7 +97,7 @@ func statisticsView(appName string, config *resolv.Config, c *gin.Context) (h gi
 	_, verifyErr := verifyAction(token)
 	if verifyErr != nil {
 		status = "failed"
-		h["message"] = verifyErr
+		h["message"] = verifyErr.Error()
 		s = http.StatusBadRequest
 		Log(WARN, fmt.Sprintf("[%s] %s", appName, message))
 		return
@@ -134,30 +134,32 @@ func statisticsView(appName string, config *resolv.Config, c *gin.Context) (h gi
 	}
 
 	if (noHttpSvrsNum == "true" || noHttpSvrsNum == "false") && (noHttpSvrNames == "true" || noHttpSvrNames == "false") && (noHttpPorts == "true" || noHttpPorts == "false") && (noLocNum == "true" || noLocNum == "false") && (noStreamSvrsNum == "true" || noStreamSvrsNum == "false") && (noStreamPorts == "true" || noStreamPorts == "false") {
-		switch {
-		case noHttpSvrsNum == "false":
-			message["httpSvrsNum"] = statistics.HTTPServersNum(config)
-			fallthrough
-		case noHttpSvrNames == "false":
-			message["httpSvrNames"] = statistics.HTTPServerNames(config)
-			fallthrough
-		case noHttpPorts == "false":
-			message["httpPorts"] = statistics.HTTPPorts(config)
-			fallthrough
-		case noLocNum == "false":
-			message["locNum"] = statistics.HTTPLocationsNum(config)
-			fallthrough
-		case noStreamSvrsNum == "false":
-			message["streamSvrsNum"] = statistics.StreamServersNum(config)
-			fallthrough
-		case noStreamPorts == "false":
-			message["streamPorts"] = statistics.StreamPorts(config)
-		default:
+		if noHttpSvrsNum == "true" && noHttpSvrNames == "true" && noHttpPorts == "true" && noLocNum == "true" && noStreamSvrsNum == "true" && noStreamPorts == "true" {
 			status = "failed"
 			h["message"] = "invalid params."
 			s = http.StatusBadRequest
 			return
 		}
+
+		if noHttpSvrsNum == "false" {
+			message["httpSvrsNum"] = statistics.HTTPServersNum(config)
+		}
+		if noHttpSvrNames == "false" {
+			message["httpSvrNames"] = statistics.HTTPServerNames(config)
+		}
+		if noHttpPorts == "false" {
+			message["httpPorts"] = statistics.HTTPPorts(config)
+		}
+		if noLocNum == "false" {
+			message["locNum"] = statistics.HTTPLocationsNum(config)
+		}
+		if noStreamSvrsNum == "false" {
+			message["streamSvrsNum"] = statistics.StreamServersNum(config)
+		}
+		if noStreamPorts == "false" {
+			message["streamPorts"] = statistics.StreamPorts(config)
+		}
+
 		if len(message) == 0 {
 			status = "failed"
 			h["message"] = "no data"

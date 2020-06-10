@@ -100,7 +100,7 @@ func init() {
 		os.Exit(1)
 	}
 
-	// 初始化ng_admin配置
+	// 初始化bifrost配置
 	confData, readErr := readFile(*confPath)
 	//confData, readErr := readFile(confPath)
 	if readErr != nil {
@@ -126,13 +126,13 @@ func init() {
 	if absErr != nil {
 		panic(absErr)
 	}
-	logPath := filepath.Join(logDir, "ng_admin.out")
+	logPath := filepath.Join(logDir, "bifrost.out")
 	logf, openErr := os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if openErr != nil {
 		panic(openErr)
 	}
 
-	myLogger, err = logger.New("NG_ADMIN", Configs.Level, logf)
+	myLogger, err = logger.New("Bifrost", Configs.Level, logf)
 	if err != nil {
 		panic(err)
 	}

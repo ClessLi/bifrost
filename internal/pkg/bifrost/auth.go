@@ -68,9 +68,9 @@ func login(c *gin.Context) {
 	if err != nil {
 		//c.String(http.StatusNotFound, err.Error())
 		status = "failed"
-		message = err
+		message = err.Error()
 		Log(NOTICE, fmt.Sprintf("[%s] user <%s> login failed, message is: <%s>", c.ClientIP(), username, message))
-		c.JSON(http.StatusNotFound, &h)
+		c.JSON(http.StatusOK, &h)
 		return
 	}
 	Log(NOTICE, fmt.Sprintf("[%s] user <%s> is login, token is: %s", c.ClientIP(), username, signedToken))
@@ -138,7 +138,7 @@ func refresh(c *gin.Context) {
 	if err != nil {
 		//c.String(http.StatusNotFound, err.Error())
 		status = "failed"
-		message = err
+		message = err.Error()
 		Log(NOTICE, fmt.Sprintf("[%s] Verified failed", c.ClientIP()))
 		c.JSON(http.StatusNotFound, &h)
 		return
@@ -201,7 +201,7 @@ func validUser(claims *JWTClaims) bool {
 		Log(ERROR, err.Error())
 		return false
 	} else if err == sql.ErrNoRows {
-		Log(NOTICE, fmt.Sprintf("user <%s> is not exist in ng_admin", claims.Username))
+		Log(NOTICE, fmt.Sprintf("user <%s> is not exist in bifrost", claims.Username))
 		return false
 	}
 
