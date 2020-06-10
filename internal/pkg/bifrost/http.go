@@ -1,4 +1,4 @@
-package ng_conf_admin
+package bifrost
 
 import (
 	"encoding/json"
@@ -320,7 +320,7 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H, 
 			if delErr != nil {
 				Log(ERROR, fmt.Sprintf("[%s] Delete new nginx ng failed. <%s>", appName, delErr))
 				status = "failed"
-				message = "New nginx ng verify failed. And delete new nginx ng failed."
+				message = "New nginx config verify failed. And delete new nginx config failed."
 				return
 			}
 
@@ -329,7 +329,7 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H, 
 			if rollbackErr != nil {
 				Log(CRITICAL, fmt.Sprintf("[%s] Nginx ng rollback failed. <%s>", appName, rollbackErr))
 				status = "failed"
-				message = "New nginx ng verify failed. And nginx ng rollback failed."
+				message = "New nginx config verify failed. And nginx config rollback failed."
 				return
 			}
 
@@ -349,7 +349,7 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H, 
 	}
 
 	status = "success"
-	message = "Nginx ng update."
+	message = "Nginx config updated."
 	s = http.StatusOK
 	return
 }

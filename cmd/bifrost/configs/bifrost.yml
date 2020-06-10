@@ -1,23 +1,23 @@
 NGConfigs:
   -
-    name: "nginx-conf-test"
+    name: "bifrost-test"
     relativePath: "/ng_conf"
     port: 18080
     confPath: "/usr/local/openresty/nginx/conf/nginx.conf"
     nginxBin: "/usr/local/openresty/nginx/sbin/nginx"
 #  -
-#    name: "ng-conf-test2"
+#    name: "bifrost-test2"
 #    relativePath: "/ng_conf"
 #    port: 28080
 #    confPath: "/GO_Project/src/go-nginx-conf-parser/test/config_test/nginx.conf"
 #    nginxBin: "xxxxxxxxxxxx/nginx"
 DBConfig:
-  DBName: "ng_conf_admin"
+  DBName: "bifrost"
   host: "127.0.0.1"
   port: 3306
   protocol: "tcp"
-  user: "ngadmin"
-  password: "ngadmin"
+  user: "heimdall"
+  password: "Bultgang"
 logConfig:
   logDir: "./logs"
   level: 2

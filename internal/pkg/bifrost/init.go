@@ -1,4 +1,4 @@
-package ng_conf_admin
+package bifrost
 
 import (
 	"flag"
@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	confPath = flag.String("f", "./configs/ng-conf-info.yml", "go-nginx-conf-parser ng-`conf`-info.y(a)ml path.")
+	confPath = flag.String("f", "./configs/bifrost.yml", "the bifrost `config`uration file path.")
 	help     = flag.Bool("h", false, "this `help`")
 	//confBackupDelay = flag.Duration("b", 10, "how many minutes `delay` for backup nginx config")
 	Configs  *ParserConfigs
@@ -78,7 +78,7 @@ func init() {
 	// 初始化应用传参
 	flag.Parse()
 	if *confPath == "" {
-		*confPath = "./configs/ng-conf-info.yml"
+		*confPath = "./configs/bifrost.yml"
 	}
 
 	if *help {
@@ -87,7 +87,7 @@ func init() {
 	}
 
 	//confPath := "./configs/ng-conf-info.json"
-	//confPath := "./configs/ng-conf-info.yml"
+	//confPath := "./configs/bifrost.yml"
 	isExistConfig, pathErr := PathExists(*confPath)
 	//isExistConfig, pathErr := PathExists(confPath)
 	if !isExistConfig {

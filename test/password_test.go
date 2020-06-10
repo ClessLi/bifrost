@@ -6,6 +6,6 @@ import (
 )
 
 func TestPassword(t *testing.T) {
-	pwd := password.Password("ngadmin")
+	pwd := password.Password("Bultgang")
 	t.Log(pwd)
 }

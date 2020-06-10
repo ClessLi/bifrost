@@ -1,4 +1,4 @@
-package ng_conf_admin
+package bifrost
 
 import (
 	"fmt"
