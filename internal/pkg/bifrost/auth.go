@@ -82,6 +82,7 @@ func login(c *gin.Context) {
 }
 
 func verify(c *gin.Context) {
+	// TODO: 区分临时、永久令牌
 	//strToken := c.Param("token")
 	status := "unkown"
 	message := "null"
