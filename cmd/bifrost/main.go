@@ -5,31 +5,44 @@ package main
 // DONE:3.日志规范化输出
 
 import (
+	"errors"
 	"fmt"
 	"github.com/ClessLi/go-nginx-conf-parser/internal/pkg/bifrost"
-	"github.com/ClessLi/go-nginx-conf-parser/pkg/resolv"
+	"os"
 )
 
 func main() {
 	defer bifrost.Logf.Close()
-	for _, ngConfig := range bifrost.Configs.NGConfigs {
-		ng, err := resolv.Load(ngConfig.ConfPath)
-
-		if err != nil {
-			fmt.Println(err)
-			continue
+	err := errors.New("unkown signal")
+	switch *bifrost.Signal {
+	case "":
+		err = bifrost.Start()
+		if err == nil {
+			fmt.Println("bifrost is running")
+			os.Exit(0)
 		}
-
-		errChan := make(chan error)
-
-		go bifrost.Run(&ngConfig, ng, errChan)
-
-		err = <-errChan
-		if err != nil {
-			bifrost.Log(bifrost.CRITICAL, fmt.Sprintf("%s's coroutine has been stoped. Cased by <%s>", ngConfig.Name, err))
+	case "stop":
+		err = bifrost.Stop()
+		if err == nil {
+			fmt.Println("bifrost is finished")
+			os.Exit(0)
+		}
+	case "restart":
+		err = bifrost.Restart()
+		if err == nil {
+			fmt.Println("bifrost is restarted")
+			os.Exit(0)
+		}
+	case "status":
+		pid, statErr := bifrost.Status()
+		if statErr != nil {
+			fmt.Printf("bifrost is abnormal with error: %s\n", statErr.Error())
+			os.Exit(1)
 		} else {
-			bifrost.Log(bifrost.NOTICE, fmt.Sprintf("%s's coroutine has been stoped", ngConfig.Name))
+			fmt.Printf("bifrost <PID %d> is running\n", pid)
+			os.Exit(0)
 		}
 	}
-
+	fmt.Println(err.Error())
+	os.Exit(1)
 }
