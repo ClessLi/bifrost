@@ -199,7 +199,7 @@ func view(appName string, config *resolv.Config, c *gin.Context) (h gin.H, s int
 	_, verifyErr := verifyAction(token)
 	if verifyErr != nil {
 		status = "failed"
-		message = verifyErr
+		message = verifyErr.Error()
 		s = http.StatusBadRequest
 		Log(WARN, fmt.Sprintf("[%s] %s", appName, message))
 		return
