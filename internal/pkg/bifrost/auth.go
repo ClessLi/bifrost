@@ -49,7 +49,7 @@ func login(c *gin.Context) {
 	if !hasusername || !haspasswd {
 		status = "failed"
 		message = "check your username or password"
-		Log(NOTICE, fmt.Sprintf("[%s] login failed, message is: <%s>", c.ClientIP(), message))
+		Log(NOTICE, fmt.Sprintf("[%s] login failed, message is: '%s'", c.ClientIP(), message))
 		c.JSON(http.StatusBadRequest, &h)
 		return
 	}
@@ -69,11 +69,11 @@ func login(c *gin.Context) {
 		//c.String(http.StatusNotFound, err.Error())
 		status = "failed"
 		message = err.Error()
-		Log(NOTICE, fmt.Sprintf("[%s] user <%s> login failed, message is: <%s>", c.ClientIP(), username, message))
+		Log(NOTICE, fmt.Sprintf("[%s] user '%s' login failed, message is: '%s'", c.ClientIP(), username, message))
 		c.JSON(http.StatusOK, &h)
 		return
 	}
-	Log(NOTICE, fmt.Sprintf("[%s] user <%s> is login, token is: %s", c.ClientIP(), username, signedToken))
+	Log(NOTICE, fmt.Sprintf("[%s] user '%s' is login, token is: %s", c.ClientIP(), username, signedToken))
 
 	status = "success"
 	token = signedToken
@@ -93,7 +93,7 @@ func verify(c *gin.Context) {
 	if !hasToken {
 		status = "failed"
 		message = "Token cannot be empty"
-		Log(NOTICE, fmt.Sprintf("[%s] token verify failed, message is: <%s>", c.ClientIP(), message))
+		Log(NOTICE, fmt.Sprintf("[%s] token verify failed, message is: '%s'", c.ClientIP(), message))
 		c.JSON(http.StatusBadRequest, &h)
 		return
 	}
@@ -109,7 +109,7 @@ func verify(c *gin.Context) {
 	}
 	//c.String(http.StatusOK, "Certified user ", claim.Username)
 	status = "success"
-	message = fmt.Sprintf("Certified user <%s>", claim.Username)
+	message = fmt.Sprintf("Certified user '%s'", claim.Username)
 	Log(NOTICE, fmt.Sprintf("[%s] %s", c.ClientIP(), message))
 	c.JSON(http.StatusOK, &h)
 }
@@ -129,7 +129,7 @@ func refresh(c *gin.Context) {
 	if !hasToken {
 		status = "failed"
 		message = "Token cannot be empty"
-		Log(NOTICE, fmt.Sprintf("[%s] token refresh failed, message is: <%s>", c.ClientIP(), message))
+		Log(NOTICE, fmt.Sprintf("[%s] token refresh failed, message is: '%s'", c.ClientIP(), message))
 		c.JSON(http.StatusBadRequest, &h)
 		return
 	}
@@ -175,14 +175,14 @@ func verifyAction(strToken string) (*JWTClaims, error) {
 	if err := token.Claims.Valid(); err != nil {
 		return nil, errors.New(ErrorReasonRelogin)
 	}
-	Log(INFO, fmt.Sprintf("Verify user <%s>...", claims.Username))
+	Log(INFO, fmt.Sprintf("Verify user '%s'...", claims.Username))
 	//fmt.Println("verify")
 	return claims, nil
 }
 
 func getToken(claims *JWTClaims) (string, error) {
 	if !validUser(claims) {
-		Log(WARN, fmt.Sprintf("invalid user <%s> or password <%s>.", claims.Username, claims.Password))
+		Log(WARN, fmt.Sprintf("invalid user '%s' or password '%s'.", claims.Username, claims.Password))
 		return "", errors.New(ErrorReasonWrongPassword)
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -201,7 +201,7 @@ func validUser(claims *JWTClaims) bool {
 		Log(ERROR, err.Error())
 		return false
 	} else if err == sql.ErrNoRows {
-		Log(NOTICE, fmt.Sprintf("user <%s> is not exist in bifrost", claims.Username))
+		Log(NOTICE, fmt.Sprintf("user '%s' is not exist in bifrost", claims.Username))
 		return false
 	}
 

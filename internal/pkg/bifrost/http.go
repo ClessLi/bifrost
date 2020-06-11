@@ -215,16 +215,18 @@ func view(appName string, config *resolv.Config, c *gin.Context) (h gin.H, s int
 	case "string":
 		status = "success"
 		message = config.String()
+		Log(DEBUG, fmt.Sprintf("[%s] %s", appName, message))
 	case "json":
 		status = "success"
 		message = config
+		Log(DEBUG, fmt.Sprintf("[%s] %s", appName, message))
 	default:
 		status = "failed"
-		message = fmt.Sprintf("view message type <%s> invalid", t)
+		message = fmt.Sprintf("view message type '%s' invalid", t)
+		Log(INFO, fmt.Sprintf("[%s] %s", appName, message))
 		s = http.StatusBadRequest
 	}
 
-	Log(INFO, fmt.Sprintf("[%s] %s", appName, message))
 	return
 }
 

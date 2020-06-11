@@ -18,6 +18,7 @@ var (
 	dbConfig    DBConfig
 	myLogger    *logger.Logger
 	Logf        *os.File
+	Stdoutf     *os.File
 	workspace   string
 	ex          string
 	pidFilename = "bifrost.pid"
@@ -155,15 +156,23 @@ func init() {
 	if absErr != nil {
 		panic(absErr)
 	}
-	logPath := filepath.Join(logDir, "bifrost.out")
-	logf, openErr := os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+
+	logPath := filepath.Join(logDir, "bifrost.log")
+	Logf, openErr := os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if openErr != nil {
 		panic(openErr)
 	}
 
-	myLogger, err = logger.New("Bifrost", Configs.Level, logf)
+	myLogger, err = logger.New("Bifrost", Configs.Level, Logf)
 	if err != nil {
 		panic(err)
 	}
 	myLogger.SetFormat("[%{module}] %{time:2006-01-02 15:04:05.000} [%{level}] %{message}\n")
+
+	// 初始化应用运行日志输出
+	stdoutPath := filepath.Join(logDir, "bifrost.out")
+	Stdoutf, openErr = os.OpenFile(stdoutPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	if openErr != nil {
+		panic(openErr)
+	}
 }

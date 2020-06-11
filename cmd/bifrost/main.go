@@ -14,6 +14,8 @@ import (
 
 func main() {
 	defer bifrost.Logf.Close()
+	defer bifrost.Stdoutf.Close()
+
 	err := errors.New("unkown signal")
 	switch *bifrost.Signal {
 	case "":

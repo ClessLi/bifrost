@@ -35,6 +35,8 @@ func Start() error {
 		}
 
 		// 启动子进程
+		os.Stdout = Stdoutf
+		os.Stderr = Stdoutf
 		_, procErr := os.StartProcess(execPath, args, &os.ProcAttr{
 			Files: []*os.File{os.Stdin, os.Stdout, os.Stderr},
 		})
@@ -68,7 +70,7 @@ func Start() error {
 
 			err = <-errChan
 			if err != nil {
-				Log(CRITICAL, fmt.Sprintf("%s's coroutine has been stoped. Cased by <%s>", ngConfig.Name, err))
+				Log(CRITICAL, fmt.Sprintf("%s's coroutine has been stoped. Cased by '%s'", ngConfig.Name, err))
 			} else {
 				Log(NOTICE, fmt.Sprintf("%s's coroutine has been stoped", ngConfig.Name))
 			}
