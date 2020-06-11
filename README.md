@@ -1,6 +1,6 @@
 # 项目介绍
 
-go-nginx-conf-parser 是基于golang语言开发的项目，它目前还处于测试阶段，目前已提供Nginx配置文件管理后端工具“bifrost”，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用版本为[v0.0.3](https://github.com/ClessLi/go-nginx-conf-parser/tree/v0.0.3-alpha.4) 。
+go-nginx-conf-parser 是基于golang语言开发的项目，它目前还处于测试阶段，目前已提供Nginx配置文件管理后端工具“bifrost”，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用版本为[v0.0.3-alpha.5](https://github.com/ClessLi/go-nginx-conf-parser/tree/v0.0.3-alpha.5) 。
 
 # 项目特点
 
@@ -14,11 +14,18 @@ go-nginx-conf-parser 是基于golang语言开发的项目，它目前还处于�
 
 ## 下载地址
 
-bifrost-v0.0.3
+bifrost-v0.0.3-alpha.5
 
-> Windows: [bifrost.v0_0_3.win_x64](https://github.com/ClessLi/go-nginx-conf-parser/releases/download/v0.0.3-alpha.4/bifrost.v0_0_3-alpha.4.win_x64.zip)
+> Windows: [bifrost.v0_0_3-alpha.5.win_x64](https://github.com/ClessLi/go-nginx-conf-parser/releases/download/v0.0.3-alpha.5/bifrost.v0_0_3-alpha.5.win_x64.zip)
 > 
-> Linux: [bifrost.v0_0_3.linux_x64](https://github.com/ClessLi/go-nginx-conf-parser/releases/download/v0.0.3-alpha.4/bifrost.v0_0_3-alpha.4.linux_x64.zip)
+> Linux: [bifrost.v0_0_3-alpha.5.linux_x64](https://github.com/ClessLi/go-nginx-conf-parser/releases/download/v0.0.3-alpha.5/bifrost.v0_0_3-alpha.5.linux_x64.zip)
+
+
+bifrost-v0.0.3-alpha.4
+
+> Windows: [bifrost.v0_0_3-alpha.4.win_x64](https://github.com/ClessLi/go-nginx-conf-parser/releases/download/v0.0.3-alpha.4/bifrost.v0_0_3-alpha.4.win_x64.zip)
+> 
+> Linux: [bifrost.v0_0_3-alpha.4.linux_x64](https://github.com/ClessLi/go-nginx-conf-parser/releases/download/v0.0.3-alpha.4/bifrost.v0_0_3-alpha.4.linux_x64.zip)
 
 ## 应用配置
 
@@ -58,11 +65,15 @@ logConfig:
 
 ```
 > ./bifrost -h
-Usage of ./bifrost:
-  -f config
-    	the bifrost configuration file path. (default "./configs/bifrost.yml")
-  -h help
-    	this help
+ bifrost version: v0.0.3-alpha.5
+ Usage: ./bifrost [-hv] [-f filename] [-s signal]
+ 
+ Options:  -f config
+     	the bifrost configuration file path. (default "./configs/bifrost.yml")
+   -h help
+     	this help
+   -s signal
+     	send signal to a master process: stop, restart, status 
 ```
 
 ## 应用接口调用方式
