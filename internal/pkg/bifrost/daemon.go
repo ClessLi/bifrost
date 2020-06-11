@@ -9,7 +9,8 @@ import (
 	"strconv"
 )
 
-// TODO: 编写biforst守护进程
+// DONE: 编写biforst守护进程
+// TODO: 修复Restart函数启动bifrost失败的bug
 func Start() error {
 	if os.Getppid() != 1 {
 		// 执行子进程
