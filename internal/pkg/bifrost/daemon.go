@@ -35,6 +35,7 @@ func Start() error {
 		}
 
 		// 启动子进程
+		Log(NOTICE, fmt.Sprintf("starting bifrost..."))
 		os.Stdout = Stdoutf
 		os.Stderr = Stdoutf
 		_, procErr := os.StartProcess(execPath, args, &os.ProcAttr{
@@ -56,6 +57,7 @@ func Start() error {
 		}
 
 		// 启动bifrost进程
+		Log(NOTICE, fmt.Sprintf("bifrost <PID %d> is started", pid))
 		for _, ngConfig := range Configs.NGConfigs {
 			ng, err := resolv.Load(ngConfig.ConfPath)
 
@@ -134,7 +136,9 @@ func getPid() (int, error) {
 
 func Restart() error {
 	if os.Getppid() != 1 {
+		Log(NOTICE, "stopping bifrost...")
 		if err := Stop(); err != nil {
+			Log(ERROR, fmt.Sprintf("stop bifrost failed cased by: '%s'", err.Error()))
 			return err
 		}
 		return Start()

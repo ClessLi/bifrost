@@ -77,7 +77,8 @@ func usage() {
 	_, _ = fmt.Fprintf(os.Stdout, `bifrost version: %s
 Usage: %s [-hv] [-f filename] [-s signal]
 
-Options:`, VERSION, os.Args[0])
+Options:
+`, VERSION, os.Args[0])
 	flag.PrintDefaults()
 }
 

@@ -23,9 +23,9 @@ bifrost-v0.0.3-alpha.5
 
 bifrost-v0.0.3-alpha.4
 
-> Windows: [bifrost.v0_0_3-alpha.4.win_x64](https://github.com/ClessLi/go-nginx-conf-parser/releases/download/v0.0.3-alpha.4/bifrost.v0_0_3-alpha.4.win_x64.zip)
+> Windows: [bifrost.v0_0_3-alpha.4.win_x64](https://github.com/ClessLi/go-nginx-conf-parser/releases/download/v0.0.3-alpha.4/bifrost.v0_0_3.win_x64.zip)
 > 
-> Linux: [bifrost.v0_0_3-alpha.4.linux_x64](https://github.com/ClessLi/go-nginx-conf-parser/releases/download/v0.0.3-alpha.4/bifrost.v0_0_3-alpha.4.linux_x64.zip)
+> Linux: [bifrost.v0_0_3-alpha.4.linux_x64](https://github.com/ClessLi/go-nginx-conf-parser/releases/download/v0.0.3-alpha.4/bifrost.v0_0_3.linux_x64.zip)
 
 ## 应用配置
 
@@ -68,7 +68,8 @@ logConfig:
  bifrost version: v0.0.3-alpha.5
  Usage: ./bifrost [-hv] [-f filename] [-s signal]
  
- Options:  -f config
+ Options:
+   -f config
      	the bifrost configuration file path. (default "./configs/bifrost.yml")
    -h help
      	this help
