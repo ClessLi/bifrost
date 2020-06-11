@@ -10,7 +10,7 @@ import (
 )
 
 // DONE: 编写biforst守护进程
-// TODO: 修复Restart函数启动bifrost失败的bug
+// DONE: 修复Restart函数启动bifrost失败的bug
 func Start() error {
 	if os.Getppid() != 1 {
 		// 执行子进程
@@ -77,7 +77,6 @@ func Start() error {
 		Log(NOTICE, stat)
 		return fmt.Errorf(stat)
 	}
-	//return fmt.Errorf("unkonw error")
 }
 
 func Stop() error {
@@ -132,10 +131,15 @@ func getPid() (int, error) {
 }
 
 func Restart() error {
-	if err := Stop(); err != nil {
-		return err
+	if os.Getppid() != 1 {
+		if err := Stop(); err != nil {
+			return err
+		}
+		return Start()
+	} else {
+		// 传参给子进程重启时，不重启
+		return Start()
 	}
-	return Start()
 }
 
 func Status() (int, error) {
