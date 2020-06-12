@@ -1,6 +1,6 @@
 # 项目介绍
 
-go-nginx-conf-parser 是基于golang语言开发的项目，它目前还处于测试阶段，目前已提供Nginx配置文件管理后端工具“bifrost”，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用版本为[v0.0.3-alpha.5](https://github.com/ClessLi/go-nginx-conf-parser/tree/v0.0.3-alpha.5) 。
+go-nginx-conf-parser 是基于golang语言开发的项目，它目前还处于测试阶段，目前已提供Nginx配置文件管理后端工具“bifrost”，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用版本为[v0.0.3-beta.1](https://github.com/ClessLi/go-nginx-conf-parser/tree/v0.0.3-beta.1) 。
 
 # 项目特点
 
@@ -13,6 +13,12 @@ go-nginx-conf-parser 是基于golang语言开发的项目，它目前还处于�
 # 使用方法
 
 ## 下载地址
+
+bifrost-v0.0.3-beta.1
+
+> Windows: [bifrost.v0_0_3-beta.1.win_x64](https://github.com/ClessLi/go-nginx-conf-parser/releases/download/v0.0.3-beta.1/bifrost.v0_0_3-beta.1.win_x64.zip)
+> 
+> Linux: [bifrost.v0_0_3-beta.1.linux_x64](https://github.com/ClessLi/go-nginx-conf-parser/releases/download/v0.0.3-beta.1/bifrost.v0_0_3-beta.1.linux_x64.zip)
 
 bifrost-v0.0.3-alpha.5
 
@@ -85,7 +91,7 @@ logConfig:
 
 接口地址
 
-`http://<Host>:<Port>/login?username=<username>&password=<password>`
+`http://<Host>:<Port>/login?username=<username>&password=<password>&unexpired=<true|false>`
 
 返回格式
 
@@ -105,6 +111,7 @@ logConfig:
 | :-: | :-: | :-: | :- |
 | username | 是 | string | 用户名 |
 | password | 是 | string | 用户密码 |
+| unexpired | 否 | bool | token是否永不过期，默认为false |
 
 返回参数说明
 
@@ -156,7 +163,7 @@ json返回示例
 
 ```json
 {
-  "message": "Certified user \u003cheimdall\u003e",
+  "message": "Certified user 'heimdall'",
   "status": "success"
 }
 ```
@@ -297,7 +304,7 @@ json返回示例
 > string格式数据返回示例
 > ```json
 > {
->   "message": ["# user  nobody;\n", "worker_processes 1;\n", "# error_log  logs/error.log;\n"],
+>   "message": "# user  nobody;\nworker_processes 1;\n# error_log  logs/error.log;\n",
 >   "status": "success"
 > }
 > ```

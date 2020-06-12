@@ -53,6 +53,25 @@ func login(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, &h)
 		return
 	}
+	// DONE: 区分临时、永久令牌
+
+	isUnExp := false
+	unexpired, hasunexp := c.GetQuery("unexpired")
+	if !hasunexp {
+		unexpired = "false"
+	}
+	switch unexpired {
+	case "true":
+		isUnExp = true
+	case "false":
+		isUnExp = false
+	default:
+		status = "failed"
+		message = fmt.Sprintf("invalid param unexpired=%s", unexpired)
+		Log(NOTICE, fmt.Sprintf("[%s] login failed, message is: '%s'", c.ClientIP(), message))
+		c.JSON(http.StatusBadRequest, &h)
+		return
+	}
 
 	claims := &JWTClaims{
 		UserID:      1,
@@ -62,7 +81,11 @@ func login(c *gin.Context) {
 		Permissions: []string{},
 	}
 	claims.IssuedAt = time.Now().Unix()
-	claims.ExpiresAt = time.Now().Add(time.Second * time.Duration(ExpireTime)).Unix()
+	if isUnExp {
+		claims.ExpiresAt = 0
+	} else {
+		claims.ExpiresAt = time.Now().Add(time.Second * time.Duration(ExpireTime)).Unix()
+	}
 
 	signedToken, err := getToken(claims)
 	if err != nil {
@@ -82,7 +105,6 @@ func login(c *gin.Context) {
 }
 
 func verify(c *gin.Context) {
-	// TODO: 区分临时、永久令牌
 	//strToken := c.Param("token")
 	status := "unkown"
 	message := "null"

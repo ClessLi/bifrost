@@ -38,7 +38,7 @@ const (
 	DEBUG    = logger.DebugLevel
 
 	// 版本号
-	VERSION = "v0.0.3-alpha.5"
+	VERSION = "v0.0.3-beta.1"
 )
 
 type NGConfig struct {

@@ -224,7 +224,12 @@ func view(appName string, config *resolv.Config, c *gin.Context) (h gin.H, s int
 	switch t {
 	case "string":
 		status = "success"
-		message = config.String()
+		// 修改string切片为string
+		var str string
+		for _, v := range config.String() {
+			str += v
+		}
+		message = str
 		Log(DEBUG, fmt.Sprintf("[%s] %s", appName, message))
 	case "json":
 		status = "success"
