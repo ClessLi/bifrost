@@ -58,7 +58,7 @@ func Start() error {
 
 		// 启动bifrost进程
 		Log(NOTICE, fmt.Sprintf("bifrost <PID %d> is started", pid))
-		// TODO: 并发异常，只能同时运行一个配置接口，待优化
+		// DONE: 并发异常，只能同时运行一个配置接口，待优化
 		for _, ngConfig := range Configs.NGConfigs {
 			ng, err := resolv.Load(ngConfig.ConfPath)
 
@@ -67,17 +67,21 @@ func Start() error {
 				continue
 			}
 
-			errChan := make(chan error)
+			//errChan := make(chan error)
 
-			go Run(&ngConfig, ng, errChan)
+			wg.Add(1)
 
-			err = <-errChan
-			if err != nil {
-				Log(CRITICAL, fmt.Sprintf("%s's coroutine has been stoped. Cased by '%s'", ngConfig.Name, err))
-			} else {
-				Log(NOTICE, fmt.Sprintf("%s's coroutine has been stoped", ngConfig.Name))
-			}
+			//go Run(&ngConfig, ng, errChan)
+			go Run(ngConfig, ng)
+
+			//err = <-errChan
+			//if err != nil {
+			//	Log(CRITICAL, fmt.Sprintf("%s's coroutine has been stoped. Cased by '%s'", ngConfig.Name, err))
+			//} else {
+			//	Log(NOTICE, fmt.Sprintf("%s's coroutine has been stoped", ngConfig.Name))
+			//}
 		}
+		wg.Wait()
 		stat := fmt.Sprintf("bifrost <PID %d> is finished", pid)
 		Log(NOTICE, stat)
 		return fmt.Errorf(stat)

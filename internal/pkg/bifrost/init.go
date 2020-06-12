@@ -7,6 +7,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"os"
 	"path/filepath"
+	"sync"
 )
 
 var (
@@ -25,6 +26,7 @@ var (
 	pidFile     string
 
 	procStatusNotRunning = fmt.Errorf("bifrost is not running")
+	wg                   sync.WaitGroup
 )
 
 const (

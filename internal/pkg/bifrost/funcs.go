@@ -22,7 +22,7 @@ func readFile(path string) ([]byte, error) {
 	return fd, nil
 }
 
-func Bak(appConfig *NGConfig, ngConfig *resolv.Config, c chan int) {
+func Bak(appConfig NGConfig, ngConfig *resolv.Config, c chan int) {
 	for {
 		select {
 		case <-time.NewTicker(5 * time.Minute).C:
@@ -37,7 +37,7 @@ func Bak(appConfig *NGConfig, ngConfig *resolv.Config, c chan int) {
 	}
 }
 
-func bak(appConfig *NGConfig, ngConfig *resolv.Config) {
+func bak(appConfig NGConfig, ngConfig *resolv.Config) {
 	bakDate := time.Now().Format("20060102")
 	bakName := fmt.Sprintf("nginx.conf.%s.tgz", bakDate)
 

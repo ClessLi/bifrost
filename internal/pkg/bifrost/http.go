@@ -12,12 +12,17 @@ import (
 	"path/filepath"
 )
 
-func Run(appConfig *NGConfig, ngConfig *resolv.Config, errChan chan error) {
+//func Run(appConfig *NGConfig, ngConfig *resolv.Config, errChan chan error) {
+func Run(appConfig NGConfig, ngConfig *resolv.Config) {
 	_, jerr := json.Marshal(ngConfig)
+
+	defer wg.Done()
 	//confBytes, jerr := json.Marshal(ngConfig)
 	//confBytes, jerr := json.MarshalIndent(ngConfig, "", "    ")
 	if jerr != nil {
-		errChan <- jerr
+		//errChan <- jerr
+		Log(CRITICAL, fmt.Sprintf("%s's coroutine has been stoped. Cased by '%s'", ngConfig.Name, jerr))
+		return
 	}
 
 	//loginURI := "/login/:username/:password"
@@ -32,7 +37,9 @@ func Run(appConfig *NGConfig, ngConfig *resolv.Config, errChan chan error) {
 
 	ngBin, absErr := filepath.Abs(appConfig.NginxBin)
 	if absErr != nil {
-		errChan <- absErr
+		//errChan <- absErr
+		Log(CRITICAL, fmt.Sprintf("%s's coroutine has been stoped. Cased by '%s'", ngConfig.Name, absErr))
+		return
 	}
 
 	// 创建备份协程管道及启动备份协程
@@ -68,13 +75,16 @@ func Run(appConfig *NGConfig, ngConfig *resolv.Config, errChan chan error) {
 		// 关闭备份
 		bakChan <- 9
 		// 输出子任务运行错误
-		errChan <- rErr
+		//errChan <- rErr
+		Log(CRITICAL, fmt.Sprintf("%s's coroutine has been stoped. Cased by '%s'", ngConfig.Name, rErr))
+		return
 	}
 
 	// 关闭备份
 	bakChan <- 9
-	errChan <- nil
-
+	//errChan <- nil
+	Log(NOTICE, fmt.Sprintf("%s's coroutine has been stoped", ngConfig.Name))
+	return
 }
 
 func statisticsView(appName string, config *resolv.Config, c *gin.Context) (h gin.H, s int) {
