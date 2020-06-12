@@ -58,6 +58,7 @@ func Start() error {
 
 		// 启动bifrost进程
 		Log(NOTICE, fmt.Sprintf("bifrost <PID %d> is started", pid))
+		// TODO: 并发异常，只能同时运行一个配置接口，待优化
 		for _, ngConfig := range Configs.NGConfigs {
 			ng, err := resolv.Load(ngConfig.ConfPath)
 
