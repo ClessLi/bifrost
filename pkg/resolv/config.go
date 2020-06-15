@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 )
 
+// TODO: 调整配置循环加载机制
 var ErrConfigIsExist = errors.New("config is exsit")
 
 type Order int
