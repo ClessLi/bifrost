@@ -13,12 +13,14 @@ import (
 )
 
 const (
+	// 认证接口错误返回
 	ErrorReasonServerBusy    = "服务器繁忙"
 	ErrorReasonRelogin       = "请重新登陆"
 	ErrorReasonWrongPassword = "用户或密码错误"
 	//ErrorReasonNoneToken     = "请通过认证"
 )
 
+// JWTClaims, jwt断言对象，定义认证接口校验的用户信息
 type JWTClaims struct { // token里面添加用户信息，验证token后可能会用到用户信息
 	jwt.StandardClaims
 	UserID      int      `json:"user_id"`
@@ -32,7 +34,11 @@ var (
 	ExpireTime = 3600 // token有效期
 )
 
+// login, 用户登录函数，定义用户登录认证接口函数
+// 参数:
+//     c: gin.Context 对象指针
 func login(c *gin.Context) {
+	// 初始化
 	status := "unkown"
 	var token interface{} = "null"
 	var message interface{} = "null"
@@ -42,9 +48,8 @@ func login(c *gin.Context) {
 		"message": &message,
 	}
 
-	//username := c.Param("username")
+	// 获取接口请求传参
 	username, hasusername := c.GetQuery("username")
-	//passwd := c.Param("password")
 	passwd, haspasswd := c.GetQuery("password")
 	if !hasusername || !haspasswd {
 		status = "failed"
@@ -53,7 +58,7 @@ func login(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, &h)
 		return
 	}
-	// DONE: 区分临时、永久令牌
+	// 判断区分临时、永久令牌
 
 	isUnExp := false
 	unexpired, hasunexp := c.GetQuery("unexpired")
@@ -73,6 +78,7 @@ func login(c *gin.Context) {
 		return
 	}
 
+	// 初始化jwt断言对象
 	claims := &JWTClaims{
 		UserID:      1,
 		Username:    username,
@@ -87,6 +93,16 @@ func login(c *gin.Context) {
 		claims.ExpiresAt = time.Now().Add(time.Second * time.Duration(ExpireTime)).Unix()
 	}
 
+	// 认证用户信息
+	if !validUser(claims) {
+		Log(WARN, fmt.Sprintf("Invalid user '%s' or password '%s'.", claims.Username, claims.Password))
+		status = "failed"
+		message = ErrorReasonWrongPassword
+		c.JSON(http.StatusOK, &h)
+		return
+	}
+
+	// 生成用户token
 	signedToken, err := getToken(claims)
 	if err != nil {
 		//c.String(http.StatusNotFound, err.Error())
@@ -104,14 +120,19 @@ func login(c *gin.Context) {
 	c.JSON(http.StatusOK, &h)
 }
 
+// verify, token校验函数，定义token校验认证接口函数
+// 参数:
+//     c: gin.Context 对象指针
 func verify(c *gin.Context) {
-	//strToken := c.Param("token")
+	// 初始化
 	status := "unkown"
 	message := "null"
 	h := gin.H{
 		"status":  &status,
 		"message": &message,
 	}
+
+	// 获取接口传参
 	strToken, hasToken := c.GetQuery("token")
 	if !hasToken {
 		status = "failed"
@@ -121,6 +142,7 @@ func verify(c *gin.Context) {
 		return
 	}
 
+	// 校验token
 	claim, err := verifyAction(strToken)
 	if err != nil {
 		//c.String(http.StatusNotFound, err.Error())
@@ -130,15 +152,17 @@ func verify(c *gin.Context) {
 		c.JSON(http.StatusNotFound, &h)
 		return
 	}
-	//c.String(http.StatusOK, "Certified user ", claim.Username)
 	status = "success"
 	message = fmt.Sprintf("Certified user '%s'", claim.Username)
 	Log(NOTICE, fmt.Sprintf("[%s] %s", c.ClientIP(), message))
 	c.JSON(http.StatusOK, &h)
 }
 
+// refresh, token更新函数，定义token更新认证接口函数
+// 参数:
+//     c: gin.Context 对象指针
 func refresh(c *gin.Context) {
-	//strToken := c.Param("token")
+	// 初始化
 	status := "unkown"
 	var token interface{} = "null"
 	var message interface{} = "null"
@@ -148,6 +172,7 @@ func refresh(c *gin.Context) {
 		"message": &message,
 	}
 
+	// 获取接口传参
 	strToken, hasToken := c.GetQuery("token")
 	if !hasToken {
 		status = "failed"
@@ -157,6 +182,7 @@ func refresh(c *gin.Context) {
 		return
 	}
 
+	// 校验token
 	claims, err := verifyAction(strToken)
 	if err != nil {
 		//c.String(http.StatusNotFound, err.Error())
@@ -166,6 +192,8 @@ func refresh(c *gin.Context) {
 		c.JSON(http.StatusNotFound, &h)
 		return
 	}
+
+	// 重新生成token
 	claims.ExpiresAt = time.Now().Unix() + (claims.ExpiresAt - claims.IssuedAt)
 	signedToken, err := getToken(claims)
 	if err != nil {
@@ -182,7 +210,14 @@ func refresh(c *gin.Context) {
 	c.JSON(http.StatusOK, &h)
 }
 
+// verifyAction, 认证token有效性函数
+// 参数:
+//     strToken: token字符串
+// 返回值:
+//     用户jwt断言对象指针
+//     错误
 func verifyAction(strToken string) (*JWTClaims, error) {
+	// 解析token
 	token, err := jwt.ParseWithClaims(strToken, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(password.Secret), nil
 	})
@@ -191,23 +226,35 @@ func verifyAction(strToken string) (*JWTClaims, error) {
 		//return nil, errors.New(ErrorReasonServerBusy)
 		return nil, errors.New(ErrorReasonRelogin)
 	}
+
+	// 转换jwt断言对象
 	claims, ok := token.Claims.(*JWTClaims)
 	if !ok {
 		return nil, errors.New(ErrorReasonRelogin)
 	}
+	Log(INFO, fmt.Sprintf("Verify user '%s'...", claims.Username))
+
+	// 认证用户信息
+	if !validUser(claims) {
+		Log(WARN, fmt.Sprintf("Invalid user '%s' or password '%s'.", claims.Username, claims.Password))
+		return nil, errors.New(ErrorReasonWrongPassword)
+	}
+
 	if err := token.Claims.Valid(); err != nil {
 		return nil, errors.New(ErrorReasonRelogin)
 	}
-	Log(INFO, fmt.Sprintf("Verify user '%s'...", claims.Username))
-	//fmt.Println("verify")
+
+	// 通过返回有效用户jwt断言对象
 	return claims, nil
 }
 
+// getToken, token生成函数，根据jwt断言对象编码为token
+// 参数:
+//     claims: 用户jwt断言对象指针
+// 返回值:
+//     token字符串
+//     错误
 func getToken(claims *JWTClaims) (string, error) {
-	if !validUser(claims) {
-		Log(WARN, fmt.Sprintf("invalid user '%s' or password '%s'.", claims.Username, claims.Password))
-		return "", errors.New(ErrorReasonWrongPassword)
-	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signedToken, err := token.SignedString([]byte(password.Secret))
 	if err != nil {
@@ -217,6 +264,11 @@ func getToken(claims *JWTClaims) (string, error) {
 	return signedToken, nil
 }
 
+// validUser, 用户认证函数，判断用户是否有效
+// 参数:
+//     claims: 用户jwt断言对象指针
+// 返回值:
+//     用户是否有效
 func validUser(claims *JWTClaims) bool {
 	sqlStr := fmt.Sprintf("SELECT `password` FROM `%s`.`user` WHERE `user_name` = \"%s\" LIMIT 1;", dbConfig.DBName, claims.Username)
 	checkPasswd, err := getPasswd(sqlStr)
@@ -231,6 +283,12 @@ func validUser(claims *JWTClaims) bool {
 	return password.Password(claims.Password) == checkPasswd
 }
 
+// getPasswd, 用户密码查询函数
+// 参数:
+//     sqlStr: 查询语句
+// 返回值:
+//     用户加密密码
+//     错误
 func getPasswd(sqlStr string) (string, error) {
 	mysqlUrl := fmt.Sprintf("%s:%s@%s(%s:%d)/%s?charset=utf8", dbConfig.User, dbConfig.Password, dbConfig.Protocol, dbConfig.Host, dbConfig.Port, dbConfig.DBName)
 	//fmt.Println(mysqlUrl)

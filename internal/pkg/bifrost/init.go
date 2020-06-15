@@ -1,3 +1,7 @@
+// bifrost 包, 该包包含了bifrost项目共用的一些变量，封装了http进程相关接口函数、一些公共函数和守护进程函数
+// 创建人：ClessLi
+// 创建时间：2020/06/10
+
 package bifrost
 
 import (
@@ -11,25 +15,38 @@ import (
 )
 
 var (
+	// 传入参数
 	confPath = flag.String("f", "./configs/bifrost.yml", "the bifrost `config`uration file path.")
 	Signal   = flag.String("s", "", "send `signal` to a master process: stop, restart, status")
 	help     = flag.Bool("h", false, "this `help`")
 	//confBackupDelay = flag.Duration("b", 10, "how many minutes `delay` for backup nginx config")
-	Configs     *ParserConfigs
-	dbConfig    DBConfig
-	myLogger    *logger.Logger
-	Logf        *os.File
-	Stdoutf     *os.File
-	workspace   string
-	ex          string
+
+	// bifrost配置
+	Configs  *ParserConfigs
+	dbConfig DBConfig
+
+	// 日志变量
+	myLogger *logger.Logger
+	// 日志文件
+	Logf    *os.File
+	Stdoutf *os.File
+
+	// 程序工作目录
+	workspace string
+
+	// 进程文件
 	pidFilename = "bifrost.pid"
 	pidFile     string
 
+	// 协程等待组
+	wg sync.WaitGroup
+
+	// 错误变量
 	procStatusNotRunning = fmt.Errorf("bifrost is not running")
-	wg                   sync.WaitGroup
 )
 
 const (
+	// 日志级别
 	CRITICAL = logger.CriticalLevel
 	ERROR    = logger.ErrorLevel
 	WARN     = logger.WarningLevel
@@ -41,6 +58,7 @@ const (
 	VERSION = "v0.0.3-beta.1"
 )
 
+// NGConfig, nginx配置文件信息结构体，定义配置文件路径、nginx可执行文件路径和bifrost为其提供接口的路由及侦听端口
 type NGConfig struct {
 	//Name         string `json:"name"`
 	//RelativePath string `json:"relative_path"`
@@ -53,6 +71,7 @@ type NGConfig struct {
 	NginxBin     string `yaml:"nginxBin"`
 }
 
+// DBConfig, mysql数据库信息结构体，用于读写bifrost信息
 type DBConfig struct {
 	DBName   string `yaml:"DBName"`
 	Host     string `yaml:"host"`
@@ -62,11 +81,13 @@ type DBConfig struct {
 	Password string `yaml:"password"`
 }
 
+// LogConfig, bifrost日志信息结构体，定义日志目录、日志级别
 type LogConfig struct {
 	LogDir string          `yaml:"logDir"`
 	Level  logger.LogLevel `yaml:"level"`
 }
 
+// ParserConfigs, bifrost配置文件结构体，定义bifrost配置信息
 type ParserConfigs struct {
 	//NGConfigs []NGConfig `json:"NGConfigs"`
 	//NGConfigs  []NGConfig `yaml:"NGConfigs"`
@@ -75,6 +96,7 @@ type ParserConfigs struct {
 	LogConfig `yaml:"logConfig"`
 }
 
+// usage, 重新定义flag.Usage 函数，为bifrost帮助信息提供版本信息及命令行工具传参信息
 func usage() {
 	_, _ = fmt.Fprintf(os.Stdout, `bifrost version: %s
 Usage: %s [-hv] [-f filename] [-s signal]
@@ -84,6 +106,7 @@ Options:
 	flag.PrintDefaults()
 }
 
+// init, bifrost包初始化函数
 func init() {
 	// 初始化工作目录
 	ex, err := os.Executable()

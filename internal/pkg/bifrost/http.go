@@ -13,10 +13,15 @@ import (
 )
 
 //func Run(appConfig *NGConfig, ngConfig *resolv.Config, errChan chan error) {
+// Run, bifrost启动函数
+// 参数:
+//     appConfig: nginx配置文件信息对象
+//     ngConfig: nginx配置对象指针
 func Run(appConfig NGConfig, ngConfig *resolv.Config) {
+	defer wg.Done() // 结束进程前关闭协程等待组
+	// 检查nginx配置是否能被正常解析为json
 	_, jerr := json.Marshal(ngConfig)
 
-	defer wg.Done()
 	//confBytes, jerr := json.Marshal(ngConfig)
 	//confBytes, jerr := json.MarshalIndent(ngConfig, "", "    ")
 	if jerr != nil {
@@ -25,9 +30,7 @@ func Run(appConfig NGConfig, ngConfig *resolv.Config) {
 		return
 	}
 
-	//loginURI := "/login/:username/:password"
-	//verifyURI := "/verify/:token"
-	//refreshURI := "/refresh/:token"
+	// 初始化接口
 	loginURI := "/login"
 	verifyURI := "/verify"
 	refreshURI := "/refresh"
@@ -87,7 +90,16 @@ func Run(appConfig NGConfig, ngConfig *resolv.Config) {
 	return
 }
 
+// statisticsView, nginx配置统计信息查询接口函数
+// 参数:
+//     appName: 子进程标题
+//     config: 子进程nginx配置对象指针
+//     c: gin上下文对象指针
+// 返回值:
+//     h: gin.H
+//     s: http状态码
 func statisticsView(appName string, config *resolv.Config, c *gin.Context) (h gin.H, s int) {
+	// 初始化h
 	status := "unkown"
 	message := make(gin.H, 0)
 	h = gin.H{
@@ -95,6 +107,7 @@ func statisticsView(appName string, config *resolv.Config, c *gin.Context) (h gi
 		"message": &message,
 	}
 
+	// 获取接口访问参数
 	token, hasToken := c.GetQuery("token")
 	if !hasToken {
 		status = "failed"
@@ -104,6 +117,7 @@ func statisticsView(appName string, config *resolv.Config, c *gin.Context) (h gi
 		return
 	}
 
+	// 校验token
 	_, verifyErr := verifyAction(token)
 	if verifyErr != nil {
 		status = "failed"
@@ -113,6 +127,7 @@ func statisticsView(appName string, config *resolv.Config, c *gin.Context) (h gi
 		return
 	}
 
+	// 检查接口访问统计查询过滤参数
 	noHttpSvrsNum, notHasHttpSvrsNum := c.GetQuery("NoHttpSvrsNum")
 	if !notHasHttpSvrsNum {
 		noHttpSvrsNum = "false"
@@ -143,7 +158,9 @@ func statisticsView(appName string, config *resolv.Config, c *gin.Context) (h gi
 		noStreamPorts = "false"
 	}
 
+	// 判断统计查询过滤参数是否为bool型
 	if (noHttpSvrsNum == "true" || noHttpSvrsNum == "false") && (noHttpSvrNames == "true" || noHttpSvrNames == "false") && (noHttpPorts == "true" || noHttpPorts == "false") && (noLocNum == "true" || noLocNum == "false") && (noStreamSvrsNum == "true" || noStreamSvrsNum == "false") && (noStreamPorts == "true" || noStreamPorts == "false") {
+		// 统计查询过滤参数不可都为真
 		if noHttpSvrsNum == "true" && noHttpSvrNames == "true" && noHttpPorts == "true" && noLocNum == "true" && noStreamSvrsNum == "true" && noStreamPorts == "true" {
 			status = "failed"
 			h["message"] = "invalid params."
@@ -151,6 +168,7 @@ func statisticsView(appName string, config *resolv.Config, c *gin.Context) (h gi
 			return
 		}
 
+		// 统计查询未过滤数据
 		if noHttpSvrsNum == "false" {
 			message["httpSvrsNum"] = statistics.HTTPServersNum(config)
 		}
@@ -170,6 +188,7 @@ func statisticsView(appName string, config *resolv.Config, c *gin.Context) (h gi
 			message["streamPorts"] = statistics.StreamPorts(config)
 		}
 
+		// 无数据时，返回无数据
 		if len(message) == 0 {
 			status = "failed"
 			h["message"] = "no data"
@@ -189,7 +208,16 @@ func statisticsView(appName string, config *resolv.Config, c *gin.Context) (h gi
 	return
 }
 
+// view, nginx配置查询接口函数
+// 参数:
+//     appName: 子进程标题
+//     config: 子进程nginx配置对象指针
+//     c: gin上下文对象指针
+// 返回值:
+//     h: gin.H
+//     s: http返回码
 func view(appName string, config *resolv.Config, c *gin.Context) (h gin.H, s int) {
+	// 初始化h
 	status := "unkown"
 	var message interface{} = "null"
 	h = gin.H{
@@ -197,6 +225,7 @@ func view(appName string, config *resolv.Config, c *gin.Context) (h gin.H, s int
 		"message": &message,
 	}
 
+	// 获取查询接口访问token参数
 	token, hasToken := c.GetQuery("token")
 	if !hasToken {
 		status = "failed"
@@ -206,6 +235,7 @@ func view(appName string, config *resolv.Config, c *gin.Context) (h gin.H, s int
 		return
 	}
 
+	// 校验token
 	_, verifyErr := verifyAction(token)
 	if verifyErr != nil {
 		status = "failed"
@@ -215,12 +245,14 @@ func view(appName string, config *resolv.Config, c *gin.Context) (h gin.H, s int
 		return
 	}
 
+	// 获取查询接口访问type参数
 	t, typeOK := c.GetQuery("type")
 	if !typeOK {
 		t = "string"
 	}
 
 	s = http.StatusOK
+	// 组装查询数据
 	switch t {
 	case "string":
 		status = "success"
@@ -245,8 +277,19 @@ func view(appName string, config *resolv.Config, c *gin.Context) (h gin.H, s int
 	return
 }
 
+// update, nginx配置更新接口函数
+// 参数:
+//     appName: 子进程标题
+//     ngBin: 子进程nginx可执行文件路径
+//     ng: 子进程nginx配置对象指针
+//     c: gin上下文指针
+// 返回值:
+//     h: gin.H
+//     s: http返回码
 func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H, s int) {
+	// 函数执行完毕前清理nginx配置缓存
 	defer resolv.ReleaseConfigsCache()
+	// 初始化h
 	status := "unkown"
 	message := "null"
 	h = gin.H{
@@ -254,6 +297,7 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H, 
 		"message": &message,
 	}
 
+	// 获取接口访问token参数
 	token, hasToken := c.GetQuery("token")
 	if !hasToken {
 		status = "failed"
@@ -263,6 +307,7 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H, 
 		return
 	}
 
+	// 校验token
 	_, verifyErr := verifyAction(token)
 	if verifyErr != nil {
 		status = "failed"
@@ -272,6 +317,7 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H, 
 		return
 	}
 
+	// 获取接口推送数据文件表单
 	//confBytes := c.DefaultPostForm("data", "null")
 	file, formFileErr := c.FormFile("data")
 	if formFileErr != nil {
@@ -291,7 +337,7 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H, 
 		return
 	}
 
-	defer f.Close()
+	defer f.Close() // 关闭文件对象
 	confBytes, rErr := ioutil.ReadAll(f)
 	if rErr != nil {
 		message := fmt.Sprintf("Read file failed: <%s>.", rErr)
@@ -302,6 +348,7 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H, 
 		return
 	}
 
+	// 解析接口传入的nginx配置json数据，并完成备份更新
 	if len(confBytes) > 0 {
 
 		Log(NOTICE, fmt.Sprintf("[%s] [%s] Unmarshal nginx ng.", c.ClientIP(), appName))
