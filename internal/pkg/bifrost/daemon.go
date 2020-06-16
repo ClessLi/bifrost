@@ -68,7 +68,8 @@ func Start() error {
 			ng, err := resolv.Load(ngConfig.ConfPath)
 
 			if err != nil {
-				fmt.Println(err)
+				//fmt.Println(err)
+				Log(ERROR, fmt.Sprintf("[%s] load config error: %s", ngConfig.Name, err))
 				continue
 			}
 

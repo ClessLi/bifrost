@@ -26,7 +26,7 @@ func Run(appConfig NGConfig, ngConfig *resolv.Config) {
 	//confBytes, jerr := json.MarshalIndent(ngConfig, "", "    ")
 	if jerr != nil {
 		//errChan <- jerr
-		Log(CRITICAL, fmt.Sprintf("%s's coroutine has been stoped. Cased by '%s'", ngConfig.Name, jerr))
+		Log(CRITICAL, fmt.Sprintf("[%s] coroutine has been stoped. Cased by '%s'", ngConfig.Name, jerr))
 		return
 	}
 
@@ -41,7 +41,7 @@ func Run(appConfig NGConfig, ngConfig *resolv.Config) {
 	ngBin, absErr := filepath.Abs(appConfig.NginxBin)
 	if absErr != nil {
 		//errChan <- absErr
-		Log(CRITICAL, fmt.Sprintf("%s's coroutine has been stoped. Cased by '%s'", ngConfig.Name, absErr))
+		Log(CRITICAL, fmt.Sprintf("[%s] coroutine has been stoped. Cased by '%s'", ngConfig.Name, absErr))
 		return
 	}
 
@@ -79,14 +79,14 @@ func Run(appConfig NGConfig, ngConfig *resolv.Config) {
 		bakChan <- 9
 		// 输出子任务运行错误
 		//errChan <- rErr
-		Log(CRITICAL, fmt.Sprintf("%s's coroutine has been stoped. Cased by '%s'", ngConfig.Name, rErr))
+		Log(CRITICAL, fmt.Sprintf("[%s] coroutine has been stoped. Cased by '%s'", ngConfig.Name, rErr))
 		return
 	}
 
 	// 关闭备份
 	bakChan <- 9
 	//errChan <- nil
-	Log(NOTICE, fmt.Sprintf("%s's coroutine has been stoped", ngConfig.Name))
+	Log(NOTICE, fmt.Sprintf("[%s] coroutine has been stoped", ngConfig.Name))
 	return
 }
 
