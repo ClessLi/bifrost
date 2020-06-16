@@ -108,6 +108,7 @@ Options:
 
 // init, bifrost包初始化函数
 func init() {
+	// TODO: 修复因nginx配置文件存在循环加载现象导致读取配置失败，最终使bifrost不断读取内存溢出
 	// 初始化工作目录
 	ex, err := os.Executable()
 	if err != nil {
