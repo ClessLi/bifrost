@@ -287,8 +287,6 @@ func view(appName string, config *resolv.Config, c *gin.Context) (h gin.H, s int
 //     h: gin.H
 //     s: http返回码
 func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H, s int) {
-	// 函数执行完毕前清理nginx配置缓存
-	defer resolv.ReleaseConfigsCache()
 	// 初始化h
 	status := "unkown"
 	message := "null"
@@ -351,8 +349,8 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H, 
 	// 解析接口传入的nginx配置json数据，并完成备份更新
 	if len(confBytes) > 0 {
 
-		Log(NOTICE, fmt.Sprintf("[%s] [%s] Unmarshal nginx ng.", c.ClientIP(), appName))
-		newConfig, ujErr := ngJson.Unmarshal(confBytes, &ngJson.Config{})
+		Log(NOTICE, fmt.Sprintf("[%s] [%s] unmarshal nginx ng.", c.ClientIP(), appName))
+		newConfig, ujErr := ngJson.Unmarshal(confBytes)
 		if ujErr != nil || len(newConfig.(*resolv.Config).Children) <= 0 || newConfig.(*resolv.Config).Value == "" {
 			message = fmt.Sprintf("UnmarshalJson failed. <%s>, data: <%s>", ujErr, confBytes)
 			Log(WARN, fmt.Sprintf("[%s] [%s] %s", appName, c.ClientIP(), message))

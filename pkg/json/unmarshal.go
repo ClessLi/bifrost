@@ -5,15 +5,16 @@ package json
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/ClessLi/go-nginx-conf-parser/pkg/resolv"
 	"regexp"
 )
 
 // unmarshaler, json反序列化内部接口对象，定义了用于nginx配置对象json反序列化所需实现的方法
 type unmarshaler interface {
-	UnmarshalToJSON(b []byte) (resolv.Parser, error)          // json反序列化方法
-	getChildren() []*json.RawMessage                          // 统一输出对象子对象json串内部方法
-	toParser(children []resolv.Parser) (resolv.Parser, error) // 统一解析并返回nginx配置对象的内部方法
+	UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) // json反序列化方法
+	getChildren() []*json.RawMessage                                         // 统一输出对象子对象json串内部方法
+	toParser(children []resolv.Parser) (resolv.Parser, error)                // 统一解析并返回nginx配置对象的内部方法
 }
 
 // BasicContext, 用于json反序列化的上下文基础对象，定义了上下文类型的基本属性及基础方法
@@ -31,9 +32,9 @@ type Config struct {
 	BasicContext `json:"config"`
 }
 
-func (conf *Config) UnmarshalToJSON(b []byte) (resolv.Parser, error) {
-	return Unmarshal(b, conf)
-	//return Unmarshal(b)
+func (conf *Config) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
+	return unmarshal(b, conf, configCaches)
+	//return unmarshal(b)
 }
 
 func (conf *Config) toParser(children []resolv.Parser) (resolv.Parser, error) {
@@ -47,13 +48,16 @@ type Include struct {
 	ConfPWD      string   `json:"conf_pwd"`
 }
 
-func (i *Include) UnmarshalToJSON(b []byte) (resolv.Parser, error) {
-	return Unmarshal(b, i)
-	//return Unmarshal(b)
+func (i *Include) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
+	return unmarshal(b, i, configCaches)
+	//return unmarshal(b)
 }
 
 func (i *Include) toParser(children []resolv.Parser) (resolv.Parser, error) {
-	IN := resolv.NewInclude(i.ConfPWD, i.Value)
+	IN, err := resolv.NewInclude(i.ConfPWD, i.Value, &[]string{})
+	if err != nil {
+		return nil, err
+	}
 	IN.Children = children
 	return IN, nil
 }
@@ -62,9 +66,9 @@ type Types struct {
 	BasicContext `json:"types"`
 }
 
-func (t *Types) UnmarshalToJSON(b []byte) (resolv.Parser, error) {
-	return Unmarshal(b, t)
-	//return Unmarshal(b)
+func (t *Types) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
+	return unmarshal(b, t, configCaches)
+	//return unmarshal(b)
 }
 
 func (t *Types) toParser(children []resolv.Parser) (resolv.Parser, error) {
@@ -77,9 +81,9 @@ type Map struct {
 	BasicContext `json:"map"`
 }
 
-func (m *Map) UnmarshalToJSON(b []byte) (resolv.Parser, error) {
-	return Unmarshal(b, m)
-	//return Unmarshal(b)
+func (m *Map) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
+	return unmarshal(b, m, configCaches)
+	//return unmarshal(b)
 }
 
 func (m *Map) toParser(children []resolv.Parser) (resolv.Parser, error) {
@@ -92,9 +96,9 @@ type LimitExcept struct {
 	BasicContext `json:"limit_except"`
 }
 
-func (le *LimitExcept) UnmarshalToJSON(b []byte) (resolv.Parser, error) {
-	return Unmarshal(b, le)
-	//return Unmarshal(b)
+func (le *LimitExcept) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
+	return unmarshal(b, le, configCaches)
+	//return unmarshal(b)
 }
 
 func (le *LimitExcept) toParser(children []resolv.Parser) (resolv.Parser, error) {
@@ -107,9 +111,9 @@ type Events struct {
 	BasicContext `json:"events"`
 }
 
-func (e *Events) UnmarshalToJSON(b []byte) (resolv.Parser, error) {
-	return Unmarshal(b, e)
-	//return Unmarshal(b)
+func (e *Events) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
+	return unmarshal(b, e, configCaches)
+	//return unmarshal(b)
 }
 
 func (e *Events) toParser(children []resolv.Parser) (resolv.Parser, error) {
@@ -122,9 +126,9 @@ type Geo struct {
 	BasicContext `json:"geo"`
 }
 
-func (g *Geo) UnmarshalToJSON(b []byte) (resolv.Parser, error) {
-	return Unmarshal(b, g)
-	//return Unmarshal(b)
+func (g *Geo) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
+	return unmarshal(b, g, configCaches)
+	//return unmarshal(b)
 }
 
 func (g *Geo) toParser(children []resolv.Parser) (resolv.Parser, error) {
@@ -137,9 +141,9 @@ type Http struct {
 	BasicContext `json:"http"`
 }
 
-func (h *Http) UnmarshalToJSON(b []byte) (resolv.Parser, error) {
-	return Unmarshal(b, h)
-	//return Unmarshal(b)
+func (h *Http) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
+	return unmarshal(b, h, configCaches)
+	//return unmarshal(b)
 }
 
 func (h *Http) toParser(children []resolv.Parser) (resolv.Parser, error) {
@@ -152,9 +156,9 @@ type Stream struct {
 	BasicContext `json:"stream"`
 }
 
-func (st *Stream) UnmarshalToJSON(b []byte) (resolv.Parser, error) {
-	return Unmarshal(b, st)
-	//return Unmarshal(b)
+func (st *Stream) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
+	return unmarshal(b, st, configCaches)
+	//return unmarshal(b)
 }
 
 func (st *Stream) toParser(children []resolv.Parser) (resolv.Parser, error) {
@@ -167,9 +171,9 @@ type Upstream struct {
 	BasicContext `json:"upstream"`
 }
 
-func (u *Upstream) UnmarshalToJSON(b []byte) (resolv.Parser, error) {
-	return Unmarshal(b, u)
-	//return Unmarshal(b)
+func (u *Upstream) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
+	return unmarshal(b, u, configCaches)
+	//return unmarshal(b)
 }
 
 func (u *Upstream) toParser(children []resolv.Parser) (resolv.Parser, error) {
@@ -182,9 +186,9 @@ type Server struct {
 	BasicContext `json:"server"`
 }
 
-func (s *Server) UnmarshalToJSON(b []byte) (resolv.Parser, error) {
-	return Unmarshal(b, s)
-	//return Unmarshal(b)
+func (s *Server) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
+	return unmarshal(b, s, configCaches)
+	//return unmarshal(b)
 }
 
 func (s *Server) toParser(children []resolv.Parser) (resolv.Parser, error) {
@@ -197,9 +201,9 @@ type Location struct {
 	BasicContext `json:"location"`
 }
 
-func (l *Location) UnmarshalToJSON(b []byte) (resolv.Parser, error) {
-	return Unmarshal(b, l)
-	//return Unmarshal(b)
+func (l *Location) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
+	return unmarshal(b, l, configCaches)
+	//return unmarshal(b)
 }
 
 func (l *Location) toParser(children []resolv.Parser) (resolv.Parser, error) {
@@ -212,9 +216,9 @@ type If struct {
 	BasicContext `json:"if"`
 }
 
-func (i *If) UnmarshalToJSON(b []byte) (resolv.Parser, error) {
-	return Unmarshal(b, i)
-	//return Unmarshal(b)
+func (i *If) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
+	return unmarshal(b, i, configCaches)
+	//return unmarshal(b)
 }
 
 func (i *If) toParser(children []resolv.Parser) (resolv.Parser, error) {
@@ -227,7 +231,7 @@ type Key struct {
 	resolv.Key
 }
 
-func (k *Key) UnmarshalToJSON(b []byte) (resolv.Parser, error) {
+func (k *Key) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
 	err := json.Unmarshal(b, k)
 	return &k.Key, err
 }
@@ -244,7 +248,7 @@ type Comment struct {
 	resolv.Comment
 }
 
-func (c *Comment) UnmarshalToJSON(b []byte) (resolv.Parser, error) {
+func (c *Comment) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
 	err := json.Unmarshal(b, c)
 	return &c.Comment, err
 }
@@ -258,26 +262,52 @@ func (c *Comment) toParser(_ []resolv.Parser) (resolv.Parser, error) {
 }
 
 // Unmarshal, json反序列化并返回nginx配置对象的函数
-func Unmarshal(b []byte, p unmarshaler) (resolv.Parser, error) {
+func Unmarshal(b []byte) (resolv.Parser, error) {
+	return unmarshal(b, &Config{}, &[]string{})
+}
+
+// unmarshal, json反序列化并返回nginx配置对象的内部函数
+func unmarshal(b []byte, p unmarshaler, configCaches *[]string) (resolv.Parser, error) {
 	switch p.(type) {
 	case *Key, *Comment:
-		return p.UnmarshalToJSON(b)
+		return p.UnmarshalToJSON(b, configCaches)
 	default:
 		err := json.Unmarshal(b, p)
 		if err != nil {
 			return nil, err
 		}
-		children, cerr := unmarshalChildren(p.getChildren())
-		if cerr != nil {
-			return nil, cerr
+		if conf, ok := p.(*Config); ok {
+			if inCaches(conf.Value, configCaches) {
+				return nil, fmt.Errorf("config '%s' is already loaded", conf.Value)
+			}
+			newCaches := *configCaches
+			newCaches = append(newCaches, conf.Value)
+			children, cerr := unmarshalChildren(p.getChildren(), &newCaches)
+			if cerr != nil {
+				return nil, cerr
+			}
+			return p.toParser(children)
+		} else {
+			children, cerr := unmarshalChildren(p.getChildren(), configCaches)
+			if cerr != nil {
+				return nil, cerr
+			}
+			return p.toParser(children)
 		}
-
-		return p.toParser(children)
 	}
 }
 
+func inCaches(path string, caches *[]string) bool {
+	for _, cache := range *caches {
+		if path == cache {
+			return true
+		}
+	}
+	return false
+}
+
 // unmarshalChildren, 解析并反序列化子json串切片对象的内部函数
-func unmarshalChildren(bytes []*json.RawMessage) (children []resolv.Parser, err error) {
+func unmarshalChildren(bytes []*json.RawMessage, configCaches *[]string) (children []resolv.Parser, err error) {
 	// parseContext, 用于解析json串归属于哪类需反序列化对象的匿名函数
 	parseContext := func(b []byte, reg *regexp.Regexp) bool {
 		if m := reg.Find(b); m != nil {
@@ -290,100 +320,100 @@ func unmarshalChildren(bytes []*json.RawMessage) (children []resolv.Parser, err 
 	for _, b := range bytes {
 		switch {
 		case parseContext(*b, RegCommentHead):
-			comment, err := Unmarshal(*b, &Comment{})
+			comment, err := unmarshal(*b, &Comment{}, configCaches)
 			if err != nil {
 				return nil, err
 			}
 			children = append(children, comment)
 		case parseContext(*b, RegIncludeHead):
-			include, err := Unmarshal(*b, &Include{})
+			include, err := unmarshal(*b, &Include{}, configCaches)
 			if err != nil {
 				return nil, err
 			}
 			children = append(children, include)
 		case parseContext(*b, RegConfigHead):
-			config, err := Unmarshal(*b, &Config{})
+			config, err := unmarshal(*b, &Config{}, configCaches)
 			if err != nil {
 				return nil, err
 			}
 			children = append(children, config)
 		case parseContext(*b, RegEventsHead):
-			events, err := Unmarshal(*b, &Events{})
+			events, err := unmarshal(*b, &Events{}, configCaches)
 			if err != nil {
 				return nil, err
 			}
 			children = append(children, events)
 		case parseContext(*b, RegGeoHead):
-			geo, err := Unmarshal(*b, &Geo{})
+			geo, err := unmarshal(*b, &Geo{}, configCaches)
 			if err != nil {
 				return nil, err
 			}
 			children = append(children, geo)
 		case parseContext(*b, RegHttpHead):
-			http, err := Unmarshal(*b, &Http{})
+			http, err := unmarshal(*b, &Http{}, configCaches)
 			if err != nil {
 				return nil, err
 				//return
 			}
 			children = append(children, http)
 		case parseContext(*b, RegIfHead):
-			i, err := Unmarshal(*b, &If{})
+			i, err := unmarshal(*b, &If{}, configCaches)
 			if err != nil {
 				return nil, err
 				//return
 			}
 			children = append(children, i)
 		case parseContext(*b, RegLimitExceptHead):
-			le, err := Unmarshal(*b, &LimitExcept{})
+			le, err := unmarshal(*b, &LimitExcept{}, configCaches)
 			if err != nil {
 				return nil, err
 				//return
 			}
 			children = append(children, le)
 		case parseContext(*b, RegLocationHead):
-			l, err := Unmarshal(*b, &Location{})
+			l, err := unmarshal(*b, &Location{}, configCaches)
 			if err != nil {
 				return nil, err
 				//return
 			}
 			children = append(children, l)
 		case parseContext(*b, RegMapHead):
-			m, err := Unmarshal(*b, &Map{})
+			m, err := unmarshal(*b, &Map{}, configCaches)
 			if err != nil {
 				return nil, err
 				//return
 			}
 			children = append(children, m)
 		case parseContext(*b, RegServerHead):
-			svr, err := Unmarshal(*b, &Server{})
+			svr, err := unmarshal(*b, &Server{}, configCaches)
 			if err != nil {
 				return nil, err
 				//return
 			}
 			children = append(children, svr)
 		case parseContext(*b, RegStreamHead):
-			st, err := Unmarshal(*b, &Stream{})
+			st, err := unmarshal(*b, &Stream{}, configCaches)
 			if err != nil {
 				return nil, err
 				//return
 			}
 			children = append(children, st)
 		case parseContext(*b, RegTypesHead):
-			t, err := Unmarshal(*b, &Types{})
+			t, err := unmarshal(*b, &Types{}, configCaches)
 			if err != nil {
 				return nil, err
 				//return
 			}
 			children = append(children, t)
 		case parseContext(*b, RegUpstreamHead):
-			u, err := Unmarshal(*b, &Upstream{})
+			u, err := unmarshal(*b, &Upstream{}, configCaches)
 			if err != nil {
 				return nil, err
 				//return
 			}
 			children = append(children, u)
 		default:
-			k, err := Unmarshal(*b, &Key{})
+			k, err := unmarshal(*b, &Key{}, configCaches)
 			if err != nil {
 				return nil, err
 				//return

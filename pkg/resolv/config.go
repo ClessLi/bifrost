@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 )
 
-// TODO: 调整配置循环加载机制
+// DONE: 调整配置防循环加载机制
 var ErrConfigIsExist = errors.New("config is exsit")
 
 type Order int
@@ -22,9 +22,6 @@ type Parser interface {
 type Config struct {
 	BasicContext `json:"config"`
 }
-
-// 记录当前加载的*Config对象
-var configs []*Config
 
 func (c *Config) String() []string {
 	ret := make([]string, 0)
@@ -144,11 +141,11 @@ func (c *Config) Size(order Order) int {
 
 func NewConf(conf []Parser, value string) (*Config, error) {
 	// 确定*Config的唯一性，防止多次加载
-	for _, c := range configs {
-		if c.Value == value {
-			return c, ErrConfigIsExist
-		}
-	}
+	//for _, c := range configs {
+	//	if c.Value == value {
+	//		return c, ErrConfigIsExist
+	//	}
+	//}
 	f := &Config{BasicContext{
 		Name:     TypeConfig,
 		Value:    value,
@@ -156,6 +153,6 @@ func NewConf(conf []Parser, value string) (*Config, error) {
 	}}
 
 	// 确保*Config的唯一性，将新加载的*Config加入configs
-	configs = append(configs, f)
+	//configs = append(configs, f)
 	return f, nil
 }

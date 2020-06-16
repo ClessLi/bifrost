@@ -1,6 +1,7 @@
 package resolv
 
 import (
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"regexp"
@@ -8,16 +9,20 @@ import (
 )
 
 func Load(path string) (*Config, error) {
-	defer ReleaseConfigsCache()
+	//defer ReleaseConfigsCache()
 
 	absPath, err := filepath.Abs(path)
 	if err != nil {
 		return nil, err
 	}
-	return load(absPath)
+	var configCaches []string
+	return load(absPath, &configCaches)
 }
 
-func load(path string) (*Config, error) {
+func load(path string, configCaches *[]string) (conf *Config, err error) {
+	if inCaches(path, configCaches) {
+		return nil, fmt.Errorf("config '%s' is already loaded", path)
+	}
 
 	dir, dirErr := filepath.Abs(filepath.Dir(path))
 	if dirErr != nil {
@@ -35,6 +40,11 @@ func load(path string) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+	//var newCaches []string
+	//copy(newCaches, *configCaches)
+	newCaches := *configCaches
+	//configCaches = append(configCaches, path)
+	newCaches = append(newCaches, path)
 
 	index := 0
 	var lopen []Parser
@@ -122,7 +132,11 @@ func load(path string) (*Config, error) {
 				k = NewKey(ms[1], ms[2])
 			}
 
-			k := checkInclude(k, dir)
+			k, ckErr := checkInclude(k, dir, &newCaches)
+			if ckErr != nil {
+				err = ckErr
+				return false
+			}
 
 			if ct, isContext := checkContext(lopen); isContext {
 				ct.Add(k)
@@ -154,20 +168,32 @@ func load(path string) (*Config, error) {
 			parseContextEnd(RegContextEnd),
 			parseKey(RegKeyValue),
 			parseKey(RegKey):
+			if err != nil {
+				return nil, err
+			}
 			continue
 		}
 
 		break
 	}
 
-	return f, nil
+	return f, err
 }
 
-func checkInclude(k *Key, dir string) Parser {
-	if k.Name == TypeInclude {
-		return NewInclude(dir, k.Value)
+func inCaches(path string, caches *[]string) bool {
+	for _, cache := range *caches {
+		if path == cache {
+			return true
+		}
 	}
-	return k
+	return false
+}
+
+func checkInclude(k *Key, dir string, configCaches *[]string) (Parser, error) {
+	if k.Name == TypeInclude {
+		return NewInclude(dir, k.Value, configCaches)
+	}
+	return k, nil
 }
 
 func checkContext(lopen []Parser) (Context, bool) {
@@ -188,6 +214,6 @@ func readConf(path string) (string, error) {
 }
 
 // 解析、加载配置文件对象后，方便清除相关缓存
-func ReleaseConfigsCache() {
-	configs = []*Config{}
-}
+//func ReleaseConfigsCache() {
+//	configs = []*Config{}
+//}

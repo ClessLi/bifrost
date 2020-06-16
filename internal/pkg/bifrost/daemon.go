@@ -19,10 +19,6 @@ func Start() error {
 	// 判断当前进程是子进程还是主进程
 	if isMain() { // 主进程时
 		// 执行子进程
-		//execPath, pathErr := filepath.Abs(os.Args[0])
-		//if pathErr != nil {
-		//	return pathErr
-		//}
 
 		// 判断是否已存在子进程
 		if pid, pidErr := getPid(); pidErr == nil {

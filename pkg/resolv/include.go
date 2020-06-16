@@ -53,8 +53,9 @@ func (i *Include) String() []string {
 	return strs
 }
 
-func (i *Include) load() error {
-
+func (i *Include) load(configCaches *[]string) error {
+	//var newCaches []string
+	//copy(newCaches, *configCaches)
 	paths, err := filepath.Glob(filepath.Join(i.ConfPWD, i.Value))
 	if err != nil {
 		return err
@@ -62,7 +63,8 @@ func (i *Include) load() error {
 
 	for _, path := range paths {
 
-		conf, lerr := load(path)
+		//conf, lerr := load(path, newCaches)
+		conf, lerr := load(path, configCaches)
 		if lerr != nil {
 			return lerr
 		}
@@ -93,7 +95,7 @@ func (i *Include) dump() ([]string, error) {
 	return i.Key.String(), nil
 }
 
-func NewInclude(dir, paths string) *Include {
+func NewInclude(dir, paths string, configCaches *[]string) (*Include, error) {
 	include := &Include{
 		BasicContext: BasicContext{
 			Name:     TypeInclude,
@@ -105,10 +107,10 @@ func NewInclude(dir, paths string) *Include {
 		ConfPWD: dir,
 	}
 
-	err := include.load()
+	err := include.load(configCaches)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
-	return include
+	return include, nil
 }
