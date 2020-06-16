@@ -9,42 +9,37 @@ import (
 )
 
 func Load(path string) (*Config, error) {
-	//defer ReleaseConfigsCache()
-
-	absPath, err := filepath.Abs(path)
+	ngDir, err := filepath.Abs(filepath.Dir(path))
 	if err != nil {
 		return nil, err
 	}
+	relativePath := filepath.Base(path)
 	var configCaches []string
-	return load(absPath, &configCaches)
+	return load(ngDir, relativePath, &configCaches)
 }
 
-func load(path string, configCaches *[]string) (conf *Config, err error) {
-	if inCaches(path, configCaches) {
-		return nil, fmt.Errorf("config '%s' is already loaded", path)
+func load(ngDir, relativePath string, configCaches *[]string) (conf *Config, err error) {
+	absPath := filepath.Join(ngDir, relativePath)
+	if inCaches(absPath, configCaches) {
+		return nil, fmt.Errorf("config '%s' is already loaded", absPath)
 	}
 
-	dir, dirErr := filepath.Abs(filepath.Dir(path))
-	if dirErr != nil {
-		return nil, dirErr
-	}
-
-	f, err := NewConf(nil, path)
+	f, err := NewConf(nil, absPath)
 	if err == ErrConfigIsExist {
 		return f, nil
 	} else if err != nil && err != ErrConfigIsExist {
 		return nil, err
 	}
 
-	data, err := readConf(path)
+	data, err := readConf(absPath)
 	if err != nil {
 		return nil, err
 	}
 	//var newCaches []string
 	//copy(newCaches, *configCaches)
 	newCaches := *configCaches
-	//configCaches = append(configCaches, path)
-	newCaches = append(newCaches, path)
+	//configCaches = append(configCaches, absPath)
+	newCaches = append(newCaches, absPath)
 
 	index := 0
 	var lopen []Parser
@@ -132,7 +127,7 @@ func load(path string, configCaches *[]string) (conf *Config, err error) {
 				k = NewKey(ms[1], ms[2])
 			}
 
-			k, ckErr := checkInclude(k, dir, &newCaches)
+			k, ckErr := checkInclude(k, ngDir, &newCaches)
 			if ckErr != nil {
 				err = ckErr
 				return false

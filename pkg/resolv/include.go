@@ -64,7 +64,12 @@ func (i *Include) load(configCaches *[]string) error {
 	for _, path := range paths {
 
 		//conf, lerr := load(path, newCaches)
-		conf, lerr := load(path, configCaches)
+		relPath, relErr := filepath.Rel(i.ConfPWD, path)
+		if relErr != nil {
+			return relErr
+		}
+
+		conf, lerr := load(i.ConfPWD, relPath, configCaches)
 		if lerr != nil {
 			return lerr
 		}
