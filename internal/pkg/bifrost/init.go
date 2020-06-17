@@ -108,6 +108,7 @@ Options:
 
 // init, bifrost包初始化函数
 func init() {
+	// TODO: nginx配置文件后台更新后自动热加载功能
 	// 初始化工作目录
 	ex, err := os.Executable()
 	if err != nil {
