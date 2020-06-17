@@ -1,6 +1,6 @@
 # 项目介绍
 
-go-nginx-conf-parser 是基于golang语言开发的项目，它目前还处于测试阶段，目前已提供Nginx配置文件管理后端工具“bifrost”，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用版本为[v0.0.3-beta.2](https://github.com/ClessLi/go-nginx-conf-parser/tree/v0.0.3-beta.2) 。
+go-nginx-conf-parser 是基于golang语言开发的项目，它目前还处于测试阶段，目前已提供Nginx配置文件管理后端工具“bifrost”，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用版本为[v0.0.3-beta.3](https://github.com/ClessLi/go-nginx-conf-parser/tree/v0.0.3-beta.3) 。
 
 # 项目特点
 
@@ -8,37 +8,19 @@ go-nginx-conf-parser 是基于golang语言开发的项目，它目前还处于�
 
 配置结构体支持增加、删除、查询（暂实现查询server上下文结构体）
 
+实现了在加载配置或返序列化json时，防止循环读取配置的功能；实现了nginx配置文件后台更新后，自动热加载的功能
+
 提供配置文件展示和修改及配置信息统计查询的接口
 
 # 使用方法
 
 ## 下载地址
 
-bifrost-v0.0.3-beta.2
+bifrost-v0.0.3-beta.3
 
-> Windows: [bifrost.v0_0_3-beta.2.win_x64](https://github.com/ClessLi/go-nginx-conf-parser/releases/download/v0.0.3-beta.2/bifrost.v0_0_3-beta.2.win_x64.zip)
+> Windows: [bifrost.v0_0_3-beta.3.win_x64](https://github.com/ClessLi/go-nginx-conf-parser/releases/download/v0.0.3-beta.3/bifrost.v0_0_3-beta.3.win_x64.zip)
 > 
-> Linux: [bifrost.v0_0_3-beta.2.linux_x64](https://github.com/ClessLi/go-nginx-conf-parser/releases/download/v0.0.3-beta.2/bifrost.v0_0_3-beta.2.linux_x64.zip)
-
-
-bifrost-v0.0.3-beta.1
-
-> Windows: [bifrost.v0_0_3-beta.1.win_x64](https://github.com/ClessLi/go-nginx-conf-parser/releases/download/v0.0.3-beta.1/bifrost.v0_0_3-beta.1.win_x64.zip)
-> 
-> Linux: [bifrost.v0_0_3-beta.1.linux_x64](https://github.com/ClessLi/go-nginx-conf-parser/releases/download/v0.0.3-beta.1/bifrost.v0_0_3-beta.1.linux_x64.zip)
-
-bifrost-v0.0.3-alpha.5
-
-> Windows: [bifrost.v0_0_3-alpha.5.win_x64](https://github.com/ClessLi/go-nginx-conf-parser/releases/download/v0.0.3-alpha.5/bifrost.v0_0_3-alpha.5.win_x64.zip)
-> 
-> Linux: [bifrost.v0_0_3-alpha.5.linux_x64](https://github.com/ClessLi/go-nginx-conf-parser/releases/download/v0.0.3-alpha.5/bifrost.v0_0_3-alpha.5.linux_x64.zip)
-
-
-bifrost-v0.0.3-alpha.4
-
-> Windows: [bifrost.v0_0_3-alpha.4.win_x64](https://github.com/ClessLi/go-nginx-conf-parser/releases/download/v0.0.3-alpha.4/bifrost.v0_0_3.win_x64.zip)
-> 
-> Linux: [bifrost.v0_0_3-alpha.4.linux_x64](https://github.com/ClessLi/go-nginx-conf-parser/releases/download/v0.0.3-alpha.4/bifrost.v0_0_3.linux_x64.zip)
+> Linux: [bifrost.v0_0_3-beta.3.linux_x64](https://github.com/ClessLi/go-nginx-conf-parser/releases/download/v0.0.3-beta.3/bifrost.v0_0_3-beta.3.linux_x64.zip)
 
 ## 应用配置
 
