@@ -49,6 +49,10 @@ func Run(appConfig NGConfig, ngConfig *resolv.Config) {
 	bakChan := make(chan int)
 	go Bak(appConfig, ngConfig, bakChan)
 
+	// 创建自动热加载配置协程管道及启动自动热加载配置协程
+	autoReloadChan := make(chan int)
+	go AutoReload(&appConfig, ngConfig, autoReloadChan)
+
 	router := gin.Default()
 	// login
 	router.GET(loginURI, login)
@@ -77,6 +81,8 @@ func Run(appConfig NGConfig, ngConfig *resolv.Config) {
 	if rErr != nil {
 		// 关闭备份
 		bakChan <- 9
+		// 关闭自动热加载
+		autoReloadChan <- 9
 		// 输出子任务运行错误
 		//errChan <- rErr
 		Log(CRITICAL, fmt.Sprintf("[%s] coroutine has been stoped. Cased by '%s'", ngConfig.Name, rErr))

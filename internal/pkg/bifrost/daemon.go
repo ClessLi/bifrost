@@ -2,7 +2,6 @@ package bifrost
 
 import (
 	"fmt"
-	"github.com/ClessLi/go-nginx-conf-parser/pkg/resolv"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -65,7 +64,8 @@ func Start() error {
 		Log(NOTICE, fmt.Sprintf("bifrost <PID %d> is started", pid))
 		// DONE: 并发异常，只能同时运行一个配置接口，待优化
 		for _, ngConfig := range Configs.NGConfigs {
-			ng, err := resolv.Load(ngConfig.ConfPath)
+			//ng, err := resolv.Load(ngConfig.ConfPath)
+			ng, err := ngLoad(&ngConfig)
 
 			if err != nil {
 				//fmt.Println(err)

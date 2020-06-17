@@ -69,6 +69,7 @@ type NGConfig struct {
 	Port         int    `yaml:"port"`
 	ConfPath     string `yaml:"confPath"`
 	NginxBin     string `yaml:"nginxBin"`
+	confHash     map[string]string
 }
 
 // DBConfig, mysql数据库信息结构体，用于读写bifrost信息
@@ -108,7 +109,7 @@ Options:
 
 // init, bifrost包初始化函数
 func init() {
-	// TODO: nginx配置文件后台更新后自动热加载功能
+	// DONE: nginx配置文件后台更新后自动热加载功能
 	// 初始化工作目录
 	ex, err := os.Executable()
 	if err != nil {
