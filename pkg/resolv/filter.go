@@ -6,15 +6,27 @@ import (
 )
 
 func GetHTTP(ctx Context) *Http {
+	if ctx == nil {
+		return nil
+	}
 	http := ctx.QueryAll(KeywordHTTP)
-	if len(http) == 0 {
+	if http == nil {
+		return nil
+	} else if len(http) == 0 { // TODO: 存在bug
 		return nil
 	}
 	return http[0].(*Http)
 }
 
 func GetHTTPServers(ctx Context, orders ...Order) []Parser {
-	servers := GetHTTP(ctx).Servers()
+	if ctx == nil {
+		return []Parser{}
+	}
+	http := GetHTTP(ctx)
+	if http == nil {
+		return nil
+	}
+	servers := http.Servers()
 	if orders != nil {
 		SortByOrders(&servers, orders...)
 	}
@@ -22,6 +34,9 @@ func GetHTTPServers(ctx Context, orders ...Order) []Parser {
 }
 
 func GetStream(ctx Context) *Stream {
+	if ctx == nil {
+		return nil
+	}
 	stream := ctx.QueryAll(KeywordStream)
 	if len(stream) == 0 {
 		return nil
@@ -34,14 +49,23 @@ func GetStream(ctx Context) *Stream {
 //}
 
 func GetServerName(ctx Context) Parser {
+	if ctx == nil {
+		return nil
+	}
 	return ctx.Query(KeywordSvrName)
 }
 
 func GetPorts(ctx Context) []Parser {
+	if ctx == nil {
+		return []Parser{}
+	}
 	return ctx.QueryAll(KeywordPort)
 }
 
 func GetLocations(ctx Context) []Parser {
+	if ctx == nil {
+		return []Parser{}
+	}
 	return ctx.QueryAll(KeywordLocations)
 }
 
@@ -98,7 +122,7 @@ func SortInsertUniqInt(slice []int, ints ...int) []int {
 		}
 
 		tmp := slice[n-1]
-		slice[n-1] = num
+		slice[n-1] = num + 1
 
 		i := 0
 		for slice[i] < num {
