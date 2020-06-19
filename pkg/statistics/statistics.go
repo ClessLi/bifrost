@@ -39,7 +39,7 @@ func HTTPServerNames(ctx resolv.Context) (serverNames []string) {
 }
 
 func HTTPLocationsNum(ctx resolv.Context) int {
-	return len(resolv.GetLocations(resolv.GetHTTP(ctx)))
+	return len(resolv.GetLocations(ctx))
 }
 
 func StreamServersNum(ctx resolv.Context) int {
