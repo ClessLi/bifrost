@@ -16,7 +16,7 @@ go-nginx-conf-parser 是基于golang语言开发的项目，它目前还处于�
 
 ## 下载地址
 
-bifrost-v0.0.3-beta.3
+bifrost-v0.0.3
 
 > Windows: [bifrost.v0_0_3.win_x64](https://github.com/ClessLi/go-nginx-conf-parser/releases/download/v0.0.3/bifrost.v0_0_3.win_x64.zip)
 > 
@@ -32,18 +32,20 @@ bifrost-v0.0.3-beta.3
 
 ```yaml
 WebServerInfo:
-  -
-    name: "bifrost-test"
-    relativePath: "/ng_conf"
-    port: 18080
-    confPath: "/usr/local/openresty/nginx/conf/nginx.conf"
-    nginxBin: "/usr/local/openresty/nginx/sbin/nginx"
-#  -
-#    name: "bifrost-test2"
-#    relativePath: "/ng_conf"
-#    port: 28080
-#    confPath: "/GO_Project/src/go-nginx-conf-parser/test/config_test/nginx.conf"
-#    nginxBin: "xxxxxxxxxxxx/nginx"
+  listenPort: 12321
+  servers:
+    -
+      name: "bifrost-test"
+      serverType: nginx
+      baseURI: "/ng_conf1"
+      confPath: "/usr/local/openresty/nginx/conf/nginx.conf"
+      verifyExecPath: "/usr/local/openresty/nginx/sbin/nginx"
+    -
+      name: "bifrost-test2"
+      serverType: nginx
+      baseURI: "/ng_conf2"
+      confPath: "/GO_Project/src/go-nginx-conf-parser/test/config_test/nginx.conf"
+      verifyExecPath: "xxxxxxxxxxxx/nginx"
 DBConfig:
   DBName: "bifrost"
   host: "127.0.0.1"
@@ -60,16 +62,18 @@ logConfig:
 
 ```
 > ./bifrost -h
- bifrost version: v0.0.3-alpha.5
- Usage: ./bifrost [-hv] [-f filename] [-s signal]
- 
- Options:
-   -f config
-     	the bifrost configuration file path. (default "./configs/bifrost.yml")
-   -h help
-     	this help
-   -s signal
-     	send signal to a master process: stop, restart, status 
+  bifrost version: v0.0.3
+  Usage: ./bifrost [-hv] [-f filename] [-s signal]
+  
+  Options:
+    -f config
+      	the bifrost configuration file path. (default "./configs/bifrost.yml")
+    -h help
+      	this help
+    -s signal
+      	send signal to a master process: stop, restart, status
+    -v version
+      	this version 
 ```
 
 ## 应用接口调用方式
@@ -92,7 +96,7 @@ logConfig:
 
 请求示例
 
-`http://127.0.0.1:18080/login?username=heimdall&password=Bultgang`
+`http://127.0.0.1:12321/login?username=heimdall&password=Bultgang`
 
 请求参数
 
@@ -134,7 +138,7 @@ json返回示例
 
 请求示例
 
-`http://127.0.0.1:18080/verify?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1OTE2MDcwMzcsImlhdCI6MTU5MTYwMzQzNywidXNlcl9pZCI6MSwicGFzc3dvcmQiOiJuZ2FkbWluIiwidXNlcm5hbWUiOiJuZ2FkbWluIiwiZnVsbF9uYW1lIjoibmdhZG1pbiIsInBlcm1pc3Npb25zIjpbXX0.l5qE1sMBD9VJHspzXlhHNmHhbZiF00YlCafUIsIEJpo`
+`http://127.0.0.1:12321/verify?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1OTE2MDcwMzcsImlhdCI6MTU5MTYwMzQzNywidXNlcl9pZCI6MSwicGFzc3dvcmQiOiJuZ2FkbWluIiwidXNlcm5hbWUiOiJuZ2FkbWluIiwiZnVsbF9uYW1lIjoibmdhZG1pbiIsInBlcm1pc3Npb25zIjpbXX0.l5qE1sMBD9VJHspzXlhHNmHhbZiF00YlCafUIsIEJpo`
 
 请求参数
 
@@ -173,7 +177,7 @@ json返回示例
 
 请求示例
 
-`http://127.0.0.1:18080/refresh?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1OTE2MDcwMzcsImlhdCI6MTU5MTYwMzQzNywidXNlcl9pZCI6MSwicGFzc3dvcmQiOiJuZ2FkbWluIiwidXNlcm5hbWUiOiJuZ2FkbWluIiwiZnVsbF9uYW1lIjoibmdhZG1pbiIsInBlcm1pc3Npb25zIjpbXX0.l5qE1sMBD9VJHspzXlhHNmHhbZiF00YlCafUIsIEJpo`
+`http://127.0.0.1:12321/refresh?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1OTE2MDcwMzcsImlhdCI6MTU5MTYwMzQzNywidXNlcl9pZCI6MSwicGFzc3dvcmQiOiJuZ2FkbWluIiwidXNlcm5hbWUiOiJuZ2FkbWluIiwiZnVsbF9uYW1lIjoibmdhZG1pbiIsInBlcm1pc3Npb25zIjpbXX0.l5qE1sMBD9VJHspzXlhHNmHhbZiF00YlCafUIsIEJpo`
 
 请求参数
 
@@ -201,9 +205,9 @@ json返回示例
 
 接口地址
 
-`http://<Host>:<Port>/<relativePath>/statistics?<statisticsParam>=<true|false>&token=<token>`
+`http://<Host>:<Port>/<baseURI>/statistics?<statisticsParam>=<true|false>&token=<token>`
 
-注：\<relativePath>为ng管理工具配置中NGConfigs列表各自元素的relativePath子参数值。\<statisticsParam>为统计查询过滤参数，详见请求参数
+注：\<baseURI>为ng管理工具配置中WebServerInfo.servers列表各自元素的baseURI子参数值。\<statisticsParam>为统计查询过滤参数，详见请求参数
 
 返回格式
 
@@ -215,7 +219,7 @@ json返回示例
 
 请求示例
 
-`http://127.0.0.1:18080/ng_conf/statistics?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1OTE2MDc3MDEsImlhdCI6MTU5MTYwMzQzNywidXNlcl9pZCI6MSwicGFzc3dvcmQiOiJuZ2FkbWluIiwidXNlcm5hbWUiOiJuZ2FkbWluIiwiZnVsbF9uYW1lIjoibmdhZG1pbiIsInBlcm1pc3Npb25zIjpbXX0.fDoe4v37XyjmrK4wnfhOUnePwJLdszYXveOfoRXyUj8&type=json`
+`http://127.0.0.1:12321/ng_conf1/statistics?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1OTE2MDc3MDEsImlhdCI6MTU5MTYwMzQzNywidXNlcl9pZCI6MSwicGFzc3dvcmQiOiJuZ2FkbWluIiwidXNlcm5hbWUiOiJuZ2FkbWluIiwiZnVsbF9uYW1lIjoibmdhZG1pbiIsInBlcm1pc3Npb25zIjpbXX0.fDoe4v37XyjmrK4wnfhOUnePwJLdszYXveOfoRXyUj8&type=json`
 
 请求参数
 
@@ -259,9 +263,9 @@ json返回示例
 
 接口地址
 
-`http://<Host>:<Port>/<relativePath>?token=<token>&type=<type>`
+`http://<Host>:<Port>/<baseURI>?token=<token>&type=<type>`
 
-注：\<relativePath>为ng管理工具配置中NGConfigs列表各自元素的relativePath子参数值。
+注：\<baseURI>为ng管理工具配置中WebServerInfo.servers列表各自元素的baseURI子参数值。
 
 返回格式
 
@@ -273,7 +277,7 @@ json返回示例
 
 请求示例
 
-`http://127.0.0.1:18080/ng_conf?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1OTE2MDc3MDEsImlhdCI6MTU5MTYwMzQzNywidXNlcl9pZCI6MSwicGFzc3dvcmQiOiJuZ2FkbWluIiwidXNlcm5hbWUiOiJuZ2FkbWluIiwiZnVsbF9uYW1lIjoibmdhZG1pbiIsInBlcm1pc3Npb25zIjpbXX0.fDoe4v37XyjmrK4wnfhOUnePwJLdszYXveOfoRXyUj8&type=json`
+`http://127.0.0.1:12321/ng_conf1?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1OTE2MDc3MDEsImlhdCI6MTU5MTYwMzQzNywidXNlcl9pZCI6MSwicGFzc3dvcmQiOiJuZ2FkbWluIiwidXNlcm5hbWUiOiJuZ2FkbWluIiwiZnVsbF9uYW1lIjoibmdhZG1pbiIsInBlcm1pc3Npb25zIjpbXX0.fDoe4v37XyjmrK4wnfhOUnePwJLdszYXveOfoRXyUj8&type=json`
 
 请求参数
 
@@ -324,9 +328,9 @@ json返回示例
 
 接口地址
 
-`http://<Host>:<Port>/<relativePath>?token=<token>`
+`http://<Host>:<Port>/<baseURI>?token=<token>`
 
-注：\<relativePath>为ng管理工具配置中NGConfigs列表各自元素的relativePath子参数值。
+注：\<baseURI>为ng管理工具配置中WebServerInfo.servers列表各自元素的baseURI子参数值。
 
 返回格式
 
@@ -339,7 +343,7 @@ json返回示例
 请求示例
 
 ```shell script
-curl 'http://127.0.0.1:18080/ng_conf?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1OTE2MDc3MDEsImlhdCI6MTU5MTYwMzQzNywidXNlcl9pZCI6MSwicGFzc3dvcmQiOiJuZ2FkbWluIiwidXNlcm5hbWUiOiJuZ2FkbWluIiwiZnVsbF9uYW1lIjoibmdhZG1pbiIsInBlcm1pc3Npb25zIjpbXX0.fDoe4v37XyjmrK4wnfhOUnePwJLdszYXveOfoRXyUj8'\
+curl 'http://127.0.0.1:12321/ng_conf1?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1OTE2MDc3MDEsImlhdCI6MTU5MTYwMzQzNywidXNlcl9pZCI6MSwicGFzc3dvcmQiOiJuZ2FkbWluIiwidXNlcm5hbWUiOiJuZ2FkbWluIiwiZnVsbF9uYW1lIjoibmdhZG1pbiIsInBlcm1pc3Npb25zIjpbXX0.fDoe4v37XyjmrK4wnfhOUnePwJLdszYXveOfoRXyUj8'\
     -X POST\
     -F "data=@/tmp/ng_conf.json"
 ```
