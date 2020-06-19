@@ -57,39 +57,28 @@ func Start() error {
 		pid := os.Getpid()
 		pidErr := ioutil.WriteFile(pidFile, []byte(fmt.Sprintf("%d", pid)), 644)
 		if pidErr != nil {
+			// 关闭进程后清理pid文件
+			rmPidFileErr := os.Remove(pidFile)
+			if rmPidFileErr != nil {
+				Log(ERROR, rmPidFileErr.Error())
+				return rmPidFileErr
+			}
+			Log(NOTICE, "bifrost.pid is removed")
 			return pidErr
 		}
 
 		// 启动bifrost进程
-		Log(NOTICE, fmt.Sprintf("bifrost <PID %d> is started", pid))
-		// DONE: 并发异常，只能同时运行一个配置接口，待优化
-		for _, ngConfig := range Configs.NGConfigs {
-			//ng, err := resolv.Load(ngConfig.ConfPath)
-			ng, err := ngLoad(&ngConfig)
-
-			if err != nil {
-				//fmt.Println(err)
-				Log(ERROR, fmt.Sprintf("[%s] load config error: %s", ngConfig.Name, err))
-				continue
-			}
-
-			//errChan := make(chan error)
-
-			wg.Add(1)
-
-			//go Run(&ngConfig, ng, errChan)
-			go Run(ngConfig, ng)
-
-			//err = <-errChan
-			//if err != nil {
-			//	Log(CRITICAL, fmt.Sprintf("%s's coroutine has been stoped. Cased by '%s'", ngConfig.Name, err))
-			//} else {
-			//	Log(NOTICE, fmt.Sprintf("%s's coroutine has been stoped", ngConfig.Name))
-			//}
-		}
-		wg.Wait()
+		Log(NOTICE, fmt.Sprintf("bifrost <PID %d> is running", pid))
+		Run()
 		stat := fmt.Sprintf("bifrost <PID %d> is finished", pid)
 		Log(NOTICE, stat)
+		// 进程停止后清理pid文件
+		rmPidFileErr := os.Remove(pidFile)
+		if rmPidFileErr != nil {
+			Log(ERROR, rmPidFileErr.Error())
+			return rmPidFileErr
+		}
+		Log(NOTICE, "bifrost.pid is removed, bifrost is finished")
 		return fmt.Errorf(stat)
 	}
 }

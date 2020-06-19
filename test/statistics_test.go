@@ -7,7 +7,8 @@ import (
 )
 
 func TestStatistics(t *testing.T) {
-	conf, err := resolv.Load("config_test/nginx.conf")
+	//conf, err := resolv.Load("config_test/nginx.conf")
+	conf, err := resolv.Load("filter_bug_test/nginx.conf")
 
 	if err != nil {
 		t.Log(err)

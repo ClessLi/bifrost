@@ -33,13 +33,13 @@ func readFile(path string) ([]byte, error) {
 
 // ngLoad, nginx配置加载函数，根据nginx配置文件信息加载nginx配置并记录文件基准信息
 // 参数:
-//     appConfig: nginx配置文件信息对象指针
+//     serverInfo: web服务器配置文件信息对象指针
 // 返回值:
 //     nginx配置对象指针
 //     错误
-func ngLoad(appConfig *NGConfig) (*resolv.Config, error) {
+func ngLoad(serverInfo *ServerInfo) (*resolv.Config, error) {
 	// 加载nginx配置
-	ng, err := resolv.Load(appConfig.ConfPath)
+	ng, err := resolv.Load(serverInfo.ConfPath)
 	if err != nil {
 		return nil, err
 	}
@@ -51,14 +51,14 @@ func ngLoad(appConfig *NGConfig) (*resolv.Config, error) {
 	}
 
 	// 计算nginx配置文件哈希基准值
-	appConfig.confHash = make(map[string]string, 0)
+	serverInfo.confHash = make(map[string]string, 0)
 	for _, path := range confList {
 		cHash, hashErr := hash(path)
 		if hashErr != nil {
 			return nil, hashErr
 		}
 
-		appConfig.confHash[path] = cHash
+		serverInfo.confHash[path] = cHash
 	}
 
 	return ng, nil
@@ -89,17 +89,17 @@ func hash(path string) (string, error) {
 
 // Bak, nginx配置文件备份函数
 // 参数:
-//     appConfig: nginx配置文件信息对象
-//     ngConfig: nginx配置对象指针
+//     serverInfo: web服务器配置文件信息对象指针
+//     config: nginx配置对象指针
 //     c: 整型管道，用于停止备份
-func Bak(appConfig NGConfig, ngConfig *resolv.Config, c chan int) {
+func Bak(serverInfo *ServerInfo, config *resolv.Config, c chan int) {
 	for {
 		select {
 		case <-time.NewTicker(5 * time.Minute).C: // 每5分钟定时执行备份操作
-			bak(appConfig, ngConfig)
+			bak(serverInfo, config)
 		case signal := <-c: // 获取管道传入信号
 			if signal == 9 { // 为9时，停止备份
-				Log(NOTICE, fmt.Sprintf("[%s] Nginx Config backup is stop.", appConfig.Name))
+				Log(NOTICE, fmt.Sprintf("[%s] Nginx Config backup is stop.", serverInfo.Name))
 				break
 			}
 		}
@@ -108,72 +108,71 @@ func Bak(appConfig NGConfig, ngConfig *resolv.Config, c chan int) {
 
 // bak, nginx配置文件备份子函数
 // 参数:
-//     appConfig: nginx配置文件信息对象
-//     ngConfig: nginx配置对象指针
-func bak(appConfig NGConfig, ngConfig *resolv.Config) {
+//     serverInfo: web服务器配置文件信息对象指针
+//     config: nginx配置对象指针
+func bak(serverInfo *ServerInfo, config *resolv.Config) {
 	// 初始化备份文件名
 	bakDate := time.Now().Format("20060102")
 	bakName := fmt.Sprintf("nginx.conf.%s.tgz", bakDate)
 
-	bakPath, bErr := resolv.Backup(ngConfig, bakName)
+	bakPath, bErr := resolv.Backup(config, bakName)
 	if bErr != nil && !os.IsExist(bErr) { // 备份失败
-		Log(CRITICAL, fmt.Sprintf("[%s] Nginx Config backup to %s, but failed. <%s>", appConfig.Name, bakPath, bErr))
-		Log(NOTICE, fmt.Sprintf("[%s] Nginx Config backup is stop.", appConfig.Name))
+		Log(CRITICAL, fmt.Sprintf("[%s] Nginx Config backup to %s, but failed. <%s>", serverInfo.Name, bakPath, bErr))
+		Log(NOTICE, fmt.Sprintf("[%s] Nginx Config backup is stop.", serverInfo.Name))
 	} else if bErr == nil { // 备份成功
-		Log(NOTICE, fmt.Sprintf("[%s] Nginx Config backup to %s", appConfig.Name, bakPath))
+		Log(NOTICE, fmt.Sprintf("[%s] Nginx Config backup to %s", serverInfo.Name, bakPath))
 	}
 
 }
 
-// AutoReload, nginx配置文件自动热加载函数
+// AutoReload, web服务器配置文件自动热加载函数
 // 参数:
-//     appConfig: nginx配置文件信息对象指针
-//     ngConfig: nginx配置对象指针
+//     serverInfo: web服务器配置文件信息对象指针
+//     config: nginx配置对象指针
 //     c: 整型管道，用于停止备份
-func AutoReload(appConfig *NGConfig, ngConfig *resolv.Config, c chan int) {
+func AutoReload(serverInfo *ServerInfo, config *resolv.Config, c chan int) {
 	for {
 		select {
 		case <-time.NewTicker(30 * time.Second).C: // 每30秒检查一次nginx配置文件是否已在后台更新
-			cache, err := autoReload(appConfig)
+			cache, err := autoReload(serverInfo)
 			if err != nil {
-				Log(WARN, fmt.Sprintf("[%s] Nginx Config reload failed, cased by '%s'", appConfig.Name, err))
+				Log(WARN, fmt.Sprintf("[%s] Nginx Config reload failed, cased by '%s'", serverInfo.Name, err))
 			} else if cache != nil {
-				ngConfig.Value = cache.Value
-				ngConfig.Children = cache.Children
-				Log(INFO, fmt.Sprintf("[%s] Nginx Config reload successfully", appConfig.Name))
+				config.Value = cache.Value
+				config.Children = cache.Children
+				Log(INFO, fmt.Sprintf("[%s] Nginx Config reload successfully", serverInfo.Name))
 			}
 		case signal := <-c: // 获取管道传入信号
 			if signal == 9 { // 为9时，停止备份
-				Log(NOTICE, fmt.Sprintf("[%s] Nginx Config backup is stop.", appConfig.Name))
+				Log(NOTICE, fmt.Sprintf("[%s] Nginx Config backup is stop.", serverInfo.Name))
 				break
 			}
 		}
 	}
 }
 
-// autoReload, nginx配置文件自动热加载子函数
+// autoReload, web服务器配置文件自动热加载子函数
 // 参数:
-//     appConfig: nginx配置文件信息对象指针
-//     ngConfig: nginx配置对象指针
-func autoReload(appConfig *NGConfig) (*resolv.Config, error) {
+//     serverInfo: web服务器配置文件信息对象指针
+func autoReload(serverInfo *ServerInfo) (*resolv.Config, error) {
 	// 校验配置文件是否更新
-	isDifferent, checkErr := hashCheck(appConfig)
+	isDifferent, checkErr := hashCheck(serverInfo)
 	if checkErr != nil {
 		return nil, checkErr
 	}
 
 	// 如果有差别，则重新读取配置
 	if isDifferent {
-		return ngLoad(appConfig)
+		return ngLoad(serverInfo)
 	}
 	return nil, nil
 }
 
-// hashCheck, nginx配置文件是否已更改校验函数
+// hashCheck, web服务器配置文件是否已更改校验函数
 // 参数:
-//     appConfig: nginx配置文件信息对象指针
-func hashCheck(appConfig *NGConfig) (bool, error) {
-	for path, h := range appConfig.confHash {
+//     serverInfo: web服务器配置文件信息对象指针
+func hashCheck(serverInfo *ServerInfo) (bool, error) {
+	for path, h := range serverInfo.confHash {
 		// 获取当前配置文件哈希值
 		checkHash, checkErr := hash(path)
 		if checkErr != nil {

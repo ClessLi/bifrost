@@ -12,46 +12,12 @@ import (
 	"path/filepath"
 )
 
-//func Run(appConfig *NGConfig, ngConfig *resolv.Config, errChan chan error) {
 // Run, bifrost启动函数
-// 参数:
-//     appConfig: nginx配置文件信息对象
-//     ngConfig: nginx配置对象指针
-func Run(appConfig NGConfig, ngConfig *resolv.Config) {
-	defer wg.Done() // 结束进程前关闭协程等待组
-	// 检查nginx配置是否能被正常解析为json
-	_, jerr := json.Marshal(ngConfig)
-
-	//confBytes, jerr := json.Marshal(ngConfig)
-	//confBytes, jerr := json.MarshalIndent(ngConfig, "", "    ")
-	if jerr != nil {
-		//errChan <- jerr
-		Log(CRITICAL, fmt.Sprintf("[%s] coroutine has been stoped. Cased by '%s'", ngConfig.Name, jerr))
-		return
-	}
-
+func Run() {
 	// 初始化接口
 	loginURI := "/login"
 	verifyURI := "/verify"
 	refreshURI := "/refresh"
-	//apiURI := fmt.Sprintf("%s/:token", appConfig.RelativePath)
-	apiURI := appConfig.RelativePath
-	statisticsURI := fmt.Sprintf("%s/statistics", apiURI)
-
-	ngBin, absErr := filepath.Abs(appConfig.NginxBin)
-	if absErr != nil {
-		//errChan <- absErr
-		Log(CRITICAL, fmt.Sprintf("[%s] coroutine has been stoped. Cased by '%s'", ngConfig.Name, absErr))
-		return
-	}
-
-	// 创建备份协程管道及启动备份协程
-	bakChan := make(chan int)
-	go Bak(appConfig, ngConfig, bakChan)
-
-	// 创建自动热加载配置协程管道及启动自动热加载配置协程
-	autoReloadChan := make(chan int)
-	go AutoReload(&appConfig, ngConfig, autoReloadChan)
 
 	router := gin.Default()
 	// login
@@ -60,40 +26,117 @@ func Run(appConfig NGConfig, ngConfig *resolv.Config) {
 	router.GET(verifyURI, verify)
 	// refresh
 	router.GET(refreshURI, refresh)
+
+	// 初始化管道指针切片
+	// 创建备份协程管道指针切片
+	bakChans := make([]*chan int, 0)
+	// 创建自动热加载配置协程管道指针切片
+	autoReloadChans := make([]*chan int, 0)
+	// 管道切片长度，用于指定管道索引和管道长度
+	chansLen := 0
+
+	// 初始化各web服务配置信息管控接口
+	for i := 0; i < len(BifrostConf.WebServerInfo.Servers); i++ {
+		switch BifrostConf.WebServerInfo.Servers[i].ServerType {
+		case NGINX:
+
+			// 创建备份协程管道及启动备份协程
+			bakChan := make(chan int)
+			bakChans = append(bakChans, &bakChan)
+
+			// 创建自动热加载配置协程管道及启动自动热加载配置协程
+			autoReloadChan := make(chan int)
+			autoReloadChans = append(autoReloadChans, &autoReloadChan)
+
+			nginxConfAPIInit(router, &BifrostConf.WebServerInfo.Servers[i], &chansLen, &bakChans, &autoReloadChans)
+
+		case HTTPD:
+			// TODO: apache httpd配置解析器
+			continue
+		default:
+			continue
+		}
+	}
+
+	// 启动bifrost各接口服务
+	rErr := router.Run(fmt.Sprintf(":%d", BifrostConf.WebServerInfo.ListenPort))
+	if rErr != nil {
+		killCoroutine(chansLen, bakChans, autoReloadChans)
+		// 输出子任务运行错误
+		Log(CRITICAL, fmt.Sprintf("bifrost Run coroutine has been stoped. Cased by '%s'", rErr))
+		return
+	}
+
+	killCoroutine(chansLen, bakChans, autoReloadChans)
+	Log(NOTICE, fmt.Sprintf("bifrost Run coroutine has been stoped"))
+	return
+}
+
+// nginxConfAPIInit, nginx配置管控接口初始化函数
+// 参数:
+//     router: gin引擎指针
+//     serverInfo: bifrost配置对象中web服务器信息配置对象指针
+//     chansLen: 管道切片长度值指针
+//     bakChans: 备份管道指针切片指针
+//     autoReloadChans: 自动热加载管道指针切片指针
+func nginxConfAPIInit(router *gin.Engine, serverInfo *ServerInfo, chansLen *int, bakChans *[]*chan int, autoReloadChans *[]*chan int) {
+
+	ngConfig, loadErr := ngLoad(serverInfo)
+	if loadErr != nil {
+		Log(ERROR, fmt.Sprintf("[%s] load config error: %s", serverInfo.Name, loadErr))
+		*chansLen++
+		return
+	}
+	// 检查nginx配置是否能被正常解析为json
+	_, jerr := json.Marshal(ngConfig)
+	if jerr != nil {
+		Log(CRITICAL, fmt.Sprintf("[%s] coroutine has been stoped. Cased by '%s'", serverInfo.Name, jerr))
+		*chansLen++
+		return
+	}
+	apiURI := serverInfo.BaseURI
+	statisticsURI := fmt.Sprintf("%s/statistics", apiURI)
+
+	ngVerifyExec, absErr := filepath.Abs(serverInfo.VerifyExecPath)
+	if absErr != nil {
+		Log(CRITICAL, fmt.Sprintf("[%s] coroutine has been stoped. Cased by '%s'", serverInfo.Name, absErr))
+		*chansLen++
+		return
+	}
+
+	go Bak(serverInfo, ngConfig, *(*bakChans)[*chansLen])
+	go AutoReload(serverInfo, ngConfig, *(*autoReloadChans)[*chansLen])
+
+	*chansLen++
+
 	// view
 	router.GET(apiURI, func(c *gin.Context) {
-		h, status := view(appConfig.Name, ngConfig, c)
+		h, status := view(serverInfo.Name, ngConfig, c)
 		c.JSON(status, &h)
 	})
 	// update
 	router.POST(apiURI, func(c *gin.Context) {
-		h, status := update(appConfig.Name, ngBin, ngConfig, c)
+		h, status := update(serverInfo.Name, ngVerifyExec, ngConfig, c)
 		c.JSON(status, &h)
 	})
 
 	// statistics
 	router.GET(statisticsURI, func(c *gin.Context) {
-		h, status := statisticsView(appConfig.Name, ngConfig, c)
+		h, status := statisticsView(serverInfo.Name, ngConfig, c)
 		c.JSON(status, &h)
 	})
+}
 
-	rErr := router.Run(fmt.Sprintf(":%d", appConfig.Port))
-	if rErr != nil {
-		// 关闭备份
-		bakChan <- 9
-		// 关闭自动热加载
-		autoReloadChan <- 9
-		// 输出子任务运行错误
-		//errChan <- rErr
-		Log(CRITICAL, fmt.Sprintf("[%s] coroutine has been stoped. Cased by '%s'", ngConfig.Name, rErr))
-		return
+// killCoroutine, 关闭协程任务函数
+// 参数:
+//     chansLen: 管道指针切片元素个数
+//     chansArray: 传入的管道指针切片集合
+func killCoroutine(chansLen int, chansArray ...[]*chan int) {
+	for i := 0; i < chansLen; i++ {
+		for _, chans := range chansArray {
+			*chans[i] <- 9
+		}
 	}
-
-	// 关闭备份
-	bakChan <- 9
-	//errChan <- nil
-	Log(NOTICE, fmt.Sprintf("[%s] coroutine has been stoped", ngConfig.Name))
-	return
 }
 
 // statisticsView, nginx配置统计信息查询接口函数
@@ -171,6 +214,15 @@ func statisticsView(appName string, config *resolv.Config, c *gin.Context) (h gi
 			status = "failed"
 			h["message"] = "invalid params."
 			s = http.StatusBadRequest
+			return
+		}
+
+		// 如果配置解析失败，返回解析失败
+		if config == nil {
+			status = "failed"
+			message := "configuration resolution failed"
+			Log(ERROR, fmt.Sprintf("[%s] %s", appName, message))
+			s = http.StatusInternalServerError
 			return
 		}
 
@@ -261,18 +313,34 @@ func view(appName string, config *resolv.Config, c *gin.Context) (h gin.H, s int
 	// 组装查询数据
 	switch t {
 	case "string":
-		status = "success"
-		// 修改string切片为string
-		var str string
-		for _, v := range config.String() {
-			str += v
+		// 防止配置对象为空时，接口异常
+		if config == nil {
+			status = "failed"
+			message = "configuration resolution failed"
+			Log(ERROR, fmt.Sprintf("[%s] %s", appName, message))
+			s = http.StatusInternalServerError
+		} else {
+			status = "success"
+			// 修改string切片为string
+			var str string
+			for _, v := range config.String() {
+				str += v
+			}
+			message = str
+			Log(DEBUG, fmt.Sprintf("[%s] %s", appName, message))
 		}
-		message = str
-		Log(DEBUG, fmt.Sprintf("[%s] %s", appName, message))
 	case "json":
-		status = "success"
-		message = config
-		Log(DEBUG, fmt.Sprintf("[%s] %s", appName, message))
+		// 防止配置对象为空时，接口异常
+		if config == nil {
+			status = "failed"
+			message = "configuration resolution failed"
+			Log(ERROR, fmt.Sprintf("[%s] %s", appName, message))
+			s = http.StatusInternalServerError
+		} else {
+			status = "success"
+			message = config
+			Log(DEBUG, fmt.Sprintf("[%s] %s", appName, message))
+		}
 	default:
 		status = "failed"
 		message = fmt.Sprintf("view message type '%s' invalid", t)

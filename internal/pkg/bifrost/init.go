@@ -11,7 +11,6 @@ import (
 	"gopkg.in/yaml.v2"
 	"os"
 	"path/filepath"
-	"sync"
 )
 
 var (
@@ -19,11 +18,12 @@ var (
 	confPath = flag.String("f", "./configs/bifrost.yml", "the bifrost `config`uration file path.")
 	Signal   = flag.String("s", "", "send `signal` to a master process: stop, restart, status")
 	help     = flag.Bool("h", false, "this `help`")
+	version  = flag.Bool("v", false, "this `version`")
 	//confBackupDelay = flag.Duration("b", 10, "how many minutes `delay` for backup nginx config")
 
 	// bifrost配置
-	Configs  *ParserConfigs
-	dbConfig DBConfig
+	BifrostConf *BifrostConfig
+	dbConfig    DBConfig
 
 	// 日志变量
 	myLogger *logger.Logger
@@ -37,9 +37,6 @@ var (
 	// 进程文件
 	pidFilename = "bifrost.pid"
 	pidFile     string
-
-	// 协程等待组
-	wg sync.WaitGroup
 
 	// 错误变量
 	procStatusNotRunning = fmt.Errorf("bifrost is not running")
@@ -55,21 +52,37 @@ const (
 	DEBUG    = logger.DebugLevel
 
 	// 版本号
-	VERSION = "v0.0.3-beta.1"
+	VERSION = "v0.0.3"
+
+	// Web服务类型
+	NGINX WebServerType = "nginx"
+	HTTPD WebServerType = "httpd"
 )
 
-// NGConfig, nginx配置文件信息结构体，定义配置文件路径、nginx可执行文件路径和bifrost为其提供接口的路由及侦听端口
-type NGConfig struct {
-	//Name         string `json:"name"`
-	//RelativePath string `json:"relative_path"`
-	//Port         int    `json:"port"`
-	//ConfPath     string `json:"conf_path"`
-	Name         string `yaml:"name"`
-	RelativePath string `yaml:"relativePath"`
-	Port         int    `yaml:"port"`
-	ConfPath     string `yaml:"confPath"`
-	NginxBin     string `yaml:"nginxBin"`
-	confHash     map[string]string
+// BifrostConfig, bifrost配置文件结构体，定义bifrost配置信息
+type BifrostConfig struct {
+	WebServerInfo WebServerInfo `yaml:"WebServerInfo"`
+	DBConfig      `yaml:"DBConfig"`
+	LogConfig     `yaml:"logConfig"`
+}
+
+// WebServerInfo, bifrost配置文件对象中web服务器信息结构体，定义管控的web服务器配置文件相关信息
+type WebServerInfo struct {
+	ListenPort int          `yaml:"listenPort"`
+	Servers    []ServerInfo `yaml:"servers"`
+}
+
+// WebServerType, web服务器类型对象，定义web服务器所属类型
+type WebServerType string
+
+// ServerInfo, nginx配置文件信息结构体，定义配置文件路径、nginx可执行文件路径和bifrost为其提供接口的路由及侦听端口
+type ServerInfo struct {
+	Name           string        `yaml:"name"`
+	ServerType     WebServerType `yaml:"serverType"`
+	BaseURI        string        `yaml:"baseURI"`
+	ConfPath       string        `yaml:"confPath"`
+	VerifyExecPath string        `yaml:"verifyExecPath"`
+	confHash       map[string]string
 }
 
 // DBConfig, mysql数据库信息结构体，用于读写bifrost信息
@@ -86,15 +99,6 @@ type DBConfig struct {
 type LogConfig struct {
 	LogDir string          `yaml:"logDir"`
 	Level  logger.LogLevel `yaml:"level"`
-}
-
-// ParserConfigs, bifrost配置文件结构体，定义bifrost配置信息
-type ParserConfigs struct {
-	//NGConfigs []NGConfig `json:"NGConfigs"`
-	//NGConfigs  []NGConfig `yaml:"NGConfigs"`
-	NGConfigs []NGConfig `yaml:"NGConfigs"`
-	DBConfig  `yaml:"DBConfig"`
-	LogConfig `yaml:"logConfig"`
 }
 
 // usage, 重新定义flag.Usage 函数，为bifrost帮助信息提供版本信息及命令行工具传参信息
@@ -137,11 +141,17 @@ func init() {
 		os.Exit(0)
 	}
 
+	if *version {
+		fmt.Printf("bifrost version: %s\n", VERSION)
+		os.Exit(0)
+	}
+
 	// 判断传入配置文件目录
-	//confPath := "./configs/ng-conf-info.json"
-	//confPath := "./configs/bifrost.yml"
 	isExistConfig, pathErr := PathExists(*confPath)
-	//isExistConfig, pathErr := PathExists(confPath)
+	/* 调测用
+	confPath := "./configs/bifrost.yml"
+	isExistConfig, pathErr := PathExists(confPath)
+	*/
 	if !isExistConfig {
 		if pathErr != nil {
 			fmt.Println("The bifrost config file", "'"+*confPath+"'", "is not found.")
@@ -167,20 +177,20 @@ func init() {
 		os.Exit(1)
 	}
 
-	Configs = &ParserConfigs{}
-	//jsonErr := json.Unmarshal(confData, configs)
-	jsonErr := yaml.Unmarshal(confData, Configs)
-	if jsonErr != nil {
-		fmt.Println(jsonErr)
+	// 加载bifrost配置
+	BifrostConf = &BifrostConfig{}
+	yamlErr := yaml.Unmarshal(confData, BifrostConf)
+	if yamlErr != nil {
+		fmt.Println(yamlErr)
 		flag.Usage()
 		os.Exit(1)
 	}
 
 	// 初始化数据库信息
-	dbConfig = Configs.DBConfig
+	dbConfig = BifrostConf.DBConfig
 
 	// 初始化日志
-	logDir, absErr := filepath.Abs(Configs.LogDir)
+	logDir, absErr := filepath.Abs(BifrostConf.LogDir)
 	if absErr != nil {
 		panic(absErr)
 	}
@@ -191,7 +201,7 @@ func init() {
 		panic(openErr)
 	}
 
-	myLogger, err = logger.New("Bifrost", Configs.Level, Logf)
+	myLogger, err = logger.New("Bifrost", BifrostConf.Level, Logf)
 	if err != nil {
 		panic(err)
 	}
