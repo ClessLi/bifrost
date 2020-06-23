@@ -28,15 +28,15 @@ func (i *Include) Query(kw KeyWords) (parser Parser) {
 	return i.subQuery(kw)
 }
 
-func (i *Include) BitSize(order Order, bit int) byte {
+func (i *Include) BitSize(_ Order, _ int) byte {
 	return 0
 }
 
-func (i *Include) BitLen(order Order) int {
+func (i *Include) BitLen(_ Order) int {
 	return 0
 }
 
-func (i *Include) Size(order Order) int {
+func (i *Include) Size(_ Order) int {
 	return 0
 }
 
@@ -53,7 +53,7 @@ func (i *Include) String() []string {
 	return strs
 }
 
-func (i *Include) load(configCaches *[]string) error {
+func (i *Include) load(allConfigs *map[string]*Config, configCaches *[]string) error {
 	//var newCaches []string
 	//copy(newCaches, *configCaches)
 	paths, err := filepath.Glob(filepath.Join(i.ConfPWD, i.Value))
@@ -69,7 +69,7 @@ func (i *Include) load(configCaches *[]string) error {
 			return relErr
 		}
 
-		conf, lerr := load(i.ConfPWD, relPath, configCaches)
+		conf, lerr := load(i.ConfPWD, relPath, allConfigs, configCaches)
 		if lerr != nil {
 			return lerr
 		}
@@ -100,7 +100,7 @@ func (i *Include) dump() ([]string, error) {
 	return i.Key.String(), nil
 }
 
-func NewInclude(dir, paths string, configCaches *[]string) (*Include, error) {
+func NewInclude(dir, paths string, allConfigs *map[string]*Config, configCaches *[]string) (*Include, error) {
 	include := &Include{
 		BasicContext: BasicContext{
 			Name:     TypeInclude,
@@ -112,7 +112,7 @@ func NewInclude(dir, paths string, configCaches *[]string) (*Include, error) {
 		ConfPWD: dir,
 	}
 
-	err := include.load(configCaches)
+	err := include.load(allConfigs, configCaches)
 	if err != nil {
 		return nil, err
 	}

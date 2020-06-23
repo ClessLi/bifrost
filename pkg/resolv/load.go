@@ -15,21 +15,26 @@ func Load(path string) (*Config, error) {
 	}
 	relativePath := filepath.Base(path)
 	var configCaches []string
-	return load(ngDir, relativePath, &configCaches)
+	allConfigs := make(map[string]*Config, 0)
+	return load(ngDir, relativePath, &allConfigs, &configCaches)
 }
 
-func load(ngDir, relativePath string, configCaches *[]string) (conf *Config, err error) {
+func load(ngDir, relativePath string, allConfigs *map[string]*Config, configCaches *[]string) (conf *Config, err error) {
 	absPath := filepath.Join(ngDir, relativePath)
 	if inCaches(absPath, configCaches) {
 		return nil, fmt.Errorf("config '%s' is already loaded", absPath)
 	}
 
-	f, err := NewConf(nil, absPath)
-	if err == ErrConfigIsExist {
+	if f, ok := (*allConfigs)[absPath]; ok {
+		//fmt.Println(allConfigs)
 		return f, nil
-	} else if err != nil && err != ErrConfigIsExist {
-		return nil, err
 	}
+
+	//f, err := NewConf(nil, absPath)
+	f := NewConf(nil, absPath)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	data, err := readConf(absPath)
 	if err != nil {
@@ -40,6 +45,9 @@ func load(ngDir, relativePath string, configCaches *[]string) (conf *Config, err
 	newCaches := *configCaches
 	//configCaches = append(configCaches, absPath)
 	newCaches = append(newCaches, absPath)
+
+	// 添加新增配置对象指针到配置对象指针映射中
+	(*allConfigs)[absPath] = f
 
 	index := 0
 	var lopen []Parser
@@ -127,7 +135,7 @@ func load(ngDir, relativePath string, configCaches *[]string) (conf *Config, err
 				k = NewKey(ms[1], ms[2])
 			}
 
-			k, ckErr := checkInclude(k, ngDir, &newCaches)
+			k, ckErr := checkInclude(k, ngDir, allConfigs, &newCaches)
 			if ckErr != nil {
 				err = ckErr
 				return false
@@ -184,9 +192,9 @@ func inCaches(path string, caches *[]string) bool {
 	return false
 }
 
-func checkInclude(k *Key, dir string, configCaches *[]string) (Parser, error) {
+func checkInclude(k *Key, dir string, allConfigs *map[string]*Config, configCaches *[]string) (Parser, error) {
 	if k.Name == TypeInclude {
-		return NewInclude(dir, k.Value, configCaches)
+		return NewInclude(dir, k.Value, allConfigs, configCaches)
 	}
 	return k, nil
 }

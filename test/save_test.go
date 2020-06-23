@@ -28,7 +28,7 @@ func TestVerifyAndSave(t *testing.T) {
 
 	tmpConf := conf
 
-	conf, _ = resolv.NewConf(nil, "./config_test/nginx.conf")
+	conf = resolv.NewConf(nil, "./config_test/nginx.conf")
 	t.Log(tmpConf.String())
 	t.Log(conf.String())
 }

@@ -1,12 +1,8 @@
 package resolv
 
 import (
-	"errors"
 	"io/ioutil"
 )
-
-// DONE: 调整配置防循环加载机制
-var ErrConfigIsExist = errors.New("config is exsit")
 
 type Order int
 
@@ -127,19 +123,19 @@ func (c *Config) Query(kw KeyWords) Parser {
 	return c.subQuery(kw)
 }
 
-func (c *Config) BitSize(order Order, bit int) byte {
+func (c *Config) BitSize(_ Order, _ int) byte {
 	return 0
 }
 
-func (c *Config) BitLen(order Order) int {
+func (c *Config) BitLen(_ Order) int {
 	return 0
 }
 
-func (c *Config) Size(order Order) int {
+func (c *Config) Size(_ Order) int {
 	return 0
 }
 
-func NewConf(conf []Parser, value string) (*Config, error) {
+func NewConf(conf []Parser, value string) *Config {
 	// 确定*Config的唯一性，防止多次加载
 	//for _, c := range configs {
 	//	if c.Value == value {
@@ -154,5 +150,6 @@ func NewConf(conf []Parser, value string) (*Config, error) {
 
 	// 确保*Config的唯一性，将新加载的*Config加入configs
 	//configs = append(configs, f)
-	return f, nil
+	//return f, nil
+	return f
 }

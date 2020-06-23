@@ -33,12 +33,13 @@ type Config struct {
 }
 
 func (conf *Config) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
-	return unmarshal(b, conf, configCaches)
+	allConfigs := make(map[string]*resolv.Config, 0)
+	return unmarshal(b, conf, configCaches, &allConfigs)
 	//return unmarshal(b)
 }
 
 func (conf *Config) toParser(children []resolv.Parser) (resolv.Parser, error) {
-	return resolv.NewConf(children, conf.Value)
+	return resolv.NewConf(children, conf.Value), nil
 }
 
 type Include struct {
@@ -49,16 +50,27 @@ type Include struct {
 }
 
 func (i *Include) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
-	return unmarshal(b, i, configCaches)
+	allConfigs := make(map[string]*resolv.Config, 0)
+	return unmarshal(b, i, configCaches, &allConfigs)
 	//return unmarshal(b)
 }
 
 func (i *Include) toParser(children []resolv.Parser) (resolv.Parser, error) {
-	IN, err := resolv.NewInclude(i.ConfPWD, i.Value, &[]string{})
-	if err != nil {
-		return nil, err
+	IN := &resolv.Include{
+		BasicContext: resolv.BasicContext{
+			Name:     "include",
+			Value:    i.Value,
+			Children: children,
+		},
+		Key:     resolv.NewKey("include", i.Value),
+		Comment: resolv.NewComment(fmt.Sprintf("%s %s", "include", i.Value), false),
+		ConfPWD: i.ConfPWD,
 	}
-	IN.Children = children
+	//IN, err := resolv.NewInclude(i.ConfPWD, i.Value, nil, &[]string{})
+	//if err != nil {
+	//	return nil, err
+	//}
+	//IN.Children = children
 	return IN, nil
 }
 
@@ -67,7 +79,8 @@ type Types struct {
 }
 
 func (t *Types) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
-	return unmarshal(b, t, configCaches)
+	allConfigs := make(map[string]*resolv.Config, 0)
+	return unmarshal(b, t, configCaches, &allConfigs)
 	//return unmarshal(b)
 }
 
@@ -82,7 +95,8 @@ type Map struct {
 }
 
 func (m *Map) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
-	return unmarshal(b, m, configCaches)
+	allConfigs := make(map[string]*resolv.Config, 0)
+	return unmarshal(b, m, configCaches, &allConfigs)
 	//return unmarshal(b)
 }
 
@@ -97,7 +111,8 @@ type LimitExcept struct {
 }
 
 func (le *LimitExcept) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
-	return unmarshal(b, le, configCaches)
+	allConfigs := make(map[string]*resolv.Config, 0)
+	return unmarshal(b, le, configCaches, &allConfigs)
 	//return unmarshal(b)
 }
 
@@ -112,7 +127,8 @@ type Events struct {
 }
 
 func (e *Events) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
-	return unmarshal(b, e, configCaches)
+	allConfigs := make(map[string]*resolv.Config, 0)
+	return unmarshal(b, e, configCaches, &allConfigs)
 	//return unmarshal(b)
 }
 
@@ -127,7 +143,8 @@ type Geo struct {
 }
 
 func (g *Geo) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
-	return unmarshal(b, g, configCaches)
+	allConfigs := make(map[string]*resolv.Config, 0)
+	return unmarshal(b, g, configCaches, &allConfigs)
 	//return unmarshal(b)
 }
 
@@ -142,7 +159,8 @@ type Http struct {
 }
 
 func (h *Http) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
-	return unmarshal(b, h, configCaches)
+	allConfigs := make(map[string]*resolv.Config, 0)
+	return unmarshal(b, h, configCaches, &allConfigs)
 	//return unmarshal(b)
 }
 
@@ -157,7 +175,8 @@ type Stream struct {
 }
 
 func (st *Stream) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
-	return unmarshal(b, st, configCaches)
+	allConfigs := make(map[string]*resolv.Config, 0)
+	return unmarshal(b, st, configCaches, &allConfigs)
 	//return unmarshal(b)
 }
 
@@ -172,7 +191,8 @@ type Upstream struct {
 }
 
 func (u *Upstream) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
-	return unmarshal(b, u, configCaches)
+	allConfigs := make(map[string]*resolv.Config, 0)
+	return unmarshal(b, u, configCaches, &allConfigs)
 	//return unmarshal(b)
 }
 
@@ -187,7 +207,8 @@ type Server struct {
 }
 
 func (s *Server) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
-	return unmarshal(b, s, configCaches)
+	allConfigs := make(map[string]*resolv.Config, 0)
+	return unmarshal(b, s, configCaches, &allConfigs)
 	//return unmarshal(b)
 }
 
@@ -202,7 +223,8 @@ type Location struct {
 }
 
 func (l *Location) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
-	return unmarshal(b, l, configCaches)
+	allConfigs := make(map[string]*resolv.Config, 0)
+	return unmarshal(b, l, configCaches, &allConfigs)
 	//return unmarshal(b)
 }
 
@@ -217,7 +239,8 @@ type If struct {
 }
 
 func (i *If) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
-	return unmarshal(b, i, configCaches)
+	allConfigs := make(map[string]*resolv.Config, 0)
+	return unmarshal(b, i, configCaches, &allConfigs)
 	//return unmarshal(b)
 }
 
@@ -231,7 +254,7 @@ type Key struct {
 	resolv.Key
 }
 
-func (k *Key) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
+func (k *Key) UnmarshalToJSON(b []byte, _ *[]string) (resolv.Parser, error) {
 	err := json.Unmarshal(b, k)
 	return &k.Key, err
 }
@@ -248,7 +271,7 @@ type Comment struct {
 	resolv.Comment
 }
 
-func (c *Comment) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
+func (c *Comment) UnmarshalToJSON(b []byte, _ *[]string) (resolv.Parser, error) {
 	err := json.Unmarshal(b, c)
 	return &c.Comment, err
 }
@@ -263,11 +286,16 @@ func (c *Comment) toParser(_ []resolv.Parser) (resolv.Parser, error) {
 
 // Unmarshal, json反序列化并返回nginx配置对象的函数
 func Unmarshal(b []byte) (resolv.Parser, error) {
-	return unmarshal(b, &Config{}, &[]string{})
+	allConfigs := make(map[string]*resolv.Config, 0)
+	return unmarshal(b, &Config{}, &[]string{}, &allConfigs)
+	/* 测试解析器Config对象指针映射
+	conf, err := unmarshal(b, &Config{}, &[]string{}, &allConfigs)
+	fmt.Println(allConfigs)
+	return conf, err */
 }
 
 // unmarshal, json反序列化并返回nginx配置对象的内部函数
-func unmarshal(b []byte, p unmarshaler, configCaches *[]string) (resolv.Parser, error) {
+func unmarshal(b []byte, p unmarshaler, configCaches *[]string, allConfigs *map[string]*resolv.Config) (resolv.Parser, error) {
 	switch p.(type) {
 	case *Key, *Comment:
 		return p.UnmarshalToJSON(b, configCaches)
@@ -277,18 +305,29 @@ func unmarshal(b []byte, p unmarshaler, configCaches *[]string) (resolv.Parser, 
 			return nil, err
 		}
 		if conf, ok := p.(*Config); ok {
+			if f, ok := (*allConfigs)[conf.Value]; ok {
+				return f, nil
+			}
 			if inCaches(conf.Value, configCaches) {
 				return nil, fmt.Errorf("config '%s' is already loaded", conf.Value)
 			}
 			newCaches := *configCaches
 			newCaches = append(newCaches, conf.Value)
-			children, cerr := unmarshalChildren(p.getChildren(), &newCaches)
+			children, cerr := unmarshalChildren(p.getChildren(), &newCaches, allConfigs)
 			if cerr != nil {
 				return nil, cerr
 			}
-			return p.toParser(children)
+
+			// 获取解析器Config对象，并添加到解析器Config对象指针映射中
+			config, tpErr := p.toParser(children)
+			if tpErr != nil {
+				return nil, tpErr
+			}
+			(*allConfigs)[conf.Value] = config.(*resolv.Config)
+
+			return config, nil
 		} else {
-			children, cerr := unmarshalChildren(p.getChildren(), configCaches)
+			children, cerr := unmarshalChildren(p.getChildren(), configCaches, allConfigs)
 			if cerr != nil {
 				return nil, cerr
 			}
@@ -307,7 +346,7 @@ func inCaches(path string, caches *[]string) bool {
 }
 
 // unmarshalChildren, 解析并反序列化子json串切片对象的内部函数
-func unmarshalChildren(bytes []*json.RawMessage, configCaches *[]string) (children []resolv.Parser, err error) {
+func unmarshalChildren(bytes []*json.RawMessage, configCaches *[]string, allConfig *map[string]*resolv.Config) (children []resolv.Parser, err error) {
 	// parseContext, 用于解析json串归属于哪类需反序列化对象的匿名函数
 	parseContext := func(b []byte, reg *regexp.Regexp) bool {
 		if m := reg.Find(b); m != nil {
@@ -320,100 +359,100 @@ func unmarshalChildren(bytes []*json.RawMessage, configCaches *[]string) (childr
 	for _, b := range bytes {
 		switch {
 		case parseContext(*b, RegCommentHead):
-			comment, err := unmarshal(*b, &Comment{}, configCaches)
+			comment, err := unmarshal(*b, &Comment{}, configCaches, allConfig)
 			if err != nil {
 				return nil, err
 			}
 			children = append(children, comment)
 		case parseContext(*b, RegIncludeHead):
-			include, err := unmarshal(*b, &Include{}, configCaches)
+			include, err := unmarshal(*b, &Include{}, configCaches, allConfig)
 			if err != nil {
 				return nil, err
 			}
 			children = append(children, include)
 		case parseContext(*b, RegConfigHead):
-			config, err := unmarshal(*b, &Config{}, configCaches)
+			config, err := unmarshal(*b, &Config{}, configCaches, allConfig)
 			if err != nil {
 				return nil, err
 			}
 			children = append(children, config)
 		case parseContext(*b, RegEventsHead):
-			events, err := unmarshal(*b, &Events{}, configCaches)
+			events, err := unmarshal(*b, &Events{}, configCaches, allConfig)
 			if err != nil {
 				return nil, err
 			}
 			children = append(children, events)
 		case parseContext(*b, RegGeoHead):
-			geo, err := unmarshal(*b, &Geo{}, configCaches)
+			geo, err := unmarshal(*b, &Geo{}, configCaches, allConfig)
 			if err != nil {
 				return nil, err
 			}
 			children = append(children, geo)
 		case parseContext(*b, RegHttpHead):
-			http, err := unmarshal(*b, &Http{}, configCaches)
+			http, err := unmarshal(*b, &Http{}, configCaches, allConfig)
 			if err != nil {
 				return nil, err
 				//return
 			}
 			children = append(children, http)
 		case parseContext(*b, RegIfHead):
-			i, err := unmarshal(*b, &If{}, configCaches)
+			i, err := unmarshal(*b, &If{}, configCaches, allConfig)
 			if err != nil {
 				return nil, err
 				//return
 			}
 			children = append(children, i)
 		case parseContext(*b, RegLimitExceptHead):
-			le, err := unmarshal(*b, &LimitExcept{}, configCaches)
+			le, err := unmarshal(*b, &LimitExcept{}, configCaches, allConfig)
 			if err != nil {
 				return nil, err
 				//return
 			}
 			children = append(children, le)
 		case parseContext(*b, RegLocationHead):
-			l, err := unmarshal(*b, &Location{}, configCaches)
+			l, err := unmarshal(*b, &Location{}, configCaches, allConfig)
 			if err != nil {
 				return nil, err
 				//return
 			}
 			children = append(children, l)
 		case parseContext(*b, RegMapHead):
-			m, err := unmarshal(*b, &Map{}, configCaches)
+			m, err := unmarshal(*b, &Map{}, configCaches, allConfig)
 			if err != nil {
 				return nil, err
 				//return
 			}
 			children = append(children, m)
 		case parseContext(*b, RegServerHead):
-			svr, err := unmarshal(*b, &Server{}, configCaches)
+			svr, err := unmarshal(*b, &Server{}, configCaches, allConfig)
 			if err != nil {
 				return nil, err
 				//return
 			}
 			children = append(children, svr)
 		case parseContext(*b, RegStreamHead):
-			st, err := unmarshal(*b, &Stream{}, configCaches)
+			st, err := unmarshal(*b, &Stream{}, configCaches, allConfig)
 			if err != nil {
 				return nil, err
 				//return
 			}
 			children = append(children, st)
 		case parseContext(*b, RegTypesHead):
-			t, err := unmarshal(*b, &Types{}, configCaches)
+			t, err := unmarshal(*b, &Types{}, configCaches, allConfig)
 			if err != nil {
 				return nil, err
 				//return
 			}
 			children = append(children, t)
 		case parseContext(*b, RegUpstreamHead):
-			u, err := unmarshal(*b, &Upstream{}, configCaches)
+			u, err := unmarshal(*b, &Upstream{}, configCaches, allConfig)
 			if err != nil {
 				return nil, err
 				//return
 			}
 			children = append(children, u)
 		default:
-			k, err := unmarshal(*b, &Key{}, configCaches)
+			k, err := unmarshal(*b, &Key{}, configCaches, allConfig)
 			if err != nil {
 				return nil, err
 				//return
