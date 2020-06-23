@@ -14,6 +14,8 @@ var INDENT = "    "
 // Context, 上下文接口对象，定义了上下文接口需实现的增、删、改等方法
 type Context interface {
 	Parser
+	GetIndex(Parser) int
+	Insert(indexParser Parser, insertParsers ...Parser) error
 	Add(...Parser)
 	Remove(...Parser)
 	Modify(int, Parser) error
@@ -34,7 +36,40 @@ type BasicContext struct {
 	Children []Parser `json:"param,omitempty"`
 }
 
-// Add, BasicContext 类新增子对象的方法， Context.Add(...interface{}) 的实现
+// GetIndex, BasicContext 类子集对象索引值查询的方法， Context.GetIndex(Parser) 的实现
+//
+// 参数:
+//     content: Parser接口对象，各配置对象指针
+// 返回值:
+//     索引值，未查询到时，返回-1
+func (c *BasicContext) GetIndex(content Parser) int {
+	for i, child := range c.Children {
+		if content == child {
+			return i
+		}
+	}
+	return -1
+}
+
+// Insert, BasicContext 类插入对象的方法， Context.Insert(indexParser Parser, insertParsers ...Parser) error 的实现
+//
+// 参数:
+//     indexParser: 基准索引子对象
+//     insertParsers: 待插入子对象集
+// 返回值:
+//     错误
+func (c *BasicContext) Insert(indexParser Parser, insertParsers ...Parser) error {
+	index := c.GetIndex(indexParser)
+	if index < 0 {
+		return fmt.Errorf("'%s' is not a child of (name: %s, value: %s)", indexParser.String(), c.Name, c.Value)
+	} else {
+		// 时间、空间复杂度O(m+n)
+		c.Children = append(append(c.Children[:index], insertParsers...), c.Children[index:]...)
+		return nil
+	}
+}
+
+// Add, BasicContext 类新增子对象的方法， Context.Add(...Parser) 的实现
 func (c *BasicContext) Add(contents ...Parser) {
 	for _, content := range contents {
 		/*if _, isBC := content.(Context); isBC {
@@ -44,7 +79,7 @@ func (c *BasicContext) Add(contents ...Parser) {
 	}
 }
 
-// Remove, BasicContext 类删除子对象的方法， Context.Remove(...interface{}) 的实现
+// Remove, BasicContext 类删除子对象的方法， Context.Remove(...Parser) 的实现
 func (c *BasicContext) Remove(contents ...Parser) {
 	for _, content := range contents {
 		for index, child := range c.Children {
@@ -55,7 +90,7 @@ func (c *BasicContext) Remove(contents ...Parser) {
 	}
 }
 
-// Modify, BasicContext 类修改子对象的方法， Context.Modify(int, interface{}) error 的实现
+// Modify, BasicContext 类修改子对象的方法， Context.Modify(int, Parser) error 的实现
 func (c *BasicContext) Modify(index int, content Parser) error {
 	switch content.(type) {
 	case Context, *Comment, *Key:
