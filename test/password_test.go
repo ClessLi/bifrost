@@ -1,7 +1,7 @@
 package test
 
 import (
-	"github.com/ClessLi/go-nginx-conf-parser/internal/pkg/password"
+	"github.com/ClessLi/bifrost/internal/pkg/password"
 	"testing"
 )
 

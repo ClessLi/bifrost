@@ -1,4 +1,4 @@
-package resolv
+package nginx
 
 func SortByOrders(slice *[]Parser, orders ...Order) {
 	for _, order := range orders {

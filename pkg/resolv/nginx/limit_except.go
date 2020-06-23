@@ -1,4 +1,4 @@
-package resolv
+package nginx
 
 type LimitExcept struct {
 	BasicContext `json:"limit_except"`
@@ -18,15 +18,15 @@ func (l *LimitExcept) Query(kw KeyWords) (parser Parser) {
 	return l.subQuery(kw)
 }
 
-func (l *LimitExcept) BitSize(order Order, bit int) byte {
+func (l *LimitExcept) BitSize(_ Order, _ int) byte {
 	return 0
 }
 
-func (l *LimitExcept) BitLen(order Order) int {
+func (l *LimitExcept) BitLen(_ Order) int {
 	return 0
 }
 
-func (l *LimitExcept) Size(order Order) int {
+func (l *LimitExcept) Size(_ Order) int {
 	return 0
 }
 

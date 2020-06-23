@@ -8,7 +8,7 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/ClessLi/go-nginx-conf-parser/internal/pkg/bifrost"
+	"github.com/ClessLi/bifrost/internal/pkg/bifrost"
 	"os"
 )
 

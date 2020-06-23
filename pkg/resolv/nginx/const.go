@@ -1,4 +1,4 @@
-package resolv
+package nginx
 
 const (
 	DoubleQuotes    = `\s*"[^"]*"`

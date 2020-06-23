@@ -1,4 +1,4 @@
-package resolv
+package nginx
 
 func Save(conf *Config) error {
 	err := conf.Save()

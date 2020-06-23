@@ -1,12 +1,12 @@
 package test
 
 import (
-	"github.com/ClessLi/go-nginx-conf-parser/pkg/resolv"
+	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
 	"testing"
 )
 
 func TestList(t *testing.T) {
-	conf, err := resolv.Load("config_test/nginx.conf")
+	conf, err := nginx.Load("config_test/nginx.conf")
 
 	if err != nil {
 		t.Log(err)

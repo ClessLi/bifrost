@@ -1,4 +1,4 @@
-package resolv
+package nginx
 
 type Upstream struct {
 	BasicContext `json:"upstream"`
@@ -18,15 +18,15 @@ func (u *Upstream) Query(kw KeyWords) (parser Parser) {
 	return u.subQuery(kw)
 }
 
-func (u *Upstream) BitSize(order Order, bit int) byte {
+func (u *Upstream) BitSize(_ Order, _ int) byte {
 	return 0
 }
 
-func (u *Upstream) BitLen(order Order) int {
+func (u *Upstream) BitLen(_ Order) int {
 	return 0
 }
 
-func (u *Upstream) Size(order Order) int {
+func (u *Upstream) Size(_ Order) int {
 	return 0
 }
 

@@ -1,4 +1,4 @@
-package resolv
+package nginx
 
 type Stream struct {
 	BasicContext `json:"stream"`
@@ -18,15 +18,15 @@ func (s *Stream) Query(kw KeyWords) (parser Parser) {
 	return s.subQuery(kw)
 }
 
-func (s *Stream) BitSize(order Order, bit int) byte {
+func (s *Stream) BitSize(_ Order, _ int) byte {
 	return 0
 }
 
-func (s *Stream) BitLen(order Order) int {
+func (s *Stream) BitLen(_ Order) int {
 	return 0
 }
 
-func (s *Stream) Size(order Order) int {
+func (s *Stream) Size(_ Order) int {
 	return 0
 }
 

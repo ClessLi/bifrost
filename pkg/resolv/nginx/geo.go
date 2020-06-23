@@ -1,4 +1,4 @@
-package resolv
+package nginx
 
 type Geo struct {
 	BasicContext `json:"geo"`
@@ -18,15 +18,15 @@ func (g *Geo) Query(kw KeyWords) (parser Parser) {
 	return g.subQuery(kw)
 }
 
-func (g *Geo) BitSize(order Order, bit int) byte {
+func (g *Geo) BitSize(_ Order, _ int) byte {
 	return 0
 }
 
-func (g *Geo) BitLen(order Order) int {
+func (g *Geo) BitLen(_ Order) int {
 	return 0
 }
 
-func (g *Geo) Size(order Order) int {
+func (g *Geo) Size(_ Order) int {
 	return 0
 }
 

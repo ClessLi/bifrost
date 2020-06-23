@@ -1,4 +1,4 @@
-package resolv
+package nginx
 
 import (
 	"strconv"

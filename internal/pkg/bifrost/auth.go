@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/ClessLi/go-nginx-conf-parser/internal/pkg/password"
+	"github.com/ClessLi/bifrost/internal/pkg/password"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"

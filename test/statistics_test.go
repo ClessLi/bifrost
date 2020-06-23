@@ -1,24 +1,24 @@
 package test
 
 import (
-	"github.com/ClessLi/go-nginx-conf-parser/pkg/resolv"
-	"github.com/ClessLi/go-nginx-conf-parser/pkg/statistics"
+	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
+	nginxStatistics "github.com/ClessLi/bifrost/pkg/statistics/nginx"
 	"testing"
 )
 
 func TestStatistics(t *testing.T) {
 	//conf, err := resolv.Load("config_test/nginx.conf")
-	conf, err := resolv.Load("filter_bug_test/nginx.conf")
+	conf, err := nginx.Load("filter_bug_test/nginx.conf")
 
 	if err != nil {
 		t.Log(err)
 	}
 
-	t.Log(statistics.HTTPServersNum(conf))
-	t.Log(statistics.HTTPServerNames(conf))
-	t.Log(statistics.HTTPPorts(conf))
+	t.Log(nginxStatistics.HTTPServersNum(conf))
+	t.Log(nginxStatistics.HTTPServerNames(conf))
+	t.Log(nginxStatistics.HTTPPorts(conf))
 	//t.Log(statistics.HTTPPortsSTR(conf))
-	t.Log(statistics.HTTPLocationsNum(conf))
-	t.Log(statistics.StreamServersNum(conf))
-	t.Log(statistics.StreamPorts(conf))
+	t.Log(nginxStatistics.HTTPLocationsNum(conf))
+	t.Log(nginxStatistics.StreamServersNum(conf))
+	t.Log(nginxStatistics.StreamPorts(conf))
 }

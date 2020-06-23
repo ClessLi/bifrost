@@ -1,4 +1,4 @@
-package resolv
+package nginx
 
 import (
 	"regexp"
@@ -47,15 +47,15 @@ func (cmt *Comment) Query(kw KeyWords) (parser Parser) {
 	return
 }
 
-func (cmt *Comment) BitSize(order Order, bit int) byte {
+func (cmt *Comment) BitSize(_ Order, _ int) byte {
 	return 0
 }
 
-func (cmt *Comment) BitLen(order Order) int {
+func (cmt *Comment) BitLen(_ Order) int {
 	return 0
 }
 
-func (cmt *Comment) Size(order Order) int {
+func (cmt *Comment) Size(_ Order) int {
 	return 0
 }
 

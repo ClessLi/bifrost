@@ -1,4 +1,4 @@
-package resolv
+package nginx
 
 type Events struct {
 	BasicContext `json:"events"`
@@ -18,15 +18,15 @@ func (e *Events) Query(kw KeyWords) (parser Parser) {
 	return e.subQuery(kw)
 }
 
-func (e *Events) BitSize(order Order, bit int) byte {
+func (e *Events) BitSize(_ Order, _ int) byte {
 	return 0
 }
 
-func (e *Events) BitLen(order Order) int {
+func (e *Events) BitLen(_ Order) int {
 	return 0
 }
 
-func (e *Events) Size(order Order) int {
+func (e *Events) Size(_ Order) int {
 	return 0
 }
 

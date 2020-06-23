@@ -1,4 +1,4 @@
-package resolv
+package nginx
 
 type If struct {
 	BasicContext `json:"if"`
@@ -18,15 +18,15 @@ func (i *If) Query(kw KeyWords) (parser Parser) {
 	return i.subQuery(kw)
 }
 
-func (i *If) BitSize(order Order, bit int) byte {
+func (i *If) BitSize(_ Order, _ int) byte {
 	return 0
 }
 
-func (i *If) BitLen(order Order) int {
+func (i *If) BitLen(_ Order) int {
 	return 0
 }
 
-func (i *If) Size(order Order) int {
+func (i *If) Size(_ Order) int {
 	return 0
 }
 

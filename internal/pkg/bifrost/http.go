@@ -3,9 +3,9 @@ package bifrost
 import (
 	"encoding/json"
 	"fmt"
-	ngJson "github.com/ClessLi/go-nginx-conf-parser/pkg/json"
-	"github.com/ClessLi/go-nginx-conf-parser/pkg/resolv"
-	"github.com/ClessLi/go-nginx-conf-parser/pkg/statistics"
+	ngJson "github.com/ClessLi/bifrost/pkg/json/nginx"
+	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
+	nginxStatistics "github.com/ClessLi/bifrost/pkg/statistics/nginx"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"net/http"
@@ -147,7 +147,7 @@ func killCoroutine(chansLen int, chansArray ...[]*chan int) {
 // 返回值:
 //     h: gin.H
 //     s: http状态码
-func statisticsView(appName string, config *resolv.Config, c *gin.Context) (h gin.H, s int) {
+func statisticsView(appName string, config *nginx.Config, c *gin.Context) (h gin.H, s int) {
 	// 初始化h
 	status := "unkown"
 	message := make(gin.H, 0)
@@ -228,22 +228,22 @@ func statisticsView(appName string, config *resolv.Config, c *gin.Context) (h gi
 
 		// 统计查询未过滤数据
 		if noHttpSvrsNum == "false" {
-			message["httpSvrsNum"] = statistics.HTTPServersNum(config)
+			message["httpSvrsNum"] = nginxStatistics.HTTPServersNum(config)
 		}
 		if noHttpSvrNames == "false" {
-			message["httpSvrNames"] = statistics.HTTPServerNames(config)
+			message["httpSvrNames"] = nginxStatistics.HTTPServerNames(config)
 		}
 		if noHttpPorts == "false" {
-			message["httpPorts"] = statistics.HTTPPorts(config)
+			message["httpPorts"] = nginxStatistics.HTTPPorts(config)
 		}
 		if noLocNum == "false" {
-			message["locNum"] = statistics.HTTPLocationsNum(config)
+			message["locNum"] = nginxStatistics.HTTPLocationsNum(config)
 		}
 		if noStreamSvrsNum == "false" {
-			message["streamSvrsNum"] = statistics.StreamServersNum(config)
+			message["streamSvrsNum"] = nginxStatistics.StreamServersNum(config)
 		}
 		if noStreamPorts == "false" {
-			message["streamPorts"] = statistics.StreamPorts(config)
+			message["streamPorts"] = nginxStatistics.StreamPorts(config)
 		}
 
 		// 无数据时，返回无数据
@@ -274,7 +274,7 @@ func statisticsView(appName string, config *resolv.Config, c *gin.Context) (h gi
 // 返回值:
 //     h: gin.H
 //     s: http返回码
-func view(appName string, config *resolv.Config, c *gin.Context) (h gin.H, s int) {
+func view(appName string, config *nginx.Config, c *gin.Context) (h gin.H, s int) {
 	// 初始化h
 	status := "unkown"
 	var message interface{} = "null"
@@ -360,7 +360,7 @@ func view(appName string, config *resolv.Config, c *gin.Context) (h gin.H, s int
 // 返回值:
 //     h: gin.H
 //     s: http返回码
-func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H, s int) {
+func update(appName, ngBin string, ng *nginx.Config, c *gin.Context) (h gin.H, s int) {
 	// 初始化h
 	status := "unkown"
 	message := "null"
@@ -425,7 +425,7 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H, 
 
 		Log(NOTICE, fmt.Sprintf("[%s] [%s] unmarshal nginx ng.", c.ClientIP(), appName))
 		newConfig, ujErr := ngJson.Unmarshal(confBytes)
-		if ujErr != nil || len(newConfig.(*resolv.Config).Children) <= 0 || newConfig.(*resolv.Config).Value == "" {
+		if ujErr != nil || len(newConfig.(*nginx.Config).Children) <= 0 || newConfig.(*nginx.Config).Value == "" {
 			message = fmt.Sprintf("UnmarshalJson failed. <%s>, data: <%s>", ujErr, confBytes)
 			Log(WARN, fmt.Sprintf("[%s] [%s] %s", appName, c.ClientIP(), message))
 			h["status"] = "failed"
@@ -435,7 +435,7 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H, 
 			return
 		}
 
-		delErr := resolv.Delete(ng)
+		delErr := nginx.Delete(ng)
 		if delErr != nil {
 			message = fmt.Sprintf("Delete nginx ng failed. <%s>", delErr)
 			Log(ERROR, fmt.Sprintf("[%s] [%s] %s", appName, c.ClientIP(), message))
@@ -446,7 +446,7 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H, 
 
 		Log(INFO, fmt.Sprintf("[%s] Deleted old nginx ng.", appName))
 		Log(INFO, fmt.Sprintf("[%s] Verify new nginx ng.", appName))
-		checkErr := resolv.Check(newConfig.(*resolv.Config), ngBin)
+		checkErr := nginx.Check(newConfig.(*nginx.Config), ngBin)
 		if checkErr != nil {
 			s = http.StatusInternalServerError
 			message = fmt.Sprintf("Nginx ng verify failed. <%s>", checkErr)
@@ -454,7 +454,7 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H, 
 			status = "failed"
 
 			Log(INFO, fmt.Sprintf("[%s] Delete new nginx ng.", appName))
-			delErr := resolv.Delete(newConfig.(*resolv.Config))
+			delErr := nginx.Delete(newConfig.(*nginx.Config))
 			if delErr != nil {
 				Log(ERROR, fmt.Sprintf("[%s] Delete new nginx ng failed. <%s>", appName, delErr))
 				status = "failed"
@@ -463,7 +463,7 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H, 
 			}
 
 			Log(INFO, fmt.Sprintf("[%s] Rollback nginx ng.", appName))
-			rollbackErr := resolv.Save(ng)
+			rollbackErr := nginx.Save(ng)
 			if rollbackErr != nil {
 				Log(CRITICAL, fmt.Sprintf("[%s] Nginx ng rollback failed. <%s>", appName, rollbackErr))
 				status = "failed"
@@ -474,8 +474,8 @@ func update(appName, ngBin string, ng *resolv.Config, c *gin.Context) (h gin.H, 
 			return
 		}
 
-		ng.Value = newConfig.(*resolv.Config).Value
-		ng.Children = newConfig.(*resolv.Config).Children
+		ng.Value = newConfig.(*nginx.Config).Value
+		ng.Children = newConfig.(*nginx.Config).Children
 		//ng = newConfig.(*resolv.Config)
 		Log(NOTICE, fmt.Sprintf("[%s] [%s] Nginx Config saved successfully", appName, c.ClientIP()))
 	} else {

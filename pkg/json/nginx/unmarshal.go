@@ -1,20 +1,20 @@
 // json 包，该包包含了用于resolve包中nginx配置对象json反序列化的相关对象和方法及函数
 // 创建者: ClessLi
 // 创建时间: 2020-4-13 09:37:01
-package json
+package nginx
 
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/ClessLi/go-nginx-conf-parser/pkg/resolv"
+	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
 	"regexp"
 )
 
 // unmarshaler, json反序列化内部接口对象，定义了用于nginx配置对象json反序列化所需实现的方法
 type unmarshaler interface {
-	UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) // json反序列化方法
-	getChildren() []*json.RawMessage                                         // 统一输出对象子对象json串内部方法
-	toParser(children []resolv.Parser) (resolv.Parser, error)                // 统一解析并返回nginx配置对象的内部方法
+	UnmarshalToJSON(b []byte, configCaches *[]string) (nginx.Parser, error) // json反序列化方法
+	getChildren() []*json.RawMessage                                        // 统一输出对象子对象json串内部方法
+	toParser(children []nginx.Parser) (nginx.Parser, error)                 // 统一解析并返回nginx配置对象的内部方法
 }
 
 // BasicContext, 用于json反序列化的上下文基础对象，定义了上下文类型的基本属性及基础方法
@@ -32,14 +32,14 @@ type Config struct {
 	BasicContext `json:"config"`
 }
 
-func (conf *Config) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
-	allConfigs := make(map[string]*resolv.Config, 0)
+func (conf *Config) UnmarshalToJSON(b []byte, configCaches *[]string) (nginx.Parser, error) {
+	allConfigs := make(map[string]*nginx.Config, 0)
 	return unmarshal(b, conf, configCaches, &allConfigs)
 	//return unmarshal(b)
 }
 
-func (conf *Config) toParser(children []resolv.Parser) (resolv.Parser, error) {
-	return resolv.NewConf(children, conf.Value), nil
+func (conf *Config) toParser(children []nginx.Parser) (nginx.Parser, error) {
+	return nginx.NewConf(children, conf.Value), nil
 }
 
 type Include struct {
@@ -49,21 +49,21 @@ type Include struct {
 	ConfPWD      string   `json:"conf_pwd"`
 }
 
-func (i *Include) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
-	allConfigs := make(map[string]*resolv.Config, 0)
+func (i *Include) UnmarshalToJSON(b []byte, configCaches *[]string) (nginx.Parser, error) {
+	allConfigs := make(map[string]*nginx.Config, 0)
 	return unmarshal(b, i, configCaches, &allConfigs)
 	//return unmarshal(b)
 }
 
-func (i *Include) toParser(children []resolv.Parser) (resolv.Parser, error) {
-	IN := &resolv.Include{
-		BasicContext: resolv.BasicContext{
+func (i *Include) toParser(children []nginx.Parser) (nginx.Parser, error) {
+	IN := &nginx.Include{
+		BasicContext: nginx.BasicContext{
 			Name:     "include",
 			Value:    i.Value,
 			Children: children,
 		},
-		Key:     resolv.NewKey("include", i.Value),
-		Comment: resolv.NewComment(fmt.Sprintf("%s %s", "include", i.Value), false),
+		Key:     nginx.NewKey("include", i.Value),
+		Comment: nginx.NewComment(fmt.Sprintf("%s %s", "include", i.Value), false),
 		ConfPWD: i.ConfPWD,
 	}
 	//IN, err := resolv.NewInclude(i.ConfPWD, i.Value, nil, &[]string{})
@@ -78,14 +78,14 @@ type Types struct {
 	BasicContext `json:"types"`
 }
 
-func (t *Types) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
-	allConfigs := make(map[string]*resolv.Config, 0)
+func (t *Types) UnmarshalToJSON(b []byte, configCaches *[]string) (nginx.Parser, error) {
+	allConfigs := make(map[string]*nginx.Config, 0)
 	return unmarshal(b, t, configCaches, &allConfigs)
 	//return unmarshal(b)
 }
 
-func (t *Types) toParser(children []resolv.Parser) (resolv.Parser, error) {
-	T := resolv.NewTypes()
+func (t *Types) toParser(children []nginx.Parser) (nginx.Parser, error) {
+	T := nginx.NewTypes()
 	T.Children = children
 	return T, nil
 }
@@ -94,14 +94,14 @@ type Map struct {
 	BasicContext `json:"map"`
 }
 
-func (m *Map) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
-	allConfigs := make(map[string]*resolv.Config, 0)
+func (m *Map) UnmarshalToJSON(b []byte, configCaches *[]string) (nginx.Parser, error) {
+	allConfigs := make(map[string]*nginx.Config, 0)
 	return unmarshal(b, m, configCaches, &allConfigs)
 	//return unmarshal(b)
 }
 
-func (m *Map) toParser(children []resolv.Parser) (resolv.Parser, error) {
-	M := resolv.NewMap(m.Value)
+func (m *Map) toParser(children []nginx.Parser) (nginx.Parser, error) {
+	M := nginx.NewMap(m.Value)
 	M.Children = children
 	return M, nil
 }
@@ -110,14 +110,14 @@ type LimitExcept struct {
 	BasicContext `json:"limit_except"`
 }
 
-func (le *LimitExcept) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
-	allConfigs := make(map[string]*resolv.Config, 0)
+func (le *LimitExcept) UnmarshalToJSON(b []byte, configCaches *[]string) (nginx.Parser, error) {
+	allConfigs := make(map[string]*nginx.Config, 0)
 	return unmarshal(b, le, configCaches, &allConfigs)
 	//return unmarshal(b)
 }
 
-func (le *LimitExcept) toParser(children []resolv.Parser) (resolv.Parser, error) {
-	Le := resolv.NewLimitExcept(le.Value)
+func (le *LimitExcept) toParser(children []nginx.Parser) (nginx.Parser, error) {
+	Le := nginx.NewLimitExcept(le.Value)
 	Le.Children = children
 	return Le, nil
 }
@@ -126,14 +126,14 @@ type Events struct {
 	BasicContext `json:"events"`
 }
 
-func (e *Events) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
-	allConfigs := make(map[string]*resolv.Config, 0)
+func (e *Events) UnmarshalToJSON(b []byte, configCaches *[]string) (nginx.Parser, error) {
+	allConfigs := make(map[string]*nginx.Config, 0)
 	return unmarshal(b, e, configCaches, &allConfigs)
 	//return unmarshal(b)
 }
 
-func (e *Events) toParser(children []resolv.Parser) (resolv.Parser, error) {
-	E := resolv.NewEvents()
+func (e *Events) toParser(children []nginx.Parser) (nginx.Parser, error) {
+	E := nginx.NewEvents()
 	E.Children = children
 	return E, nil
 }
@@ -142,14 +142,14 @@ type Geo struct {
 	BasicContext `json:"geo"`
 }
 
-func (g *Geo) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
-	allConfigs := make(map[string]*resolv.Config, 0)
+func (g *Geo) UnmarshalToJSON(b []byte, configCaches *[]string) (nginx.Parser, error) {
+	allConfigs := make(map[string]*nginx.Config, 0)
 	return unmarshal(b, g, configCaches, &allConfigs)
 	//return unmarshal(b)
 }
 
-func (g *Geo) toParser(children []resolv.Parser) (resolv.Parser, error) {
-	G := resolv.NewGeo(g.Value)
+func (g *Geo) toParser(children []nginx.Parser) (nginx.Parser, error) {
+	G := nginx.NewGeo(g.Value)
 	G.Children = children
 	return G, nil
 }
@@ -158,14 +158,14 @@ type Http struct {
 	BasicContext `json:"http"`
 }
 
-func (h *Http) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
-	allConfigs := make(map[string]*resolv.Config, 0)
+func (h *Http) UnmarshalToJSON(b []byte, configCaches *[]string) (nginx.Parser, error) {
+	allConfigs := make(map[string]*nginx.Config, 0)
 	return unmarshal(b, h, configCaches, &allConfigs)
 	//return unmarshal(b)
 }
 
-func (h *Http) toParser(children []resolv.Parser) (resolv.Parser, error) {
-	H := resolv.NewHttp()
+func (h *Http) toParser(children []nginx.Parser) (nginx.Parser, error) {
+	H := nginx.NewHttp()
 	H.Children = children
 	return H, nil
 }
@@ -174,14 +174,14 @@ type Stream struct {
 	BasicContext `json:"stream"`
 }
 
-func (st *Stream) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
-	allConfigs := make(map[string]*resolv.Config, 0)
+func (st *Stream) UnmarshalToJSON(b []byte, configCaches *[]string) (nginx.Parser, error) {
+	allConfigs := make(map[string]*nginx.Config, 0)
 	return unmarshal(b, st, configCaches, &allConfigs)
 	//return unmarshal(b)
 }
 
-func (st *Stream) toParser(children []resolv.Parser) (resolv.Parser, error) {
-	St := resolv.NewStream()
+func (st *Stream) toParser(children []nginx.Parser) (nginx.Parser, error) {
+	St := nginx.NewStream()
 	St.Children = children
 	return St, nil
 }
@@ -190,14 +190,14 @@ type Upstream struct {
 	BasicContext `json:"upstream"`
 }
 
-func (u *Upstream) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
-	allConfigs := make(map[string]*resolv.Config, 0)
+func (u *Upstream) UnmarshalToJSON(b []byte, configCaches *[]string) (nginx.Parser, error) {
+	allConfigs := make(map[string]*nginx.Config, 0)
 	return unmarshal(b, u, configCaches, &allConfigs)
 	//return unmarshal(b)
 }
 
-func (u *Upstream) toParser(children []resolv.Parser) (resolv.Parser, error) {
-	U := resolv.NewUpstream(u.Value)
+func (u *Upstream) toParser(children []nginx.Parser) (nginx.Parser, error) {
+	U := nginx.NewUpstream(u.Value)
 	U.Children = children
 	return U, nil
 }
@@ -206,14 +206,14 @@ type Server struct {
 	BasicContext `json:"server"`
 }
 
-func (s *Server) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
-	allConfigs := make(map[string]*resolv.Config, 0)
+func (s *Server) UnmarshalToJSON(b []byte, configCaches *[]string) (nginx.Parser, error) {
+	allConfigs := make(map[string]*nginx.Config, 0)
 	return unmarshal(b, s, configCaches, &allConfigs)
 	//return unmarshal(b)
 }
 
-func (s *Server) toParser(children []resolv.Parser) (resolv.Parser, error) {
-	S := resolv.NewServer()
+func (s *Server) toParser(children []nginx.Parser) (nginx.Parser, error) {
+	S := nginx.NewServer()
 	S.Children = children
 	return S, nil
 }
@@ -222,14 +222,14 @@ type Location struct {
 	BasicContext `json:"location"`
 }
 
-func (l *Location) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
-	allConfigs := make(map[string]*resolv.Config, 0)
+func (l *Location) UnmarshalToJSON(b []byte, configCaches *[]string) (nginx.Parser, error) {
+	allConfigs := make(map[string]*nginx.Config, 0)
 	return unmarshal(b, l, configCaches, &allConfigs)
 	//return unmarshal(b)
 }
 
-func (l *Location) toParser(children []resolv.Parser) (resolv.Parser, error) {
-	L := resolv.NewLocation(l.Value)
+func (l *Location) toParser(children []nginx.Parser) (nginx.Parser, error) {
+	L := nginx.NewLocation(l.Value)
 	L.Children = children
 	return L, nil
 }
@@ -238,23 +238,23 @@ type If struct {
 	BasicContext `json:"if"`
 }
 
-func (i *If) UnmarshalToJSON(b []byte, configCaches *[]string) (resolv.Parser, error) {
-	allConfigs := make(map[string]*resolv.Config, 0)
+func (i *If) UnmarshalToJSON(b []byte, configCaches *[]string) (nginx.Parser, error) {
+	allConfigs := make(map[string]*nginx.Config, 0)
 	return unmarshal(b, i, configCaches, &allConfigs)
 	//return unmarshal(b)
 }
 
-func (i *If) toParser(children []resolv.Parser) (resolv.Parser, error) {
-	I := resolv.NewIf(i.Value)
+func (i *If) toParser(children []nginx.Parser) (nginx.Parser, error) {
+	I := nginx.NewIf(i.Value)
 	I.Children = children
 	return I, nil
 }
 
 type Key struct {
-	resolv.Key
+	nginx.Key
 }
 
-func (k *Key) UnmarshalToJSON(b []byte, _ *[]string) (resolv.Parser, error) {
+func (k *Key) UnmarshalToJSON(b []byte, _ *[]string) (nginx.Parser, error) {
 	err := json.Unmarshal(b, k)
 	return &k.Key, err
 }
@@ -263,15 +263,15 @@ func (k *Key) getChildren() []*json.RawMessage {
 	return nil
 }
 
-func (k *Key) toParser(_ []resolv.Parser) (resolv.Parser, error) {
+func (k *Key) toParser(_ []nginx.Parser) (nginx.Parser, error) {
 	return &k.Key, nil
 }
 
 type Comment struct {
-	resolv.Comment
+	nginx.Comment
 }
 
-func (c *Comment) UnmarshalToJSON(b []byte, _ *[]string) (resolv.Parser, error) {
+func (c *Comment) UnmarshalToJSON(b []byte, _ *[]string) (nginx.Parser, error) {
 	err := json.Unmarshal(b, c)
 	return &c.Comment, err
 }
@@ -280,13 +280,13 @@ func (c *Comment) getChildren() []*json.RawMessage {
 	return nil
 }
 
-func (c *Comment) toParser(_ []resolv.Parser) (resolv.Parser, error) {
+func (c *Comment) toParser(_ []nginx.Parser) (nginx.Parser, error) {
 	return &c.Comment, nil
 }
 
 // Unmarshal, json反序列化并返回nginx配置对象的函数
-func Unmarshal(b []byte) (resolv.Parser, error) {
-	allConfigs := make(map[string]*resolv.Config, 0)
+func Unmarshal(b []byte) (nginx.Parser, error) {
+	allConfigs := make(map[string]*nginx.Config, 0)
 	return unmarshal(b, &Config{}, &[]string{}, &allConfigs)
 	/* 测试解析器Config对象指针映射
 	conf, err := unmarshal(b, &Config{}, &[]string{}, &allConfigs)
@@ -295,7 +295,7 @@ func Unmarshal(b []byte) (resolv.Parser, error) {
 }
 
 // unmarshal, json反序列化并返回nginx配置对象的内部函数
-func unmarshal(b []byte, p unmarshaler, configCaches *[]string, allConfigs *map[string]*resolv.Config) (resolv.Parser, error) {
+func unmarshal(b []byte, p unmarshaler, configCaches *[]string, allConfigs *map[string]*nginx.Config) (nginx.Parser, error) {
 	switch p.(type) {
 	case *Key, *Comment:
 		return p.UnmarshalToJSON(b, configCaches)
@@ -323,7 +323,7 @@ func unmarshal(b []byte, p unmarshaler, configCaches *[]string, allConfigs *map[
 			if tpErr != nil {
 				return nil, tpErr
 			}
-			(*allConfigs)[conf.Value] = config.(*resolv.Config)
+			(*allConfigs)[conf.Value] = config.(*nginx.Config)
 
 			return config, nil
 		} else {
@@ -346,7 +346,7 @@ func inCaches(path string, caches *[]string) bool {
 }
 
 // unmarshalChildren, 解析并反序列化子json串切片对象的内部函数
-func unmarshalChildren(bytes []*json.RawMessage, configCaches *[]string, allConfig *map[string]*resolv.Config) (children []resolv.Parser, err error) {
+func unmarshalChildren(bytes []*json.RawMessage, configCaches *[]string, allConfig *map[string]*nginx.Config) (children []nginx.Parser, err error) {
 	// parseContext, 用于解析json串归属于哪类需反序列化对象的匿名函数
 	parseContext := func(b []byte, reg *regexp.Regexp) bool {
 		if m := reg.Find(b); m != nil {

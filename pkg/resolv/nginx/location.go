@@ -1,4 +1,4 @@
-package resolv
+package nginx
 
 type Location struct {
 	BasicContext `json:"location"`
@@ -18,15 +18,15 @@ func (l *Location) Query(kw KeyWords) (parser Parser) {
 	return l.subQuery(kw)
 }
 
-func (l *Location) BitSize(order Order, bit int) byte {
+func (l *Location) BitSize(_ Order, _ int) byte {
 	return 0
 }
 
-func (l *Location) BitLen(order Order) int {
+func (l *Location) BitLen(_ Order) int {
 	return 0
 }
 
-func (l *Location) Size(order Order) int {
+func (l *Location) Size(_ Order) int {
 	return 0
 }
 

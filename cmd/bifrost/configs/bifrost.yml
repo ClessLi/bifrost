@@ -11,7 +11,7 @@ WebServerInfo:
       name: "bifrost-test2"
       serverType: nginx
       baseURI: "/ng_conf2"
-      confPath: "/GO_Project/src/go-nginx-conf-parser/test/config_test/nginx.conf"
+      confPath: "/GO_Project/src/bifrost/test/config_test/nginx.conf"
       verifyExecPath: "xxxxxxxxxxxx/nginx"
 DBConfig:
   DBName: "bifrost"

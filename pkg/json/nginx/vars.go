@@ -1,4 +1,4 @@
-package json
+package nginx
 
 import "regexp"
 

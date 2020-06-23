@@ -1,13 +1,13 @@
 package test
 
 import (
-	"github.com/ClessLi/go-nginx-conf-parser/pkg/resolv"
+	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
 	"path/filepath"
 	"testing"
 )
 
 func TestRel(t *testing.T) {
-	conf, err := resolv.Load("./config_test/nginx.conf")
+	conf, err := nginx.Load("./config_test/nginx.conf")
 	if err != nil {
 		t.Log(err)
 	}
@@ -18,6 +18,6 @@ func TestRel(t *testing.T) {
 	}
 
 	for _, s := range fileList {
-		t.Log(filepath.Rel("F:\\GO_Project\\src\\go-nginx-conf-parser\\test", s))
+		t.Log(filepath.Rel("F:\\GO_Project\\src\\bifrost\\test", s))
 	}
 }

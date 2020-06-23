@@ -1,18 +1,18 @@
 package test
 
 import (
-	"github.com/ClessLi/go-nginx-conf-parser/pkg/resolv"
+	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
 	"testing"
 )
 
 func TestSave(t *testing.T) {
-	conf, err := resolv.Load("./config_test/nginx.conf")
+	conf, err := nginx.Load("./config_test/nginx.conf")
 
 	if err != nil {
 		t.Log(err)
 	}
 
-	serr := resolv.Save(conf)
+	serr := nginx.Save(conf)
 
 	if serr != nil {
 		t.Log(serr)
@@ -20,7 +20,7 @@ func TestSave(t *testing.T) {
 }
 
 func TestVerifyAndSave(t *testing.T) {
-	conf, err := resolv.Load("./config_test/nginx.conf")
+	conf, err := nginx.Load("./config_test/nginx.conf")
 
 	if err != nil {
 		t.Log(err)
@@ -28,7 +28,7 @@ func TestVerifyAndSave(t *testing.T) {
 
 	tmpConf := conf
 
-	conf = resolv.NewConf(nil, "./config_test/nginx.conf")
+	conf = nginx.NewConf(nil, "./config_test/nginx.conf")
 	t.Log(tmpConf.String())
 	t.Log(conf.String())
 }

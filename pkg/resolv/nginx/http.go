@@ -1,4 +1,4 @@
-package resolv
+package nginx
 
 type Http struct {
 	BasicContext `json:"http"`
@@ -18,15 +18,15 @@ func (h *Http) Query(kw KeyWords) (parser Parser) {
 	return h.subQuery(kw)
 }
 
-func (h *Http) BitSize(order Order, bit int) byte {
+func (h *Http) BitSize(_ Order, _ int) byte {
 	return 0
 }
 
-func (h *Http) BitLen(order Order) int {
+func (h *Http) BitLen(_ Order) int {
 	return 0
 }
 
-func (h *Http) Size(order Order) int {
+func (h *Http) Size(_ Order) int {
 	return 0
 }
 

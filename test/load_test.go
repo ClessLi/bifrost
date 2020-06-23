@@ -2,15 +2,15 @@ package test
 
 import (
 	"encoding/json"
-	ngJson "github.com/ClessLi/go-nginx-conf-parser/pkg/json"
-	"github.com/ClessLi/go-nginx-conf-parser/pkg/resolv"
+	ngJson "github.com/ClessLi/bifrost/pkg/json/nginx"
+	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
 	"io/ioutil"
 	"testing"
 )
 
 func TestLoad(t *testing.T) {
 	//conf, err := resolv.Load("config_test/nginx.conf")
-	conf, err := resolv.Load("test_circle_load/nginx.conf")
+	conf, err := nginx.Load("test_circle_load/nginx.conf")
 
 	if err != nil {
 		t.Log(err)
@@ -21,7 +21,7 @@ func TestLoad(t *testing.T) {
 }
 
 func TestLoadServers(t *testing.T) {
-	conf, err := resolv.Load("config_test/nginx.conf")
+	conf, err := nginx.Load("config_test/nginx.conf")
 
 	if err != nil {
 		t.Log(err)
@@ -35,7 +35,7 @@ func TestLoadServers(t *testing.T) {
 }
 
 func TestLoadServer(t *testing.T) {
-	conf, err := resolv.Load("config_test/nginx.conf")
+	conf, err := nginx.Load("config_test/nginx.conf")
 
 	if err != nil {
 		t.Log(err)
@@ -47,7 +47,7 @@ func TestLoadServer(t *testing.T) {
 
 func TestMarshalJSON(t *testing.T) {
 	//conf, err := resolv.Load("config_test/nginx.conf")
-	conf, err := resolv.Load("test_circle_load/nginx.conf")
+	conf, err := nginx.Load("test_circle_load/nginx.conf")
 
 	if err != nil {
 		t.Log(err)

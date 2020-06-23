@@ -1,4 +1,4 @@
-package resolv
+package nginx
 
 type Map struct {
 	BasicContext `json:"map"`
@@ -18,15 +18,15 @@ func (m *Map) Query(kw KeyWords) (parser Parser) {
 	return m.subQuery(kw)
 }
 
-func (m *Map) BitSize(order Order, bit int) byte {
+func (m *Map) BitSize(_ Order, _ int) byte {
 	return 0
 }
 
-func (m *Map) BitLen(order Order) int {
+func (m *Map) BitLen(_ Order) int {
 	return 0
 }
 
-func (m *Map) Size(order Order) int {
+func (m *Map) Size(_ Order) int {
 	return 0
 }
 

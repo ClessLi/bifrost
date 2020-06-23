@@ -4,7 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"github.com/ClessLi/go-nginx-conf-parser/pkg/resolv"
+	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
 	"github.com/apsdehal/go-logger"
 	"io"
 	"io/ioutil"
@@ -37,9 +37,9 @@ func readFile(path string) ([]byte, error) {
 // 返回值:
 //     nginx配置对象指针
 //     错误
-func ngLoad(serverInfo *ServerInfo) (*resolv.Config, error) {
+func ngLoad(serverInfo *ServerInfo) (*nginx.Config, error) {
 	// 加载nginx配置
-	ng, err := resolv.Load(serverInfo.ConfPath)
+	ng, err := nginx.Load(serverInfo.ConfPath)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +92,7 @@ func hash(path string) (string, error) {
 //     serverInfo: web服务器配置文件信息对象指针
 //     config: nginx配置对象指针
 //     c: 整型管道，用于停止备份
-func Bak(serverInfo *ServerInfo, config *resolv.Config, c chan int) {
+func Bak(serverInfo *ServerInfo, config *nginx.Config, c chan int) {
 	for {
 		select {
 		case <-time.NewTicker(5 * time.Minute).C: // 每5分钟定时执行备份操作
@@ -110,12 +110,12 @@ func Bak(serverInfo *ServerInfo, config *resolv.Config, c chan int) {
 // 参数:
 //     serverInfo: web服务器配置文件信息对象指针
 //     config: nginx配置对象指针
-func bak(serverInfo *ServerInfo, config *resolv.Config) {
+func bak(serverInfo *ServerInfo, config *nginx.Config) {
 	// 初始化备份文件名
 	bakDate := time.Now().Format("20060102")
 	bakName := fmt.Sprintf("nginx.conf.%s.tgz", bakDate)
 
-	bakPath, bErr := resolv.Backup(config, bakName)
+	bakPath, bErr := nginx.Backup(config, bakName)
 	if bErr != nil && !os.IsExist(bErr) { // 备份失败
 		Log(CRITICAL, fmt.Sprintf("[%s] Nginx Config backup to %s, but failed. <%s>", serverInfo.Name, bakPath, bErr))
 		Log(NOTICE, fmt.Sprintf("[%s] Nginx Config backup is stop.", serverInfo.Name))
@@ -130,7 +130,7 @@ func bak(serverInfo *ServerInfo, config *resolv.Config) {
 //     serverInfo: web服务器配置文件信息对象指针
 //     config: nginx配置对象指针
 //     c: 整型管道，用于停止备份
-func AutoReload(serverInfo *ServerInfo, config *resolv.Config, c chan int) {
+func AutoReload(serverInfo *ServerInfo, config *nginx.Config, c chan int) {
 	for {
 		select {
 		case <-time.NewTicker(30 * time.Second).C: // 每30秒检查一次nginx配置文件是否已在后台更新
@@ -154,7 +154,7 @@ func AutoReload(serverInfo *ServerInfo, config *resolv.Config, c chan int) {
 // autoReload, web服务器配置文件自动热加载子函数
 // 参数:
 //     serverInfo: web服务器配置文件信息对象指针
-func autoReload(serverInfo *ServerInfo) (*resolv.Config, error) {
+func autoReload(serverInfo *ServerInfo) (*nginx.Config, error) {
 	// 校验配置文件是否更新
 	isDifferent, checkErr := hashCheck(serverInfo)
 	if checkErr != nil {

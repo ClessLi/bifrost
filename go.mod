@@ -1,4 +1,4 @@
-module github.com/ClessLi/go-nginx-conf-parser
+module github.com/ClessLi/bifrost
 
 go 1.13
 

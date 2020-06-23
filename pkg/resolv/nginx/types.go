@@ -1,4 +1,4 @@
-package resolv
+package nginx
 
 type Types struct {
 	BasicContext `json:"types"`
@@ -18,15 +18,15 @@ func (t *Types) Query(kw KeyWords) (parser Parser) {
 	return t.subQuery(kw)
 }
 
-func (t *Types) BitSize(order Order, bit int) byte {
+func (t *Types) BitSize(_ Order, _ int) byte {
 	return 0
 }
 
-func (t *Types) BitLen(order Order) int {
+func (t *Types) BitLen(_ Order) int {
 	return 0
 }
 
-func (t *Types) Size(order Order) int {
+func (t *Types) Size(_ Order) int {
 	return 0
 }
 

@@ -1,4 +1,4 @@
-package resolv
+package nginx
 
 type KeyWord struct {
 	Type  string
