@@ -243,6 +243,7 @@ func verifyAction(strToken string) (*JWTClaims, error) {
 	if err := token.Claims.Valid(); err != nil {
 		return nil, errors.New(ErrorReasonRelogin)
 	}
+	Log(INFO, fmt.Sprintf("User '%s' passed verification", claims.Username))
 
 	// 通过返回有效用户jwt断言对象
 	return claims, nil
