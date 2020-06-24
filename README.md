@@ -374,3 +374,90 @@ json返回示例
   "status":"success"
 }
 ```
+
+### 监控接口
+
+#### 1.bifrost健康状态
+
+接口地址
+
+`http://<Host>:<Port>/health?token=<token>`
+
+返回格式
+
+`json`
+
+请求方式
+
+`http get`
+
+请求示例
+
+`http://127.0.0.1:12321/health?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1OTE2MDcwMzcsImlhdCI6MTU5MTYwMzQzNywidXNlcl9pZCI6MSwicGFzc3dvcmQiOiJuZ2FkbWluIiwidXNlcm5hbWUiOiJuZ2FkbWluIiwiZnVsbF9uYW1lIjoibmdhZG1pbiIsInBlcm1pc3Npb25zIjpbXX0.l5qE1sMBD9VJHspzXlhHNmHhbZiF00YlCafUIsIEJpo`
+
+请求参数
+
+| 名称 | 必填 | 类型 | 说明 |
+| :-: | :-: | :-: | :- |
+| token | 是 | string | 用户访问认证成功后返回的令牌 |
+
+返回参数说明
+
+| 名称 | 类型 | 说明 |
+| :-: | :-: | :- |
+| json返回示例 | - | - |
+
+json返回示例
+
+```json
+{
+  "message": "healthy",
+  "status": "success"
+}
+```
+
+#### 2.系统监控信息接口
+
+接口地址
+
+`http://<Host>:<Port>/sysinfo?token=<token>`
+
+返回格式
+
+`json`
+
+请求方式
+
+`http get`
+
+请求示例
+
+`http://127.0.0.1:12321/sysinfo?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1OTE2MDcwMzcsImlhdCI6MTU5MTYwMzQzNywidXNlcl9pZCI6MSwicGFzc3dvcmQiOiJuZ2FkbWluIiwidXNlcm5hbWUiOiJuZ2FkbWluIiwiZnVsbF9uYW1lIjoibmdhZG1pbiIsInBlcm1pc3Npb25zIjpbXX0.l5qE1sMBD9VJHspzXlhHNmHhbZiF00YlCafUIsIEJpo`
+
+请求参数
+
+| 名称 | 必填 | 类型 | 说明 |
+| :-: | :-: | :-: | :- |
+| token | 是 | string | 用户访问认证成功后返回的令牌 |
+
+返回参数说明
+
+| 名称 | 类型 | 说明 |
+| :-: | :-: | :- |
+| json返回示例 | - | - |
+
+json返回示例
+
+```json
+{
+  "message": {
+    "system": "centos 7.4.1708",
+    "time": "2020/06/24 15:39:52",
+    "cpu": "0.10",
+    "mem": "61.41",
+    "disk": "53.13",
+    "bifrost_version": "v1.0.0-alpha"
+  },
+  "status": "success"
+}
+```

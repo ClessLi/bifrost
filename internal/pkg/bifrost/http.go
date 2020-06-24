@@ -18,6 +18,8 @@ func Run() {
 	loginURI := "/login"
 	verifyURI := "/verify"
 	refreshURI := "/refresh"
+	sysinfoURI := "/sysinfo"
+	healthURI := "/health"
 
 	router := gin.Default()
 	// login
@@ -26,6 +28,10 @@ func Run() {
 	router.GET(verifyURI, verify)
 	// refresh
 	router.GET(refreshURI, refresh)
+	// sysinfo
+	router.GET(sysinfoURI, sysInfo)
+	// health
+	router.GET(healthURI, health)
 
 	// 初始化管道指针切片
 	// 创建备份协程管道指针切片
@@ -58,6 +64,9 @@ func Run() {
 		}
 	}
 
+	// 监控系统信息
+	go monitoring(signal)
+
 	// 启动bifrost各接口服务
 	rErr := router.Run(fmt.Sprintf(":%d", BifrostConf.WebServerInfo.ListenPort))
 	if rErr != nil {
@@ -68,6 +77,7 @@ func Run() {
 	}
 
 	killCoroutine(chansLen, bakChans, autoReloadChans)
+	signal <- 9
 	Log(NOTICE, fmt.Sprintf("bifrost Run coroutine has been stoped"))
 	return
 }

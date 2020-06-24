@@ -8,6 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/apsdehal/go-logger"
+	"github.com/shirou/gopsutil/host"
 	"gopkg.in/yaml.v2"
 	"os"
 	"path/filepath"
@@ -40,6 +41,15 @@ var (
 
 	// 错误变量
 	procStatusNotRunning = fmt.Errorf("bifrost is not running")
+
+	// 初始化systemInfo监控对象
+	si = &systemInfo{}
+
+	// bifrost健康状态
+	isHealthy = true
+
+	// 初始化信号量
+	signal chan int
 )
 
 const (
@@ -52,7 +62,7 @@ const (
 	DEBUG    = logger.DebugLevel
 
 	// 版本号
-	VERSION = "v0.0.3"
+	VERSION = "v1.0.0-alpha"
 
 	// Web服务类型
 	NGINX WebServerType = "nginx"
@@ -213,4 +223,13 @@ func init() {
 	if openErr != nil {
 		panic(openErr)
 	}
+
+	platform, _, release, OSErr := host.PlatformInformation()
+	if OSErr != nil {
+		Log(CRITICAL, fmt.Sprintf("bifrost is stopped, cased by '%s'", OSErr))
+		os.Exit(1)
+	}
+	si.OS = fmt.Sprintf("%s %s", platform, release)
+	si.BifrostVersion = VERSION
+
 }

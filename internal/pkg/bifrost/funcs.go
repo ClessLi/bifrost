@@ -92,13 +92,13 @@ func hash(path string) (string, error) {
 //     serverInfo: web服务器配置文件信息对象指针
 //     config: nginx配置对象指针
 //     c: 整型管道，用于停止备份
-func Bak(serverInfo *ServerInfo, config *nginx.Config, c chan int) {
+func Bak(serverInfo *ServerInfo, config *nginx.Config, signal chan int) {
 	for {
 		select {
 		case <-time.NewTicker(5 * time.Minute).C: // 每5分钟定时执行备份操作
 			bak(serverInfo, config)
-		case signal := <-c: // 获取管道传入信号
-			if signal == 9 { // 为9时，停止备份
+		case s := <-signal: // 获取管道传入信号
+			if s == 9 { // 为9时，停止备份
 				Log(NOTICE, fmt.Sprintf("[%s] Nginx Config backup is stop.", serverInfo.Name))
 				break
 			}
@@ -130,7 +130,7 @@ func bak(serverInfo *ServerInfo, config *nginx.Config) {
 //     serverInfo: web服务器配置文件信息对象指针
 //     config: nginx配置对象指针
 //     c: 整型管道，用于停止备份
-func AutoReload(serverInfo *ServerInfo, config *nginx.Config, c chan int) {
+func AutoReload(serverInfo *ServerInfo, config *nginx.Config, signal chan int) {
 	for {
 		select {
 		case <-time.NewTicker(30 * time.Second).C: // 每30秒检查一次nginx配置文件是否已在后台更新
@@ -142,8 +142,8 @@ func AutoReload(serverInfo *ServerInfo, config *nginx.Config, c chan int) {
 				config.Children = cache.Children
 				Log(INFO, fmt.Sprintf("[%s] Nginx Config reload successfully", serverInfo.Name))
 			}
-		case signal := <-c: // 获取管道传入信号
-			if signal == 9 { // 为9时，停止备份
+		case s := <-signal: // 获取管道传入信号
+			if s == 9 { // 为9时，停止备份
 				Log(NOTICE, fmt.Sprintf("[%s] Nginx Config backup is stop.", serverInfo.Name))
 				break
 			}
