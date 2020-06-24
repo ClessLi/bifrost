@@ -1,8 +1,8 @@
 # [Bifrost](https://github.com/ClessLi/bifrost)
 
-![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/ClessLi/bifrost?include_prereleases&label=bifrost)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/ClessLi/bifrost?label=bifrost)](https://github.com/ClessLi/bifrost/releases/latest)
 ![GitHub Releases](https://img.shields.io/github/downloads/ClessLi/bifrost/latest/total)
-![GitHub](https://img.shields.io/github/license/ClessLi/bifrost)
+[![GitHub](https://img.shields.io/github/license/ClessLi/bifrost)](LICENSE)
 
 # 项目介绍
 
