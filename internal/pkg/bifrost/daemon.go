@@ -51,19 +51,27 @@ func Start() error {
 
 		return nil
 	} else { // 子进程时
+		// 进程结束前操作
+		defer func() {
+			// 捕获panic
+			if r := recover(); r != nil {
+				Log(CRITICAL, fmt.Sprintf("%s", r))
+			}
+			// 进程结束前清理pid文件
+			rmPidFileErr := os.Remove(pidFile)
+			if rmPidFileErr != nil {
+				Log(ERROR, rmPidFileErr.Error())
+			}
+			Log(NOTICE, "bifrost.pid is removed, bifrost is finished")
+		}()
+
 		// 执行bifrost进程
 
 		// 记录pid
 		pid := os.Getpid()
 		pidErr := ioutil.WriteFile(pidFile, []byte(fmt.Sprintf("%d", pid)), 644)
 		if pidErr != nil {
-			// 关闭进程后清理pid文件
-			rmPidFileErr := os.Remove(pidFile)
-			if rmPidFileErr != nil {
-				Log(ERROR, rmPidFileErr.Error())
-				return rmPidFileErr
-			}
-			Log(NOTICE, "bifrost.pid is removed")
+			Log(ERROR, fmt.Sprintf("failed to start bifrost, cased by '%s'", pidErr))
 			return pidErr
 		}
 
@@ -72,13 +80,6 @@ func Start() error {
 		Run()
 		stat := fmt.Sprintf("bifrost <PID %d> is finished", pid)
 		Log(NOTICE, stat)
-		// 进程停止后清理pid文件
-		rmPidFileErr := os.Remove(pidFile)
-		if rmPidFileErr != nil {
-			Log(ERROR, rmPidFileErr.Error())
-			return rmPidFileErr
-		}
-		Log(NOTICE, "bifrost.pid is removed, bifrost is finished")
 		return fmt.Errorf(stat)
 	}
 }
