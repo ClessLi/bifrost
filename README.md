@@ -1,6 +1,12 @@
+# [Bifrost](https://github.com/ClessLi/bifrost)
+
+![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/ClessLi/bifrost?include_prereleases&label=bifrost)
+![GitHub Releases](https://img.shields.io/github/downloads/ClessLi/bifrost/latest/total)
+![GitHub](https://img.shields.io/github/license/ClessLi/bifrost)
+
 # 项目介绍
 
-bifrost 是基于golang语言开发的项目，它目前还处于测试阶段，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用版本为[v0.0.3](https://github.com/ClessLi/bifrost/tree/v0.0.3) 。
+**Bifrost** 是基于golang语言开发的项目，它目前还处于测试阶段，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用版本为[v0.0.3](https://github.com/ClessLi/bifrost/tree/v0.0.3) 。
 
 # 项目特点
 
