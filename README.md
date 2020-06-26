@@ -18,6 +18,12 @@
 
 提供配置文件展示和修改及配置信息统计查询的接口
 
+# 合作项目
+
+## [Heimdallr](https://github.com/tanganyu1114/Heimdallr)
+
+基于SDRMS创建的Nginx管理平台，目前已完成nginx配置文件信息，操作系统基础信息的展示
+
 # 使用方法
 
 ## 下载地址
