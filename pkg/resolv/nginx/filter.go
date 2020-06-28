@@ -3,6 +3,7 @@ package nginx
 import (
 	"bytes"
 	"regexp"
+	"strconv"
 )
 
 func GetHTTP(ctx Context) *Http {
@@ -47,27 +48,37 @@ func GetPorts(ctx Context) []Parser {
 	return ctx.QueryAll(KeywordPort)
 }
 
-func GetLocations(ctx Context) []Parser {
-	http := GetHTTP(ctx)
-	if http != nil {
-		return ctx.QueryAll(KeywordLocations)
-	} else {
-		return []Parser{}
+func GetPort(ctx Context) int {
+	port, err := strconv.Atoi(ctx.Query(KeywordPort).(*Key).Value)
+	if err != nil {
+		port = -1
 	}
+	return port
 }
 
-func AppendNewString(slice []string, elem string) []string {
-	elem = stripSpace(elem)
-	var tmp []string
-	for _, s := range slice {
-		if s == elem {
-			return slice
-		}
-		tmp = append(tmp, s)
-	}
-	tmp = append(tmp, elem)
-	return tmp
-}
+//func GetLocations(ctx Context) []Parser {
+//	http := GetHTTP(ctx)
+//	if http != nil {
+//		return ctx.QueryAll(KeywordLocations)
+//	} else {
+//		return []Parser{}
+//	}
+//}
+
+//func AppendNewString(slice []string, elem string) []string {
+//	elem = StripSpace(elem)
+//	//var tmp []string
+//	for _, s := range slice {
+//		if s == elem {
+//			return slice
+//		}
+//		//tmp = append(tmp, s)
+//	}
+//	//tmp = append(tmp, elem)
+//	slice = append(slice, elem)
+//	//return tmp
+//	return slice
+//}
 
 func SortInsertInt(slice []int, ints ...int) []int {
 	n := len(slice)
@@ -134,7 +145,7 @@ func SortInsertUniqInt(slice []int, ints ...int) []int {
 	return slice
 }
 
-func stripSpace(s string) string {
-	spaceReg := regexp.MustCompile(`\s{2,}`)
+func StripSpace(s string) string {
+	spaceReg := regexp.MustCompile(`\s+`)
 	return string(spaceReg.ReplaceAll(bytes.TrimSpace([]byte(s)), []byte(" ")))
 }

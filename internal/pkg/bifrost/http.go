@@ -186,93 +186,99 @@ func statisticsView(appName string, config *nginx.Config, c *gin.Context) (h gin
 		return
 	}
 
-	// 检查接口访问统计查询过滤参数
-	noHttpSvrsNum, notHasHttpSvrsNum := c.GetQuery("NoHttpSvrsNum")
-	if !notHasHttpSvrsNum {
-		noHttpSvrsNum = "false"
-	}
+	/*	// 检查接口访问统计查询过滤参数
+		noHttpSvrsNum, notHasHttpSvrsNum := c.GetQuery("NoHttpSvrsNum")
+		if !notHasHttpSvrsNum {
+			noHttpSvrsNum = "false"
+		}
 
-	noHttpSvrNames, notHasHttpSvrNames := c.GetQuery("NoHttpSvrNames")
-	if !notHasHttpSvrNames {
-		noHttpSvrNames = "false"
-	}
+		noHttpSvrNames, notHasHttpSvrNames := c.GetQuery("NoHttpSvrNames")
+		if !notHasHttpSvrNames {
+			noHttpSvrNames = "false"
+		}
 
-	noHttpPorts, notHasHttpPorts := c.GetQuery("NoHttpPorts")
-	if !notHasHttpPorts {
-		noHttpPorts = "false"
-	}
+		noHttpPorts, notHasHttpPorts := c.GetQuery("NoHttpPorts")
+		if !notHasHttpPorts {
+			noHttpPorts = "false"
+		}
 
-	noLocNum, notHasLocationsNum := c.GetQuery("NoLocsNum")
-	if !notHasLocationsNum {
-		noLocNum = "false"
-	}
+		noLocNum, notHasLocationsNum := c.GetQuery("NoLocsNum")
+		if !notHasLocationsNum {
+			noLocNum = "false"
+		}
 
-	noStreamSvrsNum, notHasStreamSvrsNum := c.GetQuery("NoStreamSvrsNum")
-	if !notHasStreamSvrsNum {
-		noStreamSvrsNum = "false"
-	}
+		noStreamSvrsNum, notHasStreamSvrsNum := c.GetQuery("NoStreamSvrsNum")
+		if !notHasStreamSvrsNum {
+			noStreamSvrsNum = "false"
+		}
 
-	noStreamPorts, notHasStreamPorts := c.GetQuery("NoStreamPorts")
-	if !notHasStreamPorts {
-		noStreamPorts = "false"
-	}
+		noStreamPorts, notHasStreamPorts := c.GetQuery("NoStreamPorts")
+		if !notHasStreamPorts {
+			noStreamPorts = "false"
+		}
 
-	// 判断统计查询过滤参数是否为bool型
-	if (noHttpSvrsNum == "true" || noHttpSvrsNum == "false") && (noHttpSvrNames == "true" || noHttpSvrNames == "false") && (noHttpPorts == "true" || noHttpPorts == "false") && (noLocNum == "true" || noLocNum == "false") && (noStreamSvrsNum == "true" || noStreamSvrsNum == "false") && (noStreamPorts == "true" || noStreamPorts == "false") {
-		// 统计查询过滤参数不可都为真
-		if noHttpSvrsNum == "true" && noHttpSvrNames == "true" && noHttpPorts == "true" && noLocNum == "true" && noStreamSvrsNum == "true" && noStreamPorts == "true" {
+		// 判断统计查询过滤参数是否为bool型
+		if (noHttpSvrsNum == "true" || noHttpSvrsNum == "false") && (noHttpSvrNames == "true" || noHttpSvrNames == "false") && (noHttpPorts == "true" || noHttpPorts == "false") && (noLocNum == "true" || noLocNum == "false") && (noStreamSvrsNum == "true" || noStreamSvrsNum == "false") && (noStreamPorts == "true" || noStreamPorts == "false") {
+			// 统计查询过滤参数不可都为真
+			if noHttpSvrsNum == "true" && noHttpSvrNames == "true" && noHttpPorts == "true" && noLocNum == "true" && noStreamSvrsNum == "true" && noStreamPorts == "true" {
+				status = "failed"
+				h["message"] = "invalid params."
+				s = http.StatusBadRequest
+				return
+			}
+
+			// 如果配置解析失败，返回解析失败
+			if config == nil {
+				status = "failed"
+				message := "configuration resolution failed"
+				Log(ERROR, fmt.Sprintf("[%s] %s", appName, message))
+				s = http.StatusInternalServerError
+				return
+			}
+
+			// 统计查询未过滤数据
+			if noHttpSvrsNum == "false" {
+				message["httpSvrsNum"] = nginxStatistics.HTTPServersNum(config)
+			}
+			if noHttpSvrNames == "false" {
+				message["httpSvrNames"] = nginxStatistics.HTTPServerNames(config)
+			}
+			if noHttpPorts == "false" {
+				message["httpPorts"] = nginxStatistics.HTTPPorts(config)
+			}
+			if noLocNum == "false" {
+				message["locNum"] = nginxStatistics.HTTPLocationsNum(config)
+			}
+			if noStreamSvrsNum == "false" {
+				message["streamSvrsNum"] = nginxStatistics.StreamServersNum(config)
+			}
+			if noStreamPorts == "false" {
+				message["streamPorts"] = nginxStatistics.StreamServers(config)
+			}
+
+			// 无数据时，返回无数据
+			if len(message) == 0 {
+				status = "failed"
+				h["message"] = "no data"
+				s = http.StatusOK
+				return
+			}
+		} else {
 			status = "failed"
 			h["message"] = "invalid params."
 			s = http.StatusBadRequest
 			return
-		}
+		}*/
 
-		// 如果配置解析失败，返回解析失败
-		if config == nil {
-			status = "failed"
-			message := "configuration resolution failed"
-			Log(ERROR, fmt.Sprintf("[%s] %s", appName, message))
-			s = http.StatusInternalServerError
-			return
-		}
-
-		// 统计查询未过滤数据
-		if noHttpSvrsNum == "false" {
-			message["httpSvrsNum"] = nginxStatistics.HTTPServersNum(config)
-		}
-		if noHttpSvrNames == "false" {
-			message["httpSvrNames"] = nginxStatistics.HTTPServerNames(config)
-		}
-		if noHttpPorts == "false" {
-			message["httpPorts"] = nginxStatistics.HTTPPorts(config)
-		}
-		if noLocNum == "false" {
-			message["locNum"] = nginxStatistics.HTTPLocationsNum(config)
-		}
-		if noStreamSvrsNum == "false" {
-			message["streamSvrsNum"] = nginxStatistics.StreamServersNum(config)
-		}
-		if noStreamPorts == "false" {
-			message["streamPorts"] = nginxStatistics.StreamPorts(config)
-		}
-
-		// 无数据时，返回无数据
-		if len(message) == 0 {
-			status = "failed"
-			h["message"] = "no data"
-			s = http.StatusOK
-			return
-		}
-	} else {
-		status = "failed"
-		h["message"] = "invalid params."
-		s = http.StatusBadRequest
-		return
-	}
+	httpServersNum, httpServers := nginxStatistics.HTTPServers(config)
+	streamServersNum, streamPorts := nginxStatistics.StreamServers(config)
+	message["httpSvrsNum"] = httpServersNum
+	message["httpSvrs"] = httpServers
+	message["streamSvrsNum"] = streamServersNum
+	message["streamPorts"] = streamPorts
 
 	status = "success"
 	s = http.StatusOK
-	fmt.Println(h)
 	return
 }
 

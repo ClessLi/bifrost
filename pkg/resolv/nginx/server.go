@@ -29,8 +29,8 @@ func (s *Server) BitSize(order Order, bit int) byte {
 		if serverName == nil {
 			return 0
 		}
-		//sn := []byte(stripSpace(serverName[0].(*Key).Value))
-		sn := []byte(serverName.(*Key).Value)
+		sn := []byte(StripSpace(serverName.(*Key).Value))
+		//sn := []byte(serverName.(*Key).Value)
 
 		if len(sn) <= bit {
 			return 0
@@ -49,8 +49,8 @@ func (s *Server) BitLen(order Order) int {
 		if serverName == nil {
 			return 0
 		}
-		//sn := stripSpace(serverName[0].(*Key).Value)
-		sn := serverName.(*Key).Value
+		sn := StripSpace(serverName.(*Key).Value)
+		//sn := serverName.(*Key).Value
 		return len([]byte(sn))
 	default:
 		return 0
@@ -60,7 +60,7 @@ func (s *Server) BitLen(order Order) int {
 func (s *Server) Size(order Order) int {
 	switch order {
 	case ServerPort:
-		weight, err := strconv.Atoi(stripSpace(GetPorts(s)[0].(*Key).Value))
+		weight, err := strconv.Atoi(StripSpace(GetPorts(s)[0].(*Key).Value))
 		if err != nil {
 			weight = 0
 		}

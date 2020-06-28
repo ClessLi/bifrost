@@ -217,9 +217,9 @@ json返回示例
 
 接口地址
 
-`http://<Host>:<Port>/<baseURI>/statistics?<statisticsParam>=<true|false>&token=<token>`
+`http://<Host>:<Port>/<baseURI>/statistics?token=<token>`
 
-注：\<baseURI>为ng管理工具配置中WebServerInfo.servers列表各自元素的baseURI子参数值。\<statisticsParam>为统计查询过滤参数，详见请求参数
+注：\<baseURI>为ng管理工具配置中WebServerInfo.servers列表各自元素的baseURI子参数值。
 
 返回格式
 
@@ -231,21 +231,13 @@ json返回示例
 
 请求示例
 
-`http://127.0.0.1:12321/ng_conf1/statistics?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1OTE2MDc3MDEsImlhdCI6MTU5MTYwMzQzNywidXNlcl9pZCI6MSwicGFzc3dvcmQiOiJuZ2FkbWluIiwidXNlcm5hbWUiOiJuZ2FkbWluIiwiZnVsbF9uYW1lIjoibmdhZG1pbiIsInBlcm1pc3Npb25zIjpbXX0.fDoe4v37XyjmrK4wnfhOUnePwJLdszYXveOfoRXyUj8&type=json`
+`http://127.0.0.1:12321/ng_conf1/statistics?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1OTE2MDc3MDEsImlhdCI6MTU5MTYwMzQzNywidXNlcl9pZCI6MSwicGFzc3dvcmQiOiJuZ2FkbWluIiwidXNlcm5hbWUiOiJuZ2FkbWluIiwiZnVsbF9uYW1lIjoibmdhZG1pbiIsInBlcm1pc3Npb25zIjpbXX0.fDoe4v37XyjmrK4wnfhOUnePwJLdszYXveOfoRXyUj8`
 
 请求参数
 
 | 名称 | 必填 | 类型 | 说明 |
 | :-: | :-: | :-: | :- |
 | token | 是 | string | 用户访问认证成功后返回的令牌 |
-| NoHttpSvrsNum | 否 | bool | 统计查询过滤参数，默认为“false”。当为“true”时，不查询HTTPServers统计数 |
-| NoHttpSvrNames | 否 | bool | 统计查询过滤参数，默认为“false”。当为“true”时，不查询HTTPServerNames信息列表 |
-| NoHttpPorts | 否 | bool | 统计查询过滤参数，默认为“false”。当为“true”时，不查询HTTPServers端口侦听信息列表 |
-| NoLocsNum | 否 | bool | 统计查询过滤参数，默认为“false”。当为“true”时，不查询Locations统计数 |
-| NoStreamSvrsNum | 否 | bool | 统计查询过滤参数，默认为“false”。当为“true”时，不查询StreamServers统计数 |
-| NoStreamPorts | 否 | bool | 统计查询过滤参数，默认为“false”。当为“true”时，不查询StreamServers端口侦听信息列表 |
-
-注：统计查询过滤参数不可都填为true，否则将返回HTTP 400。
 
 返回参数说明
 
@@ -258,12 +250,12 @@ json返回示例
 ```json
 {
   "message": {
-    "httpPorts": [80],
-    "httpSvrNames": ["localhost"],
-    "httpSvrsNum": 1,
-    "locNum": 2,
-    "streamPorts": null,
-    "streamSvrsNum": 0
+    "httpSvrs": {
+      "localhost": [80, 990]
+    },
+    "httpSvrsNum": 2,
+    "streamPorts": [5510],
+    "streamSvrsNum": 1
   },
   "status": "success"
 }
