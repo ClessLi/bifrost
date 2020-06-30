@@ -12,23 +12,23 @@ import (
 //	}
 //	return len(http.Servers())
 //}
-//
-//func HTTPPorts(ctx nginx.Context) []int {
-//	var ports []int
-//	http := nginx.GetHTTP(ctx)
-//	if http == nil {
-//		return nil
-//	}
-//	for _, parser := range nginx.GetPorts(http) {
-//		port, err := strconv.Atoi(parser.(*nginx.Key).Value)
-//		if err != nil {
-//			continue
-//		}
-//		ports = nginx.SortInsertUniqInt(ports, port)
-//	}
-//	return ports
-//}
-//
+
+func HTTPPorts(ctx nginx.Context) []int {
+	var ports []int
+	http := nginx.GetHTTP(ctx)
+	if http == nil {
+		return nil
+	}
+	for _, parser := range nginx.GetPorts(http) {
+		port, err := strconv.Atoi(parser.(*nginx.Key).Value)
+		if err != nil {
+			continue
+		}
+		ports = nginx.SortInsertUniqInt(ports, port)
+	}
+	return ports
+}
+
 //func HTTPServerNames(ctx nginx.Context) (serverNames []string) {
 //	for _, parser := range nginx.GetHTTPServers(ctx, nginx.ServerName) {
 //		if serverNameKey := nginx.GetServerName(parser.(*nginx.Server)); serverNameKey != nil {

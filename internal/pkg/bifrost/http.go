@@ -271,9 +271,10 @@ func statisticsView(appName string, config *nginx.Config, c *gin.Context) (h gin
 		}*/
 
 	httpServersNum, httpServers := nginxStatistics.HTTPServers(config)
-	streamServersNum, streamPorts := nginxStatistics.StreamServers(config)
 	message["httpSvrsNum"] = httpServersNum
 	message["httpSvrs"] = httpServers
+	message["httpPorts"] = nginxStatistics.HTTPPorts(config)
+	streamServersNum, streamPorts := nginxStatistics.StreamServers(config)
 	message["streamSvrsNum"] = streamServersNum
 	message["streamPorts"] = streamPorts
 

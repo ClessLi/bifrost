@@ -18,7 +18,7 @@ func TestStatistics(t *testing.T) {
 
 	//t.Log(nginxStatistics.HTTPServersNum(conf))
 	//t.Log(nginxStatistics.HTTPServerNames(conf))
-	//t.Log(nginxStatistics.HTTPPorts(conf))
+	t.Log(nginxStatistics.HTTPPorts(conf))
 	//t.Log(statistics.HTTPPortsSTR(conf))
 	//t.Log(nginxStatistics.HTTPLocationsNum(conf))
 	//t.Log(nginxStatistics.StreamServersNum(conf))
