@@ -12,7 +12,7 @@
 
 支持将配置文件、json数据、字符串与配置结构体相互转换
 
-配置结构体支持增加、删除、查询（暂实现查询server上下文结构体）
+配置结构体支持增加、删除、查询
 
 实现了在加载配置或返序列化json时，防止循环读取配置的功能；实现了nginx配置文件后台更新后，自动热加载的功能
 
@@ -27,6 +27,12 @@
 # 使用方法
 
 ## 下载地址
+
+bifrost-v1.0.0-alpha.1
+
+> Windows: [bifrost.v1_0_0.alpha_1.win_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.0-alpha.1/bifrost.v1_0_0.alpha_1.win_x64.zip)
+> 
+> Linux: [bifrost.v1_0_0.alpha_1.linux_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.0-alpha.1/bifrost.v1_0_0.alpha_1.linux_x64.zip)
 
 bifrost-v0.0.3
 
@@ -250,6 +256,7 @@ json返回示例
 ```json
 {
   "message": {
+    "httpPorts": [80, 990],
     "httpSvrs": {
       "localhost": [80, 990]
     },
