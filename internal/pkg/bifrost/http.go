@@ -355,7 +355,11 @@ func view(appName string, config *nginx.Config, c *gin.Context) (h gin.H, s int)
 			s = http.StatusInternalServerError
 		} else {
 			status = "success"
-			message = config
+			data, marshalErr := json.Marshal(config)
+			if marshalErr != nil {
+				Log(ERROR, fmt.Sprintf("[%s] %s", appName, marshalErr))
+			}
+			message = string(data)
 			Log(DEBUG, fmt.Sprintf("[%s] %s", appName, message))
 		}
 	default:

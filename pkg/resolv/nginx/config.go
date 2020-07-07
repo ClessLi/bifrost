@@ -112,15 +112,24 @@ func (c *Config) QueryAll(kw KeyWords) (parsers []Parser) {
 	if c.filter(kw) {
 		parsers = append(parsers, c)
 	}
-	return c.subQueryAll(parsers, kw)
+	if kw.IsRec {
+		return c.subQueryAll(parsers, kw)
+	} else {
+		return
+	}
 
 }
 
-func (c *Config) Query(kw KeyWords) Parser {
+func (c *Config) Query(kw KeyWords) (parser Parser) {
 	if c.filter(kw) {
 		return c
 	}
-	return c.subQuery(kw)
+
+	if kw.IsRec {
+		return c.subQuery(kw)
+	} else {
+		return
+	}
 }
 
 func (c *Config) BitSize(_ Order, _ int) byte {

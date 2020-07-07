@@ -12,14 +12,22 @@ func (s *Server) QueryAll(kw KeyWords) (parsers []Parser) {
 	if s.filter(kw) {
 		parsers = append(parsers, s)
 	}
-	return s.subQueryAll(parsers, kw)
+	if kw.IsRec {
+		return s.subQueryAll(parsers, kw)
+	} else {
+		return
+	}
 }
 
-func (s *Server) Query(kw KeyWords) Parser {
+func (s *Server) Query(kw KeyWords) (parser Parser) {
 	if s.filter(kw) {
 		return s
 	}
-	return s.subQuery(kw)
+	if kw.IsRec {
+		return s.subQuery(kw)
+	} else {
+		return
+	}
 }
 
 func (s *Server) BitSize(order Order, bit int) byte {

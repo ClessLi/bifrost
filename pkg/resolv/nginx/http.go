@@ -8,14 +8,22 @@ func (h *Http) QueryAll(kw KeyWords) (parsers []Parser) {
 	if h.filter(kw) {
 		parsers = append(parsers, h)
 	}
-	return h.subQueryAll(parsers, kw)
+	if kw.IsRec {
+		return h.subQueryAll(parsers, kw)
+	} else {
+		return parsers
+	}
 }
 
 func (h *Http) Query(kw KeyWords) (parser Parser) {
 	if h.filter(kw) {
-		parser = h
+		return h
 	}
-	return h.subQuery(kw)
+	if kw.IsRec {
+		return h.subQuery(kw)
+	} else {
+		return
+	}
 }
 
 func (h *Http) BitSize(_ Order, _ int) byte {

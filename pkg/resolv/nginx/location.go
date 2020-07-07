@@ -8,14 +8,22 @@ func (l *Location) QueryAll(kw KeyWords) (parsers []Parser) {
 	if l.filter(kw) {
 		parsers = append(parsers, l)
 	}
-	return l.subQueryAll(parsers, kw)
+	if kw.IsRec {
+		return l.subQueryAll(parsers, kw)
+	} else {
+		return
+	}
 }
 
 func (l *Location) Query(kw KeyWords) (parser Parser) {
 	if l.filter(kw) {
-		parser = l
+		return l
 	}
-	return l.subQuery(kw)
+	if kw.IsRec {
+		return l.subQuery(kw)
+	} else {
+		return
+	}
 }
 
 func (l *Location) BitSize(_ Order, _ int) byte {

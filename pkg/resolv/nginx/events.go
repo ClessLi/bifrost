@@ -8,14 +8,22 @@ func (e *Events) QueryAll(kw KeyWords) (parsers []Parser) {
 	if e.filter(kw) {
 		parsers = append(parsers, e)
 	}
-	return e.subQueryAll(parsers, kw)
+	if kw.IsRec {
+		return e.subQueryAll(parsers, kw)
+	} else {
+		return
+	}
 }
 
 func (e *Events) Query(kw KeyWords) (parser Parser) {
 	if e.filter(kw) {
-		parser = e
+		return e
 	}
-	return e.subQuery(kw)
+	if kw.IsRec {
+		return e.subQuery(kw)
+	} else {
+		return
+	}
 }
 
 func (e *Events) BitSize(_ Order, _ int) byte {

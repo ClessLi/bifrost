@@ -8,14 +8,22 @@ func (g *Geo) QueryAll(kw KeyWords) (parsers []Parser) {
 	if g.filter(kw) {
 		parsers = append(parsers, g)
 	}
-	return g.subQueryAll(parsers, kw)
+	if kw.IsRec {
+		return g.subQueryAll(parsers, kw)
+	} else {
+		return
+	}
 }
 
 func (g *Geo) Query(kw KeyWords) (parser Parser) {
 	if g.filter(kw) {
-		parser = g
+		return g
 	}
-	return g.subQuery(kw)
+	if kw.IsRec {
+		return g.subQuery(kw)
+	} else {
+		return
+	}
 }
 
 func (g *Geo) BitSize(_ Order, _ int) byte {

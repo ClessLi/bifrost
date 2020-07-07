@@ -8,14 +8,22 @@ func (u *Upstream) QueryAll(kw KeyWords) (parsers []Parser) {
 	if u.filter(kw) {
 		parsers = append(parsers, u)
 	}
-	return u.subQueryAll(parsers, kw)
+	if kw.IsRec {
+		return u.subQueryAll(parsers, kw)
+	} else {
+		return
+	}
 }
 
 func (u *Upstream) Query(kw KeyWords) (parser Parser) {
 	if u.filter(kw) {
-		parser = u
+		return u
 	}
-	return u.subQuery(kw)
+	if kw.IsRec {
+		return u.subQuery(kw)
+	} else {
+		return
+	}
 }
 
 func (u *Upstream) BitSize(_ Order, _ int) byte {

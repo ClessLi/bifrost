@@ -10,9 +10,10 @@ type KeyWord struct {
 type KeyWords struct {
 	KeyWord
 	ChildKWs []KeyWords
+	IsRec    bool
 }
 
-func NewKeyWords(contextType, name, value string, isReg bool, subKWs ...interface{}) KeyWords {
+func NewKeyWords(contextType, name, value string, isReg, isRec bool, subKWs ...interface{}) KeyWords {
 	switch contextType {
 	case TypeKey, TypeComment:
 	default:
@@ -38,5 +39,6 @@ func NewKeyWords(contextType, name, value string, isReg bool, subKWs ...interfac
 			IsReg: isReg,
 		},
 		ChildKWs: childKWs,
+		IsRec:    isRec,
 	}
 }

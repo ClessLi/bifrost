@@ -8,14 +8,22 @@ func (m *Map) QueryAll(kw KeyWords) (parsers []Parser) {
 	if m.filter(kw) {
 		parsers = append(parsers, m)
 	}
-	return m.subQueryAll(parsers, kw)
+	if kw.IsRec {
+		return m.subQueryAll(parsers, kw)
+	} else {
+		return
+	}
 }
 
 func (m *Map) Query(kw KeyWords) (parser Parser) {
 	if m.filter(kw) {
-		parser = m
+		return m
 	}
-	return m.subQuery(kw)
+	if kw.IsRec {
+		return m.subQuery(kw)
+	} else {
+		return
+	}
 }
 
 func (m *Map) BitSize(_ Order, _ int) byte {
