@@ -12,8 +12,8 @@ func TestFilter(t *testing.T) {
 		t.Log(err)
 	}
 
-	keykw := nginx.NewKeyWords("key", "server_name", `^.*com.*`, true)
-	svrkw := nginx.NewKeyWords("server", "", "", true, keykw)
+	keykw := nginx.NewKeyWords("key", "server_name", `^.*com.*`, true, false)
+	svrkw := nginx.NewKeyWords("server", "", "", true, false, keykw)
 	servers := conf.QueryAll(svrkw)
 	for _, server := range servers {
 		t.Log(server.String())

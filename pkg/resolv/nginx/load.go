@@ -92,7 +92,7 @@ func load(ngDir, relativePath string, allConfigs *map[string]*Config, configCach
 	parseComment := func(reg *regexp.Regexp) bool {
 		if ms := reg.FindStringSubmatch(data[index:]); len(ms) == 3 {
 			m := reg.FindStringIndex(data[index:])
-			c := NewComment(ms[2], !strings.Contains(ms[1], "\n"))
+			c := NewComment(ms[2], !strings.Contains(ms[1], "\n") && index != 0)
 			if ct, ok := checkContext(lopen); ok {
 				ct.Add(c)
 				lopen[0] = ct

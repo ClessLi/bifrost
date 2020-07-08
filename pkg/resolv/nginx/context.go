@@ -21,6 +21,7 @@ type Context interface {
 	Modify(int, Parser) error
 	Servers() []Parser
 	Server() *Server
+	Params() []Parser
 	//getReg() string
 	//Dict() map[string]interface{}
 	//UnmarshalToJSON(b []byte) error
@@ -137,6 +138,32 @@ func (c *BasicContext) Server() *Server {
 	}
 	return nil
 	//return c.Servers()[0]
+}
+
+func (c *BasicContext) Params() (parsers []Parser) {
+	parsers = make([]Parser, 0)
+	for _, child := range c.Children {
+		switch child.(type) {
+		case *Key, *Comment:
+			parsers = append(parsers, child)
+		case *Include:
+			for _, incChild := range child.(*Include).Children {
+				if subConf, ok := incChild.(*Config); ok {
+					parsers = append(parsers, subConf.Params()...)
+				}
+			}
+		default:
+			n := len(parsers)
+			if n > 0 {
+
+				if comment, ok := parsers[n-1].(*Comment); ok && !comment.Inline {
+					parsers = parsers[:n-1]
+				}
+
+			}
+		}
+	}
+	return
 }
 
 func (c *BasicContext) filter(kw KeyWords) bool {
