@@ -19,3 +19,16 @@ func TestFilter(t *testing.T) {
 		t.Log(server.String())
 	}
 }
+
+func TestParams(t *testing.T) {
+	conf, err := nginx.Load("test_circle_load/nginx.conf")
+
+	if err != nil {
+		t.Log(err)
+	}
+
+	for _, param := range conf.Params() {
+		t.Log(param.String())
+	}
+
+}

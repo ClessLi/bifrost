@@ -154,10 +154,13 @@ func (c *BasicContext) Params() (parsers []Parser) {
 			}
 		default:
 			n := len(parsers)
-			if n > 0 {
+			for n > 0 {
 
 				if comment, ok := parsers[n-1].(*Comment); ok && !comment.Inline {
 					parsers = parsers[:n-1]
+					n--
+				} else {
+					break
 				}
 
 			}
