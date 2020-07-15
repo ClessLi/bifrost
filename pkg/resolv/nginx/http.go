@@ -4,7 +4,7 @@ type Http struct {
 	BasicContext `json:"http"`
 }
 
-func (h *Http) QueryAll(kw KeyWords) (parsers []Parser) {
+func (h *Http) QueryAllByKeywords(kw Keywords) (parsers []Parser) {
 	if h.filter(kw) {
 		parsers = append(parsers, h)
 	}
@@ -15,7 +15,7 @@ func (h *Http) QueryAll(kw KeyWords) (parsers []Parser) {
 	}
 }
 
-func (h *Http) Query(kw KeyWords) (parser Parser) {
+func (h *Http) QueryByKeywords(kw Keywords) (parser Parser) {
 	if h.filter(kw) {
 		return h
 	}

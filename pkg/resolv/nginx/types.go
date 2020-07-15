@@ -4,7 +4,7 @@ type Types struct {
 	BasicContext `json:"types"`
 }
 
-func (t *Types) QueryAll(kw KeyWords) (parsers []Parser) {
+func (t *Types) QueryAllByKeywords(kw Keywords) (parsers []Parser) {
 	if t.filter(kw) {
 		parsers = append(parsers, t)
 	}
@@ -15,7 +15,7 @@ func (t *Types) QueryAll(kw KeyWords) (parsers []Parser) {
 	}
 }
 
-func (t *Types) Query(kw KeyWords) (parser Parser) {
+func (t *Types) QueryByKeywords(kw Keywords) (parser Parser) {
 	if t.filter(kw) {
 		return t
 	}

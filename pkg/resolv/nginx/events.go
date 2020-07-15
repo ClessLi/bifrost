@@ -4,7 +4,7 @@ type Events struct {
 	BasicContext `json:"events"`
 }
 
-func (e *Events) QueryAll(kw KeyWords) (parsers []Parser) {
+func (e *Events) QueryAllByKeywords(kw Keywords) (parsers []Parser) {
 	if e.filter(kw) {
 		parsers = append(parsers, e)
 	}
@@ -15,7 +15,7 @@ func (e *Events) QueryAll(kw KeyWords) (parsers []Parser) {
 	}
 }
 
-func (e *Events) Query(kw KeyWords) (parser Parser) {
+func (e *Events) QueryByKeywords(kw Keywords) (parser Parser) {
 	if e.filter(kw) {
 		return e
 	}

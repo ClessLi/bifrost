@@ -94,10 +94,10 @@ func load(ngDir, relativePath string, allConfigs *map[string]*Config, configCach
 			m := reg.FindStringIndex(data[index:])
 			c := NewComment(ms[2], !strings.Contains(ms[1], "\n") && index != 0)
 			if ct, ok := checkContext(lopen); ok {
-				ct.Add(c)
+				ct.AddByParser(c)
 				lopen[0] = ct
 			} else {
-				f.Add(c)
+				f.AddByParser(c)
 			}
 			index += m[len(m)-1] - 1
 			return true
@@ -111,10 +111,10 @@ func load(ngDir, relativePath string, allConfigs *map[string]*Config, configCach
 			if lc, isLowerContext := checkContext(lopen); isLowerContext {
 				lopen = lopen[1:]
 				if uc, isUpperContext := checkContext(lopen); isUpperContext {
-					uc.Add(lc)
+					uc.AddByParser(lc)
 					lopen[0] = uc
 				} else {
-					f.Add(lc)
+					f.AddByParser(lc)
 				}
 			}
 			index += m[len(m)-1]
@@ -142,10 +142,10 @@ func load(ngDir, relativePath string, allConfigs *map[string]*Config, configCach
 			}
 
 			if ct, isContext := checkContext(lopen); isContext {
-				ct.Add(k)
+				ct.AddByParser(k)
 				lopen[0] = ct
 			} else {
-				f.Add(k)
+				f.AddByParser(k)
 			}
 			index += m[len(m)-1]
 			return true
@@ -193,7 +193,7 @@ func inCaches(path string, caches *[]string) bool {
 }
 
 func checkInclude(k *Key, dir string, allConfigs *map[string]*Config, configCaches *[]string) (Parser, error) {
-	if k.Name == TypeInclude {
+	if k.Name == fmt.Sprintf("%s", TypeInclude) {
 		return NewInclude(dir, k.Value, allConfigs, configCaches)
 	}
 	return k, nil

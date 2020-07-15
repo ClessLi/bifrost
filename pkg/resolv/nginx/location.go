@@ -4,7 +4,7 @@ type Location struct {
 	BasicContext `json:"location"`
 }
 
-func (l *Location) QueryAll(kw KeyWords) (parsers []Parser) {
+func (l *Location) QueryAllByKeywords(kw Keywords) (parsers []Parser) {
 	if l.filter(kw) {
 		parsers = append(parsers, l)
 	}
@@ -15,7 +15,7 @@ func (l *Location) QueryAll(kw KeyWords) (parsers []Parser) {
 	}
 }
 
-func (l *Location) Query(kw KeyWords) (parser Parser) {
+func (l *Location) QueryByKeywords(kw Keywords) (parser Parser) {
 	if l.filter(kw) {
 		return l
 	}

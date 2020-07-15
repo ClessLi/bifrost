@@ -13,24 +13,32 @@ func (cmt *Comment) String() []string {
 	return []string{"# " + cmt.Comments + "\n"}
 }
 
-func (cmt *Comment) QueryAll(kw KeyWords) (parsers []Parser) {
-	if !kw.IsReg {
-		if kw.Type == TypeComment && kw.Value == cmt.Comments {
-			parsers = append(parsers, cmt)
-		} else {
-			parsers = nil
-		}
-	} else {
-		if kw.Type == TypeComment && regexp.MustCompile(kw.Value).MatchString(cmt.Comments) {
-			parsers = append(parsers, cmt)
-		} else {
-			parsers = nil
-		}
+func (cmt *Comment) QueryAll(pType parserType, isRec bool, values ...string) []Parser {
+	kw, err := newKW(pType, values...)
+	if err != nil {
+		return nil
+	}
+	kw.IsRec = isRec
+	return cmt.QueryAllByKeywords(*kw)
+}
+
+func (cmt *Comment) QueryAllByKeywords(kw Keywords) (parsers []Parser) {
+	if parser := cmt.QueryByKeywords(kw); parser != nil {
+		parsers = append(parsers, parser)
 	}
 	return
 }
 
-func (cmt *Comment) Query(kw KeyWords) (parser Parser) {
+func (cmt *Comment) Query(pType parserType, isRec bool, values ...string) Parser {
+	kw, err := newKW(pType, values...)
+	if err != nil {
+		return nil
+	}
+	kw.IsRec = isRec
+	return cmt.QueryByKeywords(*kw)
+}
+
+func (cmt *Comment) QueryByKeywords(kw Keywords) (parser Parser) {
 	if !kw.IsReg {
 		if kw.Type == TypeComment && kw.Value == cmt.Comments {
 			parser = cmt

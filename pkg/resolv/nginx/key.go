@@ -18,25 +18,32 @@ func (k *Key) String() []string {
 	return []string{k.Name + " " + k.Value + ";\n"}
 }
 
-func (k *Key) QueryAll(kw KeyWords) (parsers []Parser) {
-	if !kw.IsReg {
-		if kw.Type == TypeKey && kw.Name == k.Name && (kw.Value == k.Value || kw.Value == `*`) {
-			parsers = append(parsers, k)
-		} else {
-			parsers = nil
-		}
-	} else {
+func (k *Key) QueryAll(pType parserType, isRec bool, values ...string) []Parser {
+	kw, err := newKW(pType, values...)
+	if err != nil {
+		return nil
+	}
+	kw.IsRec = isRec
+	return k.QueryAllByKeywords(*kw)
+}
 
-		if kw.Type == TypeKey && regexp.MustCompile(kw.Name).MatchString(k.Name) && regexp.MustCompile(kw.Value).MatchString(k.Value) {
-			parsers = append(parsers, k)
-		} else {
-			parsers = nil
-		}
+func (k *Key) QueryAllByKeywords(kw Keywords) (parsers []Parser) {
+	if parser := k.QueryByKeywords(kw); parser != nil {
+		parsers = append(parsers, parser)
 	}
 	return
 }
 
-func (k *Key) Query(kw KeyWords) (parser Parser) {
+func (k *Key) Query(pType parserType, isRec bool, values ...string) Parser {
+	kw, err := newKW(pType, values...)
+	if err != nil {
+		return nil
+	}
+	kw.IsRec = isRec
+	return k.QueryByKeywords(*kw)
+}
+
+func (k *Key) QueryByKeywords(kw Keywords) (parser Parser) {
 	if !kw.IsReg {
 		if kw.Type == TypeKey && kw.Name == k.Name && (kw.Value == k.Value || kw.Value == `*`) {
 			parser = k

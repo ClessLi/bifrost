@@ -8,7 +8,7 @@ type Server struct {
 	BasicContext `json:"server"`
 }
 
-func (s *Server) QueryAll(kw KeyWords) (parsers []Parser) {
+func (s *Server) QueryAllByKeywords(kw Keywords) (parsers []Parser) {
 	if s.filter(kw) {
 		parsers = append(parsers, s)
 	}
@@ -19,7 +19,7 @@ func (s *Server) QueryAll(kw KeyWords) (parsers []Parser) {
 	}
 }
 
-func (s *Server) Query(kw KeyWords) (parser Parser) {
+func (s *Server) QueryByKeywords(kw Keywords) (parser Parser) {
 	if s.filter(kw) {
 		return s
 	}

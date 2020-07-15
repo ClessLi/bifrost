@@ -4,7 +4,7 @@ type Geo struct {
 	BasicContext `json:"geo"`
 }
 
-func (g *Geo) QueryAll(kw KeyWords) (parsers []Parser) {
+func (g *Geo) QueryAllByKeywords(kw Keywords) (parsers []Parser) {
 	if g.filter(kw) {
 		parsers = append(parsers, g)
 	}
@@ -15,7 +15,7 @@ func (g *Geo) QueryAll(kw KeyWords) (parsers []Parser) {
 	}
 }
 
-func (g *Geo) Query(kw KeyWords) (parser Parser) {
+func (g *Geo) QueryByKeywords(kw Keywords) (parser Parser) {
 	if g.filter(kw) {
 		return g
 	}

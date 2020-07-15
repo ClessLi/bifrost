@@ -4,7 +4,7 @@ type Stream struct {
 	BasicContext `json:"stream"`
 }
 
-func (s *Stream) QueryAll(kw KeyWords) (parsers []Parser) {
+func (s *Stream) QueryAllByKeywords(kw Keywords) (parsers []Parser) {
 	if s.filter(kw) {
 		parsers = append(parsers, s)
 	}
@@ -15,7 +15,7 @@ func (s *Stream) QueryAll(kw KeyWords) (parsers []Parser) {
 	}
 }
 
-func (s *Stream) Query(kw KeyWords) (parser Parser) {
+func (s *Stream) QueryByKeywords(kw Keywords) (parser Parser) {
 	if s.filter(kw) {
 		return s
 	}

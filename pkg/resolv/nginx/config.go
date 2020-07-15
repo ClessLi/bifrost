@@ -8,8 +8,10 @@ type Order int
 
 type Parser interface {
 	String() []string
-	Query(KeyWords) Parser
-	QueryAll(KeyWords) []Parser
+	Query(parserType, bool, ...string) Parser
+	QueryByKeywords(Keywords) Parser
+	QueryAll(parserType, bool, ...string) []Parser
+	QueryAllByKeywords(Keywords) []Parser
 	BitSize(Order, int) byte
 	BitLen(Order) int
 	Size(Order) int
@@ -108,28 +110,35 @@ func (c *Config) List() (ret []string, err error) {
 	return ret, nil
 }
 
-func (c *Config) QueryAll(kw KeyWords) (parsers []Parser) {
+//func (c *Config) QueryAll(pType parserType, values ...string) []Parser {
+//	kw, err := newKW(pType, values...)
+//	if err != nil {
+//		return nil
+//	}
+//	return c.QueryAllByKeywords(*kw)
+//}
+
+func (c *Config) QueryAllByKeywords(kw Keywords) (parsers []Parser) {
 	if c.filter(kw) {
 		parsers = append(parsers, c)
 	}
-	if kw.IsRec {
-		return c.subQueryAll(parsers, kw)
-	} else {
-		return
-	}
+	return c.subQueryAll(parsers, kw)
 
 }
 
-func (c *Config) Query(kw KeyWords) (parser Parser) {
+//func (c *Config) Query(pType parserType, values ...string) Parser {
+//	kw, err := newKW(pType, values...)
+//	if err != nil {
+//		return nil
+//	}
+//	return c.QueryByKeywords(*kw)
+//}
+
+func (c *Config) QueryByKeywords(kw Keywords) (parser Parser) {
 	if c.filter(kw) {
 		return c
 	}
-
-	if kw.IsRec {
-		return c.subQuery(kw)
-	} else {
-		return
-	}
+	return c.subQuery(kw)
 }
 
 func (c *Config) BitSize(_ Order, _ int) byte {

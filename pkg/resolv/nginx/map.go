@@ -4,7 +4,7 @@ type Map struct {
 	BasicContext `json:"map"`
 }
 
-func (m *Map) QueryAll(kw KeyWords) (parsers []Parser) {
+func (m *Map) QueryAllByKeywords(kw Keywords) (parsers []Parser) {
 	if m.filter(kw) {
 		parsers = append(parsers, m)
 	}
@@ -15,7 +15,7 @@ func (m *Map) QueryAll(kw KeyWords) (parsers []Parser) {
 	}
 }
 
-func (m *Map) Query(kw KeyWords) (parser Parser) {
+func (m *Map) QueryByKeywords(kw Keywords) (parser Parser) {
 	if m.filter(kw) {
 		return m
 	}

@@ -4,7 +4,7 @@ type LimitExcept struct {
 	BasicContext `json:"limit_except"`
 }
 
-func (l *LimitExcept) QueryAll(kw KeyWords) (parsers []Parser) {
+func (l *LimitExcept) QueryAllByKeywords(kw Keywords) (parsers []Parser) {
 	if l.filter(kw) {
 		parsers = append(parsers, l)
 	}
@@ -15,7 +15,7 @@ func (l *LimitExcept) QueryAll(kw KeyWords) (parsers []Parser) {
 	}
 }
 
-func (l *LimitExcept) Query(kw KeyWords) (parser Parser) {
+func (l *LimitExcept) QueryByKeywords(kw Keywords) (parser Parser) {
 	if l.filter(kw) {
 		return l
 	}

@@ -1,6 +1,9 @@
 package nginx
 
-import "regexp"
+import (
+	"fmt"
+	"regexp"
+)
 
 var (
 	RegEndWithCR       = regexp.MustCompile("}\n+$")
@@ -25,4 +28,10 @@ var (
 	KeywordSvrName   = NewKeyWords(TypeKey, `server_name`, `*`, false, true)
 	KeywordPort      = NewKeyWords(TypeKey, `^listen$`, `.*`, true, true)
 	KeywordLocations = NewKeyWords(TypeLocation, "", `.*`, true, true)
+
+	// errors
+	//ParserTypeError                 = fmt.Errorf("invalid parserType")
+	ParserControlNoParamError       = fmt.Errorf("no valid param has been inputed")
+	ParserControlParamsError        = fmt.Errorf("unkown param has been inputed")
+	ParserControlIndexNotFoundError = fmt.Errorf("index not found")
 )

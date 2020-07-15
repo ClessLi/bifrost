@@ -1,26 +1,34 @@
 package nginx
 
+import "fmt"
+
+type parserType string
+
+func (pt *parserType) ToString() string {
+	return fmt.Sprintf("%s", *pt)
+}
+
 const (
-	DoubleQuotes    = `\s*"[^"]*"`
-	SingleQuotes    = `\s*'[^']*'`
-	Normal          = `\s*[^;\s]*`
-	S1              = DoubleQuotes + `|` + SingleQuotes + `|` + Normal
-	S               = `^\s*(` + S1 + `)\s*((?:` + S1 + `)+);`
-	TypeConfig      = "config"
-	TypeEvents      = "events"
-	TypeGeo         = "geo"
-	TypeHttp        = "http"
-	TypeIf          = "if"
-	TypeInclude     = "include"
-	TypeKey         = "key"
-	TypeLimitExcept = "limit_except"
-	TypeLocation    = "location"
-	TypeMap         = "map"
-	TypeServer      = "server"
-	TypeStream      = "stream"
-	TypeTypes       = "types"
-	TypeUpstream    = "upstream"
-	TypeComment     = "comment"
+	DoubleQuotes               = `\s*"[^"]*"`
+	SingleQuotes               = `\s*'[^']*'`
+	Normal                     = `\s*[^;\s]*`
+	S1                         = DoubleQuotes + `|` + SingleQuotes + `|` + Normal
+	S                          = `^\s*(` + S1 + `)\s*((?:` + S1 + `)+);`
+	TypeConfig      parserType = "config"
+	TypeEvents      parserType = "events"
+	TypeGeo         parserType = "geo"
+	TypeHttp        parserType = "http"
+	TypeIf          parserType = "if"
+	TypeInclude     parserType = "include"
+	TypeKey         parserType = "key"
+	TypeLimitExcept parserType = "limit_except"
+	TypeLocation    parserType = "location"
+	TypeMap         parserType = "map"
+	TypeServer      parserType = "server"
+	TypeStream      parserType = "stream"
+	TypeTypes       parserType = "types"
+	TypeUpstream    parserType = "upstream"
+	TypeComment     parserType = "comment"
 )
 
 // 整型order

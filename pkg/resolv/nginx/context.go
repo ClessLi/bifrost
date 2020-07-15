@@ -14,11 +14,14 @@ var INDENT = "    "
 // Context, 上下文接口对象，定义了上下文接口需实现的增、删、改等方法
 type Context interface {
 	Parser
-	GetIndex(Parser) int
-	Insert(indexParser Parser, insertParsers ...Parser) error
-	Add(...Parser)
-	Remove(...Parser)
-	Modify(int, Parser) error
+	Insert(indexParser Parser, pType parserType, values ...string) error
+	InsertByParser(indexParser Parser, contents ...Parser) error
+	Add(parserType, ...string) error
+	AddByParser(...Parser)
+	Remove(parserType, ...string) error
+	RemoveByParser(...Parser)
+	Modify(indexParser Parser, pType parserType, values ...string) error
+	ModifyByParser(Parser, Parser) error
 	Servers() []Parser
 	Server() *Server
 	Params() []Parser
@@ -32,74 +35,143 @@ type Context interface {
 
 // BasicContext, 上下文基础对象，定义了上下文类型的基本属性及基础方法
 type BasicContext struct {
-	Name     string   `json:"-"`
-	Value    string   `json:"value,omitempty"`
-	Children []Parser `json:"param,omitempty"`
+	Name     parserType `json:"-"`
+	Value    string     `json:"value,omitempty"`
+	Children []Parser   `json:"param,omitempty"`
 }
 
-// GetIndex, BasicContext 类子集对象索引值查询的方法， Context.GetIndex(Parser) 的实现
-//
-// 参数:
-//     content: Parser接口对象，各配置对象指针
-// 返回值:
-//     索引值，未查询到时，返回-1
-func (c *BasicContext) GetIndex(content Parser) int {
-	for i, child := range c.Children {
-		if content == child {
-			return i
-		}
+func (c *BasicContext) QueryAll(pType parserType, isRec bool, values ...string) []Parser {
+	kw, err := newKW(pType, values...)
+	if err != nil {
+		return nil
 	}
-	return -1
+	kw.IsRec = isRec
+	return c.subQueryAll([]Parser{}, *kw)
 }
 
-// Insert, BasicContext 类插入对象的方法， Context.Insert(indexParser Parser, insertParsers ...Parser) error 的实现
+func (c *BasicContext) Query(pType parserType, isRec bool, values ...string) Parser {
+	kw, err := newKW(pType, values...)
+	if err != nil {
+		return nil
+	}
+	kw.IsRec = isRec
+	return c.subQuery(*kw)
+}
+
+func (c *BasicContext) Insert(indexParser Parser, pType parserType, values ...string) error {
+	if values != nil {
+		p, err := newParser(pType, values...)
+		if err != nil {
+			return err
+		}
+
+		return c.InsertByParser(indexParser, p)
+	}
+	return ParserControlNoParamError
+}
+
+// InsertByParser, BasicContext 类插入对象的方法， Context.InsertByParser(indexParser Parser, insertParsers ...Parser) error 的实现
 //
 // 参数:
 //     indexParser: 基准索引子对象
 //     insertParsers: 待插入子对象集
 // 返回值:
 //     错误
-func (c *BasicContext) Insert(indexParser Parser, insertParsers ...Parser) error {
-	index := c.GetIndex(indexParser)
-	if index < 0 {
-		return fmt.Errorf("'%s' is not a child of (name: %s, value: %s)", indexParser.String(), c.Name, c.Value)
-	} else {
-		// 时间、空间复杂度O(m+n)
-		c.Children = append(append(c.Children[:index], insertParsers...), c.Children[index:]...)
+func (c *BasicContext) InsertByParser(indexParser Parser, contents ...Parser) error {
+	for i, child := range c.Children {
+		if indexParser != child {
+			switch child.(type) {
+			case *Include:
+				err := child.(*Include).InsertByParser(indexParser, contents...)
+				if err == ParserControlIndexNotFoundError {
+					continue
+				}
+				return err
+			}
+		} else {
+			// 时间、空间复杂度O(m+n)
+			//tmp := append(c.Children[:i], contents...)
+			//c.Children = append(tmp, c.Children[i:]...)
+			return c.childInsert(i, contents...)
+			//c.Children = append(append(c.Children[0:i], contents...), c.Children[i:]...)
+			//return nil
+		}
+	}
+	return ParserControlIndexNotFoundError
+}
+
+func (c *BasicContext) Add(pType parserType, values ...string) error {
+	if values != nil {
+		parser, err := newParser(pType, values...)
+		if err != nil {
+			return err
+		}
+		c.AddByParser(parser)
 		return nil
+
 	}
+	return ParserControlNoParamError
 }
 
-// Add, BasicContext 类新增子对象的方法， Context.Add(...Parser) 的实现
-func (c *BasicContext) Add(contents ...Parser) {
-	for _, content := range contents {
-		/*if _, isBC := content.(Context); isBC {
-			content.(Context).BumpChildDepth(c.depth+1)
-		}*/
-		c.Children = append(c.Children, content)
-	}
+// AddByParser, BasicContext 类新增子对象的方法， Context.AddByParser(...Parser) 的实现
+func (c *BasicContext) AddByParser(contents ...Parser) {
+	c.Children = append(c.Children, contents...)
 }
 
-// Remove, BasicContext 类删除子对象的方法， Context.Remove(...Parser) 的实现
-func (c *BasicContext) Remove(contents ...Parser) {
+func (c *BasicContext) Remove(pType parserType, values ...string) error {
+	c.RemoveByParser(c.QueryAll(pType, false, values...)...)
+	return nil
+}
+
+// RemoveByParser, BasicContext 类删除子对象的方法， Context.RemoveByParser(...Parser) 的实现
+func (c *BasicContext) RemoveByParser(contents ...Parser) {
 	for _, content := range contents {
-		for index, child := range c.Children {
+		for i, child := range c.Children {
 			if content == child {
-				c.remove(index)
+				c.removeByIndex(i)
+			} else {
+				switch child.(type) {
+				case *Include:
+					child.(*Include).RemoveByParser(content)
+				}
 			}
 		}
 	}
 }
 
-// Modify, BasicContext 类修改子对象的方法， Context.Modify(int, Parser) error 的实现
-func (c *BasicContext) Modify(index int, content Parser) error {
-	switch content.(type) {
-	case Context, *Comment, *Key:
-		c.Children[index] = content
-	default:
-		return fmt.Errorf("conf format not supported with: %T", content)
+func (c *BasicContext) Modify(indexParser Parser, pType parserType, values ...string) error {
+	if values != nil {
+
+		ctx, err := newParser(pType, values...)
+		if err != nil {
+			return err
+		}
+
+		return c.ModifyByParser(indexParser, ctx)
 	}
-	return nil
+	return ParserControlNoParamError
+}
+
+// ModifyByParser, BasicContext 类修改子对象的方法， Context.ModifyByParser(int, Parser) error 的实现
+func (c *BasicContext) ModifyByParser(indexParser, content Parser) error {
+	for i, child := range c.Children {
+		if child != indexParser {
+			switch child.(type) {
+			case *Include:
+				err := child.(*Include).ModifyByParser(indexParser, content)
+				if err == ParserControlIndexNotFoundError {
+					continue
+				} else {
+					return err
+				}
+			}
+			continue
+		} else {
+			c.Children[i] = content
+			return nil
+		}
+	}
+	return ParserControlIndexNotFoundError
 }
 
 func (c *BasicContext) Servers() []Parser {
@@ -137,7 +209,6 @@ func (c *BasicContext) Server() *Server {
 
 	}
 	return nil
-	//return c.Servers()[0]
 }
 
 func (c *BasicContext) Params() (parsers []Parser) {
@@ -147,11 +218,7 @@ func (c *BasicContext) Params() (parsers []Parser) {
 		case *Key, *Comment:
 			parsers = append(parsers, child)
 		case *Include:
-			for _, incChild := range child.(*Include).Children {
-				if subConf, ok := incChild.(*Config); ok {
-					parsers = append(parsers, subConf.Params()...)
-				}
-			}
+			parsers = append(parsers, child.(*Include).Params()...)
 		default:
 			n := len(parsers)
 			for n > 0 {
@@ -169,7 +236,7 @@ func (c *BasicContext) Params() (parsers []Parser) {
 	return
 }
 
-func (c *BasicContext) filter(kw KeyWords) bool {
+func (c *BasicContext) filter(kw Keywords) bool {
 	var (
 		selfMatch = false
 		subMatch  = true
@@ -187,7 +254,7 @@ func (c *BasicContext) filter(kw KeyWords) bool {
 				selfMatch = true
 			}
 		} else {
-			if regexp.MustCompile(kw.Type).MatchString(c.Name) && regexp.MustCompile(kw.Value).MatchString(c.Value) {
+			if regexp.MustCompile(kw.Type.ToString()).MatchString(c.Name.ToString()) && regexp.MustCompile(kw.Value).MatchString(c.Value) {
 				selfMatch = true
 			}
 		}
@@ -197,7 +264,7 @@ func (c *BasicContext) filter(kw KeyWords) bool {
 			for _, childKW := range kw.ChildKWs {
 				subMatch = false
 				for _, child := range c.Children {
-					if child.QueryAll(childKW) != nil {
+					if child.QueryAllByKeywords(childKW) != nil {
 						subMatch = true
 						break
 					}
@@ -215,32 +282,25 @@ func (c *BasicContext) filter(kw KeyWords) bool {
 	return selfMatch && subMatch
 }
 
-func (c *BasicContext) subQueryAll(parsers []Parser, kw KeyWords) []Parser {
+func (c *BasicContext) subQueryAll(parsers []Parser, kw Keywords) []Parser {
 	for _, child := range c.Children {
-		//parsers = append(parsers, child.QueryAll(kw)...)
-		if tmpParsers := child.QueryAll(kw); tmpParsers != nil {
+		//parsers = append(parsers, child.QueryAllByKeywords(kw)...)
+		if tmpParsers := child.QueryAllByKeywords(kw); tmpParsers != nil {
 			parsers = append(parsers, tmpParsers...)
 		}
 	}
 	return parsers
 }
 
-func (c *BasicContext) subQuery(kw KeyWords) Parser {
+func (c *BasicContext) subQuery(kw Keywords) Parser {
 	for _, child := range c.Children {
-		//parsers = append(parsers, child.QueryAll(kw)...)
-		if tmpParser := child.Query(kw); tmpParser != nil {
+		//parsers = append(parsers, child.QueryAllByKeywords(kw)...)
+		if tmpParser := child.QueryByKeywords(kw); tmpParser != nil {
 			return tmpParser
 		}
 	}
 	return nil
 }
-
-//func (c *BasicContext) getReg() string {
-//	return c.Value
-//}
-
-//func (c *BasicContext) Dict() map[string]interface{} {
-//}
 
 func (c *BasicContext) String() []string {
 	ret := make([]string, 0)
@@ -332,8 +392,8 @@ func (c *BasicContext) List() (ret []string, err error) {
 	return ret, nil
 }
 
-func (c *BasicContext) remove(index int) {
-	c.Children = append(c.Children[:index], c.Children[index+1:]...)
+func (c *BasicContext) removeByIndex(index int) {
+	c.Children = append(c.Children[0:index], c.Children[index+1:]...)
 }
 
 func (c *BasicContext) getTitle() string {
@@ -341,7 +401,7 @@ func (c *BasicContext) getTitle() string {
 	/*for i := 0; i < c.depth; i++ {
 		contextTitle += INDENT
 	}*/
-	contextTitle += c.Name
+	contextTitle += c.Name.ToString()
 
 	if c.Value != "" {
 		contextTitle += " " + c.Value
@@ -349,4 +409,132 @@ func (c *BasicContext) getTitle() string {
 
 	contextTitle += " {\n"
 	return contextTitle
+}
+
+func (c *BasicContext) childInsert(i int, contents ...Parser) error {
+	if contents != nil {
+		max := len(c.Children)
+		if max > 0 && max > i {
+
+			//cLen := len(contents)
+			//mvLen := max-i
+			//// 扩容切片
+			//for a := 0; a < cLen; a++ {
+			//	c.Children = append(c.Children, c.Children[max-1])
+			//	max++
+			//}
+			//// 移动元素
+			//for m := 0; m < mvLen; m++ {
+			//	c.Children[max-m-2] = c.Children[max-cLen-2-m]
+			//}
+			//// 插入元素
+			//for j := 0; j < cLen; j++ {
+			//	c.Children[i+j] = contents[j]
+			//}
+			tmp := append([]Parser{}, c.Children[i:]...)
+			c.Children = append(append(c.Children[:i], contents...), tmp...)
+
+			return nil
+		} else if max == 0 && i == 0 {
+			c.Children = append(c.Children, contents...)
+			return nil
+		}
+	}
+	return ParserControlParamsError
+}
+
+func newParser(pType parserType, values ...string) (Parser, error) {
+	var parser Parser
+	if values != nil {
+
+		isMatch := false
+		switch pType {
+		case TypeComment:
+			if ms := regexp.MustCompile(`^#+[ \r\t\f]*(.*)$`).FindStringSubmatch(values[0]); len(ms) == 2 {
+				return NewComment(ms[1], false), nil
+			} else {
+				return nil, ParserControlParamsError
+			}
+		case TypeKey:
+			keyValue := ""
+			kv := strings.Split(values[0], ":")
+			if len(kv) > 1 {
+				keyValue = strings.Join(kv[1:], ":")
+			}
+			keyName := kv[0]
+			return NewKey(keyName, keyValue), nil
+		case TypeGeo:
+			parser = NewGeo(values[0])
+			isMatch = true
+		case TypeIf:
+			parser = NewIf(values[0])
+			isMatch = true
+		case TypeLimitExcept:
+			parser = NewLimitExcept(values[0])
+			isMatch = true
+		case TypeLocation:
+			parser = NewLocation(values[0])
+			isMatch = true
+		case TypeMap:
+			parser = NewMap(values[0])
+			isMatch = true
+		case TypeUpstream:
+			parser = NewUpstream(values[0])
+			isMatch = true
+		case TypeEvents:
+			parser = NewEvents()
+		case TypeHttp:
+			parser = NewHttp()
+		case TypeServer:
+			parser = NewServer()
+		case TypeStream:
+			parser = NewStream()
+		case TypeTypes:
+			parser = NewTypes()
+		default:
+			return nil, fmt.Errorf("unkown nginx context type: %s", pType)
+		}
+
+		if isMatch {
+			if len(values) > 1 {
+				values = values[1:]
+			} else {
+				values = nil
+			}
+		}
+
+	} else {
+		switch pType {
+		case TypeEvents:
+			parser = NewEvents()
+		case TypeHttp:
+			parser = NewHttp()
+		case TypeServer:
+			parser = NewServer()
+		case TypeStream:
+			parser = NewStream()
+		case TypeTypes:
+			parser = NewTypes()
+		default:
+			return nil, fmt.Errorf("unkown nginx context type: %s", pType)
+		}
+	}
+
+	if ctx, ok := parser.(Context); ok && values != nil {
+		for _, value := range values {
+			if ms := regexp.MustCompile(`#+[ \r\t\f]*(.*?)`).FindStringSubmatch(value); len(ms) == 2 {
+				err := ctx.Add(TypeComment, ms[1])
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				err := ctx.Add(TypeKey, value)
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+		return ctx, nil
+	}
+	return parser, nil
 }

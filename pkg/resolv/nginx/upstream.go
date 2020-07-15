@@ -4,7 +4,7 @@ type Upstream struct {
 	BasicContext `json:"upstream"`
 }
 
-func (u *Upstream) QueryAll(kw KeyWords) (parsers []Parser) {
+func (u *Upstream) QueryAllByKeywords(kw Keywords) (parsers []Parser) {
 	if u.filter(kw) {
 		parsers = append(parsers, u)
 	}
@@ -15,7 +15,7 @@ func (u *Upstream) QueryAll(kw KeyWords) (parsers []Parser) {
 	}
 }
 
-func (u *Upstream) Query(kw KeyWords) (parser Parser) {
+func (u *Upstream) QueryByKeywords(kw Keywords) (parser Parser) {
 	if u.filter(kw) {
 		return u
 	}

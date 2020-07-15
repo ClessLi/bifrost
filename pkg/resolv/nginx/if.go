@@ -4,7 +4,7 @@ type If struct {
 	BasicContext `json:"if"`
 }
 
-func (i *If) QueryAll(kw KeyWords) (parsers []Parser) {
+func (i *If) QueryAllByKeywords(kw Keywords) (parsers []Parser) {
 	if i.filter(kw) {
 		parsers = append(parsers, i)
 	}
@@ -15,7 +15,7 @@ func (i *If) QueryAll(kw KeyWords) (parsers []Parser) {
 	}
 }
 
-func (i *If) Query(kw KeyWords) (parser Parser) {
+func (i *If) QueryByKeywords(kw Keywords) (parser Parser) {
 	if i.filter(kw) {
 		return i
 	}

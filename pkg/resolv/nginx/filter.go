@@ -7,7 +7,7 @@ import (
 )
 
 func GetHTTP(ctx Context) *Http {
-	if ps := ctx.QueryAll(KeywordHTTP); len(ps) > 0 {
+	if ps := ctx.QueryAllByKeywords(KeywordHTTP); len(ps) > 0 {
 		if http, ok := ps[0].(*Http); ok {
 			return http
 		}
@@ -28,7 +28,7 @@ func GetHTTPServers(ctx Context, orders ...Order) []Parser {
 }
 
 func GetStream(ctx Context) *Stream {
-	if ps := ctx.QueryAll(KeywordStream); len(ps) > 0 {
+	if ps := ctx.QueryAllByKeywords(KeywordStream); len(ps) > 0 {
 		if stream, ok := ps[0].(*Stream); ok {
 			return stream
 		}
@@ -37,19 +37,19 @@ func GetStream(ctx Context) *Stream {
 }
 
 //func GetServerNames(ctx Context) []Parser {
-//	return ctx.QueryAll(KeywordSvrName)
+//	return ctx.QueryAllByKeywords(KeywordSvrName)
 //}
 
 func GetServerName(ctx Context) Parser {
-	return ctx.Query(KeywordSvrName)
+	return ctx.QueryByKeywords(KeywordSvrName)
 }
 
 func GetPorts(ctx Context) []Parser {
-	return ctx.QueryAll(KeywordPort)
+	return ctx.QueryAllByKeywords(KeywordPort)
 }
 
 func GetPort(ctx Context) int {
-	port, err := strconv.Atoi(ctx.Query(KeywordPort).(*Key).Value)
+	port, err := strconv.Atoi(ctx.QueryByKeywords(KeywordPort).(*Key).Value)
 	if err != nil {
 		port = -1
 	}
@@ -59,7 +59,7 @@ func GetPort(ctx Context) int {
 //func GetLocations(ctx Context) []Parser {
 //	http := GetHTTP(ctx)
 //	if http != nil {
-//		return ctx.QueryAll(KeywordLocations)
+//		return ctx.QueryAllByKeywords(KeywordLocations)
 //	} else {
 //		return []Parser{}
 //	}

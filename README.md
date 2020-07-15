@@ -51,7 +51,7 @@ bifrost-v0.0.3
 ```yaml
 WebServerInfo:
   listenPort: 12321
-  servers:
+  httpServers:
     -
       name: "bifrost-test"
       serverType: nginx
