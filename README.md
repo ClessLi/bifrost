@@ -6,7 +6,7 @@
 
 # 项目介绍
 
-**Bifrost** 是基于golang语言开发的项目，它目前还处于测试阶段，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用版本为[v0.0.3](https://github.com/ClessLi/bifrost/tree/v0.0.3) 。
+**Bifrost** 是基于golang语言开发的项目，它目前还处于测试阶段，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用版本为[v1.0.0-alpha.4](https://github.com/ClessLi/bifrost/tree/v1.0.0-alpha.4) 。
 
 # 项目特点
 
@@ -27,6 +27,12 @@
 # 使用方法
 
 ## 下载地址
+
+bifrost-v1.0.0-alpha.4
+
+> Windows: [bifrost.v1_0_0.alpha_4.win_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.0-alpha.4/bifrost.v1_0_0.alpha_4.win_x64.zip)
+> 
+> Linux: [bifrost.v1_0_0.alpha_4.linux_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.0-alpha.4/bifrost.v1_0_0.alpha_4.linux_x64.zip)
 
 bifrost-v1.0.0-alpha.1
 
@@ -80,7 +86,7 @@ logConfig:
 
 ```
 > ./bifrost -h
-  bifrost version: v0.0.3
+  bifrost version: v1.0.0-alpha.4
   Usage: ./bifrost [-hv] [-f filename] [-s signal]
   
   Options:
@@ -316,21 +322,7 @@ json返回示例
 > json格式数据返回示例
 > ```json
 > {
->   "message": {
->     "config": {
->       "value": "/usr/local/openresty/nginx/conf/nginx.conf",
->       "param": [{
->         "comments": "user  nobody;",
->         "inline": true
->       }, {
->         "name": "worker_processes",
->         "value": "1"
->       }, {
->         "comments": "error_log  logs/error.log;",
->         "inline": false
->       }]
->     }
->   },
+>   "message": "{\"config\":{\"value\":\"/usr/local/openresty/nginx/conf/nginx.conf\",\"param\":[{\"comments\":\"user  nobody;\",\"inline\":true},{\"name\":\"worker_processes\",\"value\": \"0\"},{\"comments\":\"error_log  logs/error.log;\",\"inline\":false}]}}",
 >   "status": "success"
 > }
 > ```
@@ -467,7 +459,7 @@ json返回示例
     "cpu": "0.10",
     "mem": "61.41",
     "disk": "53.13",
-    "bifrost_version": "v1.0.0-alpha"
+    "bifrost_version": "v1.0.0-alpha.4"
   },
   "status": "success"
 }

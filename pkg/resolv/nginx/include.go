@@ -217,7 +217,11 @@ func (i *Include) load(allConfigs *map[string]*Config, configCaches *[]string) e
 		//	i.AddByParser(sub)
 		//}
 
-		i.AddByParser(conf)
+		addConfErr := i.AddConfig(conf)
+		if addConfErr != nil {
+			return addConfErr
+		}
+		//i.AddByParser(conf)
 
 	}
 
@@ -233,6 +237,19 @@ func (i *Include) dump() ([]string, error) {
 	}
 
 	return i.Key.String(), nil
+}
+
+func (i *Include) AddConfig(configs ...Parser) error {
+	for _, config := range configs {
+		switch config.(type) {
+		case *Config:
+			continue
+		default:
+			return ParserTypeError
+		}
+	}
+	i.BasicContext.AddByParser(configs...)
+	return nil
 }
 
 func NewInclude(dir, paths string, allConfigs *map[string]*Config, configCaches *[]string) (*Include, error) {

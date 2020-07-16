@@ -30,7 +30,7 @@ var (
 	KeywordLocations = NewKeyWords(TypeLocation, "", `.*`, true, true)
 
 	// errors
-	//ParserTypeError                 = fmt.Errorf("invalid parserType")
+	ParserTypeError                 = fmt.Errorf("invalid parserType")
 	ParserControlNoParamError       = fmt.Errorf("no valid param has been inputed")
 	ParserControlParamsError        = fmt.Errorf("unkown param has been inputed")
 	ParserControlIndexNotFoundError = fmt.Errorf("index not found")
