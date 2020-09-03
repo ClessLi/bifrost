@@ -21,7 +21,7 @@ func main() {
 	case "":
 		err = bifrost.Start()
 		if err == nil {
-			fmt.Println("bifrost is started")
+			fmt.Println("bifrost is stopped")
 			os.Exit(0)
 		}
 	case "stop":
@@ -33,7 +33,7 @@ func main() {
 	case "restart":
 		err = bifrost.Restart()
 		if err == nil {
-			fmt.Println("bifrost is restarted")
+			fmt.Println("bifrost was restarted, and it's stopped, now.")
 			os.Exit(0)
 		}
 	case "status":

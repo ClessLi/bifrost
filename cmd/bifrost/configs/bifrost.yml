@@ -5,12 +5,16 @@ WebServerInfo:
       name: "bifrost-test"
       serverType: nginx
       baseURI: "/ng_conf1"
+      backupCycle: 1
+      backupSaveTime: 7
       confPath: "/usr/local/openresty/nginx/conf/nginx.conf"
       verifyExecPath: "/usr/local/openresty/nginx/sbin/nginx"
     -
       name: "bifrost-test2"
       serverType: nginx
       baseURI: "/ng_conf2"
+      backupCycle: 1
+      backupSaveTime: 7
       confPath: "/GO_Project/src/bifrost/test/config_test/nginx.conf"
       verifyExecPath: "xxxxxxxxxxxx/nginx"
 DBConfig:

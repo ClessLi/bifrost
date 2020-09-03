@@ -88,26 +88,24 @@ func (c *Config) dump() ([]string, error) {
 }
 
 func (c *Config) List() (ret []string, err error) {
-	//absPath, err := filepath.Abs(c.Value)
-	//if err != nil {
-	//	return
-	//}
-	//ret = []string{absPath}
-	ret = []string{c.Value}
-	//fmt.Println(c.Value)
-	//fmt.Println("list: ", ret)
+	ac := NewAC()
+	ac.Insert(c.Value)
+	//ret = []string{c.Value}
 	for _, child := range c.Children {
 		switch child.(type) {
 		case Context:
 			l, err := child.(Context).List()
+			//fmt.Println(l)
 			if err != nil {
 				return nil, err
 			} else if l != nil {
-				ret = append(ret, l...)
+				//ret = append(ret, l...)
+				//ret = AppendNewString(ret, l...)
+				ac.Insert(l...)
 			}
 		}
 	}
-	return ret, nil
+	return ac.store, nil
 }
 
 //func (c *Config) QueryAll(pType parserType, values ...string) []Parser {

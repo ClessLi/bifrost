@@ -23,7 +23,7 @@ var (
 	//confBackupDelay = flag.Duration("b", 10, "how many minutes `delay` for backup nginx config")
 
 	// bifrost配置
-	BifrostConf *BifrostConfig
+	BifrostConf *Config
 	dbConfig    DBConfig
 
 	// 日志变量
@@ -69,8 +69,8 @@ const (
 	HTTPD WebServerType = "httpd"
 )
 
-// BifrostConfig, bifrost配置文件结构体，定义bifrost配置信息
-type BifrostConfig struct {
+// Config, bifrost配置文件结构体，定义bifrost配置信息
+type Config struct {
 	WebServerInfo WebServerInfo `yaml:"WebServerInfo"`
 	DBConfig      `yaml:"DBConfig"`
 	LogConfig     `yaml:"logConfig"`
@@ -90,6 +90,8 @@ type ServerInfo struct {
 	Name           string        `yaml:"name"`
 	ServerType     WebServerType `yaml:"serverType"`
 	BaseURI        string        `yaml:"baseURI"`
+	BackupCycle    int           `yaml:"backupCycle"`
+	BackupSaveTime int           `yaml:"backupSaveTime"`
 	ConfPath       string        `yaml:"confPath"`
 	VerifyExecPath string        `yaml:"verifyExecPath"`
 	confHash       map[string]string
@@ -188,7 +190,7 @@ func init() {
 	}
 
 	// 加载bifrost配置
-	BifrostConf = &BifrostConfig{}
+	BifrostConf = &Config{}
 	yamlErr := yaml.Unmarshal(confData, BifrostConf)
 	if yamlErr != nil {
 		fmt.Println(yamlErr)

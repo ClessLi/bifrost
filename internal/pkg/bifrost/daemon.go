@@ -14,7 +14,7 @@ import (
 // Start, 守护进程 start 方法函数
 // 返回值:
 //     错误
-func Start() error {
+func Start() (err error) {
 	// 判断当前进程是子进程还是主进程
 	if isMain() { // 主进程时
 		// 执行子进程
@@ -55,11 +55,14 @@ func Start() error {
 		defer func() {
 			// 捕获panic
 			if r := recover(); r != nil {
-				Log(CRITICAL, fmt.Sprintf("%s", r))
+				err = fmt.Errorf("%s", r)
+				Log(CRITICAL, err.Error())
+
 			}
 			// 进程结束前清理pid文件
 			rmPidFileErr := os.Remove(pidFile)
 			if rmPidFileErr != nil {
+				err = rmPidFileErr
 				Log(ERROR, rmPidFileErr.Error())
 			}
 			Log(NOTICE, "bifrost.pid is removed, bifrost is finished")

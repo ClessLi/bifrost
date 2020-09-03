@@ -65,18 +65,20 @@ func GetPort(ctx Context) int {
 //	}
 //}
 
-//func AppendNewString(slice []string, elem string) []string {
-//	elem = StripSpace(elem)
-//	//var tmp []string
-//	for _, s := range slice {
-//		if s == elem {
-//			return slice
+//func AppendNewString(slice []string, elements ...string) []string {
+//	for _, element := range elements {
+//		element = StripSpace(element)
+//		isDiff := true
+//		for _, s := range slice {
+//			if s == element {
+//				isDiff = false
+//				break
+//			}
 //		}
-//		//tmp = append(tmp, s)
+//		if isDiff {
+//			slice = append(slice, element)
+//		}
 //	}
-//	//tmp = append(tmp, elem)
-//	slice = append(slice, elem)
-//	//return tmp
 //	return slice
 //}
 

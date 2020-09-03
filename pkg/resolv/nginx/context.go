@@ -377,6 +377,7 @@ func (c *BasicContext) dump() ([]string, error) {
 }
 
 func (c *BasicContext) List() (ret []string, err error) {
+	ac := NewAC()
 	for _, child := range c.Children {
 		switch child.(type) {
 		case Context:
@@ -386,10 +387,12 @@ func (c *BasicContext) List() (ret []string, err error) {
 				return nil, err
 			}
 
-			ret = append(ret, l...)
+			//ret = append(ret, l...)
+			ac.Insert(l...)
 		}
 	}
-	return ret, nil
+	//return ret, nil
+	return ac.store, nil
 }
 
 func (c *BasicContext) removeByIndex(index int) {

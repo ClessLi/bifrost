@@ -91,6 +91,7 @@ func Run() {
 //     autoReloadChans: 自动热加载管道指针切片指针
 func nginxConfAPIInit(router *gin.Engine, serverInfo *ServerInfo, chansLen *int, bakChans *[]*chan int, autoReloadChans *[]*chan int) {
 
+	//fmt.Println("初始化", serverInfo.Name, "web服务相关接口。。。")
 	ngConfig, loadErr := ngLoad(serverInfo)
 	if loadErr != nil {
 		Log(ERROR, fmt.Sprintf("[%s] load config error: %s", serverInfo.Name, loadErr))
@@ -98,15 +99,19 @@ func nginxConfAPIInit(router *gin.Engine, serverInfo *ServerInfo, chansLen *int,
 		return
 	}
 	// 检查nginx配置是否能被正常解析为json
+	//fmt.Println("校验nginx配置。。。")
 	_, jerr := json.Marshal(ngConfig)
 	if jerr != nil {
 		Log(CRITICAL, fmt.Sprintf("[%s] coroutine has been stoped. Cased by '%s'", serverInfo.Name, jerr))
 		*chansLen++
 		return
 	}
+	//fmt.Println("获取接口URI")
 	apiURI := serverInfo.BaseURI
+	//fmt.Println("生成统计接口URI")
 	statisticsURI := fmt.Sprintf("%s/statistics", apiURI)
 
+	//fmt.Println("获取web服务配置校验二进制文件路径")
 	ngVerifyExec, absErr := filepath.Abs(serverInfo.VerifyExecPath)
 	if absErr != nil {
 		Log(CRITICAL, fmt.Sprintf("[%s] coroutine has been stoped. Cased by '%s'", serverInfo.Name, absErr))
@@ -114,23 +119,29 @@ func nginxConfAPIInit(router *gin.Engine, serverInfo *ServerInfo, chansLen *int,
 		return
 	}
 
+	//fmt.Println("载入备份协程")
 	go Bak(serverInfo, ngConfig, *(*bakChans)[*chansLen])
+	//fmt.Println("载入自动更新配置协程")
 	go AutoReload(serverInfo, ngConfig, *(*autoReloadChans)[*chansLen])
 
 	*chansLen++
 
 	// view
+	//fmt.Println("载入查询接口")
 	router.GET(apiURI, func(c *gin.Context) {
 		h, status := view(serverInfo.Name, ngConfig, c)
 		c.JSON(status, &h)
 	})
+
 	// update
+	//fmt.Println("载入更新接口")
 	router.POST(apiURI, func(c *gin.Context) {
 		h, status := update(serverInfo.Name, ngVerifyExec, ngConfig, c)
 		c.JSON(status, &h)
 	})
 
 	// statistics
+	//fmt.Println("载入统计接口")
 	router.GET(statisticsURI, func(c *gin.Context) {
 		h, status := statisticsView(serverInfo.Name, ngConfig, c)
 		c.JSON(status, &h)

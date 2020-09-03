@@ -111,12 +111,9 @@ func Bak(serverInfo *ServerInfo, config *nginx.Config, signal chan int) {
 //     serverInfo: web服务器配置文件信息对象指针
 //     config: nginx配置对象指针
 func bak(serverInfo *ServerInfo, config *nginx.Config) {
-	// 初始化备份文件名
-	bakDate := time.Now().Format("20060102")
-	bakName := fmt.Sprintf("nginx.conf.%s.tgz", bakDate)
+	bakPath, bErr := nginx.Backup(config, "nginx.conf", serverInfo.BackupSaveTime, serverInfo.BackupCycle)
 
-	bakPath, bErr := nginx.Backup(config, bakName)
-	if bErr != nil && !os.IsExist(bErr) { // 备份失败
+	if bErr != nil && (!os.IsExist(bErr) && bErr != nginx.NoBackupRequired) { // 备份失败
 		Log(CRITICAL, fmt.Sprintf("[%s] Nginx Config backup to %s, but failed. <%s>", serverInfo.Name, bakPath, bErr))
 		Log(NOTICE, fmt.Sprintf("[%s] Nginx Config backup is stop.", serverInfo.Name))
 	} else if bErr == nil { // 备份成功
