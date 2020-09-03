@@ -6,7 +6,7 @@
 
 # 项目介绍
 
-**Bifrost** 是基于golang语言开发的项目，它目前还处于测试阶段，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用版本为[v1.0.0-alpha.4](https://github.com/ClessLi/bifrost/tree/v1.0.0-alpha.4) 。
+**Bifrost** 是基于golang语言开发的项目，它目前还处于测试阶段，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用版本为[v1.0.0-alpha.5](https://github.com/ClessLi/bifrost/tree/v1.0.0-alpha.5) 。
 
 # 项目特点
 
@@ -27,6 +27,12 @@
 # 使用方法
 
 ## 下载地址
+
+bifrost-v1.0.0-alpha.5
+
+> Windows: [bifrost.v1_0_0.alpha_5.win_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.0-alpha.5/bifrost.v1_0_0.alpha_5.win_x64.zip)
+> 
+> Linux: [bifrost.v1_0_0.alpha_5.linux_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.0-alpha.5/bifrost.v1_0_0.alpha_5.linux_x64.zip)
 
 bifrost-v1.0.0-alpha.4
 
@@ -62,12 +68,16 @@ WebServerInfo:
       name: "bifrost-test"
       serverType: nginx
       baseURI: "/ng_conf1"
+      backupCycle: 1
+      backupSaveTime: 7
       confPath: "/usr/local/openresty/nginx/conf/nginx.conf"
       verifyExecPath: "/usr/local/openresty/nginx/sbin/nginx"
     -
       name: "bifrost-test2"
       serverType: nginx
       baseURI: "/ng_conf2"
+      backupCycle: 1
+      backupSaveTime: 7
       confPath: "/GO_Project/src/bifrost/test/config_test/nginx.conf"
       verifyExecPath: "xxxxxxxxxxxx/nginx"
 DBConfig:
@@ -86,7 +96,7 @@ logConfig:
 
 ```
 > ./bifrost -h
-  bifrost version: v1.0.0-alpha.4
+  bifrost version: v1.0.0-alpha.5
   Usage: ./bifrost [-hv] [-f filename] [-s signal]
   
   Options:

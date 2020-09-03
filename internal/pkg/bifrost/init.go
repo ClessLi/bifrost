@@ -62,7 +62,7 @@ const (
 	DEBUG    = logger.DebugLevel
 
 	// 版本号
-	VERSION = "v1.0.0-alpha.4"
+	VERSION = "v1.0.0-alpha.5"
 
 	// Web服务类型
 	NGINX WebServerType = "nginx"
