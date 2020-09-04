@@ -22,6 +22,7 @@ var (
 	RegCommentHead     = regexp.MustCompile(`^(\s*)#+[ \r\t\f]*(.*?)\n`)
 	RegKeyValue        = regexp.MustCompile(S)
 	RegKey             = regexp.MustCompile(`^\s*(\S+);`)
+	RegPortValue       = regexp.MustCompile(`^(\d+)\s*\S*$`)
 
 	KeywordHTTP    = NewKeyWords(TypeHttp, "", "", false, true)
 	KeywordStream  = NewKeyWords(TypeStream, "", "", false, true)

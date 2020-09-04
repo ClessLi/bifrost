@@ -20,11 +20,15 @@ func HTTPPorts(ctx nginx.Context) []int {
 		return nil
 	}
 	for _, parser := range nginx.GetPorts(http) {
-		port, err := strconv.Atoi(parser.(*nginx.Key).Value)
-		if err != nil {
-			continue
+		portValue := parser.(*nginx.Key).Value
+		if nginx.RegPortValue.MatchString(portValue) {
+			portStr := nginx.RegPortValue.FindStringSubmatch(portValue)[1]
+			port, err := strconv.Atoi(portStr)
+			if err != nil {
+				continue
+			}
+			ports = nginx.SortInsertUniqInt(ports, port)
 		}
-		ports = nginx.SortInsertUniqInt(ports, port)
 	}
 	return ports
 }

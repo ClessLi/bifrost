@@ -49,11 +49,16 @@ func GetPorts(ctx Context) []Parser {
 }
 
 func GetPort(ctx Context) int {
-	port, err := strconv.Atoi(ctx.QueryByKeywords(KeywordPort).(*Key).Value)
-	if err != nil {
-		port = -1
+	portValue := ctx.QueryByKeywords(KeywordPort).(*Key).Value
+	if RegPortValue.MatchString(portValue) {
+		portStr := RegPortValue.FindStringSubmatch(portValue)[1]
+		port, err := strconv.Atoi(portStr)
+		if err != nil {
+			port = -1
+		}
+		return port
 	}
-	return port
+	return -1
 }
 
 //func GetLocations(ctx Context) []Parser {
