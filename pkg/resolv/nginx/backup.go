@@ -52,7 +52,7 @@ func Backup(config *Config, name string, saveTime, bakCycle int, backupDir ...st
 	}
 	var bakDir string
 	if isSpecBakDir {
-		bakDir = filepath.Dir(backupDir[0])
+		bakDir = backupDir[0]
 	} else {
 		bakDir = filepath.Dir(list[0])
 	}
