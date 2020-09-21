@@ -19,10 +19,11 @@ import (
 //     name: 归档文件前缀名
 //     saveTime: 归档文件保存时间，单位天
 //     bakCycle: 归档操作周期，单位天
+//     backupDir: 可选参数，备份目录
 // 返回值:
 //     bakPath: 归档文件路径
 //     err: 错误
-func Backup(config *Config, name string, saveTime, bakCycle int) (bakPath string, err error) {
+func Backup(config *Config, name string, saveTime, bakCycle int, backupDir ...string) (bakPath string, err error) {
 	// 归档文件名修饰
 	if name != "" {
 		name = strings.TrimSpace(name)
@@ -42,7 +43,19 @@ func Backup(config *Config, name string, saveTime, bakCycle int) (bakPath string
 	}
 
 	// 归档目录
-	bakDir := filepath.Dir(list[0])
+	isSpecBakDir := false
+	if len(backupDir) > 0 && backupDir[0] != "" {
+		d, statErr := os.Stat(backupDir[0])
+		if statErr == nil {
+			isSpecBakDir = d.IsDir()
+		}
+	}
+	var bakDir string
+	if isSpecBakDir {
+		bakDir = filepath.Dir(backupDir[0])
+	} else {
+		bakDir = filepath.Dir(list[0])
+	}
 
 	// 清理过期归档，检查已归档文件
 	needBak, err := checkBackups(name, bakDir, saveTime, bakCycle, now)

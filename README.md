@@ -58,6 +58,8 @@ bifrost-v0.0.3
 
 `configs/bifrost.yml`
 
+`备份目录参数"backupDir"为可选参数，空或未选用时默认以web应用主配置文件所在目录为准`
+
 配置示例
 
 ```yaml
@@ -70,6 +72,7 @@ WebServerInfo:
       baseURI: "/ng_conf1"
       backupCycle: 1
       backupSaveTime: 7
+      backupDir:
       confPath: "/usr/local/openresty/nginx/conf/nginx.conf"
       verifyExecPath: "/usr/local/openresty/nginx/sbin/nginx"
     -

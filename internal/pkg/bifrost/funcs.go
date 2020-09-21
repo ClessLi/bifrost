@@ -111,7 +111,7 @@ func Bak(serverInfo *ServerInfo, config *nginx.Config, signal chan int) {
 //     serverInfo: web服务器配置文件信息对象指针
 //     config: nginx配置对象指针
 func bak(serverInfo *ServerInfo, config *nginx.Config) {
-	bakPath, bErr := nginx.Backup(config, "nginx.conf", serverInfo.BackupSaveTime, serverInfo.BackupCycle)
+	bakPath, bErr := nginx.Backup(config, "nginx.conf", serverInfo.BackupSaveTime, serverInfo.BackupCycle, serverInfo.BackupDir)
 
 	if bErr != nil && (!os.IsExist(bErr) && bErr != nginx.NoBackupRequired) { // 备份失败
 		Log(CRITICAL, fmt.Sprintf("[%s] Nginx Config backup to %s, but failed. <%s>", serverInfo.Name, bakPath, bErr))

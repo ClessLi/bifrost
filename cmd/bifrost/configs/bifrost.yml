@@ -7,6 +7,7 @@ WebServerInfo:
       baseURI: "/ng_conf1"
       backupCycle: 1
       backupSaveTime: 7
+      backupDir:
       confPath: "/usr/local/openresty/nginx/conf/nginx.conf"
       verifyExecPath: "/usr/local/openresty/nginx/sbin/nginx"
     -
