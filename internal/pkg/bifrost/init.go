@@ -92,7 +92,7 @@ type ServerInfo struct {
 	BaseURI        string        `yaml:"baseURI"`
 	BackupCycle    int           `yaml:"backupCycle"`
 	BackupSaveTime int           `yaml:"backupSaveTime"`
-	BackupDir      string        `yaml:"backupDir, omitempty"`
+	BackupDir      string        `yaml:"backupDir,omitempty"`
 	ConfPath       string        `yaml:"confPath"`
 	VerifyExecPath string        `yaml:"verifyExecPath"`
 	confHash       map[string]string
