@@ -68,7 +68,10 @@ func Backup(config *Config, name string, saveTime, bakCycle int, backupDir ...st
 	if needBak {
 		err = tgz(bakPath, list)
 		if err == nil && isSpecBakDir {
-			err = os.Rename(bakPath, backupDir[0])
+			specBakPath, err := filepath.Abs(filepath.Join(backupDir[0], bakName))
+			if err == nil {
+				err = os.Rename(bakPath, specBakPath)
+			}
 		}
 	} else {
 		err = NoBackupRequired
