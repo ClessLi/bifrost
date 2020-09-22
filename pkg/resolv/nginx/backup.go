@@ -50,12 +50,7 @@ func Backup(config *Config, name string, saveTime, bakCycle int, backupDir ...st
 			isSpecBakDir = d.IsDir()
 		}
 	}
-	var bakDir string
-	if isSpecBakDir {
-		bakDir = backupDir[0]
-	} else {
-		bakDir = filepath.Dir(list[0])
-	}
+	bakDir := filepath.Dir(list[0])
 
 	// 清理过期归档，检查已归档文件
 	needBak, err := checkBackups(name, bakDir, saveTime, bakCycle, now)
@@ -72,6 +67,9 @@ func Backup(config *Config, name string, saveTime, bakCycle int, backupDir ...st
 
 	if needBak {
 		err = tgz(bakPath, list)
+		if err == nil && isSpecBakDir {
+			err = os.Rename(bakPath, backupDir[0])
+		}
 	} else {
 		err = NoBackupRequired
 	}
