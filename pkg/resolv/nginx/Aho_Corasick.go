@@ -120,11 +120,12 @@ func (ac *AC) Find(str string) bool {
 		}
 		p = p.children[data]
 	}
-	if !p.isEndingChar {
-		return false
-	} else {
-		return true
-	}
+	//if !p.isEndingChar {
+	//	return false
+	//} else {
+	//	return true
+	//}
+	return p.isEndingChar
 }
 
 //func (ac *AC) Match(str string) {
