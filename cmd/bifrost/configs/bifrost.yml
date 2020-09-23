@@ -7,7 +7,7 @@ WebServerInfo:
       baseURI: "/ng_conf1"
       backupCycle: 1
       backupSaveTime: 7
-      backupDir:
+      backupDir: # 可选，空或未选用时默认以web应用主配置文件所在目录为准
       confPath: "/usr/local/openresty/nginx/conf/nginx.conf"
       verifyExecPath: "/usr/local/openresty/nginx/sbin/nginx"
     -
@@ -18,13 +18,16 @@ WebServerInfo:
       backupSaveTime: 7
       confPath: "/GO_Project/src/bifrost/test/config_test/nginx.conf"
       verifyExecPath: "xxxxxxxxxxxx/nginx"
-DBConfig:
+AuthDBConfig: # 可选，未指定时将考虑AuthConfig
   DBName: "bifrost"
   host: "127.0.0.1"
   port: 3306
   protocol: "tcp"
   user: "heimdall"
   password: "Bultgang"
-logConfig:
+AuthConfig: # 可选，未指定AuthDBConfig和AuthConfig是，将以"heimdall/Bultgang"作为默认认证信息
+  username: "heimdall"
+  password: "Bultgang"
+LogConfig:
   logDir: "./logs"
   level: 2

@@ -243,7 +243,7 @@ func verifyAction(strToken string) (*JWTClaims, error) {
 	if err := token.Claims.Valid(); err != nil {
 		return nil, errors.New(ErrorReasonRelogin)
 	}
-	Log(INFO, fmt.Sprintf("User '%s' passed verification", claims.Username))
+	Log(INFO, fmt.Sprintf("Username '%s' passed verification", claims.Username))
 
 	// 通过返回有效用户jwt断言对象
 	return claims, nil
@@ -271,7 +271,10 @@ func getToken(claims *JWTClaims) (string, error) {
 // 返回值:
 //     用户是否有效
 func validUser(claims *JWTClaims) bool {
-	sqlStr := fmt.Sprintf("SELECT `password` FROM `%s`.`user` WHERE `user_name` = \"%s\" LIMIT 1;", dbConfig.DBName, claims.Username)
+	if authDBConfig == nil {
+		return claims.Username == authConfig.Username && claims.Password == authConfig.Password
+	}
+	sqlStr := fmt.Sprintf("SELECT `password` FROM `%s`.`user` WHERE `user_name` = \"%s\" LIMIT 1;", authDBConfig.DBName, claims.Username)
 	checkPasswd, err := getPasswd(sqlStr)
 	if err != nil && err != sql.ErrNoRows {
 		Log(ERROR, err.Error())
@@ -291,7 +294,7 @@ func validUser(claims *JWTClaims) bool {
 //     用户加密密码
 //     错误
 func getPasswd(sqlStr string) (string, error) {
-	mysqlUrl := fmt.Sprintf("%s:%s@%s(%s:%d)/%s?charset=utf8", dbConfig.User, dbConfig.Password, dbConfig.Protocol, dbConfig.Host, dbConfig.Port, dbConfig.DBName)
+	mysqlUrl := fmt.Sprintf("%s:%s@%s(%s:%d)/%s?charset=utf8", authDBConfig.User, authDBConfig.Password, authDBConfig.Protocol, authDBConfig.Host, authDBConfig.Port, authDBConfig.DBName)
 	//fmt.Println(mysqlUrl)
 	db, dbConnErr := sql.Open("mysql", mysqlUrl)
 	if dbConnErr != nil {

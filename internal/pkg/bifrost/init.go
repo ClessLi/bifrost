@@ -23,8 +23,9 @@ var (
 	//confBackupDelay = flag.Duration("b", 10, "how many minutes `delay` for backup nginx config")
 
 	// bifrost配置
-	BifrostConf *Config
-	dbConfig    DBConfig
+	BifrostConf  *Config
+	authDBConfig *AuthDBConfig
+	authConfig   *AuthConfig
 
 	// 日志变量
 	myLogger *logger.Logger
@@ -62,7 +63,7 @@ const (
 	DEBUG    = logger.DebugLevel
 
 	// 版本号
-	VERSION = "v1.0.0-alpha.5"
+	VERSION = "v1.0.0-alpha.6"
 
 	// Web服务类型
 	NGINX WebServerType = "nginx"
@@ -72,14 +73,15 @@ const (
 // Config, bifrost配置文件结构体，定义bifrost配置信息
 type Config struct {
 	WebServerInfo WebServerInfo `yaml:"WebServerInfo"`
-	DBConfig      `yaml:"DBConfig"`
-	LogConfig     `yaml:"logConfig"`
+	*AuthDBConfig `yaml:"AuthDBConfig,omitempty"`
+	*AuthConfig   `yaml:"AuthConfig,omitempty"`
+	LogConfig     `yaml:"LogConfig"`
 }
 
 // WebServerInfo, bifrost配置文件对象中web服务器信息结构体，定义管控的web服务器配置文件相关信息
 type WebServerInfo struct {
 	ListenPort int          `yaml:"listenPort"`
-	Servers    []ServerInfo `yaml:"servers"`
+	Servers    []ServerInfo `yaml:"servers,flow"`
 }
 
 // WebServerType, web服务器类型对象，定义web服务器所属类型
@@ -98,13 +100,19 @@ type ServerInfo struct {
 	confHash       map[string]string
 }
 
-// DBConfig, mysql数据库信息结构体，用于读写bifrost信息
-type DBConfig struct {
+// AuthDBConfig, mysql数据库信息结构体，该库用于存放用户认证信息（可选）
+type AuthDBConfig struct {
 	DBName   string `yaml:"DBName"`
 	Host     string `yaml:"host"`
 	Port     int    `yaml:"port"`
 	Protocol string `yaml:"protocol"`
 	User     string `yaml:"user"`
+	Password string `yaml:"password"`
+}
+
+// AuthConfig, 认证信息结构体，记录用户认证信息（可选）
+type AuthConfig struct {
+	Username string `yaml:"username"`
 	Password string `yaml:"password"`
 }
 
@@ -199,8 +207,16 @@ func init() {
 		os.Exit(1)
 	}
 
-	// 初始化数据库信息
-	dbConfig = BifrostConf.DBConfig
+	// 初始化认证数据库或认证配置信息
+	if BifrostConf.AuthDBConfig != nil {
+		authDBConfig = BifrostConf.AuthDBConfig
+	} else {
+		if BifrostConf.AuthConfig != nil {
+			authConfig = BifrostConf.AuthConfig
+		} else { // 使用默认认证信息
+			authConfig = &AuthConfig{"heimdall", "Bultgang"}
+		}
+	}
 
 	// 初始化日志
 	logDir, absErr := filepath.Abs(BifrostConf.LogDir)

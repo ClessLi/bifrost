@@ -6,7 +6,7 @@
 
 # 项目介绍
 
-**Bifrost** 是基于golang语言开发的项目，它目前还处于测试阶段，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用版本为[v1.0.0-alpha.5](https://github.com/ClessLi/bifrost/tree/v1.0.0-alpha.5) 。
+**Bifrost** 是基于golang语言开发的项目，它目前还处于测试阶段，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用版本为[v1.0.0-alpha.6](https://github.com/ClessLi/bifrost/tree/v1.0.0-alpha.6) 。
 
 # 项目特点
 
@@ -27,6 +27,12 @@
 # 使用方法
 
 ## 下载地址
+
+bifrost-v1.0.0-alpha.6
+
+> Windows: [bifrost.v1_0_0.alpha_6.win_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.0-alpha.6/bifrost.v1_0_0.alpha_6.win_x64.zip)
+> 
+> Linux: [bifrost.v1_0_0.alpha_6.linux_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.0-alpha.6/bifrost.v1_0_0.alpha_6.linux_x64.zip)
 
 bifrost-v1.0.0-alpha.5
 
@@ -58,21 +64,19 @@ bifrost-v0.0.3
 
 `configs/bifrost.yml`
 
-`备份目录参数"backupDir"为可选参数，空或未选用时默认以web应用主配置文件所在目录为准`
-
 配置示例
 
 ```yaml
 WebServerInfo:
   listenPort: 12321
-  httpServers:
+  servers:
     -
       name: "bifrost-test"
       serverType: nginx
       baseURI: "/ng_conf1"
       backupCycle: 1
       backupSaveTime: 7
-      backupDir:
+      backupDir: # 可选，空或未选用时默认以web应用主配置文件所在目录为准
       confPath: "/usr/local/openresty/nginx/conf/nginx.conf"
       verifyExecPath: "/usr/local/openresty/nginx/sbin/nginx"
     -
@@ -83,14 +87,17 @@ WebServerInfo:
       backupSaveTime: 7
       confPath: "/GO_Project/src/bifrost/test/config_test/nginx.conf"
       verifyExecPath: "xxxxxxxxxxxx/nginx"
-DBConfig:
+AuthDBConfig: # 可选，未指定时将考虑AuthConfig
   DBName: "bifrost"
   host: "127.0.0.1"
   port: 3306
   protocol: "tcp"
   user: "heimdall"
   password: "Bultgang"
-logConfig:
+AuthConfig: # 可选，未指定AuthDBConfig和AuthConfig是，将以"heimdall/Bultgang"作为默认认证信息
+  username: "heimdall"
+  password: "Bultgang"
+LogConfig:
   logDir: "./logs"
   level: 2
 ```
@@ -99,7 +106,7 @@ logConfig:
 
 ```
 > ./bifrost -h
-  bifrost version: v1.0.0-alpha.5
+  bifrost version: v1.0.0-alpha.6
   Usage: ./bifrost [-hv] [-f filename] [-s signal]
   
   Options:
