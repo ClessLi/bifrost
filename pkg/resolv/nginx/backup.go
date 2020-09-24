@@ -50,7 +50,22 @@ func Backup(config *Config, name string, saveTime, bakCycle int, backupDir ...st
 			isSpecBakDir = d.IsDir()
 		}
 	}
-	bakDir := filepath.Dir(list[0])
+	confDir := filepath.Dir(list[0])
+	bakName := fmt.Sprintf("%s.%s.tgz", name, dt)
+	bakDir := confDir
+	bakPath = filepath.Join(confDir, bakName)
+	bakPath, err = filepath.Abs(bakPath)
+	if err != nil {
+		return "", err
+	}
+	specBakPath := bakPath
+	if isSpecBakDir {
+		bakDir = backupDir[0]
+		specBakPath, err = filepath.Abs(filepath.Join(backupDir[0], bakName))
+		if err != nil {
+			return "", err
+		}
+	}
 
 	// 清理过期归档，检查已归档文件
 	needBak, err := checkBackups(name, bakDir, saveTime, bakCycle, now)
@@ -58,20 +73,10 @@ func Backup(config *Config, name string, saveTime, bakCycle int, backupDir ...st
 		return "", err
 	}
 
-	bakName := fmt.Sprintf("%s.%s.tgz", name, dt)
-	bakPath = filepath.Join(bakDir, bakName)
-	bakPath, err = filepath.Abs(bakPath)
-	if err != nil {
-		return "", err
-	}
-
 	if needBak {
 		err = tgz(bakPath, list)
 		if err == nil && isSpecBakDir {
-			specBakPath, err := filepath.Abs(filepath.Join(backupDir[0], bakName))
-			if err == nil {
-				err = os.Rename(bakPath, specBakPath)
-			}
+			err = os.Rename(bakPath, specBakPath)
 		}
 	} else {
 		err = NoBackupRequired
