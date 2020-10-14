@@ -10,13 +10,7 @@ func Check(config *Config, ng string) (err error) {
 	if err != nil {
 		return
 	}
-	list, err := config.List()
-	//fmt.Println("list", list)
-	if err != nil {
-		return
-	}
-
-	return check(ng, list[0])
+	return check(ng, config.Value)
 }
 
 func check(ng string, s string) error {

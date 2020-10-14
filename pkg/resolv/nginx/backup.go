@@ -23,7 +23,7 @@ import (
 // 返回值:
 //     bakPath: 归档文件路径
 //     err: 错误
-func Backup(config *Config, name string, saveTime, bakCycle int, backupDir ...string) (bakPath string, err error) {
+func Backup(config *Config, name string, caches Caches, saveTime, bakCycle int, backupDir ...string) (bakPath string, err error) {
 	// 归档文件名修饰
 	if name != "" {
 		name = strings.TrimSpace(name)
@@ -36,12 +36,6 @@ func Backup(config *Config, name string, saveTime, bakCycle int, backupDir ...st
 	now := time.Now()
 	dt := now.Format("20060102")
 
-	// 获取被归档文件信息
-	list, err := config.List()
-	if err != nil {
-		return "", err
-	}
-
 	// 归档目录
 	isSpecBakDir := false
 	if len(backupDir) > 0 && backupDir[0] != "" {
@@ -50,7 +44,7 @@ func Backup(config *Config, name string, saveTime, bakCycle int, backupDir ...st
 			isSpecBakDir = d.IsDir()
 		}
 	}
-	confDir := filepath.Dir(list[0])
+	confDir := filepath.Dir(config.Value)
 	bakName := fmt.Sprintf("%s.%s.tgz", name, dt)
 	bakDir := confDir
 	bakPath = filepath.Join(confDir, bakName)
@@ -74,7 +68,7 @@ func Backup(config *Config, name string, saveTime, bakCycle int, backupDir ...st
 	}
 
 	if needBak {
-		err = tgz(bakPath, list)
+		err = tgz(bakPath, caches)
 		if err == nil && isSpecBakDir {
 			err = os.Rename(bakPath, specBakPath)
 			bakPath = specBakPath
@@ -138,10 +132,11 @@ func checkBackups(name, dir string, saveTime, cycle int, now time.Time) (bool, e
 //
 // 参数:
 //     dest: 归档文件路径
+//     caches: 配置文件对象缓存
 //     list: 被归档（仅）文件（非目录）切片
 // 返回值:
 //     错误
-func tgz(dest string, list []string) (err error) {
+func tgz(dest string, caches Caches) (err error) {
 	// 归档目录
 	destDir := filepath.Dir(dest)
 
@@ -154,7 +149,7 @@ func tgz(dest string, list []string) (err error) {
 	defer tgzw.Close()
 
 	// 开始归档
-	for _, f := range list {
+	for f := range caches {
 
 		// 初始化被归档文件信息
 		relDir, relErr := filepath.Rel(destDir, filepath.Dir(f))

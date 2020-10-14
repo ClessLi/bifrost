@@ -8,7 +8,7 @@ import (
 )
 
 func TestStatistics(t *testing.T) {
-	conf, err := nginx.Load("config_test/nginx.conf")
+	conf, _, err := nginx.Load("config_test/nginx.conf")
 	//conf, err := nginx.Load("filter_bug_test/nginx.conf")
 
 	if err != nil {

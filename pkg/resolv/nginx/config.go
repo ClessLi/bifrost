@@ -24,10 +24,6 @@ type Config struct {
 func (c *Config) String() []string {
 	ret := make([]string, 0)
 
-	// 暂取消config对象输出自身对象信息
-	//title := c.getTitle()
-	//ret = append(ret, "# "+title)
-
 	for _, child := range c.Children {
 		switch child.(type) {
 		case *Key, *Comment:
@@ -40,9 +36,6 @@ func (c *Config) String() []string {
 	if ret != nil {
 		ret[len(ret)-1] = RegEndWithCR.ReplaceAllString(ret[len(ret)-1], "}\n")
 	}
-
-	// 暂取消config对象输出自身对象信息
-	//ret = append(ret, "#End# "+c.Name+": "+c.Value+"}\n\n")
 
 	return ret
 }
@@ -87,34 +80,30 @@ func (c *Config) dump() ([]string, error) {
 	return ret, nil
 }
 
-func (c *Config) List() (ret []string, err error) {
-	ac := NewAC()
-	ac.Insert(c.Value)
-	//ret = []string{c.Value}
+func (c *Config) List() (ret Caches, err error) {
+	ret = Caches{}
+	err = ret.setCache(c, hashForGetList)
+	if err != nil && err != IsInCaches {
+		return nil, err
+	}
 	for _, child := range c.Children {
 		switch child.(type) {
 		case Context:
-			l, err := child.(Context).List()
-			//fmt.Println(l)
+			subCaches, err := child.(Context).List()
 			if err != nil {
 				return nil, err
-			} else if l != nil {
-				//ret = append(ret, l...)
-				//ret = AppendNewString(ret, l...)
-				ac.Insert(l...)
+			} else if subCaches != nil {
+				for _, cache := range subCaches {
+					err = ret.setCache(cache.config, hashForGetList)
+					if err != nil && err != IsInCaches {
+						return nil, err
+					}
+				}
 			}
 		}
 	}
-	return ac.store, nil
+	return ret, nil
 }
-
-//func (c *Config) QueryAll(pType parserType, values ...string) []Parser {
-//	kw, err := newKW(pType, values...)
-//	if err != nil {
-//		return nil
-//	}
-//	return c.QueryAllByKeywords(*kw)
-//}
 
 func (c *Config) QueryAllByKeywords(kw Keywords) (parsers []Parser) {
 	if c.filter(kw) {
@@ -123,14 +112,6 @@ func (c *Config) QueryAllByKeywords(kw Keywords) (parsers []Parser) {
 	return c.subQueryAll(parsers, kw)
 
 }
-
-//func (c *Config) Query(pType parserType, values ...string) Parser {
-//	kw, err := newKW(pType, values...)
-//	if err != nil {
-//		return nil
-//	}
-//	return c.QueryByKeywords(*kw)
-//}
 
 func (c *Config) QueryByKeywords(kw Keywords) (parser Parser) {
 	if c.filter(kw) {
@@ -152,20 +133,11 @@ func (c *Config) Size(_ Order) int {
 }
 
 func NewConf(conf []Parser, value string) *Config {
-	// 确定*Config的唯一性，防止多次加载
-	//for _, c := range configs {
-	//	if c.Value == value {
-	//		return c, ErrConfigIsExist
-	//	}
-	//}
 	f := &Config{BasicContext{
 		Name:     TypeConfig,
 		Value:    value,
 		Children: conf,
 	}}
 
-	// 确保*Config的唯一性，将新加载的*Config加入configs
-	//configs = append(configs, f)
-	//return f, nil
 	return f
 }

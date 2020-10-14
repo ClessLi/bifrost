@@ -7,6 +7,7 @@ package bifrost
 import (
 	"flag"
 	"fmt"
+	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
 	"github.com/apsdehal/go-logger"
 	"github.com/shirou/gopsutil/host"
 	"gopkg.in/yaml.v2"
@@ -97,7 +98,8 @@ type ServerInfo struct {
 	BackupDir      string        `yaml:"backupDir,omitempty"`
 	ConfPath       string        `yaml:"confPath"`
 	VerifyExecPath string        `yaml:"verifyExecPath"`
-	confHash       map[string]string
+	//confCaches       map[string]string
+	confCaches nginx.Caches
 }
 
 // AuthDBConfig, mysql数据库信息结构体，该库用于存放用户认证信息（可选）

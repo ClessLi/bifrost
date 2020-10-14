@@ -9,10 +9,16 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ClessLi/bifrost/internal/pkg/bifrost"
+	//"net/http"
+	//_ "net/http/pprof"
 	"os"
 )
 
 func main() {
+	//go func() {
+	//	err := http.ListenAndServe("0.0.0.0:12378", nil)
+	//	fmt.Println(err)
+	//}()
 	defer bifrost.Logf.Close()
 	defer bifrost.Stdoutf.Close()
 

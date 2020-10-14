@@ -21,18 +21,20 @@ func usage() {
 
 func main() {
 	var configs []*nginx.Config
+	cacheSlice := make([]nginx.Caches, 0)
 	for _, s := range os.Args[1:] {
-		config, loadErr := nginx.Load(s)
+		config, caches, loadErr := nginx.Load(s)
 		if loadErr != nil {
 			fmt.Println(loadErr)
 			usage()
 			os.Exit(2)
 		}
+		cacheSlice = append(cacheSlice, caches)
 		configs = append(configs, config)
 	}
 
-	for _, config := range configs {
-		bakPath, bakErr := nginx.Backup(config, "nginx.conf", 7, 1, filepath.Dir(config.Value))
+	for i := range configs {
+		bakPath, bakErr := nginx.Backup(configs[i], "nginx.conf", cacheSlice[i], 7, 1, filepath.Dir(configs[i].Value))
 		if bakErr != nil && bakErr != nginx.NoBackupRequired {
 			fmt.Printf("backup to %s failed, cased by %s", bakPath, bakErr)
 			os.Exit(3)

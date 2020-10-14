@@ -1,6 +1,7 @@
 package nginx
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"regexp"
 )
@@ -36,4 +37,9 @@ var (
 	ParserControlParamsError        = fmt.Errorf("unkown param has been inputed")
 	ParserControlIndexNotFoundError = fmt.Errorf("index not found")
 	NoBackupRequired                = fmt.Errorf("no backup required")
+	IsInCaches                      = fmt.Errorf("cache already exists")
+	IsNotInCaches                   = fmt.Errorf("cache is not exists")
+
+	// 散列缓存
+	hash256 = sha256.New()
 )

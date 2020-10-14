@@ -1,12 +1,9 @@
 package bifrost
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
 	"github.com/apsdehal/go-logger"
-	"io"
 	"io/ioutil"
 	"os"
 	"time"
@@ -38,53 +35,16 @@ func readFile(path string) ([]byte, error) {
 //     nginx配置对象指针
 //     错误
 func ngLoad(serverInfo *ServerInfo) (*nginx.Config, error) {
-	// 加载nginx配置
-	ng, err := nginx.Load(serverInfo.ConfPath)
+	// 加载nginx配置并获取缓存
+	ng, caches, err := nginx.Load(serverInfo.ConfPath)
 	if err != nil {
 		return nil, err
 	}
 
-	// 获取nginx配置文件列表
-	confList, listErr := ng.List()
-	if listErr != nil {
-		return nil, listErr
-	}
-
-	// 计算nginx配置文件哈希基准值
-	serverInfo.confHash = make(map[string]string, 0)
-	for _, path := range confList {
-		cHash, hashErr := hash(path)
-		if hashErr != nil {
-			return nil, hashErr
-		}
-
-		serverInfo.confHash[path] = cHash
-	}
+	// 记录缓存
+	serverInfo.confCaches = caches
 
 	return ng, nil
-}
-
-// hash, 计算文件hash值函数
-// 参数:
-//     path: 文件路径
-// 返回值:
-//     文件哈希基准值
-//     错误
-func hash(path string) (string, error) {
-	// 读取文件
-	f, err := os.Open(path)
-	if err != nil {
-		return "", err
-	}
-	defer f.Close()
-
-	// 计算文件数据哈希值
-	hash256 := sha256.New()
-	_, hashCPErr := io.Copy(hash256, f)
-	if hashCPErr != nil {
-		return "", hashCPErr
-	}
-	return hex.EncodeToString(hash256.Sum(nil)), nil
 }
 
 // Bak, nginx配置文件备份函数
@@ -111,7 +71,7 @@ func Bak(serverInfo *ServerInfo, config *nginx.Config, signal chan int) {
 //     serverInfo: web服务器配置文件信息对象指针
 //     config: nginx配置对象指针
 func bak(serverInfo *ServerInfo, config *nginx.Config) {
-	bakPath, bErr := nginx.Backup(config, "nginx.conf", serverInfo.BackupSaveTime, serverInfo.BackupCycle, serverInfo.BackupDir)
+	bakPath, bErr := nginx.Backup(config, "nginx.conf", serverInfo.confCaches, serverInfo.BackupSaveTime, serverInfo.BackupCycle, serverInfo.BackupDir)
 
 	if bErr != nil && (!os.IsExist(bErr) && bErr != nginx.NoBackupRequired) { // 备份失败
 		Log(CRITICAL, fmt.Sprintf("[%s] Nginx Config backup to %s, but failed. <%s>", serverInfo.Name, bakPath, bErr))
@@ -153,36 +113,30 @@ func AutoReload(serverInfo *ServerInfo, config *nginx.Config, signal chan int) {
 //     serverInfo: web服务器配置文件信息对象指针
 func autoReload(serverInfo *ServerInfo) (*nginx.Config, error) {
 	// 校验配置文件是否更新
-	isDifferent, checkErr := hashCheck(serverInfo)
+	isSame, checkErr := checkHash(serverInfo)
 	if checkErr != nil {
 		return nil, checkErr
 	}
 
 	// 如果有差别，则重新读取配置
-	if isDifferent {
+	if !isSame {
 		return ngLoad(serverInfo)
 	}
 	return nil, nil
 }
 
-// hashCheck, web服务器配置文件是否已更改校验函数
+// checkHash, web服务器配置文件是否已更改校验函数
 // 参数:
 //     serverInfo: web服务器配置文件信息对象指针
-func hashCheck(serverInfo *ServerInfo) (bool, error) {
-	for path, h := range serverInfo.confHash {
-		// 获取当前配置文件哈希值
-		checkHash, checkErr := hash(path)
-		if checkErr != nil {
-			return false, checkErr
-		}
-
-		// 校验哈希，不一致说明需要更新
-		if checkHash != h {
-			return true, nil
+func checkHash(serverInfo *ServerInfo) (isSame bool, err error) {
+	isSame = true
+	for path := range serverInfo.confCaches {
+		if isSame, err = serverInfo.confCaches.CheckHash(path); !isSame {
+			return
 		}
 
 	}
-	return false, nil
+	return
 }
 
 // PathExists, 判断文件路径是否存在函数
@@ -205,8 +159,5 @@ func PathExists(path string) (bool, error) {
 //     level: 日志级别对象
 //     message: 需记录的日志信息字符串
 func Log(level logger.LogLevel, message string) {
-
 	myLogger.Log(level, message)
-	//fmt.Printf("[%s] [%s] %s\n", level, time.Now().Format(timeFormat), message)
-
 }

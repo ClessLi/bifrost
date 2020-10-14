@@ -30,7 +30,7 @@ type Context interface {
 	//UnmarshalToJSON(b []byte) error
 	//BumpChildDepth(int)
 	dump() ([]string, error)
-	List() ([]string, error)
+	List() (Caches, error)
 }
 
 // BasicContext, 上下文基础对象，定义了上下文类型的基本属性及基础方法
@@ -284,7 +284,6 @@ func (c *BasicContext) filter(kw Keywords) bool {
 
 func (c *BasicContext) subQueryAll(parsers []Parser, kw Keywords) []Parser {
 	for _, child := range c.Children {
-		//parsers = append(parsers, child.QueryAllByKeywords(kw)...)
 		if tmpParsers := child.QueryAllByKeywords(kw); tmpParsers != nil {
 			parsers = append(parsers, tmpParsers...)
 		}
@@ -294,7 +293,6 @@ func (c *BasicContext) subQueryAll(parsers []Parser, kw Keywords) []Parser {
 
 func (c *BasicContext) subQuery(kw Keywords) Parser {
 	for _, child := range c.Children {
-		//parsers = append(parsers, child.QueryAllByKeywords(kw)...)
 		if tmpParser := child.QueryByKeywords(kw); tmpParser != nil {
 			return tmpParser
 		}
@@ -321,8 +319,6 @@ func (c *BasicContext) String() []string {
 			}
 		case Context:
 			strs := child.String()
-			//ret = append(ret, INDENT+strs[0])
-			//for _, str := range strs[1:] {
 			for _, str := range strs {
 				ret = append(ret, INDENT+str)
 			}
@@ -376,23 +372,31 @@ func (c *BasicContext) dump() ([]string, error) {
 	return ret, nil
 }
 
-func (c *BasicContext) List() (ret []string, err error) {
-	ac := NewAC()
+func (c *BasicContext) List() (ret Caches, err error) {
+	ret = Caches{}
 	for _, child := range c.Children {
 		switch child.(type) {
 		case Context:
-			//fmt.Println("farther", c.Name, "child", child)
-			l, err := child.(Context).List()
+			subCaches, err := child.(Context).List()
 			if err != nil {
 				return nil, err
+
+			} else if subCaches != nil {
+
+				for _, cache := range subCaches {
+					err = ret.setCache(cache.config, hashForGetList)
+
+					if err != nil && err != IsInCaches {
+						return nil, err
+					}
+
+				}
+
 			}
 
-			//ret = append(ret, l...)
-			ac.Insert(l...)
 		}
 	}
-	//return ret, nil
-	return ac.store, nil
+	return ret, nil
 }
 
 func (c *BasicContext) removeByIndex(index int) {

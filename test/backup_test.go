@@ -10,17 +10,18 @@ import (
 )
 
 func TestRel(t *testing.T) {
-	conf, err := nginx.Load("./config_test/nginx.conf")
+	_, caches, err := nginx.Load("./config_test/nginx.conf")
 	if err != nil {
 		t.Log(err)
 	}
 
-	fileList, err := conf.List()
-	if err != nil {
-		t.Log(err)
-	}
+	//fileList, err := conf.List()
+	//if err != nil {
+	//	t.Log(err)
+	//}
 
-	for _, s := range fileList {
+	//for _, s := range fileList {
+	for s := range caches {
 		t.Log(filepath.Rel("F:\\GO_Project\\src\\bifrost\\test", s))
 	}
 }

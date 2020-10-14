@@ -3,52 +3,44 @@ package nginx
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 )
 
-func Load(path string) (*Config, error) {
-	ngDir, err := filepath.Abs(filepath.Dir(path))
-	if err != nil {
-		return nil, err
+func Load(path string) (*Config, Caches, error) {
+	cs := newCaches()
+	ngDir, fileErr := filepath.Abs(filepath.Dir(path))
+	if fileErr != nil {
+		return nil, nil, fileErr
 	}
 	relativePath := filepath.Base(path)
-	var configCaches []string
-	allConfigs := make(map[string]*Config, 0)
-	return load(ngDir, relativePath, &allConfigs, &configCaches)
+	conf, loadErr := load(ngDir, relativePath, &cs)
+	if loadErr != nil {
+		return nil, nil, loadErr
+	}
+	return conf, cs, nil
 }
 
-func load(ngDir, relativePath string, allConfigs *map[string]*Config, configCaches *[]string) (conf *Config, err error) {
+func load(ngDir, relativePath string, caches *Caches) (conf *Config, err error) {
 	absPath := filepath.Join(ngDir, relativePath)
-	if inCaches(absPath, configCaches) {
-		return nil, fmt.Errorf("config '%s' is already loaded", absPath)
+	if _, ok := (*caches)[absPath]; ok {
+		return nil, IsInCaches
 	}
-
-	if f, ok := (*allConfigs)[absPath]; ok {
-		//fmt.Println(allConfigs)
-		return f, nil
-	}
-
-	//f, err := NewConf(nil, absPath)
 	f := NewConf(nil, absPath)
-	//if err != nil {
-	//	return nil, err
-	//}
 
-	data, err := readConf(absPath)
-	if err != nil {
-		return nil, err
+	file, openErr := os.Open(absPath)
+	if openErr != nil {
+		return nil, openErr
 	}
-	//var newCaches []string
-	//copy(newCaches, *configCaches)
-	newCaches := *configCaches
-	//configCaches = append(configCaches, absPath)
-	newCaches = append(newCaches, absPath)
+	defer file.Close()
 
-	// 添加新增配置对象指针到配置对象指针映射中
-	(*allConfigs)[absPath] = f
-
+	bytes, readErr := ioutil.ReadAll(file)
+	if readErr != nil {
+		return nil, readErr
+	}
+	data := string(bytes)
 	index := 0
 	var lopen []Parser
 
@@ -135,7 +127,7 @@ func load(ngDir, relativePath string, allConfigs *map[string]*Config, configCach
 				k = NewKey(ms[1], ms[2])
 			}
 
-			k, ckErr := checkInclude(k, ngDir, allConfigs, &newCaches)
+			k, ckErr := checkInclude(k, ngDir, caches)
 			if ckErr != nil {
 				err = ckErr
 				return false
@@ -180,21 +172,15 @@ func load(ngDir, relativePath string, allConfigs *map[string]*Config, configCach
 		break
 	}
 
+	err = caches.setCache(f, file)
+
 	return f, err
 }
 
-func inCaches(path string, caches *[]string) bool {
-	for _, cache := range *caches {
-		if path == cache {
-			return true
-		}
-	}
-	return false
-}
-
-func checkInclude(k *Key, dir string, allConfigs *map[string]*Config, configCaches *[]string) (Parser, error) {
+func checkInclude(k *Key, dir string, cs *Caches) (Parser, error) {
 	if k.Name == fmt.Sprintf("%s", TypeInclude) {
-		return NewInclude(dir, k.Value, allConfigs, configCaches)
+		//return NewInclude(dir, k.Value, allConfigs, configCaches)
+		return NewInclude(dir, k.Value, cs)
 	}
 	return k, nil
 }
@@ -207,16 +193,3 @@ func checkContext(lopen []Parser) (Context, bool) {
 		return nil, false
 	}
 }
-
-func readConf(path string) (string, error) {
-	data, err := ioutil.ReadFile(path)
-	if err != nil {
-		return "", err
-	}
-	return string(data), nil
-}
-
-// 解析、加载配置文件对象后，方便清除相关缓存
-//func ReleaseConfigsCache() {
-//	configs = []*Config{}
-//}

@@ -29,6 +29,8 @@ const (
 	TypeTypes       parserType = "types"
 	TypeUpstream    parserType = "upstream"
 	TypeComment     parserType = "comment"
+
+	hashForGetList = "ForList"
 )
 
 // 整型order

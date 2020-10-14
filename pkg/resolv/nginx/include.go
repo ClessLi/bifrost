@@ -188,9 +188,7 @@ func (i *Include) String() []string {
 	return strs
 }
 
-func (i *Include) load(allConfigs *map[string]*Config, configCaches *[]string) error {
-	//var newCaches []string
-	//copy(newCaches, *configCaches)
+func (i *Include) initLoad(cs *Caches) error {
 	paths, err := filepath.Glob(filepath.Join(i.ConfPWD, i.Value))
 	if err != nil {
 		return err
@@ -198,30 +196,20 @@ func (i *Include) load(allConfigs *map[string]*Config, configCaches *[]string) e
 
 	for _, path := range paths {
 
-		//conf, lerr := load(path, newCaches)
 		relPath, relErr := filepath.Rel(i.ConfPWD, path)
 		if relErr != nil {
 			return relErr
 		}
 
-		conf, lerr := load(i.ConfPWD, relPath, allConfigs, configCaches)
+		conf, lerr := load(i.ConfPWD, relPath, cs)
 		if lerr != nil {
 			return lerr
 		}
-
-		//if len(paths) == 1 && paths[0] == path {
-		//	i.AddByParser(conf.Children...)
-		//} else {
-		//	sub := NewInclude("", path)
-		//	sub.AddByParser(conf.Children...)
-		//	i.AddByParser(sub)
-		//}
 
 		addConfErr := i.AddConfig(conf)
 		if addConfErr != nil {
 			return addConfErr
 		}
-		//i.AddByParser(conf)
 
 	}
 
@@ -252,7 +240,7 @@ func (i *Include) AddConfig(configs ...Parser) error {
 	return nil
 }
 
-func NewInclude(dir, paths string, allConfigs *map[string]*Config, configCaches *[]string) (*Include, error) {
+func NewInclude(dir, paths string, cs *Caches) (*Include, error) {
 	include := &Include{
 		BasicContext: BasicContext{
 			Name:     TypeInclude,
@@ -264,7 +252,7 @@ func NewInclude(dir, paths string, allConfigs *map[string]*Config, configCaches 
 		ConfPWD: dir,
 	}
 
-	err := include.load(allConfigs, configCaches)
+	err := include.initLoad(cs)
 	if err != nil {
 		return nil, err
 	}

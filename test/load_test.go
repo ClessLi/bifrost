@@ -10,7 +10,7 @@ import (
 
 func TestLoad(t *testing.T) {
 	//conf, err := resolv.Load("config_test/nginx.conf")
-	conf, err := nginx.Load("test_circle_load/nginx.conf")
+	conf, _, err := nginx.Load("test_circle_load/nginx.conf")
 
 	if err != nil {
 		t.Log(err)
@@ -21,7 +21,7 @@ func TestLoad(t *testing.T) {
 }
 
 func TestLoadServers(t *testing.T) {
-	conf, err := nginx.Load("config_test/nginx.conf")
+	conf, _, err := nginx.Load("config_test/nginx.conf")
 
 	if err != nil {
 		t.Log(err)
@@ -35,7 +35,7 @@ func TestLoadServers(t *testing.T) {
 }
 
 func TestLoadServer(t *testing.T) {
-	conf, err := nginx.Load("config_test/nginx.conf")
+	conf, _, err := nginx.Load("config_test/nginx.conf")
 
 	if err != nil {
 		t.Log(err)
@@ -47,7 +47,7 @@ func TestLoadServer(t *testing.T) {
 
 func TestMarshalJSON(t *testing.T) {
 	//conf, err := resolv.Load("config_test/nginx.conf")
-	conf, err := nginx.Load("test_circle_load/nginx.conf")
+	conf, _, err := nginx.Load("test_circle_load/nginx.conf")
 
 	if err != nil {
 		t.Log(err)
