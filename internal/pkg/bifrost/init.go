@@ -7,7 +7,6 @@ package bifrost
 import (
 	"flag"
 	"fmt"
-	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
 	"github.com/apsdehal/go-logger"
 	"github.com/shirou/gopsutil/host"
 	"gopkg.in/yaml.v2"
@@ -87,20 +86,6 @@ type WebServerInfo struct {
 
 // WebServerType, web服务器类型对象，定义web服务器所属类型
 type WebServerType string
-
-// ServerInfo, nginx配置文件信息结构体，定义配置文件路径、nginx可执行文件路径和bifrost为其提供接口的路由及侦听端口
-type ServerInfo struct {
-	Name           string        `yaml:"name"`
-	ServerType     WebServerType `yaml:"serverType"`
-	BaseURI        string        `yaml:"baseURI"`
-	BackupCycle    int           `yaml:"backupCycle"`
-	BackupSaveTime int           `yaml:"backupSaveTime"`
-	BackupDir      string        `yaml:"backupDir,omitempty"`
-	ConfPath       string        `yaml:"confPath"`
-	VerifyExecPath string        `yaml:"verifyExecPath"`
-	//confCaches       map[string]string
-	confCaches nginx.Caches
-}
 
 // AuthDBConfig, mysql数据库信息结构体，该库用于存放用户认证信息（可选）
 type AuthDBConfig struct {
@@ -247,7 +232,7 @@ func init() {
 
 	platform, _, release, OSErr := host.PlatformInformation()
 	if OSErr != nil {
-		Log(CRITICAL, fmt.Sprintf("bifrost is stopped, cased by '%s'", OSErr))
+		Log(CRITICAL, "bifrost is stopped, cased by '%s'", OSErr)
 		os.Exit(1)
 	}
 	si.OS = fmt.Sprintf("%s %s", platform, release)

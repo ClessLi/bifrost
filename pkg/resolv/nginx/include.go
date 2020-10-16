@@ -175,12 +175,12 @@ func (i *Include) Size(_ Order) int {
 	return 0
 }
 
-func (i *Include) String() []string {
+func (i *Include) String(caches *Caches) []string {
 	var strs []string
 	// 暂取消include对象自身信息
 	//strs = append(strs, i.Comment.String()[0])
 	for _, child := range i.Children {
-		strs = append(strs, child.String()...)
+		strs = append(strs, child.String(caches)...)
 	}
 	// 暂取消include对象自身信息
 	//strs = append(strs, "#End"+i.Comment.String()[0])
@@ -188,7 +188,7 @@ func (i *Include) String() []string {
 	return strs
 }
 
-func (i *Include) initLoad(cs *Caches) error {
+func (i *Include) initLoad(caches *Caches) error {
 	paths, err := filepath.Glob(filepath.Join(i.ConfPWD, i.Value))
 	if err != nil {
 		return err
@@ -201,11 +201,15 @@ func (i *Include) initLoad(cs *Caches) error {
 			return relErr
 		}
 
-		conf, lerr := load(i.ConfPWD, relPath, cs)
-		if lerr != nil {
+		configAbsPath, lerr := load(i.ConfPWD, relPath, caches)
+		if lerr != nil && lerr != IsInCaches {
 			return lerr
 		}
 
+		conf, confErr := caches.GetConfig(configAbsPath)
+		if confErr != nil {
+			return confErr
+		}
 		addConfErr := i.AddConfig(conf)
 		if addConfErr != nil {
 			return addConfErr
@@ -216,15 +220,22 @@ func (i *Include) initLoad(cs *Caches) error {
 	return nil
 }
 
-func (i *Include) dump() ([]string, error) {
+func (i *Include) dump(configPath string, caches *Caches) (map[string][]string, error) {
+	dumps := make(map[string][]string)
+	var err error
 	for _, child := range i.Children {
-		err := Save(child.(*Config))
-		if err != nil {
-			return nil, err
+		conf, ok := child.(*Config)
+		if ok {
+			dumps, err = conf.dump(configPath, caches)
+			//err := Save(child.(*Config))
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
-	return i.Key.String(), nil
+	dumps[configPath] = i.Key.String(caches)
+	return dumps, nil
 }
 
 func (i *Include) AddConfig(configs ...Parser) error {

@@ -10,38 +10,56 @@ import (
 
 func TestLoad(t *testing.T) {
 	//conf, err := resolv.Load("config_test/nginx.conf")
-	conf, _, err := nginx.Load("test_circle_load/nginx.conf")
+	path, caches, err := nginx.Load("test_circle_load/nginx.conf")
 
 	if err != nil {
 		t.Log(err)
-	} else {
-		t.Log(conf.String())
+		return
 	}
 
+	conf, err := caches.GetConfig(path)
+	if err != nil {
+		t.Log(err)
+		return
+	}
+	caches = nginx.NewCaches()
+	t.Log(conf.String(&caches))
 }
 
 func TestLoadServers(t *testing.T) {
-	conf, _, err := nginx.Load("config_test/nginx.conf")
+	path, caches, err := nginx.Load("config_test/nginx.conf")
 
 	if err != nil {
 		t.Log(err)
 	}
 
+	conf, err := caches.GetConfig(path)
+	if err != nil {
+		t.Log(err)
+		return
+	}
 	t.Log(conf.Servers())
 
 	for _, server := range conf.Servers() {
-		t.Log(server.String())
+		caches := nginx.NewCaches()
+		t.Log(server.String(&caches))
 	}
 }
 
 func TestLoadServer(t *testing.T) {
-	conf, _, err := nginx.Load("config_test/nginx.conf")
+	path, caches, err := nginx.Load("config_test/nginx.conf")
 
 	if err != nil {
 		t.Log(err)
 	}
 
-	t.Log(conf.Server().String())
+	conf, err := caches.GetConfig(path)
+	if err != nil {
+		t.Log(err)
+		return
+	}
+	caches = nginx.NewCaches()
+	t.Log(conf.Server().String(&caches))
 
 }
 
@@ -88,7 +106,8 @@ func TestConfig_UnmarshalJSON(t *testing.T) {
 		t.Log(err)
 	} else {
 		t.Log(conf)
-		t.Log(conf.String())
+		caches := nginx.NewCaches()
+		t.Log(conf.String(&caches))
 	}
 
 }

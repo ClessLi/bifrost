@@ -6,7 +6,7 @@
 
 # 项目介绍
 
-**Bifrost** 是基于golang语言开发的项目，它目前还处于测试阶段，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用版本为[v1.0.0-alpha.6](https://github.com/ClessLi/bifrost/tree/v1.0.0-alpha.6) 。
+**Bifrost** 是基于golang语言开发的项目，它目前还处于测试阶段，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用版本为[v1.0.0-alpha.7](https://github.com/ClessLi/bifrost/tree/v1.0.0-alpha.7) 。
 
 # 项目特点
 
@@ -27,6 +27,12 @@
 # 使用方法
 
 ## 下载地址
+
+bifrost-v1.0.0-alpha.7
+
+> Windows: [bifrost.v1_0_0.alpha_7.win_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.0-alpha.7/bifrost.v1_0_0.alpha_7.win_x64.zip)
+> 
+> Linux: [bifrost.v1_0_0.alpha_7.linux_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.0-alpha.7/bifrost.v1_0_0.alpha_7.linux_x64.zip)
 
 bifrost-v1.0.0-alpha.6
 
@@ -106,7 +112,7 @@ LogConfig:
 
 ```
 > ./bifrost -h
-  bifrost version: v1.0.0-alpha.6
+  bifrost version: v1.0.0-alpha.7
   Usage: ./bifrost [-hv] [-f filename] [-s signal]
   
   Options:

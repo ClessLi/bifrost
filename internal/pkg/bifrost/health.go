@@ -1,7 +1,6 @@
 package bifrost
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -19,7 +18,7 @@ func health(c *gin.Context) {
 	if !hasToken {
 		status = "failed"
 		message = "Token cannot be empty"
-		Log(NOTICE, fmt.Sprintf("[%s] token verify failed, message is: '%s'", c.ClientIP(), message))
+		Log(NOTICE, "[%s] token verify failed, message is: '%s'", c.ClientIP(), message)
 		c.JSON(http.StatusBadRequest, &h)
 		return
 	}
@@ -30,7 +29,7 @@ func health(c *gin.Context) {
 		//c.String(http.StatusNotFound, err.Error())
 		status = "failed"
 		message = err.Error()
-		Log(NOTICE, fmt.Sprintf("[%s] Verified failed", c.ClientIP()))
+		Log(NOTICE, "[%s] Verified failed", c.ClientIP())
 		c.JSON(http.StatusNotFound, &h)
 		return
 	}

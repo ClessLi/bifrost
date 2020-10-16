@@ -9,7 +9,7 @@ type Comment struct {
 	Inline   bool   `json:"inline"`
 }
 
-func (cmt *Comment) String() []string {
+func (cmt *Comment) String(_ *Caches) []string {
 	return []string{"# " + cmt.Comments + "\n"}
 }
 

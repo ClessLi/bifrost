@@ -33,7 +33,7 @@ func Start() (err error) {
 		}
 
 		// 启动子进程
-		Log(NOTICE, fmt.Sprintf("starting bifrost..."))
+		Log(NOTICE, "starting bifrost...")
 		os.Stdout = Stdoutf
 		os.Stderr = Stdoutf
 		exec, pathErr := filepath.Abs(os.Args[0])
@@ -74,12 +74,12 @@ func Start() (err error) {
 		pid := os.Getpid()
 		pidErr := ioutil.WriteFile(pidFile, []byte(fmt.Sprintf("%d", pid)), 644)
 		if pidErr != nil {
-			Log(ERROR, fmt.Sprintf("failed to start bifrost, cased by '%s'", pidErr))
+			Log(ERROR, "failed to start bifrost, cased by '%s'", pidErr)
 			return pidErr
 		}
 
 		// 启动bifrost进程
-		Log(NOTICE, fmt.Sprintf("bifrost <PID %d> is running", pid))
+		Log(NOTICE, "bifrost <PID %d> is running", pid)
 		Run()
 		stat := fmt.Sprintf("bifrost <PID %d> is finished", pid)
 		Log(NOTICE, stat)
@@ -159,7 +159,7 @@ func Restart() error {
 	if isMain() { // 主进程时
 		Log(NOTICE, "stopping bifrost...")
 		if err := Stop(); err != nil {
-			Log(ERROR, fmt.Sprintf("stop bifrost failed cased by: '%s'", err.Error()))
+			Log(ERROR, "stop bifrost failed cased by: '%s'", err.Error())
 			return err
 		}
 		return Start()

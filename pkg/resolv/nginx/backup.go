@@ -23,7 +23,7 @@ import (
 // 返回值:
 //     bakPath: 归档文件路径
 //     err: 错误
-func Backup(config *Config, name string, caches Caches, saveTime, bakCycle int, backupDir ...string) (bakPath string, err error) {
+func Backup(config *Config, name string, saveTime, bakCycle int, backupDir ...string) (bakPath string, err error) {
 	// 归档文件名修饰
 	if name != "" {
 		name = strings.TrimSpace(name)
@@ -68,6 +68,10 @@ func Backup(config *Config, name string, caches Caches, saveTime, bakCycle int, 
 	}
 
 	if needBak {
+		caches, err := config.List()
+		if err != nil {
+			return "", err
+		}
 		err = tgz(bakPath, caches)
 		if err == nil && isSpecBakDir {
 			err = os.Rename(bakPath, specBakPath)

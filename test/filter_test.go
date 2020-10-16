@@ -7,12 +7,17 @@ import (
 )
 
 func TestFilter(t *testing.T) {
-	conf, _, err := nginx.Load("config_test/nginx.conf")
+	path, caches, err := nginx.Load("config_test/nginx.conf")
 
 	if err != nil {
 		t.Log(err)
 	}
 
+	conf, err := caches.GetConfig(path)
+	if err != nil {
+		t.Log(err)
+		return
+	}
 	//keykw := nginx.NewKeyWords("key", "server_name", `^.*com.*`, true, false)
 	//svrkw := nginx.NewKeyWords("server", "", "", true, false, keykw)
 	//httpServers := conf.QueryAllByKeywords(svrkw)
@@ -26,18 +31,24 @@ func TestFilter(t *testing.T) {
 	t.Log("All Servers")
 	allServers := conf.QueryAll(nginx.TypeServer, true, "server_name:^open.*$", "listen:^80$")
 	for _, server := range allServers {
-		t.Log(server.String())
+		caches := nginx.NewCaches()
+		t.Log(server.String(&caches))
 	}
 }
 
 func TestParams(t *testing.T) {
 	//conf, err := nginx.Load("test_circle_load/nginx.conf")
-	conf, _, err := nginx.Load("config_test/nginx.conf")
+	path, caches, err := nginx.Load("config_test/nginx.conf")
 
 	if err != nil {
 		t.Log(err)
 	}
 
+	conf, err := caches.GetConfig(path)
+	if err != nil {
+		t.Log(err)
+		return
+	}
 	//for _, param := range conf.Params() {
 	//	t.Log(param.String())
 	//}
@@ -45,7 +56,8 @@ func TestParams(t *testing.T) {
 	for _, server := range servers {
 		fmt.Printf("server: server_name %s\n", server.Query(nginx.TypeKey, false, "server_name").(*nginx.Key).Value)
 		for _, parser := range server.(*nginx.Server).Params() {
-			fmt.Println(parser.String())
+			caches := nginx.NewCaches()
+			fmt.Println(parser.String(&caches))
 		}
 	}
 

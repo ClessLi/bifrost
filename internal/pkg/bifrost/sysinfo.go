@@ -26,7 +26,7 @@ func monitoring(signal chan int) {
 		select {
 		case s := <-signal: // 获取管道传入信号
 			if s == 9 { // 为9时，停止备份
-				Log(NOTICE, fmt.Sprintf("monitor has been finished."))
+				Log(NOTICE, "monitor has been finished.")
 				return
 			}
 		default:
@@ -55,7 +55,7 @@ func monitoring(signal chan int) {
 		}
 	}
 	isHealthy = false
-	Log(CRITICAL, fmt.Sprintf("monitor is stopped, cased by '%s'", sysErr))
+	Log(CRITICAL, "monitor is stopped, cased by '%s'", sysErr)
 	return
 }
 
@@ -72,7 +72,7 @@ func sysInfo(c *gin.Context) {
 	if !hasToken {
 		status = "failed"
 		message = "Token cannot be empty"
-		Log(NOTICE, fmt.Sprintf("[%s] token verify failed, message is: '%s'", c.ClientIP(), message))
+		Log(NOTICE, "[%s] token verify failed, message is: '%s'", c.ClientIP(), message)
 		c.JSON(http.StatusBadRequest, &h)
 		return
 	}
@@ -83,7 +83,7 @@ func sysInfo(c *gin.Context) {
 		//c.String(http.StatusNotFound, err.Error())
 		status = "failed"
 		message = err.Error()
-		Log(NOTICE, fmt.Sprintf("[%s] Verified failed", c.ClientIP()))
+		Log(NOTICE, "[%s] Verified failed", c.ClientIP())
 		c.JSON(http.StatusNotFound, &h)
 		return
 	}

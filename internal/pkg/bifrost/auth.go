@@ -54,7 +54,7 @@ func login(c *gin.Context) {
 	if !hasusername || !haspasswd {
 		status = "failed"
 		message = "check your username or password"
-		Log(NOTICE, fmt.Sprintf("[%s] login failed, message is: '%s'", c.ClientIP(), message))
+		Log(NOTICE, "[%s] login failed, message is: '%s'", c.ClientIP(), message)
 		c.JSON(http.StatusBadRequest, &h)
 		return
 	}
@@ -73,7 +73,7 @@ func login(c *gin.Context) {
 	default:
 		status = "failed"
 		message = fmt.Sprintf("invalid param unexpired=%s", unexpired)
-		Log(NOTICE, fmt.Sprintf("[%s] login failed, message is: '%s'", c.ClientIP(), message))
+		Log(NOTICE, "[%s] login failed, message is: '%s'", c.ClientIP(), message)
 		c.JSON(http.StatusBadRequest, &h)
 		return
 	}
@@ -95,7 +95,7 @@ func login(c *gin.Context) {
 
 	// 认证用户信息
 	if !validUser(claims) {
-		Log(WARN, fmt.Sprintf("Invalid user '%s' or password '%s'.", claims.Username, claims.Password))
+		Log(WARN, "Invalid user '%s' or password '%s'.", claims.Username, claims.Password)
 		status = "failed"
 		message = ErrorReasonWrongPassword
 		c.JSON(http.StatusOK, &h)
@@ -108,11 +108,11 @@ func login(c *gin.Context) {
 		//c.String(http.StatusNotFound, err.Error())
 		status = "failed"
 		message = err.Error()
-		Log(NOTICE, fmt.Sprintf("[%s] user '%s' login failed, message is: '%s'", c.ClientIP(), username, message))
+		Log(NOTICE, "[%s] user '%s' login failed, message is: '%s'", c.ClientIP(), username, message)
 		c.JSON(http.StatusOK, &h)
 		return
 	}
-	Log(NOTICE, fmt.Sprintf("[%s] user '%s' is login, token is: %s", c.ClientIP(), username, signedToken))
+	Log(NOTICE, "[%s] user '%s' is login, token is: %s", c.ClientIP(), username, signedToken)
 
 	status = "success"
 	token = signedToken
@@ -137,7 +137,7 @@ func verify(c *gin.Context) {
 	if !hasToken {
 		status = "failed"
 		message = "Token cannot be empty"
-		Log(NOTICE, fmt.Sprintf("[%s] token verify failed, message is: '%s'", c.ClientIP(), message))
+		Log(NOTICE, "[%s] token verify failed, message is: '%s'", c.ClientIP(), message)
 		c.JSON(http.StatusBadRequest, &h)
 		return
 	}
@@ -148,13 +148,13 @@ func verify(c *gin.Context) {
 		//c.String(http.StatusNotFound, err.Error())
 		status = "failed"
 		message = err.Error()
-		Log(NOTICE, fmt.Sprintf("[%s] Verified failed", c.ClientIP()))
+		Log(NOTICE, "[%s] Verified failed", c.ClientIP())
 		c.JSON(http.StatusNotFound, &h)
 		return
 	}
 	status = "success"
 	message = fmt.Sprintf("Certified user '%s'", claim.Username)
-	Log(NOTICE, fmt.Sprintf("[%s] %s", c.ClientIP(), message))
+	Log(NOTICE, "[%s] %s", c.ClientIP(), message)
 	c.JSON(http.StatusOK, &h)
 }
 
@@ -177,7 +177,7 @@ func refresh(c *gin.Context) {
 	if !hasToken {
 		status = "failed"
 		message = "Token cannot be empty"
-		Log(NOTICE, fmt.Sprintf("[%s] token refresh failed, message is: '%s'", c.ClientIP(), message))
+		Log(NOTICE, "[%s] token refresh failed, message is: '%s'", c.ClientIP(), message)
 		c.JSON(http.StatusBadRequest, &h)
 		return
 	}
@@ -188,7 +188,7 @@ func refresh(c *gin.Context) {
 		//c.String(http.StatusNotFound, err.Error())
 		status = "failed"
 		message = err.Error()
-		Log(NOTICE, fmt.Sprintf("[%s] Verified failed", c.ClientIP()))
+		Log(NOTICE, "[%s] Verified failed", c.ClientIP())
 		c.JSON(http.StatusNotFound, &h)
 		return
 	}
@@ -200,7 +200,7 @@ func refresh(c *gin.Context) {
 		//c.String(http.StatusNotFound, err.Error())
 		status = "failed"
 		message = err
-		Log(NOTICE, fmt.Sprintf("[%s] refresh token failed", c.ClientIP()))
+		Log(NOTICE, "[%s] refresh token failed", c.ClientIP())
 		c.JSON(http.StatusNotFound, &h)
 		return
 	}
@@ -232,18 +232,18 @@ func verifyAction(strToken string) (*JWTClaims, error) {
 	if !ok {
 		return nil, errors.New(ErrorReasonRelogin)
 	}
-	Log(INFO, fmt.Sprintf("Verify user '%s'...", claims.Username))
+	Log(INFO, "Verify user '%s'...", claims.Username)
 
 	// 认证用户信息
 	if !validUser(claims) {
-		Log(WARN, fmt.Sprintf("Invalid user '%s' or password '%s'.", claims.Username, claims.Password))
+		Log(WARN, "Invalid user '%s' or password '%s'.", claims.Username, claims.Password)
 		return nil, errors.New(ErrorReasonWrongPassword)
 	}
 
 	if err := token.Claims.Valid(); err != nil {
 		return nil, errors.New(ErrorReasonRelogin)
 	}
-	Log(INFO, fmt.Sprintf("Username '%s' passed verification", claims.Username))
+	Log(INFO, "Username '%s' passed verification", claims.Username)
 
 	// 通过返回有效用户jwt断言对象
 	return claims, nil
@@ -280,7 +280,7 @@ func validUser(claims *JWTClaims) bool {
 		Log(ERROR, err.Error())
 		return false
 	} else if err == sql.ErrNoRows {
-		Log(NOTICE, fmt.Sprintf("user '%s' is not exist in bifrost", claims.Username))
+		Log(NOTICE, "user '%s' is not exist in bifrost", claims.Username)
 		return false
 	}
 

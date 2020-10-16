@@ -1,13 +1,11 @@
 package nginx
 
-import (
-	"io/ioutil"
-)
+import "io/ioutil"
 
 type Order int
 
 type Parser interface {
-	String() []string
+	String(*Caches) []string
 	Query(parserType, bool, ...string) Parser
 	QueryByKeywords(Keywords) Parser
 	QueryAll(parserType, bool, ...string) []Parser
@@ -21,15 +19,67 @@ type Config struct {
 	BasicContext `json:"config"`
 }
 
-func (c *Config) String() []string {
+func (c *Config) Save() error {
+	caches := NewCaches()
+	dumps, derr := c.dump(c.Value, &caches)
+	if derr != nil {
+		return derr
+	}
+	data := make([]byte, 0)
+	for path, lines := range dumps {
+
+		for _, line := range lines {
+			data = append(data, []byte(line)...)
+		}
+
+		werr := ioutil.WriteFile(path, data, 0755)
+		if werr != nil {
+			return werr
+		}
+	}
+
+	return nil
+
+}
+
+func (c Config) getCaches() (Caches, error) {
+	caches := NewCaches()
+	dumps, derr := c.dump(c.Value, &caches)
+	if derr != nil {
+		return nil, derr
+	}
+	for path, lines := range dumps {
+		cache, ok := caches[path]
+		if !ok {
+			continue
+		}
+		data := make([]byte, 0)
+
+		for _, line := range lines {
+			data = append(data, []byte(line)...)
+		}
+		hash, herr := getHash(cache.config.Value, data)
+		if herr != nil {
+			return nil, herr
+		}
+		cache.hash = hash
+		caches[path] = cache
+	}
+	return caches, nil
+}
+
+func (c *Config) String(caches *Caches) []string {
+	if _, ok := (*caches)[c.Value]; ok {
+		return nil
+	}
 	ret := make([]string, 0)
 
 	for _, child := range c.Children {
 		switch child.(type) {
 		case *Key, *Comment:
-			ret = append(ret, child.String()[0])
+			ret = append(ret, child.String(caches)[0])
 		case Context:
-			ret = append(ret, child.String()...)
+			ret = append(ret, child.String(caches)...)
 		}
 	}
 
@@ -37,52 +87,50 @@ func (c *Config) String() []string {
 		ret[len(ret)-1] = RegEndWithCR.ReplaceAllString(ret[len(ret)-1], "}\n")
 	}
 
+	(*caches)[c.Value], _ = newCache(c, hashForString)
+
 	return ret
 }
 
-func (c *Config) Save() error {
-	conf, derr := c.dump()
-	if derr != nil {
-		return derr
-	}
-	data := make([]byte, 0)
-	for _, str := range conf {
-		data = append(data, []byte(str)...)
+func (c *Config) dump(_ string, caches *Caches) (map[string][]string, error) {
+	if _, ok := (*caches)[c.Value]; ok {
+		return nil, IsInCaches
 	}
 
-	werr := ioutil.WriteFile(c.Value, data, 0755)
-	if werr != nil {
-		return werr
+	dumps := make(map[string][]string)
+	var err error
+
+	err = caches.setCache(c, hashForDump)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil
-
-}
-
-func (c *Config) dump() ([]string, error) {
-	ret := make([]string, 0)
+	dmp := make([]string, 0)
 	for _, child := range c.Children {
 		switch child.(type) {
 		case *Key, *Comment:
-			ret = append(ret, child.String()...)
+			dmp = append(dmp, child.String(caches)...)
 		case Context:
-			strs, err := child.(Context).dump()
+			dumps, err = child.(Context).dump(c.Value, caches)
 
 			if err != nil {
-				return ret, err
+				return nil, err
 			}
 
-			ret = append(ret, strs...)
+			if d, ok := dumps[c.Value]; ok {
+				dmp = append(dmp, d...)
+			}
 		default:
-			ret = append(ret, child.String()...)
+			dmp = append(dmp, child.String(caches)...)
 		}
 	}
-	return ret, nil
+	dumps[c.Value] = dmp
+	return dumps, nil
 }
 
-func (c *Config) List() (ret Caches, err error) {
-	ret = Caches{}
-	err = ret.setCache(c, hashForGetList)
+func (c *Config) List() (caches Caches, err error) {
+	caches = NewCaches()
+	err = caches.setCache(c, hashForGetList)
 	if err != nil && err != IsInCaches {
 		return nil, err
 	}
@@ -94,7 +142,7 @@ func (c *Config) List() (ret Caches, err error) {
 				return nil, err
 			} else if subCaches != nil {
 				for _, cache := range subCaches {
-					err = ret.setCache(cache.config, hashForGetList)
+					err = caches.setCache(cache.config, hashForGetList)
 					if err != nil && err != IsInCaches {
 						return nil, err
 					}
@@ -102,7 +150,7 @@ func (c *Config) List() (ret Caches, err error) {
 			}
 		}
 	}
-	return ret, nil
+	return
 }
 
 func (c *Config) QueryAllByKeywords(kw Keywords) (parsers []Parser) {

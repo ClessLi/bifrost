@@ -72,13 +72,13 @@ func Run() {
 	if rErr != nil {
 		killCoroutine(chansLen, bakChans, autoReloadChans)
 		// 输出子任务运行错误
-		Log(CRITICAL, fmt.Sprintf("bifrost Run coroutine has been stoped. Cased by '%s'", rErr))
+		Log(CRITICAL, "bifrost Run coroutine has been stoped. Cased by '%s'", rErr)
 		return
 	}
 
 	killCoroutine(chansLen, bakChans, autoReloadChans)
 	signal <- 9
-	Log(NOTICE, fmt.Sprintf("bifrost Run coroutine has been stoped"))
+	Log(NOTICE, "bifrost Run coroutine has been stoped")
 	return
 }
 
@@ -92,9 +92,15 @@ func Run() {
 func nginxConfAPIInit(router *gin.Engine, serverInfo *ServerInfo, chansLen *int, bakChans *[]*chan int, autoReloadChans *[]*chan int) {
 
 	//fmt.Println("初始化", serverInfo.Name, "web服务相关接口。。。")
-	ngConfig, loadErr := ngLoad(serverInfo)
+	loadErr := serverInfo.ngLoad()
 	if loadErr != nil {
-		Log(ERROR, fmt.Sprintf("[%s] load config error: %s", serverInfo.Name, loadErr))
+		Log(ERROR, "[%s] load config error: %s", serverInfo.Name, loadErr)
+		*chansLen++
+		return
+	}
+	ngConfig, confErr := serverInfo.confCaches.GetConfig(serverInfo.ConfPath)
+	if confErr != nil {
+		Log(ERROR, "[%s] load config error: %s", serverInfo.Name, confErr)
 		*chansLen++
 		return
 	}
@@ -102,7 +108,7 @@ func nginxConfAPIInit(router *gin.Engine, serverInfo *ServerInfo, chansLen *int,
 	//fmt.Println("校验nginx配置。。。")
 	_, jerr := json.Marshal(ngConfig)
 	if jerr != nil {
-		Log(CRITICAL, fmt.Sprintf("[%s] coroutine has been stoped. Cased by '%s'", serverInfo.Name, jerr))
+		Log(CRITICAL, "[%s] coroutine has been stoped. Cased by '%s'", serverInfo.Name, jerr)
 		*chansLen++
 		return
 	}
@@ -114,15 +120,15 @@ func nginxConfAPIInit(router *gin.Engine, serverInfo *ServerInfo, chansLen *int,
 	//fmt.Println("获取web服务配置校验二进制文件路径")
 	ngVerifyExec, absErr := filepath.Abs(serverInfo.VerifyExecPath)
 	if absErr != nil {
-		Log(CRITICAL, fmt.Sprintf("[%s] coroutine has been stoped. Cased by '%s'", serverInfo.Name, absErr))
+		Log(CRITICAL, "[%s] coroutine has been stoped. Cased by '%s'", serverInfo.Name, absErr)
 		*chansLen++
 		return
 	}
 
 	//fmt.Println("载入备份协程")
-	go Bak(serverInfo, ngConfig, *(*bakChans)[*chansLen])
+	go serverInfo.Bak(*(*bakChans)[*chansLen])
 	//fmt.Println("载入自动更新配置协程")
-	go AutoReload(serverInfo, ngConfig, *(*autoReloadChans)[*chansLen])
+	go serverInfo.AutoReload(*(*autoReloadChans)[*chansLen])
 
 	*chansLen++
 
@@ -183,7 +189,7 @@ func statisticsView(appName string, config *nginx.Config, c *gin.Context) (h gin
 		status = "failed"
 		h["message"] = "Token cannot be empty"
 		s = http.StatusBadRequest
-		Log(NOTICE, fmt.Sprintf("[%s] request without token", c.ClientIP()))
+		Log(NOTICE, "[%s] request without token", c.ClientIP())
 		return
 	}
 
@@ -193,7 +199,7 @@ func statisticsView(appName string, config *nginx.Config, c *gin.Context) (h gin
 		status = "failed"
 		h["message"] = verifyErr.Error()
 		s = http.StatusBadRequest
-		Log(WARN, fmt.Sprintf("[%s] %s", appName, message))
+		Log(WARN, "[%s] %s", appName, message)
 		return
 	}
 
@@ -242,7 +248,7 @@ func statisticsView(appName string, config *nginx.Config, c *gin.Context) (h gin
 			if config == nil {
 				status = "failed"
 				message := "configuration resolution failed"
-				Log(ERROR, fmt.Sprintf("[%s] %s", appName, message))
+				Log(ERROR, "[%s] %s", appName, message)
 				s = http.StatusInternalServerError
 				return
 			}
@@ -317,7 +323,7 @@ func view(appName string, config *nginx.Config, c *gin.Context) (h gin.H, s int)
 		status = "failed"
 		message = "Token cannot be empty"
 		s = http.StatusBadRequest
-		Log(NOTICE, fmt.Sprintf("[%s] request without token", c.ClientIP()))
+		Log(NOTICE, "[%s] request without token", c.ClientIP())
 		return
 	}
 
@@ -327,7 +333,7 @@ func view(appName string, config *nginx.Config, c *gin.Context) (h gin.H, s int)
 		status = "failed"
 		message = verifyErr.Error()
 		s = http.StatusBadRequest
-		Log(WARN, fmt.Sprintf("[%s] %s", appName, message))
+		Log(WARN, "[%s] %s", appName, message)
 		return
 	}
 
@@ -345,38 +351,39 @@ func view(appName string, config *nginx.Config, c *gin.Context) (h gin.H, s int)
 		if config == nil {
 			status = "failed"
 			message = "configuration resolution failed"
-			Log(ERROR, fmt.Sprintf("[%s] %s", appName, message))
+			Log(ERROR, "[%s] %s", appName, message)
 			s = http.StatusInternalServerError
 		} else {
 			status = "success"
 			// 修改string切片为string
 			var str string
-			for _, v := range config.String() {
+			caches := nginx.NewCaches()
+			for _, v := range config.String(&caches) {
 				str += v
 			}
 			message = str
-			Log(DEBUG, fmt.Sprintf("[%s] %s", appName, message))
+			Log(DEBUG, "[%s] %s", appName, message)
 		}
 	case "json":
 		// 防止配置对象为空时，接口异常
 		if config == nil {
 			status = "failed"
 			message = "configuration resolution failed"
-			Log(ERROR, fmt.Sprintf("[%s] %s", appName, message))
+			Log(ERROR, "[%s] %s", appName, message)
 			s = http.StatusInternalServerError
 		} else {
 			status = "success"
 			data, marshalErr := json.Marshal(config)
 			if marshalErr != nil {
-				Log(ERROR, fmt.Sprintf("[%s] %s", appName, marshalErr))
+				Log(ERROR, "[%s] %s", appName, marshalErr)
 			}
 			message = string(data)
-			Log(DEBUG, fmt.Sprintf("[%s] %s", appName, message))
+			Log(DEBUG, "[%s] %s", appName, message)
 		}
 	default:
 		status = "failed"
 		message = fmt.Sprintf("view message type '%s' invalid", t)
-		Log(INFO, fmt.Sprintf("[%s] %s", appName, message))
+		Log(INFO, "[%s] %s", appName, message)
 		s = http.StatusBadRequest
 	}
 
@@ -406,7 +413,7 @@ func update(appName, ngBin string, ng *nginx.Config, c *gin.Context) (h gin.H, s
 	if !hasToken {
 		status = "failed"
 		message = "Token cannot be empty"
-		Log(NOTICE, fmt.Sprintf("[%s] request without token", c.ClientIP()))
+		Log(NOTICE, "[%s] request without token", c.ClientIP())
 		s = http.StatusBadRequest
 		return
 	}
@@ -417,7 +424,7 @@ func update(appName, ngBin string, ng *nginx.Config, c *gin.Context) (h gin.H, s
 		status = "failed"
 		message = verifyErr.Error()
 		s = http.StatusBadRequest
-		Log(WARN, fmt.Sprintf("[%s] [%s] %s", appName, c.ClientIP(), message))
+		Log(WARN, "[%s] [%s] %s", appName, c.ClientIP(), message)
 		return
 	}
 
@@ -426,7 +433,7 @@ func update(appName, ngBin string, ng *nginx.Config, c *gin.Context) (h gin.H, s
 	file, formFileErr := c.FormFile("data")
 	if formFileErr != nil {
 		message = fmt.Sprintf("FormFile option invalid: <%s>.", formFileErr)
-		Log(WARN, fmt.Sprintf("[%s] [%s] %s", appName, c.ClientIP(), message))
+		Log(WARN, "[%s] [%s] %s", appName, c.ClientIP(), message)
 		status = "failed"
 		s = http.StatusBadRequest
 		return
@@ -435,7 +442,7 @@ func update(appName, ngBin string, ng *nginx.Config, c *gin.Context) (h gin.H, s
 	f, fErr := file.Open()
 	if fErr != nil {
 		message = fmt.Sprintf("Open file failed: <%s>.", fErr)
-		Log(CRITICAL, fmt.Sprintf("[%s] [%s] %s", appName, c.ClientIP(), message))
+		Log(CRITICAL, "[%s] [%s] %s", appName, c.ClientIP(), message)
 		status = "failed"
 		s = http.StatusInternalServerError
 		return
@@ -445,7 +452,7 @@ func update(appName, ngBin string, ng *nginx.Config, c *gin.Context) (h gin.H, s
 	confBytes, rErr := ioutil.ReadAll(f)
 	if rErr != nil {
 		message := fmt.Sprintf("Read file failed: <%s>.", rErr)
-		Log(CRITICAL, fmt.Sprintf("[%s] [%s] %s", appName, c.ClientIP(), message))
+		Log(CRITICAL, "[%s] [%s] %s", appName, c.ClientIP(), message)
 		h["status"] = "failed"
 		h["message"] = message
 		s = http.StatusInternalServerError
@@ -455,11 +462,11 @@ func update(appName, ngBin string, ng *nginx.Config, c *gin.Context) (h gin.H, s
 	// 解析接口传入的nginx配置json数据，并完成备份更新
 	if len(confBytes) > 0 {
 
-		Log(NOTICE, fmt.Sprintf("[%s] [%s] unmarshal nginx ng.", c.ClientIP(), appName))
+		Log(NOTICE, "[%s] [%s] unmarshal nginx ng.", c.ClientIP(), appName)
 		newConfig, ujErr := ngJson.Unmarshal(confBytes)
 		if ujErr != nil || len(newConfig.(*nginx.Config).Children) <= 0 || newConfig.(*nginx.Config).Value == "" {
 			message = fmt.Sprintf("UnmarshalJson failed. <%s>, data: <%s>", ujErr, confBytes)
-			Log(WARN, fmt.Sprintf("[%s] [%s] %s", appName, c.ClientIP(), message))
+			Log(WARN, "[%s] [%s] %s", appName, c.ClientIP(), message)
 			h["status"] = "failed"
 			status = "failed"
 			//errChan <- ujErr
@@ -470,34 +477,34 @@ func update(appName, ngBin string, ng *nginx.Config, c *gin.Context) (h gin.H, s
 		delErr := nginx.Delete(ng)
 		if delErr != nil {
 			message = fmt.Sprintf("Delete nginx ng failed. <%s>", delErr)
-			Log(ERROR, fmt.Sprintf("[%s] [%s] %s", appName, c.ClientIP(), message))
+			Log(ERROR, "[%s] [%s] %s", appName, c.ClientIP(), message)
 			status = "failed"
 			s = http.StatusInternalServerError
 			return
 		}
 
-		Log(INFO, fmt.Sprintf("[%s] Deleted old nginx ng.", appName))
-		Log(INFO, fmt.Sprintf("[%s] Verify new nginx ng.", appName))
+		Log(INFO, "[%s] Deleted old nginx ng.", appName)
+		Log(INFO, "[%s] Verify new nginx ng.", appName)
 		checkErr := nginx.Check(newConfig.(*nginx.Config), ngBin)
 		if checkErr != nil {
 			s = http.StatusInternalServerError
 			message = fmt.Sprintf("Nginx ng verify failed. <%s>", checkErr)
-			Log(WARN, fmt.Sprintf("[%s] %s", appName, message))
+			Log(WARN, "[%s] %s", appName, message)
 			status = "failed"
 
-			Log(INFO, fmt.Sprintf("[%s] Delete new nginx ng.", appName))
+			Log(INFO, "[%s] Delete new nginx ng.", appName)
 			delErr := nginx.Delete(newConfig.(*nginx.Config))
 			if delErr != nil {
-				Log(ERROR, fmt.Sprintf("[%s] Delete new nginx ng failed. <%s>", appName, delErr))
+				Log(ERROR, "[%s] Delete new nginx ng failed. <%s>", appName, delErr)
 				status = "failed"
 				message = "New nginx config verify failed. And delete new nginx config failed."
 				return
 			}
 
-			Log(INFO, fmt.Sprintf("[%s] Rollback nginx ng.", appName))
+			Log(INFO, "[%s] Rollback nginx ng.", appName)
 			rollbackErr := nginx.Save(ng)
 			if rollbackErr != nil {
-				Log(CRITICAL, fmt.Sprintf("[%s] Nginx ng rollback failed. <%s>", appName, rollbackErr))
+				Log(CRITICAL, "[%s] Nginx ng rollback failed. <%s>", appName, rollbackErr)
 				status = "failed"
 				message = "New nginx config verify failed. And nginx config rollback failed."
 				return
@@ -509,11 +516,11 @@ func update(appName, ngBin string, ng *nginx.Config, c *gin.Context) (h gin.H, s
 		ng.Value = newConfig.(*nginx.Config).Value
 		ng.Children = newConfig.(*nginx.Config).Children
 		//ng = newConfig.(*resolv.Config)
-		Log(NOTICE, fmt.Sprintf("[%s] [%s] Nginx Config saved successfully", appName, c.ClientIP()))
+		Log(NOTICE, "[%s] [%s] Nginx Config saved successfully", appName, c.ClientIP())
 	} else {
 		status = "failed"
 		message = fmt.Sprintf("Wrong data: <%s>", confBytes)
-		Log(WARN, fmt.Sprintf("[%s] [%s] %s", appName, c.ClientIP(), message))
+		Log(WARN, "[%s] [%s] %s", appName, c.ClientIP(), message)
 		s = http.StatusBadRequest
 		return
 	}

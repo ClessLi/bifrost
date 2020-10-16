@@ -9,36 +9,36 @@ import (
 	"strings"
 )
 
-func Load(path string) (*Config, Caches, error) {
-	cs := newCaches()
+func Load(path string) (string, Caches, error) {
+	cs := NewCaches()
 	ngDir, fileErr := filepath.Abs(filepath.Dir(path))
 	if fileErr != nil {
-		return nil, nil, fileErr
+		return "", nil, fileErr
 	}
 	relativePath := filepath.Base(path)
-	conf, loadErr := load(ngDir, relativePath, &cs)
-	if loadErr != nil {
-		return nil, nil, loadErr
+	configPath, loadErr := load(ngDir, relativePath, &cs)
+	if loadErr != nil && loadErr != IsInCaches {
+		return "", nil, loadErr
 	}
-	return conf, cs, nil
+	return configPath, cs, nil
 }
 
-func load(ngDir, relativePath string, caches *Caches) (conf *Config, err error) {
-	absPath := filepath.Join(ngDir, relativePath)
-	if _, ok := (*caches)[absPath]; ok {
-		return nil, IsInCaches
+func load(ngDir, relativePath string, caches *Caches) (configAbsPath string, err error) {
+	configAbsPath = filepath.Join(ngDir, relativePath)
+	if _, ok := (*caches)[configAbsPath]; ok {
+		return configAbsPath, IsInCaches
 	}
-	f := NewConf(nil, absPath)
+	f := NewConf(nil, configAbsPath)
 
-	file, openErr := os.Open(absPath)
+	file, openErr := os.Open(configAbsPath)
 	if openErr != nil {
-		return nil, openErr
+		return "", openErr
 	}
 	defer file.Close()
 
 	bytes, readErr := ioutil.ReadAll(file)
 	if readErr != nil {
-		return nil, readErr
+		return "", readErr
 	}
 	data := string(bytes)
 	index := 0
@@ -164,7 +164,7 @@ func load(ngDir, relativePath string, caches *Caches) (conf *Config, err error) 
 			parseKey(RegKeyValue),
 			parseKey(RegKey):
 			if err != nil {
-				return nil, err
+				return "", err
 			}
 			continue
 		}
@@ -174,7 +174,7 @@ func load(ngDir, relativePath string, caches *Caches) (conf *Config, err error) 
 
 	err = caches.setCache(f, file)
 
-	return f, err
+	return
 }
 
 func checkInclude(k *Key, dir string, cs *Caches) (Parser, error) {

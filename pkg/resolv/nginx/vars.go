@@ -37,6 +37,7 @@ var (
 	ParserControlParamsError        = fmt.Errorf("unkown param has been inputed")
 	ParserControlIndexNotFoundError = fmt.Errorf("index not found")
 	NoBackupRequired                = fmt.Errorf("no backup required")
+	NoReloadRequired                = fmt.Errorf("no reload required")
 	IsInCaches                      = fmt.Errorf("cache already exists")
 	IsNotInCaches                   = fmt.Errorf("cache is not exists")
 

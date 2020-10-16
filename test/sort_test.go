@@ -20,16 +20,22 @@ func TestSortInsertUniqInt(t *testing.T) {
 }
 
 func TestGetSortServers(t *testing.T) {
-	conf, _, err := nginx.Load("config_test/nginx.conf")
+	path, caches, err := nginx.Load("config_test/nginx.conf")
 
 	if err != nil {
 		t.Log(err)
 	}
 
+	conf, err := caches.GetConfig(path)
+	if err != nil {
+		t.Log(err)
+		return
+	}
 	servers := nginx.GetHTTPServers(conf, nginx.ServerName, nginx.ServerPort)
 	//servers := resolv.GetHTTPServers(conf, resolv.ServerName)
 	//servers := statistics.GetHTTPServers(conf, statistics.ServerName)
 	for _, server := range servers {
-		t.Log(server.String())
+		caches := nginx.NewCaches()
+		t.Log(server.String(&caches))
 	}
 }

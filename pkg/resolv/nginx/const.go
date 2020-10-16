@@ -31,6 +31,8 @@ const (
 	TypeComment     parserType = "comment"
 
 	hashForGetList = "ForList"
+	hashForString  = "ForString"
+	hashForDump    = "ForDump"
 )
 
 // 整型order

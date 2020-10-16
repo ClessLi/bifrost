@@ -9,7 +9,7 @@ type Key struct {
 	Value string `json:"value"`
 }
 
-func (k *Key) String() []string {
+func (k *Key) String(_ *Caches) []string {
 	if k.Value == "" {
 		return []string{k.Name + ";\n"}
 		//} else if !inString(k.Value, "\"") && (inString(k.Value, ";") || inString(k.Value, "#")) {
