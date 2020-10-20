@@ -121,15 +121,15 @@ func nginxConfAPIInit(router *gin.Engine, serverInfo *ServerInfo, chansLen *int,
 		*chansLen++
 		return
 	}
-	ngConfig, confErr := serverInfo.confCaches.GetConfig(serverInfo.ConfPath)
-	if confErr != nil {
-		Log(ERROR, "[%s] load config error: %s", serverInfo.Name, confErr)
-		*chansLen++
-		return
-	}
+	//ngConfig, confErr := serverInfo.confCaches.GetConfig(serverInfo.ConfPath)
+	//if confErr != nil {
+	//	Log(ERROR, "[%s] load config error: %s", serverInfo.Name, confErr)
+	//	*chansLen++
+	//	return
+	//}
 	// 检查nginx配置是否能被正常解析为json
 	//fmt.Println("校验nginx配置。。。")
-	_, jerr := json.Marshal(ngConfig)
+	_, jerr := json.Marshal(serverInfo.nginxConfig)
 	if jerr != nil {
 		Log(CRITICAL, "[%s] coroutine has been stoped. Cased by '%s'", serverInfo.Name, jerr)
 		*chansLen++
@@ -158,21 +158,21 @@ func nginxConfAPIInit(router *gin.Engine, serverInfo *ServerInfo, chansLen *int,
 	// view
 	//fmt.Println("载入查询接口")
 	router.GET(apiURI, func(c *gin.Context) {
-		h, status := view(serverInfo.Name, ngConfig, c)
+		h, status := view(serverInfo.Name, serverInfo, c)
 		c.JSON(status, &h)
 	})
 
 	// update
 	//fmt.Println("载入更新接口")
 	router.POST(apiURI, func(c *gin.Context) {
-		h, status := update(serverInfo.Name, ngVerifyExec, ngConfig, c)
+		h, status := update(serverInfo.Name, ngVerifyExec, serverInfo, c)
 		c.JSON(status, &h)
 	})
 
 	// statistics
 	//fmt.Println("载入统计接口")
 	router.GET(statisticsURI, func(c *gin.Context) {
-		h, status := statisticsView(serverInfo.Name, ngConfig, c)
+		h, status := statisticsView(serverInfo.Name, serverInfo, c)
 		c.JSON(status, &h)
 	})
 }
@@ -197,7 +197,7 @@ func killCoroutine(chansLen int, chansArray ...[]*chan int) {
 // 返回值:
 //     h: gin.H
 //     s: http状态码
-func statisticsView(appName string, config *nginx.Config, c *gin.Context) (h gin.H, s int) {
+func statisticsView(appName string, si *ServerInfo, c *gin.Context) (h gin.H, s int) {
 	// 初始化h
 	status := "unkown"
 	message := make(gin.H, 0)
@@ -310,11 +310,11 @@ func statisticsView(appName string, config *nginx.Config, c *gin.Context) (h gin
 			return
 		}*/
 
-	httpServersNum, httpServers := nginxStatistics.HTTPServers(config)
+	httpServersNum, httpServers := nginxStatistics.HTTPServers(si.nginxConfig)
 	message["httpSvrsNum"] = httpServersNum
 	message["httpSvrs"] = httpServers
-	message["httpPorts"] = nginxStatistics.HTTPPorts(config)
-	streamServersNum, streamPorts := nginxStatistics.StreamServers(config)
+	message["httpPorts"] = nginxStatistics.HTTPPorts(si.nginxConfig)
+	streamServersNum, streamPorts := nginxStatistics.StreamServers(si.nginxConfig)
 	message["streamSvrsNum"] = streamServersNum
 	message["streamPorts"] = streamPorts
 
@@ -331,7 +331,7 @@ func statisticsView(appName string, config *nginx.Config, c *gin.Context) (h gin
 // 返回值:
 //     h: gin.H
 //     s: http返回码
-func view(appName string, config *nginx.Config, c *gin.Context) (h gin.H, s int) {
+func view(appName string, si *ServerInfo, c *gin.Context) (h gin.H, s int) {
 	// 初始化h
 	status := "unkown"
 	var message interface{} = "null"
@@ -371,7 +371,7 @@ func view(appName string, config *nginx.Config, c *gin.Context) (h gin.H, s int)
 	switch t {
 	case "string":
 		// 防止配置对象为空时，接口异常
-		if config == nil {
+		if si.nginxConfig == nil {
 			status = "failed"
 			message = "configuration resolution failed"
 			Log(ERROR, "[%s] %s", appName, message)
@@ -381,7 +381,7 @@ func view(appName string, config *nginx.Config, c *gin.Context) (h gin.H, s int)
 			// 修改string切片为string
 			var str string
 			caches := nginx.NewCaches()
-			for _, v := range config.String(&caches) {
+			for _, v := range si.nginxConfig.String(&caches) {
 				str += v
 			}
 			message = str
@@ -389,14 +389,14 @@ func view(appName string, config *nginx.Config, c *gin.Context) (h gin.H, s int)
 		}
 	case "json":
 		// 防止配置对象为空时，接口异常
-		if config == nil {
+		if si.nginxConfig == nil {
 			status = "failed"
 			message = "configuration resolution failed"
 			Log(ERROR, "[%s] %s", appName, message)
 			s = http.StatusInternalServerError
 		} else {
 			status = "success"
-			data, marshalErr := json.Marshal(config)
+			data, marshalErr := json.Marshal(si.nginxConfig)
 			if marshalErr != nil {
 				Log(ERROR, "[%s] %s", appName, marshalErr)
 			}
@@ -422,7 +422,7 @@ func view(appName string, config *nginx.Config, c *gin.Context) (h gin.H, s int)
 // 返回值:
 //     h: gin.H
 //     s: http返回码
-func update(appName, ngBin string, ng *nginx.Config, c *gin.Context) (h gin.H, s int) {
+func update(appName, ngBin string, si *ServerInfo, c *gin.Context) (h gin.H, s int) {
 	// 初始化h
 	status := "unkown"
 	message := "null"
@@ -497,7 +497,7 @@ func update(appName, ngBin string, ng *nginx.Config, c *gin.Context) (h gin.H, s
 			return
 		}
 
-		delErr := nginx.Delete(ng)
+		delErr := nginx.Delete(si.nginxConfig)
 		if delErr != nil {
 			message = fmt.Sprintf("Delete nginx ng failed. <%s>", delErr)
 			Log(ERROR, "[%s] [%s] %s", appName, c.ClientIP(), message)
@@ -525,7 +525,7 @@ func update(appName, ngBin string, ng *nginx.Config, c *gin.Context) (h gin.H, s
 			}
 
 			Log(INFO, "[%s] Rollback nginx ng.", appName)
-			rollbackErr := nginx.Save(ng)
+			rollbackErr := nginx.Save(si.nginxConfig)
 			if rollbackErr != nil {
 				Log(CRITICAL, "[%s] Nginx ng rollback failed. <%s>", appName, rollbackErr)
 				status = "failed"
@@ -536,8 +536,8 @@ func update(appName, ngBin string, ng *nginx.Config, c *gin.Context) (h gin.H, s
 			return
 		}
 
-		ng.Value = newConfig.(*nginx.Config).Value
-		ng.Children = newConfig.(*nginx.Config).Children
+		si.nginxConfig.Value = newConfig.(*nginx.Config).Value
+		si.nginxConfig.Children = newConfig.(*nginx.Config).Children
 		//ng = newConfig.(*resolv.Config)
 		Log(NOTICE, "[%s] [%s] Nginx Config saved successfully", appName, c.ClientIP())
 	} else {

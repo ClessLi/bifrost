@@ -17,6 +17,7 @@ type ServerInfo struct {
 	ConfPath       string        `yaml:"confPath"`
 	VerifyExecPath string        `yaml:"verifyExecPath"`
 	confCaches     nginx.Caches
+	nginxConfig    *nginx.Config
 }
 
 // ngLoad, ServerInfo的nginx配置加载方法，根据nginx配置文件信息加载nginx配置并记录文件基准信息
@@ -33,6 +34,10 @@ func (si *ServerInfo) ngLoad() error {
 	// 记录缓存
 	si.confCaches = caches
 	si.ConfPath = path
+	si.nginxConfig, err = si.confCaches.GetConfig(si.ConfPath)
+	if err != nil {
+		return err
+	}
 
 	return nil
 
@@ -107,6 +112,7 @@ func (si *ServerInfo) autoReload() error {
 
 	// 如果有差别，则重新读取配置
 	if !isSame {
+		Log(DEBUG, "[%s] reloading nginx config", si.Name)
 		return si.ngLoad()
 	}
 	return nginx.NoReloadRequired
