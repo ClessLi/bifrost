@@ -50,7 +50,7 @@ var (
 	isHealthy = true
 
 	// 初始化信号量
-	signal chan int
+	signalChan = make(chan int)
 )
 
 const (

@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"syscall"
+	"time"
 )
 
 // DONE: 编写biforst守护进程
@@ -17,7 +19,8 @@ import (
 func Start() (err error) {
 	// 判断当前进程是子进程还是主进程
 	if isMain() { // 主进程时
-		// 执行子进程
+		// 执行主进程
+		Log(DEBUG, "Running Main Process")
 
 		// 判断是否已存在子进程
 		if pid, pidErr := getPid(); pidErr == nil {
@@ -33,7 +36,7 @@ func Start() (err error) {
 		}
 
 		// 启动子进程
-		Log(NOTICE, "starting bifrost...")
+		Log(NOTICE, "Starting bifrost...")
 		os.Stdout = Stdoutf
 		os.Stderr = Stdoutf
 		exec, pathErr := filepath.Abs(os.Args[0])
@@ -51,6 +54,10 @@ func Start() (err error) {
 
 		return nil
 	} else { // 子进程时
+		Log(DEBUG, "Running Sub Process")
+
+		// 关闭进程后清理pid文件
+		defer rmPidFile()
 		// 进程结束前操作
 		defer func() {
 			// 捕获panic
@@ -59,13 +66,7 @@ func Start() (err error) {
 				Log(CRITICAL, err.Error())
 
 			}
-			// 进程结束前清理pid文件
-			rmPidFileErr := os.Remove(pidFile)
-			if rmPidFileErr != nil {
-				err = rmPidFileErr
-				Log(ERROR, rmPidFileErr.Error())
-			}
-			Log(NOTICE, "bifrost.pid is removed, bifrost is finished")
+			Log(NOTICE, "bifrost is finished")
 		}()
 
 		// 执行bifrost进程
@@ -91,19 +92,17 @@ func Start() (err error) {
 // 返回值:
 //     错误
 func Stop() error {
+
 	// 判断bifrost进程是否存在
-	pid, pidErr := getPid()
-	if pidErr != nil {
-		return pidErr
-	}
-	process, procErr := os.FindProcess(pid)
+	process, procErr := getProc()
 	if procErr != nil {
 		Log(ERROR, procErr.Error())
 		return procErr
 	}
 
 	// 存在则关闭进程
-	killErr := process.Kill()
+	Log(NOTICE, "Stopping bifrost...")
+	killErr := process.Signal(syscall.SIGQUIT)
 	if killErr != nil {
 		if sysErr, ok := killErr.(*os.SyscallError); !ok || sysErr.Syscall != "TerminateProcess" {
 			Log(ERROR, killErr.Error())
@@ -113,15 +112,23 @@ func Stop() error {
 		}
 	}
 
-	// 关闭进程后清理pid文件
+	return nil
+}
+
+func getProc() (*os.Process, error) {
+	pid, pidErr := getPid()
+	if pidErr != nil {
+		return nil, pidErr
+	}
+	return os.FindProcess(pid)
+}
+
+func rmPidFile() {
 	rmPidFileErr := os.Remove(pidFile)
 	if rmPidFileErr != nil {
 		Log(ERROR, rmPidFileErr.Error())
-		return rmPidFileErr
 	}
-	Log(NOTICE, "bifrost.pid is removed, bifrost is finished")
-
-	return nil
+	Log(NOTICE, "bifrost.pid has been removed.")
 }
 
 // getPid, 查询pid文件并返回pid
@@ -157,11 +164,22 @@ func getPid() (int, error) {
 func Restart() error {
 	// 判断当前进程是主进程还是子进程
 	if isMain() { // 主进程时
-		Log(NOTICE, "stopping bifrost...")
 		if err := Stop(); err != nil {
 			Log(ERROR, "stop bifrost failed cased by: '%s'", err.Error())
 			return err
 		}
+
+		for i := 0; i < 300; i++ {
+			_, procErr := getProc()
+			if procErr != nil {
+				break
+			}
+			if i == 299 {
+				return fmt.Errorf("an unknown error occurred in terminating bifrost")
+			}
+			time.Sleep(time.Second)
+		}
+
 		return Start()
 	} else { // 子进程时
 		// 传参给子进程重启时，不重启

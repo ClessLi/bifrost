@@ -14,6 +14,11 @@ import (
 
 // Run, bifrost启动函数
 func Run() {
+
+	Log(DEBUG, "Listening system call signal")
+	go ListenSignal(signalChan)
+	Log(DEBUG, "Listened system call signal")
+
 	// 初始化接口
 	loginURI := "/login"
 	verifyURI := "/verify"
@@ -65,20 +70,38 @@ func Run() {
 	}
 
 	// 监控系统信息
-	go monitoring(signal)
+	monitorChan := make(chan int)
+	go monitoring(monitorChan)
 
-	// 启动bifrost各接口服务
-	rErr := router.Run(fmt.Sprintf(":%d", BifrostConf.WebServerInfo.ListenPort))
-	if rErr != nil {
-		killCoroutine(chansLen, bakChans, autoReloadChans)
-		// 输出子任务运行错误
-		Log(CRITICAL, "bifrost Run coroutine has been stoped. Cased by '%s'", rErr)
-		return
+	// 打印启动logo
+	fmt.Println(logoStr)
+
+	Log(DEBUG, "Listening ports for bifrost")
+	go func() {
+		// 启动bifrost各接口服务
+		rErr := router.Run(fmt.Sprintf(":%d", BifrostConf.WebServerInfo.ListenPort))
+		if rErr != nil {
+			killCoroutine(chansLen, bakChans, autoReloadChans)
+			monitorChan <- 9
+			// 输出子任务运行错误
+			Log(CRITICAL, "bifrost Run coroutine has been stoped. Cased by '%s'", rErr)
+			return
+		}
+		Log(DEBUG, "Stopping listen ports for bifrost")
+	}()
+	Log(DEBUG, "Listened ports for bifrost")
+
+	select {
+	case s := <-signalChan:
+		if s == 9 {
+			Log(DEBUG, "stopping...")
+			break
+		}
+		Log(DEBUG, "stopping signal error")
 	}
-
 	killCoroutine(chansLen, bakChans, autoReloadChans)
-	signal <- 9
-	Log(NOTICE, "bifrost Run coroutine has been stoped")
+	monitorChan <- 9
+	Log(NOTICE, "bifrost Run coroutine has been stoped.")
 	return
 }
 
