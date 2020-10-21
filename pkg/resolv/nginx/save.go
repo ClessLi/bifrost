@@ -1,9 +1,9 @@
 package nginx
 
-func Save(conf *Config) error {
-	err := conf.Save()
+func Save(conf *Config) (Caches, error) {
+	caches, err := conf.Save()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return caches, nil
 }

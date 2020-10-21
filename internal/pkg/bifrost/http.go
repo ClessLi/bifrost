@@ -140,14 +140,6 @@ func nginxConfAPIInit(router *gin.Engine, serverInfo *ServerInfo, chansLen *int,
 	//fmt.Println("生成统计接口URI")
 	statisticsURI := fmt.Sprintf("%s/statistics", apiURI)
 
-	//fmt.Println("获取web服务配置校验二进制文件路径")
-	ngVerifyExec, absErr := filepath.Abs(serverInfo.VerifyExecPath)
-	if absErr != nil {
-		Log(CRITICAL, "[%s] coroutine has been stoped. Cased by '%s'", serverInfo.Name, absErr)
-		*chansLen++
-		return
-	}
-
 	//fmt.Println("载入备份协程")
 	go serverInfo.Bak(*(*bakChans)[*chansLen])
 	//fmt.Println("载入自动更新配置协程")
@@ -158,21 +150,21 @@ func nginxConfAPIInit(router *gin.Engine, serverInfo *ServerInfo, chansLen *int,
 	// view
 	//fmt.Println("载入查询接口")
 	router.GET(apiURI, func(c *gin.Context) {
-		h, status := view(serverInfo.Name, serverInfo, c)
+		h, status := view(serverInfo, c)
 		c.JSON(status, &h)
 	})
 
 	// update
 	//fmt.Println("载入更新接口")
 	router.POST(apiURI, func(c *gin.Context) {
-		h, status := update(serverInfo.Name, ngVerifyExec, serverInfo, c)
+		h, status := update(serverInfo, c)
 		c.JSON(status, &h)
 	})
 
 	// statistics
 	//fmt.Println("载入统计接口")
 	router.GET(statisticsURI, func(c *gin.Context) {
-		h, status := statisticsView(serverInfo.Name, serverInfo, c)
+		h, status := statisticsView(serverInfo, c)
 		c.JSON(status, &h)
 	})
 }
@@ -191,13 +183,12 @@ func killCoroutine(chansLen int, chansArray ...[]*chan int) {
 
 // statisticsView, nginx配置统计信息查询接口函数
 // 参数:
-//     appName: 子进程标题
-//     config: 子进程nginx配置对象指针
+//     si: ServerInfo对象指针
 //     c: gin上下文对象指针
 // 返回值:
 //     h: gin.H
 //     s: http状态码
-func statisticsView(appName string, si *ServerInfo, c *gin.Context) (h gin.H, s int) {
+func statisticsView(si *ServerInfo, c *gin.Context) (h gin.H, s int) {
 	// 初始化h
 	status := "unkown"
 	message := make(gin.H, 0)
@@ -222,7 +213,7 @@ func statisticsView(appName string, si *ServerInfo, c *gin.Context) (h gin.H, s 
 		status = "failed"
 		h["message"] = verifyErr.Error()
 		s = http.StatusBadRequest
-		Log(WARN, "[%s] %s", appName, message)
+		Log(WARN, "[%s] %s", si.Name, message)
 		return
 	}
 
@@ -325,13 +316,12 @@ func statisticsView(appName string, si *ServerInfo, c *gin.Context) (h gin.H, s 
 
 // view, nginx配置查询接口函数
 // 参数:
-//     appName: 子进程标题
-//     config: 子进程nginx配置对象指针
+//     si: ServerInfo对象指针
 //     c: gin上下文对象指针
 // 返回值:
 //     h: gin.H
 //     s: http返回码
-func view(appName string, si *ServerInfo, c *gin.Context) (h gin.H, s int) {
+func view(si *ServerInfo, c *gin.Context) (h gin.H, s int) {
 	// 初始化h
 	status := "unkown"
 	var message interface{} = "null"
@@ -356,7 +346,7 @@ func view(appName string, si *ServerInfo, c *gin.Context) (h gin.H, s int) {
 		status = "failed"
 		message = verifyErr.Error()
 		s = http.StatusBadRequest
-		Log(WARN, "[%s] %s", appName, message)
+		Log(WARN, "[%s] %s", si.Name, message)
 		return
 	}
 
@@ -374,7 +364,7 @@ func view(appName string, si *ServerInfo, c *gin.Context) (h gin.H, s int) {
 		if si.nginxConfig == nil {
 			status = "failed"
 			message = "configuration resolution failed"
-			Log(ERROR, "[%s] %s", appName, message)
+			Log(ERROR, "[%s] %s", si.Name, message)
 			s = http.StatusInternalServerError
 		} else {
 			status = "success"
@@ -385,28 +375,28 @@ func view(appName string, si *ServerInfo, c *gin.Context) (h gin.H, s int) {
 				str += v
 			}
 			message = str
-			Log(DEBUG, "[%s] %s", appName, message)
+			Log(DEBUG, "[%s] %s", si.Name, message)
 		}
 	case "json":
 		// 防止配置对象为空时，接口异常
 		if si.nginxConfig == nil {
 			status = "failed"
 			message = "configuration resolution failed"
-			Log(ERROR, "[%s] %s", appName, message)
+			Log(ERROR, "[%s] %s", si.Name, message)
 			s = http.StatusInternalServerError
 		} else {
 			status = "success"
 			data, marshalErr := json.Marshal(si.nginxConfig)
 			if marshalErr != nil {
-				Log(ERROR, "[%s] %s", appName, marshalErr)
+				Log(ERROR, "[%s] %s", si.Name, marshalErr)
 			}
 			message = string(data)
-			Log(DEBUG, "[%s] %s", appName, message)
+			Log(DEBUG, "[%s] %s", si.Name, message)
 		}
 	default:
 		status = "failed"
 		message = fmt.Sprintf("view message type '%s' invalid", t)
-		Log(INFO, "[%s] %s", appName, message)
+		Log(INFO, "[%s] %s", si.Name, message)
 		s = http.StatusBadRequest
 	}
 
@@ -415,20 +405,28 @@ func view(appName string, si *ServerInfo, c *gin.Context) (h gin.H, s int) {
 
 // update, nginx配置更新接口函数
 // 参数:
-//     appName: 子进程标题
-//     ngBin: 子进程nginx可执行文件路径
-//     ng: 子进程nginx配置对象指针
+//     si: ServerInfo对象指针
 //     c: gin上下文指针
 // 返回值:
 //     h: gin.H
 //     s: http返回码
-func update(appName, ngBin string, si *ServerInfo, c *gin.Context) (h gin.H, s int) {
+func update(si *ServerInfo, c *gin.Context) (h gin.H, s int) {
 	// 初始化h
 	status := "unkown"
 	message := "null"
 	h = gin.H{
 		"status":  &status,
 		"message": &message,
+	}
+
+	//fmt.Println("获取web服务配置校验二进制文件路径")
+	verifyBin, absErr := filepath.Abs(si.VerifyExecPath)
+	if absErr != nil {
+		s = http.StatusInternalServerError
+		message = fmt.Sprintf("The validation process does not exist or is configured incorrectly.")
+		status = "failed"
+		Log(CRITICAL, "[%s] %s detailed error: %s", si.Name, message, absErr)
+		return
 	}
 
 	// 获取接口访问token参数
@@ -447,7 +445,7 @@ func update(appName, ngBin string, si *ServerInfo, c *gin.Context) (h gin.H, s i
 		status = "failed"
 		message = verifyErr.Error()
 		s = http.StatusBadRequest
-		Log(WARN, "[%s] [%s] %s", appName, c.ClientIP(), message)
+		Log(WARN, "[%s] [%s] %s", si.Name, c.ClientIP(), message)
 		return
 	}
 
@@ -456,7 +454,7 @@ func update(appName, ngBin string, si *ServerInfo, c *gin.Context) (h gin.H, s i
 	file, formFileErr := c.FormFile("data")
 	if formFileErr != nil {
 		message = fmt.Sprintf("FormFile option invalid: <%s>.", formFileErr)
-		Log(WARN, "[%s] [%s] %s", appName, c.ClientIP(), message)
+		Log(WARN, "[%s] [%s] %s", si.Name, c.ClientIP(), message)
 		status = "failed"
 		s = http.StatusBadRequest
 		return
@@ -465,7 +463,7 @@ func update(appName, ngBin string, si *ServerInfo, c *gin.Context) (h gin.H, s i
 	f, fErr := file.Open()
 	if fErr != nil {
 		message = fmt.Sprintf("Open file failed: <%s>.", fErr)
-		Log(CRITICAL, "[%s] [%s] %s", appName, c.ClientIP(), message)
+		Log(CRITICAL, "[%s] [%s] %s", si.Name, c.ClientIP(), message)
 		status = "failed"
 		s = http.StatusInternalServerError
 		return
@@ -475,7 +473,7 @@ func update(appName, ngBin string, si *ServerInfo, c *gin.Context) (h gin.H, s i
 	confBytes, rErr := ioutil.ReadAll(f)
 	if rErr != nil {
 		message := fmt.Sprintf("Read file failed: <%s>.", rErr)
-		Log(CRITICAL, "[%s] [%s] %s", appName, c.ClientIP(), message)
+		Log(CRITICAL, "[%s] [%s] %s", si.Name, c.ClientIP(), message)
 		h["status"] = "failed"
 		h["message"] = message
 		s = http.StatusInternalServerError
@@ -485,11 +483,11 @@ func update(appName, ngBin string, si *ServerInfo, c *gin.Context) (h gin.H, s i
 	// 解析接口传入的nginx配置json数据，并完成备份更新
 	if len(confBytes) > 0 {
 
-		Log(NOTICE, "[%s] [%s] unmarshal nginx ng.", c.ClientIP(), appName)
+		Log(NOTICE, "[%s] [%s] unmarshal nginx ng.", c.ClientIP(), si.Name)
 		newConfig, ujErr := ngJson.Unmarshal(confBytes)
-		if ujErr != nil || len(newConfig.(*nginx.Config).Children) <= 0 || newConfig.(*nginx.Config).Value == "" {
+		if ujErr != nil || len(newConfig.Children) <= 0 || newConfig.Value == "" {
 			message = fmt.Sprintf("UnmarshalJson failed. <%s>, data: <%s>", ujErr, confBytes)
-			Log(WARN, "[%s] [%s] %s", appName, c.ClientIP(), message)
+			Log(WARN, "[%s] [%s] %s", si.Name, c.ClientIP(), message)
 			h["status"] = "failed"
 			status = "failed"
 			//errChan <- ujErr
@@ -500,34 +498,34 @@ func update(appName, ngBin string, si *ServerInfo, c *gin.Context) (h gin.H, s i
 		delErr := nginx.Delete(si.nginxConfig)
 		if delErr != nil {
 			message = fmt.Sprintf("Delete nginx ng failed. <%s>", delErr)
-			Log(ERROR, "[%s] [%s] %s", appName, c.ClientIP(), message)
+			Log(ERROR, "[%s] [%s] %s", si.Name, c.ClientIP(), message)
 			status = "failed"
 			s = http.StatusInternalServerError
 			return
 		}
 
-		Log(INFO, "[%s] Deleted old nginx ng.", appName)
-		Log(INFO, "[%s] Verify new nginx ng.", appName)
-		checkErr := nginx.Check(newConfig.(*nginx.Config), ngBin)
+		Log(INFO, "[%s] Deleted old nginx ng.", si.Name)
+		Log(INFO, "[%s] Verify new nginx ng.", si.Name)
+		newCaches, checkErr := nginx.SaveWithCheck(newConfig, verifyBin)
 		if checkErr != nil {
 			s = http.StatusInternalServerError
 			message = fmt.Sprintf("Nginx ng verify failed. <%s>", checkErr)
-			Log(WARN, "[%s] %s", appName, message)
+			Log(WARN, "[%s] %s", si.Name, message)
 			status = "failed"
 
-			Log(INFO, "[%s] Delete new nginx ng.", appName)
-			delErr := nginx.Delete(newConfig.(*nginx.Config))
+			Log(INFO, "[%s] Delete new nginx ng.", si.Name)
+			delErr := nginx.Delete(newConfig)
 			if delErr != nil {
-				Log(ERROR, "[%s] Delete new nginx ng failed. <%s>", appName, delErr)
+				Log(ERROR, "[%s] Delete new nginx ng failed. <%s>", si.Name, delErr)
 				status = "failed"
 				message = "New nginx config verify failed. And delete new nginx config failed."
 				return
 			}
 
-			Log(INFO, "[%s] Rollback nginx ng.", appName)
-			rollbackErr := nginx.Save(si.nginxConfig)
+			Log(INFO, "[%s] Rollback nginx ng.", si.Name)
+			_, rollbackErr := nginx.Save(si.nginxConfig)
 			if rollbackErr != nil {
-				Log(CRITICAL, "[%s] Nginx ng rollback failed. <%s>", appName, rollbackErr)
+				Log(CRITICAL, "[%s] Nginx ng rollback failed. <%s>", si.Name, rollbackErr)
 				status = "failed"
 				message = "New nginx config verify failed. And nginx config rollback failed."
 				return
@@ -535,15 +533,15 @@ func update(appName, ngBin string, si *ServerInfo, c *gin.Context) (h gin.H, s i
 
 			return
 		}
+		si.confCaches = newCaches
+		si.nginxConfig = newConfig
+		si.ConfPath = newConfig.Value
 
-		si.nginxConfig.Value = newConfig.(*nginx.Config).Value
-		si.nginxConfig.Children = newConfig.(*nginx.Config).Children
-		//ng = newConfig.(*resolv.Config)
-		Log(NOTICE, "[%s] [%s] Nginx Config saved successfully", appName, c.ClientIP())
+		Log(NOTICE, "[%s] [%s] Nginx Config saved successfully", si.Name, c.ClientIP())
 	} else {
 		status = "failed"
 		message = fmt.Sprintf("Wrong data: <%s>", confBytes)
-		Log(WARN, "[%s] [%s] %s", appName, c.ClientIP(), message)
+		Log(WARN, "[%s] [%s] %s", si.Name, c.ClientIP(), message)
 		s = http.StatusBadRequest
 		return
 	}

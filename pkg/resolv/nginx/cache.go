@@ -14,7 +14,7 @@ func NewCaches() Caches {
 	return Caches{}
 }
 
-func (cs Caches) setCache(config *Config, file ...interface{}) error {
+func (cs Caches) SetCache(config *Config, file ...interface{}) error {
 	cache, err := newCache(config, file...)
 	if err != nil {
 		return err
@@ -27,11 +27,15 @@ func (cs Caches) setCache(config *Config, file ...interface{}) error {
 	return nil
 }
 
+func (cs Caches) IsCached(path string) bool {
+	_, ok := cs[path]
+	return ok
+}
+
 func (cs Caches) CheckHash(path string) (bool, error) {
-	conf, ok := cs[path]
-	if ok {
-		hash, hashErr := getHash(conf.config.Value)
-		return hash == conf.hash, hashErr
+	if cs.IsCached(path) {
+		hash, hashErr := getHash(path)
+		return hash == cs[path].hash, hashErr
 	}
 	return false, IsNotInCaches
 }

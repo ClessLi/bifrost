@@ -19,26 +19,36 @@ type Config struct {
 	BasicContext `json:"config"`
 }
 
-func (c *Config) Save() error {
+func (c *Config) Save() (Caches, error) {
 	caches := NewCaches()
 	dumps, derr := c.dump(c.Value, &caches)
 	if derr != nil {
-		return derr
+		return nil, derr
 	}
-	data := make([]byte, 0)
 	for path, lines := range dumps {
+		data := make([]byte, 0)
 
 		for _, line := range lines {
 			data = append(data, []byte(line)...)
 		}
 
 		werr := ioutil.WriteFile(path, data, 0755)
+		hash, hashErr := getHash(path, data)
+		if hashErr != nil {
+			return nil, hashErr
+		}
+
+		cacheErr := caches.SetCache(caches[path].config, hash)
+		if cacheErr != nil {
+			return nil, cacheErr
+		}
+
 		if werr != nil {
-			return werr
+			return nil, werr
 		}
 	}
 
-	return nil
+	return caches, nil
 
 }
 
@@ -93,14 +103,14 @@ func (c *Config) String(caches *Caches) []string {
 }
 
 func (c *Config) dump(_ string, caches *Caches) (map[string][]string, error) {
-	if _, ok := (*caches)[c.Value]; ok {
-		return nil, IsInCaches
+	dumps := make(map[string][]string)
+	if caches.IsCached(c.Value) {
+		return dumps, IsInCaches
 	}
 
-	dumps := make(map[string][]string)
 	var err error
 
-	err = caches.setCache(c, hashForDump)
+	err = caches.SetCache(c, hashForDump)
 	if err != nil {
 		return nil, err
 	}
@@ -111,13 +121,23 @@ func (c *Config) dump(_ string, caches *Caches) (map[string][]string, error) {
 		case *Key, *Comment:
 			dmp = append(dmp, child.String(caches)...)
 		case Context:
-			dumps, err = child.(Context).dump(c.Value, caches)
 
-			if err != nil {
+			newDumps, err := child.(Context).dump(c.Value, caches)
+
+			if err != nil && err != IsInCaches {
 				return nil, err
+			} else if err == IsInCaches {
+				break
 			}
 
-			if d, ok := dumps[c.Value]; ok {
+			for dmpPath, data := range newDumps {
+				if _, ok := dumps[dmpPath]; ok || dmpPath == c.Value {
+					continue
+				}
+				dumps[dmpPath] = data
+			}
+
+			if d, ok := newDumps[c.Value]; ok {
 				dmp = append(dmp, d...)
 			}
 		default:
@@ -130,7 +150,7 @@ func (c *Config) dump(_ string, caches *Caches) (map[string][]string, error) {
 
 func (c *Config) List() (caches Caches, err error) {
 	caches = NewCaches()
-	err = caches.setCache(c, hashForGetList)
+	err = caches.SetCache(c, hashForGetList)
 	if err != nil && err != IsInCaches {
 		return nil, err
 	}
@@ -142,7 +162,7 @@ func (c *Config) List() (caches Caches, err error) {
 				return nil, err
 			} else if subCaches != nil {
 				for _, cache := range subCaches {
-					err = caches.setCache(cache.config, hashForGetList)
+					err = caches.SetCache(cache.config, hashForGetList)
 					if err != nil && err != IsInCaches {
 						return nil, err
 					}

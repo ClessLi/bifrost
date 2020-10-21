@@ -47,7 +47,7 @@ func main() {
 	}
 
 	for _, config := range configs {
-		saveErr := nginx.Save(config)
+		_, saveErr := nginx.Save(config)
 		if saveErr != nil {
 			fmt.Println(saveErr)
 			os.Exit(5)

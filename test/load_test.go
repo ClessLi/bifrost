@@ -95,6 +95,7 @@ func TestMarshalJSON(t *testing.T) {
 }
 func TestConfig_UnmarshalJSON(t *testing.T) {
 	jdata, rerr := ioutil.ReadFile("test_circle_load/test.json")
+	//jdata, rerr := ioutil.ReadFile("config_test/test2.json")
 	if rerr != nil {
 		t.Log(rerr)
 	}

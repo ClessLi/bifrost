@@ -8,7 +8,7 @@ import (
 )
 
 func TestStatistics(t *testing.T) {
-	conf, _, err := nginx.Load("config_test/nginx.conf")
+	path, caches, err := nginx.Load("config_test/nginx.conf")
 	//conf, err := nginx.Load("filter_bug_test/nginx.conf")
 
 	if err != nil {
@@ -16,6 +16,11 @@ func TestStatistics(t *testing.T) {
 		os.Exit(1)
 	}
 
+	conf, err := caches.GetConfig(path)
+	if err != nil {
+		t.Log(err)
+		os.Exit(2)
+	}
 	//t.Log(nginxStatistics.HTTPServersNum(conf))
 	//t.Log(nginxStatistics.HTTPServerNames(conf))
 	t.Log(nginxStatistics.HTTPPorts(conf))

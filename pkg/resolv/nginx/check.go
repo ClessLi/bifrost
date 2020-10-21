@@ -5,12 +5,12 @@ import (
 	"os/exec"
 )
 
-func Check(config *Config, ng string) (err error) {
-	err = config.Save()
+func SaveWithCheck(config *Config, ng string) (caches Caches, err error) {
+	caches, err = config.Save()
 	if err != nil {
 		return
 	}
-	return check(ng, config.Value)
+	return caches, check(ng, config.Value)
 }
 
 func check(ng string, s string) error {

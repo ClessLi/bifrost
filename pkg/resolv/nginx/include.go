@@ -222,15 +222,24 @@ func (i *Include) initLoad(caches *Caches) error {
 
 func (i *Include) dump(configPath string, caches *Caches) (map[string][]string, error) {
 	dumps := make(map[string][]string)
-	var err error
 	for _, child := range i.Children {
 		conf, ok := child.(*Config)
 		if ok {
-			dumps, err = conf.dump(configPath, caches)
+			newDumps, err := conf.dump(configPath, caches)
 			//err := Save(child.(*Config))
-			if err != nil {
+			if err != nil && err != IsInCaches {
 				return nil, err
+			} else if err == IsInCaches {
+				continue
 			}
+
+			for dmpPath, data := range newDumps {
+				if _, ok := dumps[dmpPath]; ok {
+					continue
+				}
+				dumps[dmpPath] = data
+			}
+
 		}
 	}
 

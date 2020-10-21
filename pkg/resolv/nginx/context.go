@@ -337,7 +337,6 @@ func (c *BasicContext) String(caches *Caches) []string {
 
 func (c *BasicContext) dump(configPath string, caches *Caches) (map[string][]string, error) {
 	dumps := make(map[string][]string)
-	var err error
 	dmp := make([]string, 0)
 	contextTitle := c.getTitle()
 	dmp = append(dmp, contextTitle)
@@ -353,16 +352,22 @@ func (c *BasicContext) dump(configPath string, caches *Caches) (map[string][]str
 				dmp = append(dmp, INDENT+child.String(caches)[0])
 			}
 		case Context:
-			dumps, err = child.(Context).dump(configPath, caches)
+			newDumps, err := child.(Context).dump(configPath, caches)
 			if err != nil {
 				return nil, err
 			}
 
-			if d, ok := dumps[configPath]; ok {
+			for dmpPath, data := range newDumps {
+				if _, ok := dumps[dmpPath]; ok || dmpPath == configPath {
+					continue
+				}
+				dumps[dmpPath] = data
+			}
+
+			if d, ok := newDumps[configPath]; ok {
 				for _, line := range d {
 					dmp = append(dmp, INDENT+line)
 				}
-
 			}
 		default:
 			lines := child.String(caches)
@@ -391,7 +396,7 @@ func (c *BasicContext) List() (caches Caches, err error) {
 			} else if subCaches != nil {
 
 				for _, cache := range subCaches {
-					err = caches.setCache(cache.config, hashForGetList)
+					err = caches.SetCache(cache.config, hashForGetList)
 
 					if err != nil && err != IsInCaches {
 						return nil, err

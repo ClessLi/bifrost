@@ -172,7 +172,7 @@ func load(ngDir, relativePath string, caches *Caches) (configAbsPath string, err
 		break
 	}
 
-	err = caches.setCache(f, file)
+	err = caches.SetCache(f, file)
 
 	return
 }

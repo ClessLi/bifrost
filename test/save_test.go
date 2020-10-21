@@ -19,7 +19,7 @@ func TestSave(t *testing.T) {
 		return
 	}
 
-	serr := nginx.Save(conf)
+	_, serr := nginx.Save(conf)
 
 	if serr != nil {
 		t.Log(serr)
