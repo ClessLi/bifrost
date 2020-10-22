@@ -33,12 +33,8 @@ func (c *Config) Save() (Caches, error) {
 		}
 
 		werr := ioutil.WriteFile(path, data, 0755)
-		hash, hashErr := getHash(path, data)
-		if hashErr != nil {
-			return nil, hashErr
-		}
 
-		cacheErr := caches.SetCache(caches[path].config, hash)
+		cacheErr := caches.SetCache(caches[path].config, data)
 		if cacheErr != nil {
 			return nil, cacheErr
 		}
@@ -59,21 +55,16 @@ func (c Config) getCaches() (Caches, error) {
 		return nil, derr
 	}
 	for path, lines := range dumps {
-		cache, ok := caches[path]
-		if !ok {
-			continue
-		}
 		data := make([]byte, 0)
 
 		for _, line := range lines {
 			data = append(data, []byte(line)...)
 		}
-		hash, herr := getHash(cache.config.Value, data)
-		if herr != nil {
-			return nil, herr
+
+		cacheErr := caches.SetCache(caches[path].config, data)
+		if cacheErr != nil {
+			return nil, cacheErr
 		}
-		cache.hash = hash
-		caches[path] = cache
 	}
 	return caches, nil
 }
@@ -110,7 +101,7 @@ func (c *Config) dump(_ string, caches *Caches) (map[string][]string, error) {
 
 	var err error
 
-	err = caches.SetCache(c, hashForDump)
+	err = caches.SetCache(c, hashForDumpTemp)
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +132,10 @@ func (c *Config) dump(_ string, caches *Caches) (map[string][]string, error) {
 				dmp = append(dmp, d...)
 			}
 		default:
-			dmp = append(dmp, child.String(caches)...)
+			lines := child.String(caches)
+			if lines != nil {
+				dmp = append(dmp, lines...)
+			}
 		}
 	}
 	dumps[c.Value] = dmp

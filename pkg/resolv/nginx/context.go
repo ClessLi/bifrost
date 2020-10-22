@@ -29,7 +29,7 @@ type Context interface {
 	//Dict() map[string]interface{}
 	//UnmarshalToJSON(b []byte) error
 	//BumpChildDepth(int)
-	dump(string, *Caches) (map[string][]string, error)
+	dump(string, *Caches) (map[string][]string, error) //TODO: 优化将dumps数据string切片换为byte切片，用于将数据直接解析给缓存
 	List() (Caches, error)
 }
 
@@ -330,7 +330,7 @@ func (c *BasicContext) String(caches *Caches) []string {
 		}
 	}
 	ret[len(ret)-1] = RegEndWithCR.ReplaceAllString(ret[len(ret)-1], "}\n")
-	ret = append(ret, "}\n\n")
+	ret = append(ret, "}\n")
 
 	return ret
 }
@@ -377,7 +377,7 @@ func (c *BasicContext) dump(configPath string, caches *Caches) (map[string][]str
 		}
 	}
 	dmp[len(dmp)-1] = RegEndWithCR.ReplaceAllString(dmp[len(dmp)-1], "}\n")
-	dmp = append(dmp, "}\n\n")
+	dmp = append(dmp, "}\n")
 
 	dumps[configPath] = dmp
 

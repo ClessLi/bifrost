@@ -30,9 +30,9 @@ const (
 	TypeUpstream    parserType = "upstream"
 	TypeComment     parserType = "comment"
 
-	hashForGetList = "ForList"
-	hashForString  = "ForString"
-	hashForDump    = "ForDump"
+	hashForGetList  = "ForList"
+	hashForString   = "ForString"
+	hashForDumpTemp = "ForDumpTemp"
 )
 
 // 整型order
