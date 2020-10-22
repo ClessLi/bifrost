@@ -2,6 +2,7 @@ package nginx
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -67,7 +68,8 @@ func newCache(config *Config, file ...interface{}) (cache, error) {
 //     文件哈希基准值
 //     错误
 func getHash(path string, file ...interface{}) (hash string, err error) {
-	fmt.Println("------------getHash func------------")
+	hash256 := sha256.New()
+	//fmt.Println("------------getHash func------------")
 	// 结束操作前捕捉panic
 	defer func() {
 		// 捕获panic
@@ -75,12 +77,12 @@ func getHash(path string, file ...interface{}) (hash string, err error) {
 			//err = fmt.Errorf("%s", r)
 			fmt.Println(r)
 		}
-		fmt.Println("----------getHash func end----------")
+		//fmt.Println("----------getHash func end----------")
 	}()
 	var f *os.File
 	if file == nil {
 		// 测试
-		fmt.Println("no param, path:", path)
+		//fmt.Println("no param, path:", path)
 		// 读取文件
 		f, err = os.Open(path)
 		if err != nil {
@@ -92,18 +94,17 @@ func getHash(path string, file ...interface{}) (hash string, err error) {
 		switch data.(type) {
 		case string:
 			// 测试
-			fmt.Println("hash:", data.(string), "path:", path)
+			//fmt.Println("hash:", data.(string), "path:", path)
 			return data.(string), nil
 		case *os.File:
 			//测试
-			fmt.Println("fd, path:", path)
+			//fmt.Println("fd, path:", path)
 			f = data.(*os.File)
 			_, _ = f.Seek(0, 0)
 		case []byte:
 			// 测试
-			fmt.Println("bytes, path:", path)
+			//fmt.Println("bytes, path:", path)
 			r := bytes.NewReader(data.([]byte))
-			defer hash256.Reset()
 			_, hashCPErr := io.Copy(hash256, r)
 			if hashCPErr != nil {
 				return "", hashCPErr
@@ -116,7 +117,6 @@ func getHash(path string, file ...interface{}) (hash string, err error) {
 	}
 
 	// 计算文件数据哈希值
-	defer hash256.Reset()
 	_, hashCPErr := io.Copy(hash256, f)
 	if hashCPErr != nil {
 		return "", hashCPErr

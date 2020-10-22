@@ -1,7 +1,6 @@
 package nginx
 
 import (
-	"crypto/sha256"
 	"fmt"
 	"regexp"
 )
@@ -40,7 +39,4 @@ var (
 	NoReloadRequired                = fmt.Errorf("no reload required")
 	IsInCaches                      = fmt.Errorf("cache already exists")
 	IsNotInCaches                   = fmt.Errorf("cache is not exists")
-
-	// 散列缓存
-	hash256 = sha256.New()
 )
