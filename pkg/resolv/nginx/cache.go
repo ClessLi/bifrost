@@ -67,10 +67,20 @@ func newCache(config *Config, file ...interface{}) (cache, error) {
 //     文件哈希基准值
 //     错误
 func getHash(path string, file ...interface{}) (hash string, err error) {
+	fmt.Println("------------getHash func------------")
+	// 结束操作前捕捉panic
+	defer func() {
+		// 捕获panic
+		if r := recover(); r != nil {
+			//err = fmt.Errorf("%s", r)
+			fmt.Println(r)
+		}
+		fmt.Println("----------getHash func end----------")
+	}()
 	var f *os.File
 	if file == nil {
 		// 测试
-		//fmt.Println("no param, path:", path)
+		fmt.Println("no param, path:", path)
 		// 读取文件
 		f, err = os.Open(path)
 		if err != nil {
@@ -82,16 +92,16 @@ func getHash(path string, file ...interface{}) (hash string, err error) {
 		switch data.(type) {
 		case string:
 			// 测试
-			//fmt.Println("hash:", data.(string), "path:", path)
+			fmt.Println("hash:", data.(string), "path:", path)
 			return data.(string), nil
 		case *os.File:
 			//测试
-			//fmt.Println("fd, path:", path)
+			fmt.Println("fd, path:", path)
 			f = data.(*os.File)
 			_, _ = f.Seek(0, 0)
 		case []byte:
 			// 测试
-			//fmt.Println("bytes, path:", path)
+			fmt.Println("bytes, path:", path)
 			r := bytes.NewReader(data.([]byte))
 			defer hash256.Reset()
 			_, hashCPErr := io.Copy(hash256, r)
@@ -104,14 +114,6 @@ func getHash(path string, file ...interface{}) (hash string, err error) {
 			return "", fmt.Errorf("wrong type or wrong value for input to func pkg/resolv/nginx.getHash")
 		}
 	}
-	//else if hash, ok := file[0].(string); ok && hash == hashForGetList {
-	//	return hashForGetList, nil
-	//} else if fd, ok := file[0].(*os.File); ok {
-	//	f = fd
-	//	f.Seek(0, os.SEEK_SET)
-	//} else {
-	//	return "", fmt.Errorf("wrong type or wrong value for input to func pkg/resolv/nginx.getHash")
-	//}
 
 	// 计算文件数据哈希值
 	defer hash256.Reset()
