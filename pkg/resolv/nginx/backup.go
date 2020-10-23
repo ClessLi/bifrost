@@ -33,7 +33,7 @@ func Backup(config *Config, name string, saveTime, bakCycle int, backupDir ...st
 	}
 
 	// 归档日期初始化
-	now := time.Now()
+	now := time.Now().In(TZ)
 	dt := now.Format("20060102")
 
 	// 归档目录

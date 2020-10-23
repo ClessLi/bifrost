@@ -3,9 +3,14 @@ package nginx
 import (
 	"fmt"
 	"regexp"
+	"time"
 )
 
 var (
+	//system vars
+	TZ, _ = time.LoadLocation("Local")
+
+	// regexp
 	RegEndWithCR       = regexp.MustCompile("}\n+$")
 	RegEventsHead      = regexp.MustCompile(`^\s*events\s*{`)
 	RegHttpHead        = regexp.MustCompile(`^\s*http\s*{`)
