@@ -63,13 +63,7 @@ func (si ServerInfo) Bak(signal chan int) {
 // bak, ServerInfo的nginx配置文件备份子方法
 // 参数:
 func (si ServerInfo) bak() {
-	config, confErr := si.confCaches.GetConfig(si.ConfPath)
-	if confErr != nil {
-		Log(CRITICAL, "[%s] Nginx Config backup failed, cased by %s.", si.Name, confErr)
-		return
-	}
-
-	bakPath, bErr := nginx.Backup(config, "nginx.conf", si.BackupSaveTime, si.BackupCycle, si.BackupDir)
+	bakPath, bErr := nginx.Backup(si.nginxConfig, "nginx.conf", si.BackupSaveTime, si.BackupCycle, si.BackupDir)
 
 	if bErr != nil && (!os.IsExist(bErr) && bErr != nginx.NoBackupRequired) { // 备份失败
 		Log(CRITICAL, "[%s] Nginx Config backup to %s, but failed. <%s>", si.Name, bakPath, bErr)
