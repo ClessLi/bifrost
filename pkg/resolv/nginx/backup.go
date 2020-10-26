@@ -99,6 +99,8 @@ func checkBackups(name, dir string, saveTime, cycle int, now time.Time) (bool, e
 	needBackup := true
 	saveDate := now.Add(-24 * time.Hour * time.Duration(saveTime))
 	cycleDate := now.Add(-24 * time.Hour * time.Duration(cycle))
+	//fmt.Printf("save date now is %s, time is '%s'\n", saveDate.Format("20060102"), saveDate)
+	//fmt.Printf("cycle date now is %s, time is '%s'\n", cycleDate.Format("20060102"), cycleDate)
 	bakFilePattern := fmt.Sprintf(`^%s\.(\d{8})\.tgz$`, name)
 	bakFileReg := regexp.MustCompile(bakFilePattern)
 
@@ -107,10 +109,11 @@ func checkBackups(name, dir string, saveTime, cycle int, now time.Time) (bool, e
 		return false, gErr
 	}
 
+	//fmt.Printf("date now is %s, time is '%s'\n\n", now.Format("20060102"), now)
 	for i := 0; i < len(baks) && needBackup; i++ {
 		bakName := filepath.Base(baks[i])
 		if isBak := bakFileReg.MatchString(bakName); isBak {
-			bakDate, tpErr := time.Parse("20060102", bakFileReg.FindStringSubmatch(bakName)[1])
+			bakDate, tpErr := time.ParseInLocation("20060102", bakFileReg.FindStringSubmatch(bakName)[1], TZ)
 			if tpErr != nil {
 				return false, tpErr
 			}
@@ -126,6 +129,7 @@ func checkBackups(name, dir string, saveTime, cycle int, now time.Time) (bool, e
 				needBackup = false
 			}
 
+			//fmt.Printf("bakDate is %s, time is '%s'\n", bakDate.Format("20060102"), bakDate)
 		}
 	}
 

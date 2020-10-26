@@ -8,7 +8,7 @@ import (
 
 var (
 	//system vars
-	TZ, _ = time.LoadLocation("Local")
+	TZ = time.Local
 
 	// regexp
 	RegEndWithCR       = regexp.MustCompile("}\n+$")
