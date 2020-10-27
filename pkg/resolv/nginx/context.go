@@ -1,4 +1,4 @@
-// resove 包，该包包含了项目最基础的上下文相关对象，及相关方法及函数
+// resolv.nginx 包，该包包含了bifrost.pkg.resolv.nginx项目最基础的上下文相关对象，及相关方法及函数
 // 创建者： ClessLi
 // 创建时间：2020-1-17 11:14:15
 package nginx
