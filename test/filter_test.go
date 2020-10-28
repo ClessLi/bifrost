@@ -26,13 +26,13 @@ func TestFilter(t *testing.T) {
 	//httpServers := http.QueryAll(nginx.TypeServer, false, "server_name:com")
 	//t.Log("Http Servers")
 	//for _, server := range httpServers {
-	//	t.Log(server.String())
+	//	t.Log(server.string())
 	//}
 	t.Log("All Servers")
 	allServers := conf.QueryAll(nginx.TypeServer, true, "server_name:^open.*$", "listen:^80$")
 	for _, server := range allServers {
-		caches := nginx.NewCaches()
-		t.Log(server.String(&caches))
+		//caches := nginx.NewCaches()
+		t.Log(server.String())
 	}
 }
 
@@ -50,25 +50,26 @@ func TestParams(t *testing.T) {
 		return
 	}
 	//for _, param := range conf.Params() {
-	//	t.Log(param.String())
+	//	t.Log(param.string())
 	//}
 	servers := conf.QueryAll(nginx.TypeServer, true, "server_name:^.*com")
 	for _, server := range servers {
 		fmt.Printf("server: server_name %s\n", server.Query(nginx.TypeKey, false, "server_name").(*nginx.Key).Value)
 		for _, parser := range server.(*nginx.Server).Params() {
-			caches := nginx.NewCaches()
-			fmt.Println(parser.String(&caches))
+			//caches := nginx.NewCaches()
+			//fmt.Println(parser.string(&caches))
+			fmt.Println(parser.String())
 		}
 	}
 
 	//kw := nginx.NewKeyWords(nginx.TypeEvents, "", "", false, true)
 	//event := conf.QueryByKeywords(kw).(*nginx.Events)
 	//for _, param := range event.Params() {
-	//	t.Log(param.String())
+	//	t.Log(param.string())
 	//}
 
 	//http := nginx.GetHTTP(conf)
 	//for _, param := range http.Params() {
-	//	t.Log(param.String())
+	//	t.Log(param.string())
 	//}
 }

@@ -109,6 +109,10 @@ type LogConfig struct {
 	Level  logger.LogLevel `yaml:"level"`
 }
 
+func (c LogConfig) IsDebugLvl() bool {
+	return c.Level >= logger.DebugLevel
+}
+
 // usage, 重新定义flag.Usage 函数，为bifrost帮助信息提供版本信息及命令行工具传参信息
 func usage() {
 	_, _ = fmt.Fprintf(os.Stdout, `bifrost version: %s

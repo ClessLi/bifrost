@@ -175,15 +175,20 @@ func (i *Include) Size(_ Order) int {
 	return 0
 }
 
-func (i *Include) String(caches *Caches) []string {
+func (i Include) String() []string {
+	caches := NewCaches()
+	return i.string(&caches, 0)
+}
+
+func (i *Include) string(caches *Caches, deep int) []string {
 	var strs []string
 	// 暂取消include对象自身信息
-	//strs = append(strs, i.Comment.String()[0])
+	//strs = append(strs, i.Comment.string()[0])
 	for _, child := range i.Children {
-		strs = append(strs, child.String(caches)...)
+		strs = append(strs, child.string(caches, deep)...)
 	}
 	// 暂取消include对象自身信息
-	//strs = append(strs, "#End"+i.Comment.String()[0])
+	//strs = append(strs, "#End"+i.Comment.string()[0])
 
 	return strs
 }
@@ -220,12 +225,12 @@ func (i *Include) initLoad(caches *Caches) error {
 	return nil
 }
 
-func (i *Include) dump(configPath string, caches *Caches) (map[string][]string, error) {
+func (i *Include) dump(configPath string, caches *Caches, deep int) (map[string][]string, error) {
 	dumps := make(map[string][]string)
 	for _, child := range i.Children {
 		conf, ok := child.(*Config)
 		if ok {
-			newDumps, err := conf.dump(configPath, caches)
+			newDumps, err := conf.dump(configPath, caches, deep)
 			//err := Save(child.(*Config))
 			if err != nil && err != IsInCaches {
 				return nil, err
@@ -243,7 +248,7 @@ func (i *Include) dump(configPath string, caches *Caches) (map[string][]string, 
 		}
 	}
 
-	dumps[configPath] = i.Key.String(caches)
+	dumps[configPath] = i.Key.string(caches, deep)
 	return dumps, nil
 }
 

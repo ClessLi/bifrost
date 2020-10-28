@@ -29,7 +29,7 @@ type Context interface {
 	//Dict() map[string]interface{}
 	//UnmarshalToJSON(b []byte) error
 	//BumpChildDepth(int)
-	dump(string, *Caches) (map[string][]string, error) //TODO: 优化将dumps数据string切片换为byte切片，用于将数据直接解析给缓存
+	dump(string, *Caches, int) (map[string][]string, error) //TODO: 优化将dumps数据string切片换为byte切片，用于将数据直接解析给缓存
 	List() (Caches, error)
 }
 
@@ -300,59 +300,67 @@ func (c *BasicContext) subQuery(kw Keywords) Parser {
 	return nil
 }
 
-func (c *BasicContext) String(caches *Caches) []string {
-	ret := make([]string, 0)
+func (c BasicContext) String() []string {
+	caches := NewCaches()
+	return c.string(&caches, 0)
+}
 
-	contextTitle := c.getTitle()
+func (c *BasicContext) string(caches *Caches, deep int) []string {
+	ret := make([]string, 0)
+	ind := strings.Repeat(INDENT, deep)
+
+	contextTitle := ind + c.getTitle()
 
 	ret = append(ret, contextTitle)
 
 	for _, child := range c.Children {
 		switch child.(type) {
 		case *Key:
-			ret = append(ret, INDENT+child.String(caches)[0])
+			ret = append(ret, child.string(caches, deep+1)[0])
 		case *Comment:
 			if child.(*Comment).Inline && len(ret) >= 1 {
-				ret[len(ret)-1] = strings.TrimRight(ret[len(ret)-1], "\n") + "  " + child.String(caches)[0]
+				ret[len(ret)-1] = strings.TrimRight(ret[len(ret)-1], "\n") + "  " + child.String()[0]
 			} else {
-				ret = append(ret, INDENT+child.String(caches)[0])
+				ret = append(ret, child.string(caches, deep+1)[0])
 			}
 		case Context:
-			strs := child.String(caches)
-			for _, str := range strs {
-				ret = append(ret, INDENT+str)
-			}
+			strs := child.string(caches, deep+1)
+			//for _, str := range strs {
+			//	ret = append(ret, INDENT+str)
+			//}
+			ret = append(ret, strs...)
 		default:
-			str := child.String(caches)
+			str := child.string(caches, deep+1)
 			if str != nil {
 				ret = append(ret, str...)
 			}
 		}
 	}
 	ret[len(ret)-1] = RegEndWithCR.ReplaceAllString(ret[len(ret)-1], "}\n")
-	ret = append(ret, "}\n")
+	ret = append(ret, ind+"}\n")
 
 	return ret
 }
 
-func (c *BasicContext) dump(configPath string, caches *Caches) (map[string][]string, error) {
+func (c *BasicContext) dump(configPath string, caches *Caches, deep int) (map[string][]string, error) {
 	dumps := make(map[string][]string)
 	dmp := make([]string, 0)
-	contextTitle := c.getTitle()
+	ind := strings.Repeat(INDENT, deep)
+	contextTitle := ind + c.getTitle()
 	dmp = append(dmp, contextTitle)
 
 	for _, child := range c.Children {
 		switch child.(type) {
 		case *Key:
-			dmp = append(dmp, INDENT+child.String(caches)[0])
+			dmp = append(dmp, child.string(caches, deep+1)[0])
 		case *Comment:
 			if child.(*Comment).Inline && len(dmp) >= 1 {
-				dmp[len(dmp)-1] = strings.TrimRight(dmp[len(dmp)-1], "\n") + "  " + child.String(caches)[0]
+				dmp[len(dmp)-1] = strings.TrimRight(dmp[len(dmp)-1], "\n") + "  " + child.String()[0]
 			} else {
-				dmp = append(dmp, INDENT+child.String(caches)[0])
+				dmp = append(dmp, child.string(caches, deep+1)[0])
 			}
 		case Context:
-			newDumps, err := child.(Context).dump(configPath, caches)
+			newDumps, err := child.(Context).dump(configPath, caches, deep+1)
 			if err != nil {
 				return nil, err
 			}
@@ -365,19 +373,20 @@ func (c *BasicContext) dump(configPath string, caches *Caches) (map[string][]str
 			}
 
 			if d, ok := newDumps[configPath]; ok {
-				for _, line := range d {
-					dmp = append(dmp, INDENT+line)
-				}
+				//for _, line := range d {
+				//	dmp = append(dmp, INDENT+line)
+				//}
+				dmp = append(dmp, d...)
 			}
 		default:
-			lines := child.String(caches)
+			lines := child.string(caches, deep+1)
 			if lines != nil {
 				dmp = append(dmp, lines...)
 			}
 		}
 	}
 	dmp[len(dmp)-1] = RegEndWithCR.ReplaceAllString(dmp[len(dmp)-1], "}\n")
-	dmp = append(dmp, "}\n")
+	dmp = append(dmp, ind+"}\n")
 
 	dumps[configPath] = dmp
 

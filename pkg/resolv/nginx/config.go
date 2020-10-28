@@ -1,11 +1,14 @@
 package nginx
 
-import "io/ioutil"
+import (
+	"io/ioutil"
+)
 
 type Order int
 
 type Parser interface {
-	String(*Caches) []string
+	String() []string
+	string(*Caches, int) []string
 	Query(parserType, bool, ...string) Parser
 	QueryByKeywords(Keywords) Parser
 	QueryAll(parserType, bool, ...string) []Parser
@@ -21,7 +24,7 @@ type Config struct {
 
 func (c *Config) Save() (Caches, error) {
 	caches := NewCaches()
-	dumps, derr := c.dump(c.Value, &caches)
+	dumps, derr := c.dump(c.Value, &caches, 0)
 	if derr != nil {
 		return nil, derr
 	}
@@ -50,7 +53,7 @@ func (c *Config) Save() (Caches, error) {
 
 func (c Config) getCaches() (Caches, error) {
 	caches := NewCaches()
-	dumps, derr := c.dump(c.Value, &caches)
+	dumps, derr := c.dump(c.Value, &caches, 0)
 	if derr != nil {
 		return nil, derr
 	}
@@ -69,7 +72,12 @@ func (c Config) getCaches() (Caches, error) {
 	return caches, nil
 }
 
-func (c *Config) String(caches *Caches) []string {
+func (c Config) String() []string {
+	caches := NewCaches()
+	return c.string(&caches, 0)
+}
+
+func (c *Config) string(caches *Caches, deep int) []string {
 	if _, ok := (*caches)[c.Value]; ok {
 		return nil
 	}
@@ -78,9 +86,9 @@ func (c *Config) String(caches *Caches) []string {
 	for _, child := range c.Children {
 		switch child.(type) {
 		case *Key, *Comment:
-			ret = append(ret, child.String(caches)[0])
+			ret = append(ret, child.string(caches, deep)[0])
 		case Context:
-			ret = append(ret, child.String(caches)...)
+			ret = append(ret, child.string(caches, deep)...)
 		}
 	}
 
@@ -93,7 +101,7 @@ func (c *Config) String(caches *Caches) []string {
 	return ret
 }
 
-func (c *Config) dump(_ string, caches *Caches) (map[string][]string, error) {
+func (c *Config) dump(_ string, caches *Caches, deep int) (map[string][]string, error) {
 	dumps := make(map[string][]string)
 	if caches.IsCached(c.Value) {
 		return dumps, IsInCaches
@@ -110,10 +118,10 @@ func (c *Config) dump(_ string, caches *Caches) (map[string][]string, error) {
 	for _, child := range c.Children {
 		switch child.(type) {
 		case *Key, *Comment:
-			dmp = append(dmp, child.String(caches)...)
+			dmp = append(dmp, child.string(caches, deep)...)
 		case Context:
 
-			newDumps, err := child.(Context).dump(c.Value, caches)
+			newDumps, err := child.(Context).dump(c.Value, caches, deep)
 
 			if err != nil && err != IsInCaches {
 				return nil, err
@@ -132,7 +140,7 @@ func (c *Config) dump(_ string, caches *Caches) (map[string][]string, error) {
 				dmp = append(dmp, d...)
 			}
 		default:
-			lines := child.String(caches)
+			lines := child.string(caches, deep)
 			if lines != nil {
 				dmp = append(dmp, lines...)
 			}

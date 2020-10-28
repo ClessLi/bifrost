@@ -2,6 +2,7 @@ package nginx
 
 import (
 	"regexp"
+	"strings"
 )
 
 type Comment struct {
@@ -9,8 +10,12 @@ type Comment struct {
 	Inline   bool   `json:"inline"`
 }
 
-func (cmt *Comment) String(_ *Caches) []string {
-	return []string{"# " + cmt.Comments + "\n"}
+func (cmt Comment) String() []string {
+	return cmt.string(nil, 0)
+}
+
+func (cmt *Comment) string(_ *Caches, deep int) []string {
+	return []string{strings.Repeat(INDENT, deep) + "# " + cmt.Comments + "\n"}
 }
 
 func (cmt *Comment) QueryAll(pType parserType, isRec bool, values ...string) []Parser {

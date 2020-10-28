@@ -35,7 +35,8 @@ func TestGetSortServers(t *testing.T) {
 	//servers := resolv.GetHTTPServers(conf, resolv.ServerName)
 	//servers := statistics.GetHTTPServers(conf, statistics.ServerName)
 	for _, server := range servers {
-		caches := nginx.NewCaches()
-		t.Log(server.String(&caches))
+		//caches := nginx.NewCaches()
+		//t.Log(server.string(&caches))
+		t.Log(server.String())
 	}
 }

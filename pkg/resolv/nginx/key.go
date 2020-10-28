@@ -2,6 +2,7 @@ package nginx
 
 import (
 	"regexp"
+	"strings"
 )
 
 type Key struct {
@@ -9,13 +10,18 @@ type Key struct {
 	Value string `json:"value"`
 }
 
-func (k *Key) String(_ *Caches) []string {
+func (k Key) String() []string {
+	return k.string(nil, 0)
+}
+
+func (k *Key) string(_ *Caches, deep int) []string {
+	ind := strings.Repeat(INDENT, deep)
 	if k.Value == "" {
-		return []string{k.Name + ";\n"}
+		return []string{ind + k.Name + ";\n"}
 		//} else if !inString(k.Value, "\"") && (inString(k.Value, ";") || inString(k.Value, "#")) {
 		//	return []string{k.Name + " \"" + k.Value + "\";\n"}
 	}
-	return []string{k.Name + " " + k.Value + ";\n"}
+	return []string{ind + k.Name + " " + k.Value + ";\n"}
 }
 
 func (k *Key) QueryAll(pType parserType, isRec bool, values ...string) []Parser {

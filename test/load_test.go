@@ -22,8 +22,9 @@ func TestLoad(t *testing.T) {
 		t.Log(err)
 		return
 	}
-	caches = nginx.NewCaches()
-	t.Log(conf.String(&caches))
+	//caches = nginx.NewCaches()
+	//t.Log(conf.string(&caches))
+	t.Log(conf.String())
 }
 
 func TestLoadServers(t *testing.T) {
@@ -41,8 +42,9 @@ func TestLoadServers(t *testing.T) {
 	t.Log(conf.Servers())
 
 	for _, server := range conf.Servers() {
-		caches := nginx.NewCaches()
-		t.Log(server.String(&caches))
+		//caches := nginx.NewCaches()
+		//t.Log(server.string(&caches))
+		t.Log(server.String())
 	}
 }
 
@@ -58,8 +60,9 @@ func TestLoadServer(t *testing.T) {
 		t.Log(err)
 		return
 	}
-	caches = nginx.NewCaches()
-	t.Log(conf.Server().String(&caches))
+	//caches = nginx.NewCaches()
+	//t.Log(conf.Server().string(&caches))
+	t.Log(conf.Server().String())
 
 }
 
@@ -107,8 +110,9 @@ func TestConfig_UnmarshalJSON(t *testing.T) {
 		t.Log(err)
 	} else {
 		t.Log(conf)
-		caches := nginx.NewCaches()
-		t.Log(conf.String(&caches))
+		//caches := nginx.NewCaches()
+		//t.Log(conf.string(&caches))
+		t.Log(conf.String())
 	}
 
 }

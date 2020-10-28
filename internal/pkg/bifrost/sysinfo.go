@@ -11,6 +11,7 @@ import (
 )
 
 type systemInfo struct {
+	// TODO: 添加web服务版本信息、web服务状态信息(README.md需调整相关接口文档)
 	OS             string `json:"system"`
 	Time           string `json:"time"`
 	Cpu            string `json:"cpu"`

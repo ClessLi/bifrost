@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
+	"strings"
 )
 
 // Run, bifrost启动函数
@@ -369,12 +370,16 @@ func view(si *ServerInfo, c *gin.Context) (h gin.H, s int) {
 		} else {
 			status = "success"
 			// 修改string切片为string
-			var str string
+			// @ClessLi 多次字符串+= 内存开销过大，决定用strings.Join([]string, string)一次性拼接
+			/*var str string
 			caches := nginx.NewCaches()
-			for _, v := range si.nginxConfig.String(&caches) {
+			for _, v := range si.nginxConfig.string(&caches) {
 				str += v
 			}
-			message = str
+			message = str*/
+			//caches := nginx.NewCaches()
+			//message = strings.Join(si.nginxConfig.string(&caches), "")
+			message = strings.Join(si.nginxConfig.String(), "")
 			Log(DEBUG, "[%s] %s", si.Name, message)
 		}
 	case "json":

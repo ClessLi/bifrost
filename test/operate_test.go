@@ -101,6 +101,7 @@ func TestOperate(t *testing.T) {
 		t.Log(rmeErr)
 	}
 
-	caches := nginx.NewCaches()
-	fmt.Println(conf.String(&caches))
+	//caches := nginx.NewCaches()
+	//fmt.Println(conf.string(&caches))
+	fmt.Println(conf.String())
 }

@@ -43,8 +43,10 @@ func TestVerifyAndSave(t *testing.T) {
 	tmpConf := conf
 
 	conf = nginx.NewConf(nil, "./config_test/nginx.conf")
-	caches = nginx.NewCaches()
-	t.Log(tmpConf.String(&caches))
-	caches = nginx.NewCaches()
-	t.Log(conf.String(&caches))
+	//caches = nginx.NewCaches()
+	//t.Log(tmpConf.string(&caches))
+	t.Log(tmpConf.String())
+	//caches = nginx.NewCaches()
+	//t.Log(conf.string(&caches))
+	t.Log(conf.String())
 }
