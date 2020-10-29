@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strconv"
 	"syscall"
 	"time"
 )
@@ -23,7 +22,7 @@ func Start() (err error) {
 		Log(DEBUG, "Running Main Process")
 
 		// 判断是否已存在子进程
-		if pid, pidErr := getPid(); pidErr == nil {
+		if pid, pidErr := getPid(pidFile); pidErr == nil {
 
 			process, procErr := os.FindProcess(pid)
 			if procErr != nil {
@@ -57,7 +56,7 @@ func Start() (err error) {
 		Log(DEBUG, "Running Sub Process")
 
 		// 关闭进程后清理pid文件
-		defer rmPidFile()
+		defer rmPidFile(pidFile)
 		// 进程结束前操作
 		defer func() {
 			// 捕获panic
@@ -94,7 +93,7 @@ func Start() (err error) {
 func Stop() error {
 
 	// 判断bifrost进程是否存在
-	process, procErr := getProc()
+	process, procErr := getProc(pidFile)
 	if procErr != nil {
 		Log(ERROR, procErr.Error())
 		return procErr
@@ -115,49 +114,6 @@ func Stop() error {
 	return nil
 }
 
-func getProc() (*os.Process, error) {
-	pid, pidErr := getPid()
-	if pidErr != nil {
-		return nil, pidErr
-	}
-	return os.FindProcess(pid)
-}
-
-func rmPidFile() {
-	rmPidFileErr := os.Remove(pidFile)
-	if rmPidFileErr != nil {
-		Log(ERROR, rmPidFileErr.Error())
-	}
-	Log(NOTICE, "bifrost.pid has been removed.")
-}
-
-// getPid, 查询pid文件并返回pid
-// 返回值:
-//     pid
-//     错误
-func getPid() (int, error) {
-	// 判断pid文件是否存在
-	if _, err := os.Stat(pidFile); err == nil || os.IsExist(err) { // 存在
-		// 读取pid文件
-		pidBytes, readPidErr := readFile(pidFile)
-		if readPidErr != nil {
-			Log(ERROR, readPidErr.Error())
-			return -1, readPidErr
-		}
-
-		// 转码pid
-		pid, toIntErr := strconv.Atoi(string(pidBytes))
-		if toIntErr != nil {
-			Log(ERROR, toIntErr.Error())
-			return -1, toIntErr
-		}
-
-		return pid, nil
-	} else { // 不存在
-		return -1, procStatusNotRunning
-	}
-}
-
 // Restart, 守护进程 restart 方法函数
 // 返回值:
 //     错误
@@ -170,7 +126,7 @@ func Restart() error {
 		}
 
 		for i := 0; i < 300; i++ {
-			_, procErr := getProc()
+			_, procErr := getProc(pidFile)
 			if procErr != nil {
 				break
 			}
@@ -191,7 +147,7 @@ func Restart() error {
 // 返回值:
 //     错误
 func Status() (int, error) {
-	pid, pidErr := getPid()
+	pid, pidErr := getPid(pidFile)
 	if pidErr != nil {
 		return -1, pidErr
 	}

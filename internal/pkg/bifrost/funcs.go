@@ -1,10 +1,12 @@
 package bifrost
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/apsdehal/go-logger"
 	"io/ioutil"
 	"os"
+	"strconv"
 )
 
 // readFile, 读取文件函数
@@ -49,4 +51,50 @@ func PathExists(path string) (bool, error) {
 //     message: 需记录的日志信息字符串
 func Log(level logger.LogLevel, message string, a ...interface{}) {
 	myLogger.Log(level, fmt.Sprintf(message, a...))
+}
+
+func getProc(path string) (*os.Process, error) {
+	pid, pidErr := getPid(path)
+	if pidErr != nil {
+		return nil, pidErr
+	}
+	return os.FindProcess(pid)
+}
+
+func rmPidFile(path string) {
+	rmPidFileErr := os.Remove(path)
+	if rmPidFileErr != nil {
+		Log(ERROR, rmPidFileErr.Error())
+	}
+	Log(NOTICE, "bifrost.pid has been removed.")
+}
+
+// getPid, 查询pid文件并返回pid
+// 返回值:
+//     pid
+//     错误
+func getPid(path string) (int, error) {
+	// 判断pid文件是否存在
+	if _, err := os.Stat(path); err == nil || os.IsExist(err) { // 存在
+		// 读取pid文件
+		pidBytes, readPidErr := readFile(path)
+		if readPidErr != nil {
+			Log(ERROR, readPidErr.Error())
+			return -1, readPidErr
+		}
+
+		// 去除pid后边的换行符
+		pidBytes = bytes.TrimRight(pidBytes, "\n")
+
+		// 转码pid
+		pid, toIntErr := strconv.Atoi(string(pidBytes))
+		if toIntErr != nil {
+			Log(ERROR, toIntErr.Error())
+			return -1, toIntErr
+		}
+
+		return pid, nil
+	} else { // 不存在
+		return -1, procStatusNotRunning
+	}
 }

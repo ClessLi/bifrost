@@ -7,6 +7,7 @@ package bifrost
 import (
 	"flag"
 	"fmt"
+	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
 	"github.com/apsdehal/go-logger"
 	"github.com/shirou/gopsutil/host"
 	"gopkg.in/yaml.v2"
@@ -23,7 +24,7 @@ var (
 	//confBackupDelay = flag.Duration("b", 10, "how many minutes `delay` for backup nginx config")
 
 	// bifrost配置
-	BifrostConf  *Config
+	BifrostConf  = &Config{}
 	authDBConfig *AuthDBConfig
 	authConfig   *AuthConfig
 
@@ -41,10 +42,11 @@ var (
 	pidFile     string
 
 	// 错误变量
-	procStatusNotRunning = fmt.Errorf("bifrost is not running")
+	procStatusNotRunning = fmt.Errorf("process is not running")
 
 	// 初始化systemInfo监控对象
-	si = &systemInfo{}
+	si           = &systemInfo{}
+	svrPidFileKW = nginx.NewKeyWords(nginx.TypeKey, "pid", "*", false, false)
 
 	// bifrost健康状态
 	isHealthy = true
@@ -63,7 +65,7 @@ const (
 	DEBUG    = logger.DebugLevel
 
 	// 版本号
-	VERSION = "v1.0.0-alpha.7"
+	VERSION = "v1.0.0-alpha.8"
 
 	// Web服务类型
 	NGINX WebServerType = "nginx"
@@ -110,7 +112,7 @@ type LogConfig struct {
 }
 
 func (c LogConfig) IsDebugLvl() bool {
-	return c.Level >= logger.DebugLevel
+	return c.Level >= DEBUG
 }
 
 // usage, 重新定义flag.Usage 函数，为bifrost帮助信息提供版本信息及命令行工具传参信息
@@ -190,7 +192,6 @@ func init() {
 	}
 
 	// 加载bifrost配置
-	BifrostConf = &Config{}
 	yamlErr := yaml.Unmarshal(confData, BifrostConf)
 	if yamlErr != nil {
 		fmt.Println(yamlErr)

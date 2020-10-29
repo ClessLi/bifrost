@@ -1,32 +1,143 @@
 package bifrost
 
 import (
+	"bytes"
 	"fmt"
+	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
 	"github.com/gin-gonic/gin"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/disk"
 	"github.com/shirou/gopsutil/mem"
 	"net/http"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 	"time"
 )
 
 type systemInfo struct {
 	// TODO: 添加web服务版本信息、web服务状态信息(README.md需调整相关接口文档)
-	OS             string `json:"system"`
-	Time           string `json:"time"`
-	Cpu            string `json:"cpu"`
-	Mem            string `json:"mem"`
-	Disk           string `json:"disk"`
-	BifrostVersion string `json:"bifrost_version"`
+	OS             string   `json:"system"`
+	Time           string   `json:"time"`
+	Cpu            string   `json:"cpu"`
+	Mem            string   `json:"mem"`
+	Disk           string   `json:"disk"`
+	ServersStatus  []string `json:"servers_status"`
+	ServersVersion []string `json:"servers_version"`
+	BifrostVersion string   `json:"bifrost_version"`
 }
 
 func monitoring(signal chan int) {
+	svrsNum := len(BifrostConf.WebServerInfo.Servers)
+	si.ServersStatus = make([]string, svrsNum)
+	si.ServersVersion = make([]string, svrsNum)
+	checkPass := make([]bool, svrsNum)
+	svrWSs := make([]string, svrsNum)
+	for i := 0; i < svrsNum; i++ {
+		if BifrostConf.WebServerInfo.Servers[i].nginxConfig != nil && !checkPass[i] {
+			svrBinAbs, absErr := filepath.Abs(BifrostConf.WebServerInfo.Servers[i].VerifyExecPath)
+			if absErr != nil {
+				Log(WARN, "[%s] get web server bin dir err: %s", BifrostConf.WebServerInfo.Servers[i].Name, absErr)
+				checkPass[i] = true
+				continue
+
+			}
+			//svrWS, wsErr := filepath.Rel(filepath.Dir(svrBinAbs),"..")
+			svrWS, wsErr := filepath.Abs(filepath.Join(filepath.Dir(svrBinAbs), ".."))
+			if wsErr != nil {
+				Log(WARN, "[%s] get web server workspace err: %s", BifrostConf.WebServerInfo.Servers[i].Name, wsErr)
+				checkPass[i] = true
+				continue
+			}
+			svrWSs[i] = svrWS
+			svrVersion, vErr := func() (string, error) {
+				cmd := exec.Command(svrBinAbs, "-v")
+				//cmd.Stderr = Stdoutf
+				stdoutPipe, pipeErr := cmd.StderrPipe()
+				if pipeErr != nil {
+					return "", pipeErr
+				}
+
+				startErr := cmd.Start()
+				if startErr != nil {
+					return "", startErr
+				}
+
+				buff := bytes.NewBuffer([]byte{})
+				_, rbErr := buff.ReadFrom(stdoutPipe)
+				if rbErr != nil {
+					return "", rbErr
+				}
+
+				return strings.TrimRight(buff.String(), "\n"), cmd.Wait()
+			}()
+
+			if vErr != nil {
+				Log(WARN, "[%s] web server version check error: %s", BifrostConf.WebServerInfo.Servers[i].Name, vErr)
+			} else {
+				si.ServersVersion[i] = svrVersion
+			}
+
+		}
+	}
+
+	go func() {
+		for {
+			for i := 0; i < svrsNum; i++ {
+				svrPidFilePath := "logs/nginx.pid"
+				svrPidFileKey, ok := BifrostConf.WebServerInfo.Servers[i].nginxConfig.QueryByKeywords(svrPidFileKW).(*nginx.Key)
+				if ok && svrPidFileKey != nil {
+					svrPidFilePath = svrPidFileKey.Value
+				}
+
+				svrPidFilePathAbs := svrPidFilePath
+				if !filepath.IsAbs(svrPidFilePath) {
+					var pidErr error
+					svrPidFilePathAbs, pidErr = filepath.Abs(filepath.Join(svrWSs[i], svrPidFilePath))
+					if pidErr != nil {
+						if si.ServersStatus[i] != "unknow" {
+							Log(WARN, "[%s] get web server pid file path failed: %s", BifrostConf.WebServerInfo.Servers[i].Name, pidErr)
+						}
+						si.ServersStatus[i] = "unknow"
+						continue
+					}
+				}
+
+				svrPid, gPidErr := getPid(svrPidFilePathAbs)
+				if gPidErr != nil {
+					if si.ServersStatus[i] != "abnormal" {
+						Log(WARN, "[%s] something wrong with web server: %s", BifrostConf.WebServerInfo.Servers[i].Name, gPidErr)
+					}
+					si.ServersStatus[i] = "abnormal"
+					continue
+				}
+
+				_, procErr := os.FindProcess(svrPid)
+				if procErr != nil {
+					if si.ServersStatus[i] != "abnormal" {
+						Log(WARN, "[%s] something wrong with web server: %s", BifrostConf.WebServerInfo.Servers[i].Name, gPidErr)
+					}
+					si.ServersStatus[i] = "abnormal"
+					continue
+				}
+
+				if si.ServersStatus[i] != "normal" {
+					Log(INFO, "[%s] web server <PID: %d> is running.", BifrostConf.WebServerInfo.Servers[i].Name, svrPid)
+				}
+				si.ServersStatus[i] = "normal"
+			}
+
+			time.Sleep(1 * time.Minute)
+		}
+	}()
+
 	var sysErr error
 	for sysErr == nil {
 
 		select {
 		case s := <-signal: // 获取管道传入信号
-			if s == 9 { // 为9时，停止备份
+			if s == 9 { // 为9时，停止监控
 				Log(NOTICE, "monitor has been finished.")
 				return
 			}
