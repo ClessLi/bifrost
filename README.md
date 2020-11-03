@@ -481,11 +481,13 @@ json返回示例
 {
   "message": {
     "system": "centos 7.4.1708",
-    "time": "2020/06/24 15:39:52",
-    "cpu": "0.10",
-    "mem": "61.41",
-    "disk": "53.13",
-    "bifrost_version": "v1.0.0-alpha.4"
+    "time": "2020/10/29 17:32:27",
+    "cpu": "2.15",
+    "mem": "66.16",
+    "disk": "71.97",
+    "servers_status": ["normal", "abnormal"],
+    "servers_version": ["nginx version: openresty/1.13.6.2", "nginx version: openresty/1.13.6.2"],
+    "bifrost_version": "v1.0.0-alpha.8"
   },
   "status": "success"
 }

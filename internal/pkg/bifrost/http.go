@@ -114,8 +114,7 @@ func Run() {
 //     bakChans: 备份管道指针切片指针
 //     autoReloadChans: 自动热加载管道指针切片指针
 func nginxConfAPIInit(router *gin.Engine, serverInfo *ServerInfo, chansLen *int, bakChans *[]*chan int, autoReloadChans *[]*chan int) {
-
-	//fmt.Println("初始化", serverInfo.Name, "web服务相关接口。。。")
+	Log(DEBUG, "[%s] 初始化web服务相关接口。。。", serverInfo.Name)
 	loadErr := serverInfo.ngLoad()
 	if loadErr != nil {
 		Log(ERROR, "[%s] load config error: %s", serverInfo.Name, loadErr)
@@ -129,41 +128,45 @@ func nginxConfAPIInit(router *gin.Engine, serverInfo *ServerInfo, chansLen *int,
 	//	return
 	//}
 	// 检查nginx配置是否能被正常解析为json
-	//fmt.Println("校验nginx配置。。。")
+	Log(DEBUG, "[%s] 校验nginx配置。。。", serverInfo.Name)
 	_, jerr := json.Marshal(serverInfo.nginxConfig)
 	if jerr != nil {
 		Log(CRITICAL, "[%s] coroutine has been stoped. Cased by '%s'", serverInfo.Name, jerr)
 		*chansLen++
 		return
 	}
-	//fmt.Println("获取接口URI")
 	apiURI := serverInfo.BaseURI
-	//fmt.Println("生成统计接口URI")
+	Log(DEBUG, "[%s] 获取接口URI: %s", serverInfo.Name, apiURI)
 	statisticsURI := fmt.Sprintf("%s/statistics", apiURI)
+	Log(DEBUG, "[%s] 生成统计接口URI: %s", serverInfo.Name, statisticsURI)
+	accessLogMonitorURI := fmt.Sprintf("%s/access_log", apiURI)
+	Log(DEBUG, "[%s] access日志监看接口URI: %s", serverInfo.Name, accessLogMonitorURI)
+	errorLogMonitorURI := fmt.Sprintf("%s/error_log", apiURI)
+	Log(DEBUG, "[%s] error日志监看接口URI: %s", serverInfo.Name, errorLogMonitorURI)
 
-	//fmt.Println("载入备份协程")
 	go serverInfo.Bak(*(*bakChans)[*chansLen])
-	//fmt.Println("载入自动更新配置协程")
+	Log(DEBUG, "[%s] 载入备份协程", serverInfo.Name)
 	go serverInfo.AutoReload(*(*autoReloadChans)[*chansLen])
+	Log(DEBUG, "[%s] 载入自动更新配置协程", serverInfo.Name)
 
 	*chansLen++
 
 	// view
-	//fmt.Println("载入查询接口")
+	Log(DEBUG, "[%s] 载入查询接口", serverInfo.Name)
 	router.GET(apiURI, func(c *gin.Context) {
 		h, status := view(serverInfo, c)
 		c.JSON(status, &h)
 	})
 
 	// update
-	//fmt.Println("载入更新接口")
+	Log(DEBUG, "[%s] 载入更新接口", serverInfo.Name)
 	router.POST(apiURI, func(c *gin.Context) {
 		h, status := update(serverInfo, c)
 		c.JSON(status, &h)
 	})
 
 	// statistics
-	//fmt.Println("载入统计接口")
+	Log(DEBUG, "[%s] 载入统计接口", serverInfo.Name)
 	router.GET(statisticsURI, func(c *gin.Context) {
 		h, status := statisticsView(serverInfo, c)
 		c.JSON(status, &h)
