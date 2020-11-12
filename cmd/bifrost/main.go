@@ -9,18 +9,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ClessLi/bifrost/internal/pkg/bifrost"
-	"net/http"
-	_ "net/http/pprof"
 	"os"
 )
 
 func main() {
-	if bifrost.BifrostConf.IsDebugLvl() {
-		go func() {
-			err := http.ListenAndServe("0.0.0.0:12378", nil)
-			fmt.Println(err)
-		}()
-	}
 
 	defer bifrost.Logf.Close()
 	defer bifrost.Stdoutf.Close()
@@ -30,19 +22,19 @@ func main() {
 	case "":
 		err = bifrost.Start()
 		if err == nil {
-			fmt.Println("bifrost is stopped")
 			os.Exit(0)
 		}
 	case "stop":
 		err = bifrost.Stop()
 		if err == nil {
-			fmt.Println("bifrost is finished")
+			if os.Getppid() != 1 {
+				fmt.Println("bifrost is stopping...")
+			}
 			os.Exit(0)
 		}
 	case "restart":
 		err = bifrost.Restart()
 		if err == nil {
-			fmt.Println("bifrost was restarted, and it's stopped, now.")
 			os.Exit(0)
 		}
 	case "status":

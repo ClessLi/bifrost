@@ -24,11 +24,11 @@ func TestFilter(t *testing.T) {
 
 	//http := nginx.GetHTTP(conf)
 	//httpServers := http.QueryAll(nginx.TypeServer, false, "server_name:com")
-	//t.Log("Http Servers")
+	//t.Log("Http ServiceInfos")
 	//for _, server := range httpServers {
 	//	t.Log(server.string())
 	//}
-	t.Log("All Servers")
+	t.Log("All ServiceInfos")
 	allServers := conf.QueryAll(nginx.TypeServer, true, "server_name:^open.*$", "listen:^80$")
 	for _, server := range allServers {
 		//caches := nginx.NewCaches()

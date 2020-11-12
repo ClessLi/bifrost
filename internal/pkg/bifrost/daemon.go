@@ -3,6 +3,8 @@ package bifrost
 import (
 	"fmt"
 	"io/ioutil"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -47,13 +49,16 @@ func Start() (err error) {
 		_, procErr := os.StartProcess(exec, args, &os.ProcAttr{
 			Files: []*os.File{os.Stdin, os.Stdout, os.Stderr},
 		})
-		if procErr != nil {
-			return procErr
-		}
+		return procErr
 
-		return nil
 	} else { // 子进程时
 		Log(DEBUG, "Running Sub Process")
+		if BifrostConf.IsDebugLvl() {
+			go func() {
+				err := http.ListenAndServe("0.0.0.0:12378", nil)
+				fmt.Println(err)
+			}()
+		}
 
 		// 关闭进程后清理pid文件
 		defer rmPidFile(pidFile)
@@ -65,7 +70,7 @@ func Start() (err error) {
 				Log(CRITICAL, err.Error())
 
 			}
-			Log(NOTICE, "bifrost is finished")
+			//Log(NOTICE, "bifrost is finished")
 		}()
 
 		// 执行bifrost进程
@@ -80,10 +85,10 @@ func Start() (err error) {
 
 		// 启动bifrost进程
 		Log(NOTICE, "bifrost <PID %d> is running", pid)
-		Run()
-		stat := fmt.Sprintf("bifrost <PID %d> is finished", pid)
-		Log(NOTICE, stat)
-		return fmt.Errorf(stat)
+		//Run()
+		serviceRun()
+		Log(NOTICE, "bifrost <PID %d> is finished", pid)
+		return nil
 	}
 }
 

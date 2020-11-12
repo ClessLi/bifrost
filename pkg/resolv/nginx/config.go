@@ -101,6 +101,23 @@ func (c *Config) string(caches *Caches, deep int) []string {
 	return ret
 }
 
+//func (c Config) Dump() (map[string][]byte, error) {
+//	caches := NewCaches()
+//	strDmps, err := c.dump("", &caches, 0)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	dumps := make(map[string][]byte)
+//	for path, strings := range strDmps {
+//		for _, s := range strings {
+//			dumps[path] = append(dumps[path], []byte(s)...)
+//		}
+//	}
+//
+//	return dumps, nil
+//}
+
 func (c *Config) dump(_ string, caches *Caches, deep int) (map[string][]string, error) {
 	dumps := make(map[string][]string)
 	if caches.IsCached(c.Value) {

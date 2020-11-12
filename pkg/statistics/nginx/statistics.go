@@ -10,7 +10,7 @@ import (
 //	if http == nil {
 //		return 0
 //	}
-//	return len(http.Servers())
+//	return len(http.ServiceInfos())
 //}
 
 func HTTPPorts(ctx nginx.Context) []int {
@@ -83,7 +83,7 @@ func HTTPServers(ctx nginx.Context) (int, map[string][]int) {
 //	if stream == nil {
 //		return 0
 //	}
-//	return len(stream.Servers())
+//	return len(stream.ServiceInfos())
 //}
 
 func StreamServers(ctx nginx.Context) (int, []int) {
