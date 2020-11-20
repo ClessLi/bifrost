@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func TestClientStatistics(t *testing.T) {
+func TestClientStatus(t *testing.T) {
 	authSvcAddr := "192.168.220.11:12320"
 	authConn, acErr := grpc.Dial(authSvcAddr, grpc.WithInsecure())
 	if acErr != nil {
@@ -39,7 +39,7 @@ func TestClientStatistics(t *testing.T) {
 		Token:   authResp.Token,
 		SvrName: "bifrost-test",
 	}
-	ret, err := opClient.ViewStatistics(context.Background(), &opReq)
+	ret, err := opClient.Status(context.Background(), &opReq)
 	if err != nil {
 		t.Fatal(err)
 		return
@@ -54,8 +54,8 @@ func TestClientStatistics(t *testing.T) {
 			return
 		}
 
-		// statistics
+		// status
 		t.Log(string(item.Ret))
-		// msg: '{"http_svrs_num":2,"http_svrs":{"localhost":[990,80]},"http_ports":[80,990],"stream_svrs_num":1,"stream_ports":[5510]}'
+		// status json data: '{"system":"centos 7.4.1708","time":"2020/11/12 10:15:55","cpu":"0.31","mem":"48.76","disk":"77.21","servers_status":["normal","abnormal"],"servers_version":["nginx version: openresty/1.13.6.2","nginx version: openresty/1.13.6.2"],"bifrost_version":"v1.0.1-alpha.1"}'
 	}
 }

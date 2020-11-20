@@ -1,4 +1,4 @@
-package bifrost
+package auth
 
 import (
 	"fmt"
@@ -53,9 +53,9 @@ func Start() (err error) {
 
 	} else { // 子进程时
 		Log(DEBUG, "Running Sub Process")
-		if BifrostConf.IsDebugLvl() {
+		if AuthConf.IsDebugLvl() {
 			go func() {
-				err := http.ListenAndServe("0.0.0.0:12378", nil)
+				err := http.ListenAndServe("0.0.0.0:12377", nil)
 				fmt.Println(err)
 			}()
 		}

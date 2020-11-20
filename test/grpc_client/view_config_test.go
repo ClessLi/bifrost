@@ -1,6 +1,7 @@
 package grpc_client
 
 import (
+	"github.com/ClessLi/bifrost/api/protobuf-spec/authpb"
 	"github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -9,6 +10,12 @@ import (
 )
 
 func TestClientVC(t *testing.T) {
+	authSvcAddr := "192.168.220.11:12320"
+	authConn, acErr := grpc.Dial(authSvcAddr, grpc.WithInsecure())
+	if acErr != nil {
+		panic("connect error")
+	}
+	defer authConn.Close()
 	serviceAddr := "192.168.220.11:12321"
 	conn, cStreamErr := grpc.Dial(serviceAddr, grpc.WithInsecure())
 	if cStreamErr != nil {
@@ -16,9 +23,9 @@ func TestClientVC(t *testing.T) {
 	}
 
 	defer conn.Close()
-	authClient := bifrostpb.NewAuthServiceClient(conn)
-	opClient := bifrostpb.NewOperationServiceClient(conn)
-	authReq := bifrostpb.AuthRequest{
+	authClient := authpb.NewAuthServiceClient(authConn)
+	opClient := bifrostpb.NewBifrostServiceClient(conn)
+	authReq := authpb.AuthRequest{
 		Username:  "heimdall",
 		Password:  "Bultgang",
 		Unexpired: false,
@@ -29,8 +36,8 @@ func TestClientVC(t *testing.T) {
 		return
 	}
 	opReq := bifrostpb.OperateRequest{
-		Token:    authResp.Token,
-		Location: "bifrost-test",
+		Token:   authResp.Token,
+		SvrName: "bifrost-test",
 	}
 
 	ret, err := opClient.ViewConfig(context.Background(), &opReq)

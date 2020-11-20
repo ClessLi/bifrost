@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+option go_package = "api/protobuf-spec/authpb";
+package authpb;
+
+service AuthService {
+  rpc Login(AuthRequest) returns (AuthResponse) {}
+  rpc Verify(VerifyRequest) returns (VerifyResponse) {}
+}
+
+message AuthRequest {
+  string Username = 1;
+  string Password = 2;
+  bool Unexpired = 3;
+}
+
+message AuthResponse {
+  string Token = 1;
+  string Err = 2;
+}
+
+message VerifyRequest {
+  string Token = 1;
+}
+
+message VerifyResponse {
+  bool Passed = 1;
+  string Err = 2;
+}

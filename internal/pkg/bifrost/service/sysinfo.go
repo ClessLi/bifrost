@@ -1,4 +1,4 @@
-package bifrost
+package service
 
 type systemInfo struct {
 	// DONE: 添加web服务版本信息、web服务状态信息(README.md需调整相关接口文档)
@@ -11,3 +11,5 @@ type systemInfo struct {
 	ServersVersion []string `json:"servers_version"`
 	BifrostVersion string   `json:"bifrost_version"`
 }
+
+var SysInfo = new(systemInfo)

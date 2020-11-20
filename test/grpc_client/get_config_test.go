@@ -1,6 +1,7 @@
 package grpc_client
 
 import (
+	"github.com/ClessLi/bifrost/api/protobuf-spec/authpb"
 	"github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb"
 	ngJson "github.com/ClessLi/bifrost/pkg/json/nginx"
 	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
@@ -11,6 +12,12 @@ import (
 )
 
 func TestClientGetConfig(t *testing.T) {
+	authSvcAddr := "192.168.220.11:12320"
+	authConn, acErr := grpc.Dial(authSvcAddr, grpc.WithInsecure())
+	if acErr != nil {
+		panic("connect error")
+	}
+	defer authConn.Close()
 	serviceAddr := "192.168.220.11:12321"
 	conn, cStreamErr := grpc.Dial(serviceAddr, grpc.WithInsecure())
 	if cStreamErr != nil {
@@ -18,9 +25,9 @@ func TestClientGetConfig(t *testing.T) {
 	}
 
 	defer conn.Close()
-	authClient := bifrostpb.NewAuthServiceClient(conn)
-	opClient := bifrostpb.NewOperationServiceClient(conn)
-	authReq := bifrostpb.AuthRequest{
+	authClient := authpb.NewAuthServiceClient(authConn)
+	opClient := bifrostpb.NewBifrostServiceClient(conn)
+	authReq := authpb.AuthRequest{
 		Username:  "heimdall",
 		Password:  "Bultgang",
 		Unexpired: false,
@@ -31,8 +38,8 @@ func TestClientGetConfig(t *testing.T) {
 		return
 	}
 	opReq := bifrostpb.OperateRequest{
-		Token:    authResp.Token,
-		Location: "bifrost-test",
+		Token:   authResp.Token,
+		SvrName: "bifrost-test",
 	}
 	confResp, err := opClient.GetConfig(context.Background(), &opReq)
 	if err != nil {

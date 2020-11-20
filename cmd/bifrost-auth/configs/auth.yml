@@ -1,0 +1,15 @@
+AuthService:
+  Port: 12320
+  AuthDBConfig: # 可选，未指定时将考虑AuthConfig
+    DBName: "bifrost"
+    host: "127.0.0.1"
+    port: 3306
+    protocol: "tcp"
+    user: "heimdall"
+    password: "Bultgang"
+  AuthConfig: # 可选，未指定AuthDBConfig和AuthConfig时，将以"heimdall/Bultgang"作为默认认证信息
+    username: "heimdall"
+    password: "Bultgang"
+LogConfig:
+  logDir: "./logs"
+  level: 2

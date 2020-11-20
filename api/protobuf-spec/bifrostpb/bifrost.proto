@@ -3,11 +3,7 @@ syntax = "proto3";
 option go_package = "api/protobuf-spec/bifrostpb";
 package bifrostpb;
 
-service AuthService {
-  rpc Login(AuthRequest) returns (AuthResponse) {}
-}
-
-service OperationService {
+service BifrostService {
   rpc ViewConfig(OperateRequest) returns (stream OperateResponse) {}
   rpc GetConfig(OperateRequest) returns (stream ConfigResponse) {}
   rpc UpdateConfig(stream ConfigRequest) returns (OperateResponse) {}
@@ -15,20 +11,9 @@ service OperationService {
   rpc Status(OperateRequest) returns (stream OperateResponse) {}
 }
 
-message AuthRequest {
-  string Username = 1;
-  string Password = 2;
-  bool Unexpired = 3;
-}
-
-message AuthResponse {
-  string Token = 1;
-  string Err = 2;
-}
-
 message OperateRequest {
   string Token = 1;
-  string Location = 2;
+  string SvrName = 2;
 }
 
 message OperateResponse {
@@ -38,7 +23,7 @@ message OperateResponse {
 
 message ConfigRequest {
   string Token = 1;
-  string Location = 2;
+  string SvrName = 2;
   Config Req = 3;
 }
 
@@ -48,6 +33,5 @@ message ConfigResponse {
 }
 
 message Config {
-  string Path = 1;
-  bytes JData = 2;
+  bytes JData = 1;
 }

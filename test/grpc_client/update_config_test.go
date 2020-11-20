@@ -3,6 +3,7 @@ package grpc_client
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/ClessLi/bifrost/api/protobuf-spec/authpb"
 	"github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb"
 	ngJson "github.com/ClessLi/bifrost/pkg/json/nginx"
 	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
@@ -13,6 +14,12 @@ import (
 )
 
 func TestClientUpdateConfig(t *testing.T) {
+	authSvcAddr := "192.168.220.11:12320"
+	authConn, acErr := grpc.Dial(authSvcAddr, grpc.WithInsecure())
+	if acErr != nil {
+		panic("connect error")
+	}
+	defer authConn.Close()
 	serviceAddr := "192.168.220.11:12321"
 	conn, cStreamErr := grpc.Dial(serviceAddr, grpc.WithInsecure())
 	if cStreamErr != nil {
@@ -20,9 +27,9 @@ func TestClientUpdateConfig(t *testing.T) {
 	}
 
 	defer conn.Close()
-	authClient := bifrostpb.NewAuthServiceClient(conn)
-	opClient := bifrostpb.NewOperationServiceClient(conn)
-	authReq := bifrostpb.AuthRequest{
+	authClient := authpb.NewAuthServiceClient(authConn)
+	opClient := bifrostpb.NewBifrostServiceClient(conn)
+	authReq := authpb.AuthRequest{
 		Username:  "heimdall",
 		Password:  "Bultgang",
 		Unexpired: false,
@@ -33,8 +40,8 @@ func TestClientUpdateConfig(t *testing.T) {
 		return
 	}
 	opReq := bifrostpb.OperateRequest{
-		Token:    authResp.Token,
-		Location: "bifrost-test",
+		Token:   authResp.Token,
+		SvrName: "bifrost-test",
 	}
 	confResp, err := opClient.GetConfig(context.Background(), &opReq)
 	if err != nil {
@@ -63,7 +70,7 @@ func TestClientUpdateConfig(t *testing.T) {
 	}
 
 	// modify config
-	err = config.Insert(config.Children[0], nginx.TypeComment, "#test for api.UpdateConfig")
+	err = config.Insert(config.Children[0], nginx.TypeComment, "#test for bifrostpb.UpdateConfig")
 	if err != nil {
 		t.Fatal(err)
 		return
@@ -77,9 +84,9 @@ func TestClientUpdateConfig(t *testing.T) {
 	//t.Log(string(jdata))
 	// init request
 	confReq := &bifrostpb.ConfigRequest{
-		Token:    authResp.Token,
-		Location: "bifrost-test",
-		Req:      &bifrostpb.Config{Path: config.Value},
+		Token:   authResp.Token,
+		SvrName: "bifrost-test",
+		Req:     &bifrostpb.Config{},
 	}
 	// init client stream
 	upStream, err := opClient.UpdateConfig(context.Background())
@@ -106,6 +113,6 @@ func TestClientUpdateConfig(t *testing.T) {
 	}
 
 	// print response of update config
-	t.Log(upRet.Ret, upRet.Err)
-	// response: (Ret)'[]' (Err)'update config success'
+	t.Log(string(upRet.Ret), upRet.Err)
+	// response: (Ret)'update config success'
 }

@@ -29,137 +29,19 @@ const (
 // of the legacy proto package is being used.
 const _ = proto.ProtoPackageIsVersion4
 
-type AuthRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Username  string `protobuf:"bytes,1,opt,name=Username,proto3" json:"Username,omitempty"`
-	Password  string `protobuf:"bytes,2,opt,name=Password,proto3" json:"Password,omitempty"`
-	Unexpired bool   `protobuf:"varint,3,opt,name=Unexpired,proto3" json:"Unexpired,omitempty"`
-}
-
-func (x *AuthRequest) Reset() {
-	*x = AuthRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_bifrostpb_bifrost_proto_msgTypes[0]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *AuthRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*AuthRequest) ProtoMessage() {}
-
-func (x *AuthRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_bifrostpb_bifrost_proto_msgTypes[0]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use AuthRequest.ProtoReflect.Descriptor instead.
-func (*AuthRequest) Descriptor() ([]byte, []int) {
-	return file_bifrostpb_bifrost_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *AuthRequest) GetUsername() string {
-	if x != nil {
-		return x.Username
-	}
-	return ""
-}
-
-func (x *AuthRequest) GetPassword() string {
-	if x != nil {
-		return x.Password
-	}
-	return ""
-}
-
-func (x *AuthRequest) GetUnexpired() bool {
-	if x != nil {
-		return x.Unexpired
-	}
-	return false
-}
-
-type AuthResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Token string `protobuf:"bytes,1,opt,name=Token,proto3" json:"Token,omitempty"`
-	Err   string `protobuf:"bytes,2,opt,name=Err,proto3" json:"Err,omitempty"`
-}
-
-func (x *AuthResponse) Reset() {
-	*x = AuthResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_bifrostpb_bifrost_proto_msgTypes[1]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *AuthResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*AuthResponse) ProtoMessage() {}
-
-func (x *AuthResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_bifrostpb_bifrost_proto_msgTypes[1]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use AuthResponse.ProtoReflect.Descriptor instead.
-func (*AuthResponse) Descriptor() ([]byte, []int) {
-	return file_bifrostpb_bifrost_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *AuthResponse) GetToken() string {
-	if x != nil {
-		return x.Token
-	}
-	return ""
-}
-
-func (x *AuthResponse) GetErr() string {
-	if x != nil {
-		return x.Err
-	}
-	return ""
-}
-
 type OperateRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Token    string `protobuf:"bytes,1,opt,name=Token,proto3" json:"Token,omitempty"`
-	Location string `protobuf:"bytes,2,opt,name=Location,proto3" json:"Location,omitempty"`
+	Token   string `protobuf:"bytes,1,opt,name=Token,proto3" json:"Token,omitempty"`
+	SvrName string `protobuf:"bytes,2,opt,name=SvrName,proto3" json:"SvrName,omitempty"`
 }
 
 func (x *OperateRequest) Reset() {
 	*x = OperateRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_bifrostpb_bifrost_proto_msgTypes[2]
+		mi := &file_bifrostpb_bifrost_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -172,7 +54,7 @@ func (x *OperateRequest) String() string {
 func (*OperateRequest) ProtoMessage() {}
 
 func (x *OperateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_bifrostpb_bifrost_proto_msgTypes[2]
+	mi := &file_bifrostpb_bifrost_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -185,7 +67,7 @@ func (x *OperateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OperateRequest.ProtoReflect.Descriptor instead.
 func (*OperateRequest) Descriptor() ([]byte, []int) {
-	return file_bifrostpb_bifrost_proto_rawDescGZIP(), []int{2}
+	return file_bifrostpb_bifrost_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *OperateRequest) GetToken() string {
@@ -195,9 +77,9 @@ func (x *OperateRequest) GetToken() string {
 	return ""
 }
 
-func (x *OperateRequest) GetLocation() string {
+func (x *OperateRequest) GetSvrName() string {
 	if x != nil {
-		return x.Location
+		return x.SvrName
 	}
 	return ""
 }
@@ -214,7 +96,7 @@ type OperateResponse struct {
 func (x *OperateResponse) Reset() {
 	*x = OperateResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_bifrostpb_bifrost_proto_msgTypes[3]
+		mi := &file_bifrostpb_bifrost_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -227,7 +109,7 @@ func (x *OperateResponse) String() string {
 func (*OperateResponse) ProtoMessage() {}
 
 func (x *OperateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_bifrostpb_bifrost_proto_msgTypes[3]
+	mi := &file_bifrostpb_bifrost_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -240,7 +122,7 @@ func (x *OperateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OperateResponse.ProtoReflect.Descriptor instead.
 func (*OperateResponse) Descriptor() ([]byte, []int) {
-	return file_bifrostpb_bifrost_proto_rawDescGZIP(), []int{3}
+	return file_bifrostpb_bifrost_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *OperateResponse) GetRet() []byte {
@@ -262,15 +144,15 @@ type ConfigRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Token    string  `protobuf:"bytes,1,opt,name=Token,proto3" json:"Token,omitempty"`
-	Location string  `protobuf:"bytes,2,opt,name=Location,proto3" json:"Location,omitempty"`
-	Req      *Config `protobuf:"bytes,3,opt,name=Req,proto3" json:"Req,omitempty"`
+	Token   string  `protobuf:"bytes,1,opt,name=Token,proto3" json:"Token,omitempty"`
+	SvrName string  `protobuf:"bytes,2,opt,name=SvrName,proto3" json:"SvrName,omitempty"`
+	Req     *Config `protobuf:"bytes,3,opt,name=Req,proto3" json:"Req,omitempty"`
 }
 
 func (x *ConfigRequest) Reset() {
 	*x = ConfigRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_bifrostpb_bifrost_proto_msgTypes[4]
+		mi := &file_bifrostpb_bifrost_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -283,7 +165,7 @@ func (x *ConfigRequest) String() string {
 func (*ConfigRequest) ProtoMessage() {}
 
 func (x *ConfigRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_bifrostpb_bifrost_proto_msgTypes[4]
+	mi := &file_bifrostpb_bifrost_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -296,7 +178,7 @@ func (x *ConfigRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConfigRequest.ProtoReflect.Descriptor instead.
 func (*ConfigRequest) Descriptor() ([]byte, []int) {
-	return file_bifrostpb_bifrost_proto_rawDescGZIP(), []int{4}
+	return file_bifrostpb_bifrost_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ConfigRequest) GetToken() string {
@@ -306,9 +188,9 @@ func (x *ConfigRequest) GetToken() string {
 	return ""
 }
 
-func (x *ConfigRequest) GetLocation() string {
+func (x *ConfigRequest) GetSvrName() string {
 	if x != nil {
-		return x.Location
+		return x.SvrName
 	}
 	return ""
 }
@@ -332,7 +214,7 @@ type ConfigResponse struct {
 func (x *ConfigResponse) Reset() {
 	*x = ConfigResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_bifrostpb_bifrost_proto_msgTypes[5]
+		mi := &file_bifrostpb_bifrost_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -345,7 +227,7 @@ func (x *ConfigResponse) String() string {
 func (*ConfigResponse) ProtoMessage() {}
 
 func (x *ConfigResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_bifrostpb_bifrost_proto_msgTypes[5]
+	mi := &file_bifrostpb_bifrost_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -358,7 +240,7 @@ func (x *ConfigResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConfigResponse.ProtoReflect.Descriptor instead.
 func (*ConfigResponse) Descriptor() ([]byte, []int) {
-	return file_bifrostpb_bifrost_proto_rawDescGZIP(), []int{5}
+	return file_bifrostpb_bifrost_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ConfigResponse) GetRet() *Config {
@@ -380,14 +262,13 @@ type Config struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Path  string `protobuf:"bytes,1,opt,name=Path,proto3" json:"Path,omitempty"`
-	JData []byte `protobuf:"bytes,2,opt,name=JData,proto3" json:"JData,omitempty"`
+	JData []byte `protobuf:"bytes,1,opt,name=JData,proto3" json:"JData,omitempty"`
 }
 
 func (x *Config) Reset() {
 	*x = Config{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_bifrostpb_bifrost_proto_msgTypes[6]
+		mi := &file_bifrostpb_bifrost_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -400,7 +281,7 @@ func (x *Config) String() string {
 func (*Config) ProtoMessage() {}
 
 func (x *Config) ProtoReflect() protoreflect.Message {
-	mi := &file_bifrostpb_bifrost_proto_msgTypes[6]
+	mi := &file_bifrostpb_bifrost_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -413,14 +294,7 @@ func (x *Config) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Config.ProtoReflect.Descriptor instead.
 func (*Config) Descriptor() ([]byte, []int) {
-	return file_bifrostpb_bifrost_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *Config) GetPath() string {
-	if x != nil {
-		return x.Path
-	}
-	return ""
+	return file_bifrostpb_bifrost_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Config) GetJData() []byte {
@@ -435,70 +309,54 @@ var File_bifrostpb_bifrost_proto protoreflect.FileDescriptor
 var file_bifrostpb_bifrost_proto_rawDesc = []byte{
 	0x0a, 0x17, 0x62, 0x69, 0x66, 0x72, 0x6f, 0x73, 0x74, 0x70, 0x62, 0x2f, 0x62, 0x69, 0x66, 0x72,
 	0x6f, 0x73, 0x74, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x09, 0x62, 0x69, 0x66, 0x72, 0x6f,
-	0x73, 0x74, 0x70, 0x62, 0x22, 0x63, 0x0a, 0x0b, 0x41, 0x75, 0x74, 0x68, 0x52, 0x65, 0x71, 0x75,
-	0x65, 0x73, 0x74, 0x12, 0x1a, 0x0a, 0x08, 0x55, 0x73, 0x65, 0x72, 0x6e, 0x61, 0x6d, 0x65, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x55, 0x73, 0x65, 0x72, 0x6e, 0x61, 0x6d, 0x65, 0x12,
-	0x1a, 0x0a, 0x08, 0x50, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x08, 0x50, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x12, 0x1c, 0x0a, 0x09, 0x55,
-	0x6e, 0x65, 0x78, 0x70, 0x69, 0x72, 0x65, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x08, 0x52, 0x09,
-	0x55, 0x6e, 0x65, 0x78, 0x70, 0x69, 0x72, 0x65, 0x64, 0x22, 0x36, 0x0a, 0x0c, 0x41, 0x75, 0x74,
-	0x68, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x54, 0x6f, 0x6b,
-	0x65, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x12,
-	0x10, 0x0a, 0x03, 0x45, 0x72, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x45, 0x72,
-	0x72, 0x22, 0x42, 0x0a, 0x0e, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75,
-	0x65, 0x73, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x05, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x12, 0x1a, 0x0a, 0x08, 0x4c, 0x6f, 0x63,
-	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x4c, 0x6f, 0x63,
-	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x35, 0x0a, 0x0f, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x65,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x10, 0x0a, 0x03, 0x52, 0x65, 0x74, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x03, 0x52, 0x65, 0x74, 0x12, 0x10, 0x0a, 0x03, 0x45, 0x72,
-	0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x45, 0x72, 0x72, 0x22, 0x66, 0x0a, 0x0d,
-	0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x14, 0x0a,
-	0x05, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x54, 0x6f,
-	0x6b, 0x65, 0x6e, 0x12, 0x1a, 0x0a, 0x08, 0x4c, 0x6f, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18,
-	0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x4c, 0x6f, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12,
-	0x23, 0x0a, 0x03, 0x52, 0x65, 0x71, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x11, 0x2e, 0x62,
-	0x69, 0x66, 0x72, 0x6f, 0x73, 0x74, 0x70, 0x62, 0x2e, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x52,
-	0x03, 0x52, 0x65, 0x71, 0x22, 0x47, 0x0a, 0x0e, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x23, 0x0a, 0x03, 0x52, 0x65, 0x74, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x0b, 0x32, 0x11, 0x2e, 0x62, 0x69, 0x66, 0x72, 0x6f, 0x73, 0x74, 0x70, 0x62, 0x2e,
-	0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x52, 0x03, 0x52, 0x65, 0x74, 0x12, 0x10, 0x0a, 0x03, 0x45,
-	0x72, 0x72, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x45, 0x72, 0x72, 0x22, 0x32, 0x0a,
-	0x06, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x12, 0x12, 0x0a, 0x04, 0x50, 0x61, 0x74, 0x68, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x50, 0x61, 0x74, 0x68, 0x12, 0x14, 0x0a, 0x05, 0x4a,
-	0x44, 0x61, 0x74, 0x61, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x05, 0x4a, 0x44, 0x61, 0x74,
-	0x61, 0x32, 0x49, 0x0a, 0x0b, 0x41, 0x75, 0x74, 0x68, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65,
-	0x12, 0x3a, 0x0a, 0x05, 0x4c, 0x6f, 0x67, 0x69, 0x6e, 0x12, 0x16, 0x2e, 0x62, 0x69, 0x66, 0x72,
-	0x6f, 0x73, 0x74, 0x70, 0x62, 0x2e, 0x41, 0x75, 0x74, 0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
-	0x74, 0x1a, 0x17, 0x2e, 0x62, 0x69, 0x66, 0x72, 0x6f, 0x73, 0x74, 0x70, 0x62, 0x2e, 0x41, 0x75,
-	0x74, 0x68, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x32, 0xfe, 0x02, 0x0a,
-	0x10, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63,
-	0x65, 0x12, 0x47, 0x0a, 0x0a, 0x56, 0x69, 0x65, 0x77, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x12,
-	0x19, 0x2e, 0x62, 0x69, 0x66, 0x72, 0x6f, 0x73, 0x74, 0x70, 0x62, 0x2e, 0x4f, 0x70, 0x65, 0x72,
-	0x61, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1a, 0x2e, 0x62, 0x69, 0x66,
-	0x72, 0x6f, 0x73, 0x74, 0x70, 0x62, 0x2e, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x65, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x30, 0x01, 0x12, 0x45, 0x0a, 0x09, 0x47, 0x65,
-	0x74, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x12, 0x19, 0x2e, 0x62, 0x69, 0x66, 0x72, 0x6f, 0x73,
-	0x74, 0x70, 0x62, 0x2e, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x1a, 0x19, 0x2e, 0x62, 0x69, 0x66, 0x72, 0x6f, 0x73, 0x74, 0x70, 0x62, 0x2e, 0x43,
-	0x6f, 0x6e, 0x66, 0x69, 0x67, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x30,
-	0x01, 0x12, 0x48, 0x0a, 0x0c, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x43, 0x6f, 0x6e, 0x66, 0x69,
-	0x67, 0x12, 0x18, 0x2e, 0x62, 0x69, 0x66, 0x72, 0x6f, 0x73, 0x74, 0x70, 0x62, 0x2e, 0x43, 0x6f,
-	0x6e, 0x66, 0x69, 0x67, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1a, 0x2e, 0x62, 0x69,
-	0x66, 0x72, 0x6f, 0x73, 0x74, 0x70, 0x62, 0x2e, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x65, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x28, 0x01, 0x12, 0x4b, 0x0a, 0x0e, 0x56,
-	0x69, 0x65, 0x77, 0x53, 0x74, 0x61, 0x74, 0x69, 0x73, 0x74, 0x69, 0x63, 0x73, 0x12, 0x19, 0x2e,
+	0x73, 0x74, 0x70, 0x62, 0x22, 0x40, 0x0a, 0x0e, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x65, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x12, 0x18, 0x0a, 0x07,
+	0x53, 0x76, 0x72, 0x4e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x53,
+	0x76, 0x72, 0x4e, 0x61, 0x6d, 0x65, 0x22, 0x35, 0x0a, 0x0f, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74,
+	0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x10, 0x0a, 0x03, 0x52, 0x65, 0x74,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x03, 0x52, 0x65, 0x74, 0x12, 0x10, 0x0a, 0x03, 0x45,
+	0x72, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x45, 0x72, 0x72, 0x22, 0x64, 0x0a,
+	0x0d, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x14,
+	0x0a, 0x05, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x54,
+	0x6f, 0x6b, 0x65, 0x6e, 0x12, 0x18, 0x0a, 0x07, 0x53, 0x76, 0x72, 0x4e, 0x61, 0x6d, 0x65, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x53, 0x76, 0x72, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x23,
+	0x0a, 0x03, 0x52, 0x65, 0x71, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x11, 0x2e, 0x62, 0x69,
+	0x66, 0x72, 0x6f, 0x73, 0x74, 0x70, 0x62, 0x2e, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x52, 0x03,
+	0x52, 0x65, 0x71, 0x22, 0x47, 0x0a, 0x0e, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x23, 0x0a, 0x03, 0x52, 0x65, 0x74, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x11, 0x2e, 0x62, 0x69, 0x66, 0x72, 0x6f, 0x73, 0x74, 0x70, 0x62, 0x2e, 0x43,
+	0x6f, 0x6e, 0x66, 0x69, 0x67, 0x52, 0x03, 0x52, 0x65, 0x74, 0x12, 0x10, 0x0a, 0x03, 0x45, 0x72,
+	0x72, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x45, 0x72, 0x72, 0x22, 0x1e, 0x0a, 0x06,
+	0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x12, 0x14, 0x0a, 0x05, 0x4a, 0x44, 0x61, 0x74, 0x61, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x05, 0x4a, 0x44, 0x61, 0x74, 0x61, 0x32, 0xfc, 0x02, 0x0a,
+	0x0e, 0x42, 0x69, 0x66, 0x72, 0x6f, 0x73, 0x74, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12,
+	0x47, 0x0a, 0x0a, 0x56, 0x69, 0x65, 0x77, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x12, 0x19, 0x2e,
 	0x62, 0x69, 0x66, 0x72, 0x6f, 0x73, 0x74, 0x70, 0x62, 0x2e, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74,
 	0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1a, 0x2e, 0x62, 0x69, 0x66, 0x72, 0x6f,
 	0x73, 0x74, 0x70, 0x62, 0x2e, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x30, 0x01, 0x12, 0x43, 0x0a, 0x06, 0x53, 0x74, 0x61, 0x74,
-	0x75, 0x73, 0x12, 0x19, 0x2e, 0x62, 0x69, 0x66, 0x72, 0x6f, 0x73, 0x74, 0x70, 0x62, 0x2e, 0x4f,
-	0x70, 0x65, 0x72, 0x61, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1a, 0x2e,
-	0x62, 0x69, 0x66, 0x72, 0x6f, 0x73, 0x74, 0x70, 0x62, 0x2e, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74,
-	0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x30, 0x01, 0x42, 0x1d, 0x5a,
-	0x1b, 0x61, 0x70, 0x69, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2d, 0x73, 0x70,
-	0x65, 0x63, 0x2f, 0x62, 0x69, 0x66, 0x72, 0x6f, 0x73, 0x74, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x33,
+	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x30, 0x01, 0x12, 0x45, 0x0a, 0x09, 0x47, 0x65, 0x74, 0x43,
+	0x6f, 0x6e, 0x66, 0x69, 0x67, 0x12, 0x19, 0x2e, 0x62, 0x69, 0x66, 0x72, 0x6f, 0x73, 0x74, 0x70,
+	0x62, 0x2e, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x1a, 0x19, 0x2e, 0x62, 0x69, 0x66, 0x72, 0x6f, 0x73, 0x74, 0x70, 0x62, 0x2e, 0x43, 0x6f, 0x6e,
+	0x66, 0x69, 0x67, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x30, 0x01, 0x12,
+	0x48, 0x0a, 0x0c, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x12,
+	0x18, 0x2e, 0x62, 0x69, 0x66, 0x72, 0x6f, 0x73, 0x74, 0x70, 0x62, 0x2e, 0x43, 0x6f, 0x6e, 0x66,
+	0x69, 0x67, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1a, 0x2e, 0x62, 0x69, 0x66, 0x72,
+	0x6f, 0x73, 0x74, 0x70, 0x62, 0x2e, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x65, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x28, 0x01, 0x12, 0x4b, 0x0a, 0x0e, 0x56, 0x69, 0x65,
+	0x77, 0x53, 0x74, 0x61, 0x74, 0x69, 0x73, 0x74, 0x69, 0x63, 0x73, 0x12, 0x19, 0x2e, 0x62, 0x69,
+	0x66, 0x72, 0x6f, 0x73, 0x74, 0x70, 0x62, 0x2e, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x65, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1a, 0x2e, 0x62, 0x69, 0x66, 0x72, 0x6f, 0x73, 0x74,
+	0x70, 0x62, 0x2e, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x22, 0x00, 0x30, 0x01, 0x12, 0x43, 0x0a, 0x06, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73,
+	0x12, 0x19, 0x2e, 0x62, 0x69, 0x66, 0x72, 0x6f, 0x73, 0x74, 0x70, 0x62, 0x2e, 0x4f, 0x70, 0x65,
+	0x72, 0x61, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1a, 0x2e, 0x62, 0x69,
+	0x66, 0x72, 0x6f, 0x73, 0x74, 0x70, 0x62, 0x2e, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x65, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x30, 0x01, 0x42, 0x1d, 0x5a, 0x1b, 0x61,
+	0x70, 0x69, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2d, 0x73, 0x70, 0x65, 0x63,
+	0x2f, 0x62, 0x69, 0x66, 0x72, 0x6f, 0x73, 0x74, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x33,
 }
 
 var (
@@ -513,33 +371,29 @@ func file_bifrostpb_bifrost_proto_rawDescGZIP() []byte {
 	return file_bifrostpb_bifrost_proto_rawDescData
 }
 
-var file_bifrostpb_bifrost_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_bifrostpb_bifrost_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_bifrostpb_bifrost_proto_goTypes = []interface{}{
-	(*AuthRequest)(nil),     // 0: bifrostpb.AuthRequest
-	(*AuthResponse)(nil),    // 1: bifrostpb.AuthResponse
-	(*OperateRequest)(nil),  // 2: bifrostpb.OperateRequest
-	(*OperateResponse)(nil), // 3: bifrostpb.OperateResponse
-	(*ConfigRequest)(nil),   // 4: bifrostpb.ConfigRequest
-	(*ConfigResponse)(nil),  // 5: bifrostpb.ConfigResponse
-	(*Config)(nil),          // 6: bifrostpb.Config
+	(*OperateRequest)(nil),  // 0: bifrostpb.OperateRequest
+	(*OperateResponse)(nil), // 1: bifrostpb.OperateResponse
+	(*ConfigRequest)(nil),   // 2: bifrostpb.ConfigRequest
+	(*ConfigResponse)(nil),  // 3: bifrostpb.ConfigResponse
+	(*Config)(nil),          // 4: bifrostpb.Config
 }
 var file_bifrostpb_bifrost_proto_depIdxs = []int32{
-	6, // 0: bifrostpb.ConfigRequest.Req:type_name -> bifrostpb.Config
-	6, // 1: bifrostpb.ConfigResponse.Ret:type_name -> bifrostpb.Config
-	0, // 2: bifrostpb.AuthService.Login:input_type -> bifrostpb.AuthRequest
-	2, // 3: bifrostpb.OperationService.ViewConfig:input_type -> bifrostpb.OperateRequest
-	2, // 4: bifrostpb.OperationService.GetConfig:input_type -> bifrostpb.OperateRequest
-	4, // 5: bifrostpb.OperationService.UpdateConfig:input_type -> bifrostpb.ConfigRequest
-	2, // 6: bifrostpb.OperationService.ViewStatistics:input_type -> bifrostpb.OperateRequest
-	2, // 7: bifrostpb.OperationService.Status:input_type -> bifrostpb.OperateRequest
-	1, // 8: bifrostpb.AuthService.Login:output_type -> bifrostpb.AuthResponse
-	3, // 9: bifrostpb.OperationService.ViewConfig:output_type -> bifrostpb.OperateResponse
-	5, // 10: bifrostpb.OperationService.GetConfig:output_type -> bifrostpb.ConfigResponse
-	3, // 11: bifrostpb.OperationService.UpdateConfig:output_type -> bifrostpb.OperateResponse
-	3, // 12: bifrostpb.OperationService.ViewStatistics:output_type -> bifrostpb.OperateResponse
-	3, // 13: bifrostpb.OperationService.Status:output_type -> bifrostpb.OperateResponse
-	8, // [8:14] is the sub-list for method output_type
-	2, // [2:8] is the sub-list for method input_type
+	4, // 0: bifrostpb.ConfigRequest.Req:type_name -> bifrostpb.Config
+	4, // 1: bifrostpb.ConfigResponse.Ret:type_name -> bifrostpb.Config
+	0, // 2: bifrostpb.BifrostService.ViewConfig:input_type -> bifrostpb.OperateRequest
+	0, // 3: bifrostpb.BifrostService.GetConfig:input_type -> bifrostpb.OperateRequest
+	2, // 4: bifrostpb.BifrostService.UpdateConfig:input_type -> bifrostpb.ConfigRequest
+	0, // 5: bifrostpb.BifrostService.ViewStatistics:input_type -> bifrostpb.OperateRequest
+	0, // 6: bifrostpb.BifrostService.Status:input_type -> bifrostpb.OperateRequest
+	1, // 7: bifrostpb.BifrostService.ViewConfig:output_type -> bifrostpb.OperateResponse
+	3, // 8: bifrostpb.BifrostService.GetConfig:output_type -> bifrostpb.ConfigResponse
+	1, // 9: bifrostpb.BifrostService.UpdateConfig:output_type -> bifrostpb.OperateResponse
+	1, // 10: bifrostpb.BifrostService.ViewStatistics:output_type -> bifrostpb.OperateResponse
+	1, // 11: bifrostpb.BifrostService.Status:output_type -> bifrostpb.OperateResponse
+	7, // [7:12] is the sub-list for method output_type
+	2, // [2:7] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name
 	2, // [2:2] is the sub-list for extension extendee
 	0, // [0:2] is the sub-list for field type_name
@@ -552,30 +406,6 @@ func file_bifrostpb_bifrost_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_bifrostpb_bifrost_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AuthRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_bifrostpb_bifrost_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AuthResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_bifrostpb_bifrost_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*OperateRequest); i {
 			case 0:
 				return &v.state
@@ -587,7 +417,7 @@ func file_bifrostpb_bifrost_proto_init() {
 				return nil
 			}
 		}
-		file_bifrostpb_bifrost_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+		file_bifrostpb_bifrost_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*OperateResponse); i {
 			case 0:
 				return &v.state
@@ -599,7 +429,7 @@ func file_bifrostpb_bifrost_proto_init() {
 				return nil
 			}
 		}
-		file_bifrostpb_bifrost_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+		file_bifrostpb_bifrost_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ConfigRequest); i {
 			case 0:
 				return &v.state
@@ -611,7 +441,7 @@ func file_bifrostpb_bifrost_proto_init() {
 				return nil
 			}
 		}
-		file_bifrostpb_bifrost_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+		file_bifrostpb_bifrost_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ConfigResponse); i {
 			case 0:
 				return &v.state
@@ -623,7 +453,7 @@ func file_bifrostpb_bifrost_proto_init() {
 				return nil
 			}
 		}
-		file_bifrostpb_bifrost_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+		file_bifrostpb_bifrost_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Config); i {
 			case 0:
 				return &v.state
@@ -642,9 +472,9 @@ func file_bifrostpb_bifrost_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_bifrostpb_bifrost_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   5,
 			NumExtensions: 0,
-			NumServices:   2,
+			NumServices:   1,
 		},
 		GoTypes:           file_bifrostpb_bifrost_proto_goTypes,
 		DependencyIndexes: file_bifrostpb_bifrost_proto_depIdxs,
@@ -664,103 +494,31 @@ var _ grpc.ClientConnInterface
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion6
 
-// AuthServiceClient is the client API for AuthService service.
+// BifrostServiceClient is the client API for BifrostService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-type AuthServiceClient interface {
-	Login(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*AuthResponse, error)
+type BifrostServiceClient interface {
+	ViewConfig(ctx context.Context, in *OperateRequest, opts ...grpc.CallOption) (BifrostService_ViewConfigClient, error)
+	GetConfig(ctx context.Context, in *OperateRequest, opts ...grpc.CallOption) (BifrostService_GetConfigClient, error)
+	UpdateConfig(ctx context.Context, opts ...grpc.CallOption) (BifrostService_UpdateConfigClient, error)
+	ViewStatistics(ctx context.Context, in *OperateRequest, opts ...grpc.CallOption) (BifrostService_ViewStatisticsClient, error)
+	Status(ctx context.Context, in *OperateRequest, opts ...grpc.CallOption) (BifrostService_StatusClient, error)
 }
 
-type authServiceClient struct {
+type bifrostServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewAuthServiceClient(cc grpc.ClientConnInterface) AuthServiceClient {
-	return &authServiceClient{cc}
+func NewBifrostServiceClient(cc grpc.ClientConnInterface) BifrostServiceClient {
+	return &bifrostServiceClient{cc}
 }
 
-func (c *authServiceClient) Login(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*AuthResponse, error) {
-	out := new(AuthResponse)
-	err := c.cc.Invoke(ctx, "/bifrostpb.AuthService/Login", in, out, opts...)
+func (c *bifrostServiceClient) ViewConfig(ctx context.Context, in *OperateRequest, opts ...grpc.CallOption) (BifrostService_ViewConfigClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_BifrostService_serviceDesc.Streams[0], "/bifrostpb.BifrostService/ViewConfig", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
-}
-
-// AuthServiceServer is the server API for AuthService service.
-type AuthServiceServer interface {
-	Login(context.Context, *AuthRequest) (*AuthResponse, error)
-}
-
-// UnimplementedAuthServiceServer can be embedded to have forward compatible implementations.
-type UnimplementedAuthServiceServer struct {
-}
-
-func (*UnimplementedAuthServiceServer) Login(context.Context, *AuthRequest) (*AuthResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
-}
-
-func RegisterAuthServiceServer(s *grpc.Server, srv AuthServiceServer) {
-	s.RegisterService(&_AuthService_serviceDesc, srv)
-}
-
-func _AuthService_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AuthRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AuthServiceServer).Login(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/bifrostpb.AuthService/Login",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).Login(ctx, req.(*AuthRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-var _AuthService_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "bifrostpb.AuthService",
-	HandlerType: (*AuthServiceServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "Login",
-			Handler:    _AuthService_Login_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "bifrostpb/bifrost.proto",
-}
-
-// OperationServiceClient is the client API for OperationService service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-type OperationServiceClient interface {
-	ViewConfig(ctx context.Context, in *OperateRequest, opts ...grpc.CallOption) (OperationService_ViewConfigClient, error)
-	GetConfig(ctx context.Context, in *OperateRequest, opts ...grpc.CallOption) (OperationService_GetConfigClient, error)
-	UpdateConfig(ctx context.Context, opts ...grpc.CallOption) (OperationService_UpdateConfigClient, error)
-	ViewStatistics(ctx context.Context, in *OperateRequest, opts ...grpc.CallOption) (OperationService_ViewStatisticsClient, error)
-	Status(ctx context.Context, in *OperateRequest, opts ...grpc.CallOption) (OperationService_StatusClient, error)
-}
-
-type operationServiceClient struct {
-	cc grpc.ClientConnInterface
-}
-
-func NewOperationServiceClient(cc grpc.ClientConnInterface) OperationServiceClient {
-	return &operationServiceClient{cc}
-}
-
-func (c *operationServiceClient) ViewConfig(ctx context.Context, in *OperateRequest, opts ...grpc.CallOption) (OperationService_ViewConfigClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_OperationService_serviceDesc.Streams[0], "/bifrostpb.OperationService/ViewConfig", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &operationServiceViewConfigClient{stream}
+	x := &bifrostServiceViewConfigClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -770,16 +528,16 @@ func (c *operationServiceClient) ViewConfig(ctx context.Context, in *OperateRequ
 	return x, nil
 }
 
-type OperationService_ViewConfigClient interface {
+type BifrostService_ViewConfigClient interface {
 	Recv() (*OperateResponse, error)
 	grpc.ClientStream
 }
 
-type operationServiceViewConfigClient struct {
+type bifrostServiceViewConfigClient struct {
 	grpc.ClientStream
 }
 
-func (x *operationServiceViewConfigClient) Recv() (*OperateResponse, error) {
+func (x *bifrostServiceViewConfigClient) Recv() (*OperateResponse, error) {
 	m := new(OperateResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -787,12 +545,12 @@ func (x *operationServiceViewConfigClient) Recv() (*OperateResponse, error) {
 	return m, nil
 }
 
-func (c *operationServiceClient) GetConfig(ctx context.Context, in *OperateRequest, opts ...grpc.CallOption) (OperationService_GetConfigClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_OperationService_serviceDesc.Streams[1], "/bifrostpb.OperationService/GetConfig", opts...)
+func (c *bifrostServiceClient) GetConfig(ctx context.Context, in *OperateRequest, opts ...grpc.CallOption) (BifrostService_GetConfigClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_BifrostService_serviceDesc.Streams[1], "/bifrostpb.BifrostService/GetConfig", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &operationServiceGetConfigClient{stream}
+	x := &bifrostServiceGetConfigClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -802,16 +560,16 @@ func (c *operationServiceClient) GetConfig(ctx context.Context, in *OperateReque
 	return x, nil
 }
 
-type OperationService_GetConfigClient interface {
+type BifrostService_GetConfigClient interface {
 	Recv() (*ConfigResponse, error)
 	grpc.ClientStream
 }
 
-type operationServiceGetConfigClient struct {
+type bifrostServiceGetConfigClient struct {
 	grpc.ClientStream
 }
 
-func (x *operationServiceGetConfigClient) Recv() (*ConfigResponse, error) {
+func (x *bifrostServiceGetConfigClient) Recv() (*ConfigResponse, error) {
 	m := new(ConfigResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -819,30 +577,30 @@ func (x *operationServiceGetConfigClient) Recv() (*ConfigResponse, error) {
 	return m, nil
 }
 
-func (c *operationServiceClient) UpdateConfig(ctx context.Context, opts ...grpc.CallOption) (OperationService_UpdateConfigClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_OperationService_serviceDesc.Streams[2], "/bifrostpb.OperationService/UpdateConfig", opts...)
+func (c *bifrostServiceClient) UpdateConfig(ctx context.Context, opts ...grpc.CallOption) (BifrostService_UpdateConfigClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_BifrostService_serviceDesc.Streams[2], "/bifrostpb.BifrostService/UpdateConfig", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &operationServiceUpdateConfigClient{stream}
+	x := &bifrostServiceUpdateConfigClient{stream}
 	return x, nil
 }
 
-type OperationService_UpdateConfigClient interface {
+type BifrostService_UpdateConfigClient interface {
 	Send(*ConfigRequest) error
 	CloseAndRecv() (*OperateResponse, error)
 	grpc.ClientStream
 }
 
-type operationServiceUpdateConfigClient struct {
+type bifrostServiceUpdateConfigClient struct {
 	grpc.ClientStream
 }
 
-func (x *operationServiceUpdateConfigClient) Send(m *ConfigRequest) error {
+func (x *bifrostServiceUpdateConfigClient) Send(m *ConfigRequest) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *operationServiceUpdateConfigClient) CloseAndRecv() (*OperateResponse, error) {
+func (x *bifrostServiceUpdateConfigClient) CloseAndRecv() (*OperateResponse, error) {
 	if err := x.ClientStream.CloseSend(); err != nil {
 		return nil, err
 	}
@@ -853,12 +611,12 @@ func (x *operationServiceUpdateConfigClient) CloseAndRecv() (*OperateResponse, e
 	return m, nil
 }
 
-func (c *operationServiceClient) ViewStatistics(ctx context.Context, in *OperateRequest, opts ...grpc.CallOption) (OperationService_ViewStatisticsClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_OperationService_serviceDesc.Streams[3], "/bifrostpb.OperationService/ViewStatistics", opts...)
+func (c *bifrostServiceClient) ViewStatistics(ctx context.Context, in *OperateRequest, opts ...grpc.CallOption) (BifrostService_ViewStatisticsClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_BifrostService_serviceDesc.Streams[3], "/bifrostpb.BifrostService/ViewStatistics", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &operationServiceViewStatisticsClient{stream}
+	x := &bifrostServiceViewStatisticsClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -868,16 +626,16 @@ func (c *operationServiceClient) ViewStatistics(ctx context.Context, in *Operate
 	return x, nil
 }
 
-type OperationService_ViewStatisticsClient interface {
+type BifrostService_ViewStatisticsClient interface {
 	Recv() (*OperateResponse, error)
 	grpc.ClientStream
 }
 
-type operationServiceViewStatisticsClient struct {
+type bifrostServiceViewStatisticsClient struct {
 	grpc.ClientStream
 }
 
-func (x *operationServiceViewStatisticsClient) Recv() (*OperateResponse, error) {
+func (x *bifrostServiceViewStatisticsClient) Recv() (*OperateResponse, error) {
 	m := new(OperateResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -885,12 +643,12 @@ func (x *operationServiceViewStatisticsClient) Recv() (*OperateResponse, error) 
 	return m, nil
 }
 
-func (c *operationServiceClient) Status(ctx context.Context, in *OperateRequest, opts ...grpc.CallOption) (OperationService_StatusClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_OperationService_serviceDesc.Streams[4], "/bifrostpb.OperationService/Status", opts...)
+func (c *bifrostServiceClient) Status(ctx context.Context, in *OperateRequest, opts ...grpc.CallOption) (BifrostService_StatusClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_BifrostService_serviceDesc.Streams[4], "/bifrostpb.BifrostService/Status", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &operationServiceStatusClient{stream}
+	x := &bifrostServiceStatusClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -900,16 +658,16 @@ func (c *operationServiceClient) Status(ctx context.Context, in *OperateRequest,
 	return x, nil
 }
 
-type OperationService_StatusClient interface {
+type BifrostService_StatusClient interface {
 	Recv() (*OperateResponse, error)
 	grpc.ClientStream
 }
 
-type operationServiceStatusClient struct {
+type bifrostServiceStatusClient struct {
 	grpc.ClientStream
 }
 
-func (x *operationServiceStatusClient) Recv() (*OperateResponse, error) {
+func (x *bifrostServiceStatusClient) Recv() (*OperateResponse, error) {
 	m := new(OperateResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -917,100 +675,100 @@ func (x *operationServiceStatusClient) Recv() (*OperateResponse, error) {
 	return m, nil
 }
 
-// OperationServiceServer is the server API for OperationService service.
-type OperationServiceServer interface {
-	ViewConfig(*OperateRequest, OperationService_ViewConfigServer) error
-	GetConfig(*OperateRequest, OperationService_GetConfigServer) error
-	UpdateConfig(OperationService_UpdateConfigServer) error
-	ViewStatistics(*OperateRequest, OperationService_ViewStatisticsServer) error
-	Status(*OperateRequest, OperationService_StatusServer) error
+// BifrostServiceServer is the server API for BifrostService service.
+type BifrostServiceServer interface {
+	ViewConfig(*OperateRequest, BifrostService_ViewConfigServer) error
+	GetConfig(*OperateRequest, BifrostService_GetConfigServer) error
+	UpdateConfig(BifrostService_UpdateConfigServer) error
+	ViewStatistics(*OperateRequest, BifrostService_ViewStatisticsServer) error
+	Status(*OperateRequest, BifrostService_StatusServer) error
 }
 
-// UnimplementedOperationServiceServer can be embedded to have forward compatible implementations.
-type UnimplementedOperationServiceServer struct {
+// UnimplementedBifrostServiceServer can be embedded to have forward compatible implementations.
+type UnimplementedBifrostServiceServer struct {
 }
 
-func (*UnimplementedOperationServiceServer) ViewConfig(*OperateRequest, OperationService_ViewConfigServer) error {
+func (*UnimplementedBifrostServiceServer) ViewConfig(*OperateRequest, BifrostService_ViewConfigServer) error {
 	return status.Errorf(codes.Unimplemented, "method ViewConfig not implemented")
 }
-func (*UnimplementedOperationServiceServer) GetConfig(*OperateRequest, OperationService_GetConfigServer) error {
+func (*UnimplementedBifrostServiceServer) GetConfig(*OperateRequest, BifrostService_GetConfigServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetConfig not implemented")
 }
-func (*UnimplementedOperationServiceServer) UpdateConfig(OperationService_UpdateConfigServer) error {
+func (*UnimplementedBifrostServiceServer) UpdateConfig(BifrostService_UpdateConfigServer) error {
 	return status.Errorf(codes.Unimplemented, "method UpdateConfig not implemented")
 }
-func (*UnimplementedOperationServiceServer) ViewStatistics(*OperateRequest, OperationService_ViewStatisticsServer) error {
+func (*UnimplementedBifrostServiceServer) ViewStatistics(*OperateRequest, BifrostService_ViewStatisticsServer) error {
 	return status.Errorf(codes.Unimplemented, "method ViewStatistics not implemented")
 }
-func (*UnimplementedOperationServiceServer) Status(*OperateRequest, OperationService_StatusServer) error {
+func (*UnimplementedBifrostServiceServer) Status(*OperateRequest, BifrostService_StatusServer) error {
 	return status.Errorf(codes.Unimplemented, "method Status not implemented")
 }
 
-func RegisterOperationServiceServer(s *grpc.Server, srv OperationServiceServer) {
-	s.RegisterService(&_OperationService_serviceDesc, srv)
+func RegisterBifrostServiceServer(s *grpc.Server, srv BifrostServiceServer) {
+	s.RegisterService(&_BifrostService_serviceDesc, srv)
 }
 
-func _OperationService_ViewConfig_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _BifrostService_ViewConfig_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(OperateRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(OperationServiceServer).ViewConfig(m, &operationServiceViewConfigServer{stream})
+	return srv.(BifrostServiceServer).ViewConfig(m, &bifrostServiceViewConfigServer{stream})
 }
 
-type OperationService_ViewConfigServer interface {
+type BifrostService_ViewConfigServer interface {
 	Send(*OperateResponse) error
 	grpc.ServerStream
 }
 
-type operationServiceViewConfigServer struct {
+type bifrostServiceViewConfigServer struct {
 	grpc.ServerStream
 }
 
-func (x *operationServiceViewConfigServer) Send(m *OperateResponse) error {
+func (x *bifrostServiceViewConfigServer) Send(m *OperateResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func _OperationService_GetConfig_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _BifrostService_GetConfig_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(OperateRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(OperationServiceServer).GetConfig(m, &operationServiceGetConfigServer{stream})
+	return srv.(BifrostServiceServer).GetConfig(m, &bifrostServiceGetConfigServer{stream})
 }
 
-type OperationService_GetConfigServer interface {
+type BifrostService_GetConfigServer interface {
 	Send(*ConfigResponse) error
 	grpc.ServerStream
 }
 
-type operationServiceGetConfigServer struct {
+type bifrostServiceGetConfigServer struct {
 	grpc.ServerStream
 }
 
-func (x *operationServiceGetConfigServer) Send(m *ConfigResponse) error {
+func (x *bifrostServiceGetConfigServer) Send(m *ConfigResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func _OperationService_UpdateConfig_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(OperationServiceServer).UpdateConfig(&operationServiceUpdateConfigServer{stream})
+func _BifrostService_UpdateConfig_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(BifrostServiceServer).UpdateConfig(&bifrostServiceUpdateConfigServer{stream})
 }
 
-type OperationService_UpdateConfigServer interface {
+type BifrostService_UpdateConfigServer interface {
 	SendAndClose(*OperateResponse) error
 	Recv() (*ConfigRequest, error)
 	grpc.ServerStream
 }
 
-type operationServiceUpdateConfigServer struct {
+type bifrostServiceUpdateConfigServer struct {
 	grpc.ServerStream
 }
 
-func (x *operationServiceUpdateConfigServer) SendAndClose(m *OperateResponse) error {
+func (x *bifrostServiceUpdateConfigServer) SendAndClose(m *OperateResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *operationServiceUpdateConfigServer) Recv() (*ConfigRequest, error) {
+func (x *bifrostServiceUpdateConfigServer) Recv() (*ConfigRequest, error) {
 	m := new(ConfigRequest)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -1018,76 +776,76 @@ func (x *operationServiceUpdateConfigServer) Recv() (*ConfigRequest, error) {
 	return m, nil
 }
 
-func _OperationService_ViewStatistics_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _BifrostService_ViewStatistics_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(OperateRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(OperationServiceServer).ViewStatistics(m, &operationServiceViewStatisticsServer{stream})
+	return srv.(BifrostServiceServer).ViewStatistics(m, &bifrostServiceViewStatisticsServer{stream})
 }
 
-type OperationService_ViewStatisticsServer interface {
+type BifrostService_ViewStatisticsServer interface {
 	Send(*OperateResponse) error
 	grpc.ServerStream
 }
 
-type operationServiceViewStatisticsServer struct {
+type bifrostServiceViewStatisticsServer struct {
 	grpc.ServerStream
 }
 
-func (x *operationServiceViewStatisticsServer) Send(m *OperateResponse) error {
+func (x *bifrostServiceViewStatisticsServer) Send(m *OperateResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func _OperationService_Status_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _BifrostService_Status_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(OperateRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(OperationServiceServer).Status(m, &operationServiceStatusServer{stream})
+	return srv.(BifrostServiceServer).Status(m, &bifrostServiceStatusServer{stream})
 }
 
-type OperationService_StatusServer interface {
+type BifrostService_StatusServer interface {
 	Send(*OperateResponse) error
 	grpc.ServerStream
 }
 
-type operationServiceStatusServer struct {
+type bifrostServiceStatusServer struct {
 	grpc.ServerStream
 }
 
-func (x *operationServiceStatusServer) Send(m *OperateResponse) error {
+func (x *bifrostServiceStatusServer) Send(m *OperateResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-var _OperationService_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "bifrostpb.OperationService",
-	HandlerType: (*OperationServiceServer)(nil),
+var _BifrostService_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "bifrostpb.BifrostService",
+	HandlerType: (*BifrostServiceServer)(nil),
 	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "ViewConfig",
-			Handler:       _OperationService_ViewConfig_Handler,
+			Handler:       _BifrostService_ViewConfig_Handler,
 			ServerStreams: true,
 		},
 		{
 			StreamName:    "GetConfig",
-			Handler:       _OperationService_GetConfig_Handler,
+			Handler:       _BifrostService_GetConfig_Handler,
 			ServerStreams: true,
 		},
 		{
 			StreamName:    "UpdateConfig",
-			Handler:       _OperationService_UpdateConfig_Handler,
+			Handler:       _BifrostService_UpdateConfig_Handler,
 			ClientStreams: true,
 		},
 		{
 			StreamName:    "ViewStatistics",
-			Handler:       _OperationService_ViewStatistics_Handler,
+			Handler:       _BifrostService_ViewStatistics_Handler,
 			ServerStreams: true,
 		},
 		{
 			StreamName:    "Status",
-			Handler:       _OperationService_Status_Handler,
+			Handler:       _BifrostService_Status_Handler,
 			ServerStreams: true,
 		},
 	},
