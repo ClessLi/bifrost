@@ -1,65 +1,117 @@
 package grpc_client
 
 import (
-	"github.com/ClessLi/bifrost/api/protobuf-spec/authpb"
-	"github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb"
+	"encoding/json"
+	"fmt"
+	"github.com/ClessLi/bifrost/pkg/client/auth"
+	"github.com/ClessLi/bifrost/pkg/client/bifrost"
+	ngJson "github.com/ClessLi/bifrost/pkg/json/nginx"
+	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
-	"io"
+	"os"
 	"testing"
 )
 
+var (
+	authClient    *auth.Client
+	bifrostClient *bifrost.Client
+	SvrName       = "bifrost-test"
+	initErr       error
+	token         string
+)
+
+func init() {
+	authSvrAddr := "192.168.220.11:12320"
+	bifrostSvrAddr := "192.168.220.11:12321"
+	username := "heimdall"
+	password := "Bultgang"
+	authClient, initErr = auth.NewClient(authSvrAddr)
+	if initErr != nil {
+		fmt.Println(initErr)
+		os.Exit(1)
+	}
+	defer authClient.Close()
+	bifrostClient, initErr = bifrost.NewClient(bifrostSvrAddr)
+	if initErr != nil {
+		fmt.Println(initErr)
+		os.Exit(2)
+	}
+	token, initErr = authClient.Login(context.Background(), username, password, false)
+	if initErr != nil {
+		fmt.Println(initErr)
+		os.Exit(3)
+	}
+}
+
 func TestClientVC(t *testing.T) {
-	authSvcAddr := "192.168.220.11:12320"
-	authConn, acErr := grpc.Dial(authSvcAddr, grpc.WithInsecure())
-	if acErr != nil {
-		panic("connect error")
-	}
-	defer authConn.Close()
-	serviceAddr := "192.168.220.11:12321"
-	conn, cStreamErr := grpc.Dial(serviceAddr, grpc.WithInsecure())
-	if cStreamErr != nil {
-		panic("connect error")
-	}
-
-	defer conn.Close()
-	authClient := authpb.NewAuthServiceClient(authConn)
-	opClient := bifrostpb.NewBifrostServiceClient(conn)
-	authReq := authpb.AuthRequest{
-		Username:  "heimdall",
-		Password:  "Bultgang",
-		Unexpired: false,
-	}
-	authResp, err := authClient.Login(context.Background(), &authReq)
-	if err != nil {
-		t.Fatal(err.Error())
-		return
-	}
-	opReq := bifrostpb.OperateRequest{
-		Token:   authResp.Token,
-		SvrName: "bifrost-test",
-	}
-
-	ret, err := opClient.ViewConfig(context.Background(), &opReq)
+	defer bifrostClient.Close()
+	data, err := bifrostClient.ViewConfig(context.Background(), token, SvrName)
 	if err != nil {
 		t.Fatal(err)
 		return
 	}
-	for {
-		item, err := ret.Recv()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			t.Log(err)
-			return
-		}
-		// view config
-		t.Log(string(item.Ret))
-		// data: '# test for api.UpdateConfig
-		//       # user  nobody;
-		//       worker_processes 1;
-		//       ...'
+	t.Log(string(data))
+}
+
+func TestClientGC(t *testing.T) {
+	defer bifrostClient.Close()
+	jdata, err := bifrostClient.GetConfig(context.Background(), token, SvrName)
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+	t.Log(string(jdata))
+}
+
+func TestClientUC(t *testing.T) {
+	defer bifrostClient.Close()
+	jdata, err := bifrostClient.GetConfig(context.Background(), token, SvrName)
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+	config, err := ngJson.Unmarshal(jdata)
+	if err != nil {
+		t.Fatal(err)
+		return
 	}
 
+	err = config.Insert(config.Children[0], nginx.TypeComment, "#test for client.UpdateConfig")
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+	// marshal to json data
+	confJson, err := json.Marshal(config)
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+
+	msg, err := bifrostClient.UpdateConfig(context.Background(), token, SvrName, confJson)
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+	t.Log(string(msg))
+}
+
+func TestClientVS(t *testing.T) {
+	defer bifrostClient.Close()
+	jdata, err := bifrostClient.ViewStatistics(context.Background(), token, SvrName)
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+	t.Log(string(jdata))
+}
+
+func TestClientStatus(t *testing.T) {
+	defer bifrostClient.Close()
+	jdata, err := bifrostClient.Status(context.Background(), token)
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+	t.Log(string(jdata))
 }

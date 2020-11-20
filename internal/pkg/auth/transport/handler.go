@@ -31,12 +31,12 @@ func (s *grpcServer) Verify(ctx context.Context, r *authpb.VerifyRequest) (*auth
 func NewAuthServer(ctx context.Context, endpoints endpoint.AuthEndpoints) authpb.AuthServiceServer {
 	return &grpcServer{
 		login: grpc.NewServer(
-			endpoints.AuthEndpoint,
+			endpoints.LoginEndpoint,
 			DecodeAuthRequest,
 			EncodeAuthResponse,
 		),
 		verify: grpc.NewServer(
-			endpoints.AuthEndpoint,
+			endpoints.LoginEndpoint,
 			DecodeVerifyRequest,
 			EncodeVerifyResponse,
 		),

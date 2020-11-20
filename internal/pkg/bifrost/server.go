@@ -32,6 +32,7 @@ func ServerRun() error {
 	if connAuthErr != nil {
 		return connAuthErr
 	}
+	defer BifrostConf.Service.AuthSvrConnClose()
 
 	// init bifrost svr
 
@@ -41,13 +42,14 @@ func ServerRun() error {
 
 	svc = BifrostConf.Service
 	svc = logging.LoggingMiddleware(config.KitLogger)(svc)
-	endpt := endpoint.MakeBifrostEndpoint(svc)
-
-	healthEndpt := endpoint.MakeHealthCheckEndpoint(svc)
 
 	endpts := endpoint.BifrostEndpoints{
-		BifrostEndpoint:     endpt,
-		HealthCheckEndpoint: healthEndpt,
+		ViewConfigEndpoint:     endpoint.MakeViewConfigEndpoint(svc),
+		GetConfigEndpoint:      endpoint.MakeGetConfigEndpoint(svc),
+		UpdateConfigEndpoint:   endpoint.MakeUpdateConfigEndpoint(svc),
+		ViewStatisticsEndpoint: endpoint.MakeViewStatisticsEndpoint(svc),
+		StatusEndpoint:         endpoint.MakeStatusEndpoint(svc),
+		HealthCheckEndpoint:    endpoint.MakeHealthCheckEndpoint(svc),
 	}
 
 	transport.ChunkSize = BifrostConf.Service.ChunckSize

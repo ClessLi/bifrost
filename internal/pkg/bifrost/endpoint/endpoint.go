@@ -10,18 +10,26 @@ import (
 )
 
 var (
-	ErrInvalidOperateRequestType = errors.New("RequestType has only four type: ViewConfig, GetConfig, ViewStatistics, Status")
-	ErrInvalidConfigRequestType  = errors.New("RequestType has only one type: UpdateConfig")
-	ErrInvalidRequest            = errors.New("request has only two class: OperateRequest, ConfigRequest")
+	ErrInvalidVCReqType      = errors.New("RequestType has only one type: ViewConfig")
+	ErrInvalidGCReqType      = errors.New("RequestType has only one type: GetConfig")
+	ErrInvalidUCReqType      = errors.New("RequestType has only one type: UpdateConfig")
+	ErrInvalidVSReqType      = errors.New("RequestType has only one type: ViewStatistics")
+	ErrInvalidStatusReqType  = errors.New("RequestType has only one type: Status")
+	ErrInvalidOperateRequest = errors.New("request has only one class: OperateRequest")
+	ErrInvalidConfigRequest  = errors.New("request has only one class: ConfigRequest")
 )
 
 type BifrostEndpoints struct {
-	BifrostEndpoint     endpoint.Endpoint
-	HealthCheckEndpoint endpoint.Endpoint
+	ViewConfigEndpoint     endpoint.Endpoint
+	GetConfigEndpoint      endpoint.Endpoint
+	UpdateConfigEndpoint   endpoint.Endpoint
+	ViewStatisticsEndpoint endpoint.Endpoint
+	StatusEndpoint         endpoint.Endpoint
+	HealthCheckEndpoint    endpoint.Endpoint
 }
 
 func (ue BifrostEndpoints) ViewConfig(ctx context.Context, token, svrName string) (data []byte, err error) {
-	resp, err := ue.BifrostEndpoint(ctx, &bifrostpb.OperateRequest{
+	resp, err := ue.ViewConfigEndpoint(ctx, &bifrostpb.OperateRequest{
 		Token:   token,
 		SvrName: svrName,
 	})
@@ -31,7 +39,7 @@ func (ue BifrostEndpoints) ViewConfig(ctx context.Context, token, svrName string
 }
 
 func (ue BifrostEndpoints) GetConfig(ctx context.Context, token, srvName string) (jsonData []byte, err error) {
-	resp, err := ue.BifrostEndpoint(ctx, &bifrostpb.OperateRequest{
+	resp, err := ue.GetConfigEndpoint(ctx, &bifrostpb.OperateRequest{
 		Token:   token,
 		SvrName: srvName,
 	})
@@ -41,7 +49,7 @@ func (ue BifrostEndpoints) GetConfig(ctx context.Context, token, srvName string)
 }
 
 func (ue BifrostEndpoints) UpdateConfig(ctx context.Context, token, svrName string, jsonData []byte) (data []byte, err error) {
-	resp, err := ue.BifrostEndpoint(ctx, &bifrostpb.ConfigRequest{
+	resp, err := ue.UpdateConfigEndpoint(ctx, &bifrostpb.ConfigRequest{
 		Token:   token,
 		SvrName: svrName,
 		Req: &bifrostpb.Config{
@@ -53,7 +61,7 @@ func (ue BifrostEndpoints) UpdateConfig(ctx context.Context, token, svrName stri
 }
 
 func (ue BifrostEndpoints) ViewStatistics(ctx context.Context, token, svrName string) (jsonData []byte, err error) {
-	resp, err := ue.BifrostEndpoint(ctx, &bifrostpb.OperateRequest{
+	resp, err := ue.ViewStatisticsEndpoint(ctx, &bifrostpb.OperateRequest{
 		Token:   token,
 		SvrName: svrName,
 	})
@@ -63,7 +71,7 @@ func (ue BifrostEndpoints) ViewStatistics(ctx context.Context, token, svrName st
 }
 
 func (ue BifrostEndpoints) Status(ctx context.Context, token string) (jsonData []byte, err error) {
-	resp, err := ue.BifrostEndpoint(ctx, &bifrostpb.OperateRequest{
+	resp, err := ue.StatusEndpoint(ctx, &bifrostpb.OperateRequest{
 		Token:   token,
 		SvrName: "",
 	})
@@ -99,46 +107,83 @@ type ConfigResponse struct {
 	Error  error  `json:"error"`
 }
 
-func MakeBifrostEndpoint(svc service.Service) endpoint.Endpoint {
+func MakeViewConfigEndpoint(svc service.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		var res []byte
-		switch request.(type) {
-		case OperateRequest:
-			req := request.(OperateRequest)
+		if req, ok := request.(OperateRequest); ok {
 			if strings.EqualFold(req.RequestType, "ViewConfig") {
-				res, err = svc.ViewConfig(ctx, req.Token, req.SvrName)
-			} else if strings.EqualFold(req.RequestType, "GetConfig") {
-				res, err = svc.GetConfig(ctx, req.Token, req.SvrName)
+				res, err := svc.ViewConfig(ctx, req.Token, req.SvrName)
+				return OperateResponse{
+					Result: res,
+					Error:  err,
+				}, nil
+			}
+			return nil, ErrInvalidVCReqType
+		}
+		return nil, ErrInvalidOperateRequest
+	}
+}
+
+func MakeGetConfigEndpoint(svc service.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		if req, ok := request.(OperateRequest); ok {
+			if strings.EqualFold(req.RequestType, "GetConfig") {
+				res, err := svc.GetConfig(ctx, req.Token, req.SvrName)
 				return ConfigResponse{
 					Result: Config{JData: res},
 					Error:  err,
 				}, nil
-			} else if strings.EqualFold(req.RequestType, "ViewStatistics") {
-				res, err = svc.ViewStatistics(ctx, req.Token, req.SvrName)
-			} else if strings.EqualFold(req.RequestType, "Status") {
-				res, err = svc.Status(ctx, req.Token)
-			} else {
-				return nil, ErrInvalidOperateRequestType
 			}
-
-			return OperateResponse{
-				Result: res,
-				Error:  err,
-			}, nil
-		case ConfigRequest:
-			req := request.(ConfigRequest)
-			if strings.EqualFold(req.RequestType, "UpdateConfig") {
-				res, err = svc.UpdateConfig(ctx, req.Token, req.SvrName, req.Ret.JData)
-			} else {
-				return nil, ErrInvalidConfigRequestType
-			}
-			return OperateResponse{
-				Result: res,
-				Error:  err,
-			}, nil
-		default:
-			return nil, ErrInvalidRequest
+			return nil, ErrInvalidGCReqType
 		}
+		return nil, ErrInvalidOperateRequest
+	}
+}
+
+func MakeUpdateConfigEndpoint(svc service.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		if req, ok := request.(ConfigRequest); ok {
+			if strings.EqualFold(req.RequestType, "UpdateConfig") {
+				res, err := svc.UpdateConfig(ctx, req.Token, req.SvrName, req.Ret.JData)
+				return OperateResponse{
+					Result: res,
+					Error:  err,
+				}, nil
+			}
+			return nil, ErrInvalidUCReqType
+		}
+		return nil, ErrInvalidConfigRequest
+	}
+}
+
+func MakeViewStatisticsEndpoint(svc service.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		if req, ok := request.(OperateRequest); ok {
+			if strings.EqualFold(req.RequestType, "ViewStatistics") {
+				res, err := svc.ViewStatistics(ctx, req.Token, req.SvrName)
+				return OperateResponse{
+					Result: res,
+					Error:  err,
+				}, nil
+			}
+			return nil, ErrInvalidVSReqType
+		}
+		return nil, ErrInvalidOperateRequest
+	}
+}
+
+func MakeStatusEndpoint(svc service.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		if req, ok := request.(OperateRequest); ok {
+			if strings.EqualFold(req.RequestType, "Status") {
+				res, err := svc.Status(ctx, req.Token)
+				return OperateResponse{
+					Result: res,
+					Error:  err,
+				}, nil
+			}
+			return nil, ErrInvalidStatusReqType
+		}
+		return nil, ErrInvalidOperateRequest
 	}
 }
 

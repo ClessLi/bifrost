@@ -2,10 +2,9 @@ package service
 
 import (
 	"encoding/json"
-	authSvc "github.com/ClessLi/bifrost/internal/pkg/auth/service"
+	"github.com/ClessLi/bifrost/pkg/client/auth"
 	ngStatistics "github.com/ClessLi/bifrost/pkg/statistics/nginx"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
 	"sync"
 )
 
@@ -24,8 +23,7 @@ type BifrostService struct {
 	AuthServerAddr string  `yaml:"AuthServerAddr"`
 	Infos          []*Info `yaml:"Infos,flow"`
 	monitorChan    chan int
-	authConn       *grpc.ClientConn
-	authSvc        authSvc.Service
+	authSvcCli     *auth.Client
 	waitGroup      *sync.WaitGroup
 }
 

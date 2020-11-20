@@ -33,13 +33,11 @@ func ServerRun() error {
 	var svc service.Service
 	svc = AuthConf.AuthService
 	svc = logging.LoggingMiddleware(config.KitLogger)(svc)
-	endpt := endpoint.MakeAuthEndpoint(svc)
-
-	healthEndpt := endpoint.MakeHealthCheckEndpoint(svc)
 
 	endpts := endpoint.AuthEndpoints{
-		AuthEndpoint:        endpt,
-		HealthCheckEndpoint: healthEndpt,
+		LoginEndpoint:       endpoint.MakeLoginEndpoint(svc),
+		VerifyEndpoint:      endpoint.MakeVerifyEndpoint(svc),
+		HealthCheckEndpoint: endpoint.MakeHealthCheckEndpoint(svc),
 	}
 
 	handler := transport.NewAuthServer(ctx, endpts)

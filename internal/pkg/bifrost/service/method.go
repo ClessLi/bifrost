@@ -4,15 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/ClessLi/bifrost/api/protobuf-spec/authpb"
-	authEP "github.com/ClessLi/bifrost/internal/pkg/auth/endpoint"
+	"github.com/ClessLi/bifrost/pkg/client/auth"
 	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
-	grpctransport "github.com/go-kit/kit/transport/grpc"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/disk"
 	"github.com/shirou/gopsutil/mem"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -67,44 +64,23 @@ func (b *BifrostService) Run() {
 	go b.monitoring()
 }
 
-func (b *BifrostService) ConnAuthSvr() error {
-
-	EncodeVerifyResponse := func(ctx context.Context, r interface{}) (response interface{}, err error) {
-		return r, nil
-	}
-
-	DecodeVerifyRequest := func(ctx context.Context, r interface{}) (request interface{}, err error) {
-		return r, nil
-	}
-
-	authConn, err := grpc.Dial(b.AuthServerAddr, grpc.WithInsecure(), grpc.WithTimeout(1*time.Second))
+func (b *BifrostService) ConnAuthSvr() (err error) {
+	b.authSvcCli, err = auth.NewClient(b.AuthServerAddr)
 	if err != nil {
 		return err
 	}
-	var ep = grpctransport.NewClient(authConn,
-		"authpb.AuthService",
-		"Verify",
-		DecodeVerifyRequest,
-		EncodeVerifyResponse,
-		authpb.VerifyResponse{}, // 写成request会导致panic，is *authpb.VerifyResponse, not *authpb.VerifyRequest
-	).Endpoint()
-	b.authConn = authConn
-	b.authSvc = authEP.AuthEndpoints{
-		AuthEndpoint: ep,
-	}
-
 	return nil
 }
 
 func (b *BifrostService) AuthSvrConnClose() error {
-	return b.authConn.Close()
+	return b.authSvcCli.Close()
 }
 
 func (b BifrostService) checkToken(ctx context.Context, token string) (pass bool, err error) {
-	if b.authSvc == nil {
+	if b.authSvcCli == nil {
 		return false, ErrConnToAuthSvr
 	}
-	return b.authSvc.Verify(ctx, token)
+	return b.authSvcCli.Verify(ctx, token)
 }
 
 func (b *BifrostService) monitoring() {

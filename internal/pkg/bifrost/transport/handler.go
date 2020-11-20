@@ -221,10 +221,10 @@ func (s *grpcServer) Status(r *bifrostpb.OperateRequest, stream bifrostpb.Bifros
 
 func NewBifrostServer(ctx context.Context, endpoints endpoint.BifrostEndpoints) bifrostpb.BifrostServiceServer {
 	return &grpcServer{
-		viewConfig:     grpc.NewServer(endpoints.BifrostEndpoint, DecodeViewConfigRequest, EncodeOperateResponse),
-		getConfig:      grpc.NewServer(endpoints.BifrostEndpoint, DecodeGetConfigRequest, EncodeConfigResponse),
-		updateConfig:   grpc.NewServer(endpoints.BifrostEndpoint, DecodeUpdateConfigRequest, EncodeOperateResponse),
-		viewStatistics: grpc.NewServer(endpoints.BifrostEndpoint, DecodeViewStatisticsRequest, EncodeOperateResponse),
-		status:         grpc.NewServer(endpoints.BifrostEndpoint, DecodeStatusRequest, EncodeOperateResponse),
+		viewConfig:     grpc.NewServer(endpoints.ViewConfigEndpoint, DecodeViewConfigRequest, EncodeOperateResponse),
+		getConfig:      grpc.NewServer(endpoints.GetConfigEndpoint, DecodeGetConfigRequest, EncodeConfigResponse), // dong大的坑，o(╥﹏╥)o，handler得绑定对应endpoint
+		updateConfig:   grpc.NewServer(endpoints.UpdateConfigEndpoint, DecodeUpdateConfigRequest, EncodeOperateResponse),
+		viewStatistics: grpc.NewServer(endpoints.ViewStatisticsEndpoint, DecodeViewStatisticsRequest, EncodeOperateResponse),
+		status:         grpc.NewServer(endpoints.StatusEndpoint, DecodeStatusRequest, EncodeOperateResponse),
 	}
 }

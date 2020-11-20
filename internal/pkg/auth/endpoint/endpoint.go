@@ -10,12 +10,13 @@ import (
 )
 
 type AuthEndpoints struct {
-	AuthEndpoint        endpoint.Endpoint
+	LoginEndpoint       endpoint.Endpoint
+	VerifyEndpoint      endpoint.Endpoint
 	HealthCheckEndpoint endpoint.Endpoint
 }
 
 func (ue AuthEndpoints) Login(ctx context.Context, username, password string, unexpired bool) (string, error) {
-	resp, err := ue.AuthEndpoint(ctx, &authpb.AuthRequest{
+	resp, err := ue.LoginEndpoint(ctx, &authpb.AuthRequest{
 		Username:  username,
 		Password:  password,
 		Unexpired: unexpired,
@@ -25,14 +26,16 @@ func (ue AuthEndpoints) Login(ctx context.Context, username, password string, un
 }
 
 func (ue AuthEndpoints) Verify(ctx context.Context, token string) (bool, error) {
-	resp, err := ue.AuthEndpoint(ctx, &authpb.VerifyRequest{Token: token})
+	resp, err := ue.VerifyEndpoint(ctx, &authpb.VerifyRequest{Token: token})
 	response := resp.(*authpb.VerifyResponse)
 	return response.Passed, err
 }
 
 var (
-	ErrInvalidRequestType = errors.New("RequestType has only two type: Login, Verify")
-	ErrInvalidRequest     = errors.New("request has only two class: AuthRequest, VerifyRequest")
+	ErrInvalidLoginReqType  = errors.New("RequestType has only one type: Login")
+	ErrInvalidVerifyReqType = errors.New("RequestType has only one type: Verify")
+	ErrInvalidLoginRequest  = errors.New("request has only one class: AuthRequest")
+	ErrInvalidVerifyRequest = errors.New("request has only one class: VerifyRequest")
 )
 
 type AuthRequest struct {
@@ -57,38 +60,42 @@ type VerifyResponse struct {
 	Error  error `json:"error"`
 }
 
-func MakeAuthEndpoint(svc service.Service) endpoint.Endpoint {
+func MakeLoginEndpoint(svc service.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		switch request.(type) {
-		case AuthRequest:
-			req := request.(AuthRequest)
+		if req, ok := request.(AuthRequest); ok {
 			var res string
 			if strings.EqualFold(req.RequestType, "Login") {
 				res, err = svc.Login(ctx, req.Username, req.Password, req.Unexpired)
 			} else {
-				return nil, ErrInvalidRequestType
+				return nil, ErrInvalidLoginReqType
 			}
 			return AuthResponse{
 				Result: res,
 				Error:  err,
 			}, nil
+		} else {
+			return nil, ErrInvalidLoginRequest
+		}
 
-		case VerifyRequest:
-			req := request.(VerifyRequest)
+	}
+}
+
+func MakeVerifyEndpoint(svc service.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		if req, ok := request.(VerifyRequest); ok {
 			var res bool
 			if strings.EqualFold(req.ResquesType, "Verify") {
 				res, _ = svc.Verify(ctx, req.Token)
 			} else {
-				return nil, ErrInvalidRequestType
+				return nil, ErrInvalidVerifyReqType
 			}
 			return VerifyResponse{
 				Result: res,
 				Error:  err,
 			}, nil
-		default:
-			return nil, ErrInvalidRequest
+		} else {
+			return nil, ErrInvalidVerifyRequest
 		}
-
 	}
 }
 
