@@ -6,7 +6,7 @@
 
 # 项目介绍
 
-**Bifrost** 是基于golang语言开发的项目，它目前还处于测试阶段，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用版本为[v1.0.0-alpha.7](https://github.com/ClessLi/bifrost/tree/v1.0.0-alpha.7) 。
+**Bifrost** 是基于golang语言、gRPC协议、go-kit框架开发的项目，它目前还处于测试阶段，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用版本为[v1.0.0-alpha.7](https://github.com/ClessLi/bifrost/tree/v1.0.0-alpha.7) 。
 
 # 项目特点
 
@@ -16,7 +16,7 @@
 
 实现了在加载配置或反序列化json时，防止循环读取配置的功能；实现了nginx配置文件后台更新后，自动热加载的功能
 
-提供配置文件展示和修改及配置信息统计查询的接口
+提供配置文件展示和修改及配置信息统计查询，及主机系统状况信息查询的gRPC接口
 
 # 合作项目
 
@@ -68,33 +68,16 @@ bifrost-v0.0.3
 
 配置路径
 
-`configs/bifrost.yml`
+`bifrost: configs/bifrost.yml`
+
+`bifrost-auth: configs/auth.yml`
 
 配置示例
 
+`bifrost-auth`
 ```yaml
-Service:
-  listenPort: 12321
-  chunkSize: 4194304
-  infos:
-    -
-      name: "bifrost-test"
-      type: nginx
-      baseURI: "/ng_conf1"
-      backupCycle: 1
-      backupSaveTime: 7
-      backupDir: # 可选，空或未选用时默认以web应用主配置文件所在目录为准
-      confPath: "/usr/local/openresty/nginx/conf/nginx.conf"
-      verifyExecPath: "/usr/local/openresty/nginx/sbin/nginx"
-    -
-      name: "bifrost-test2"
-      type: nginx
-      baseURI: "/ng_conf2"
-      backupCycle: 1
-      backupSaveTime: 7
-      confPath: "/GO_Project/src/bifrost/test/config_test/nginx.conf"
-      verifyExecPath: "xxxxxxxxxxxx/nginx"
 AuthService:
+  Port: 12320
   AuthDBConfig: # 可选，未指定时将考虑AuthConfig
     DBName: "bifrost"
     host: "127.0.0.1"
@@ -110,8 +93,53 @@ LogConfig:
   level: 2
 ```
 
+`bifrost`
+```yaml
+Service:
+  Port: 12321
+  ChunkSize: 4194304
+  AuthServerAddr: "127.0.0.1:12320"
+  Infos:
+    -
+      name: "bifrost-test"
+      type: nginx
+      backupCycle: 1
+      backupSaveTime: 7
+      backupDir: # 可选，空或未选用时默认以web应用主配置文件所在目录为准
+      confPath: "/usr/local/openresty/nginx/conf/nginx.conf"
+      verifyExecPath: "/usr/local/openresty/nginx/sbin/nginx"
+    -
+      name: "bifrost-test2"
+      type: nginx
+      backupCycle: 1
+      backupSaveTime: 7
+      confPath: "/GO_Project/src/bifrost/test/config_test/nginx.conf"
+      verifyExecPath: "xxxxxxxxxxxx/nginx"
+LogConfig:
+  logDir: "./logs"
+  level: 2
+```
+
 ## 命令帮助
 
+`bifrost-auth`
+```
+> ./bifrost-auth -h
+  bifrost-auth version: v1.0.1-alpha.1
+  Usage: ./bifrost-auth [-hv] [-f filename] [-s signal]
+  
+  Options:
+    -f config
+      	the bifrost-auth configuration file path. (default "./configs/auth.yml")
+    -h help
+      	this help
+    -s signal
+      	send signal to a master process: stop, restart, status
+    -v version
+      	this version
+```
+
+`bifrost`
 ```
 > ./bifrost -h
   bifrost version: v1.0.1-alpha.1
@@ -130,10 +158,30 @@ LogConfig:
 
 ## 接口文档
 
-详见[bifrost_gRPC接口定义](api/protobuf-spec/bifrostpb/bifrost.proto)
+详见
 
-注：gRPC服务端口侦听为bifrost配置中Service.listenPort值。
+[bifrost_gRPC接口定义](api/protobuf-spec/bifrostpb/bifrost.proto)
 
-### 接口示例
+注：gRPC服务端口侦听为bifrost配置中Service.Port值。
 
-详见[bifrost_gRPC接口示例](test/grpc_client)
+[auth_gRPC接口定义](api/protobuf-spec/authpb/auth.proto)
+
+注：gRPC服务端口侦听为auth配置中AuthService.Port值。
+
+### ~~接口示例~~(已改用客户端方式)
+
+~~详见~~[~~bifrost_gRPC接口示例~~](test/grpc_client)
+
+## 客户端
+
+### 认证客户端
+
+通过"pkg/client/auth/client.NewClient"函数可生成认证服务客户端
+
+详见[认证客户端](pkg/client/auth/client.go)
+
+### bifrost客户端
+
+通过"pkg/client/bifrost/client.NewClient"函数可生成bifrost服务客户端
+
+详见[bifrost客户端](pkg/client/bifrost/client.go)

@@ -16,7 +16,7 @@ import (
 
 var (
 	// 传入参数
-	confPath = flag.String("f", "./configs/bifrost.yml", "the bifrost `config`uration file path.")
+	confPath = flag.String("f", "./configs/auth.yml", "the bifrost-auth `config`uration file path.")
 	Signal   = flag.String("s", "", "send `signal` to a master process: stop, restart, status")
 	help     = flag.Bool("h", false, "this `help`")
 	version  = flag.Bool("v", false, "this `version`")
