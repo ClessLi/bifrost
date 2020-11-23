@@ -6,7 +6,7 @@
 
 # 项目介绍
 
-**Bifrost** 是基于golang语言、gRPC协议、go-kit框架开发的项目，它目前还处于测试阶段，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用版本为[v1.0.0-alpha.7](https://github.com/ClessLi/bifrost/tree/v1.0.0-alpha.7) 。
+**Bifrost** 是基于golang语言开发的项目，它目前还处于测试阶段，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用版本为[v1.0.0-alpha.7](https://github.com/ClessLi/bifrost/tree/v1.0.0-alpha.7) （v1.0.1-alpha.1将取消http协议接口，改用gRPC协议接口。该版本正在开发中，敬请期待）。
 
 # 项目特点
 
@@ -168,7 +168,7 @@ LogConfig:
 
 注：gRPC服务端口侦听为auth配置中AuthService.Port值。
 
-### ~~接口示例~~(已改用客户端方式)
+### ~~接口示例~~(已改用客户端方式，详见[客户端使用示例](#test))
 
 ~~详见~~[~~bifrost_gRPC接口示例~~](test/grpc_client)
 
@@ -185,3 +185,7 @@ LogConfig:
 通过"pkg/client/bifrost/client.NewClient"函数可生成bifrost服务客户端
 
 详见[bifrost客户端](pkg/client/bifrost/client.go)
+
+<h3 id="test">客户端使用示例</h3>
+
+详见[客户端测试示例](test/grpc_client)

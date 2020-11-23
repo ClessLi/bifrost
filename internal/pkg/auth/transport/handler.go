@@ -14,18 +14,25 @@ type grpcServer struct {
 
 func (s *grpcServer) Login(ctx context.Context, r *authpb.AuthRequest) (*authpb.AuthResponse, error) {
 	_, resp, err := s.login.ServeGRPC(ctx, r)
-	if err != nil {
-		return nil, err
+	if resp != nil {
+		return resp.(*authpb.AuthResponse), err
 	}
-	return resp.(*authpb.AuthResponse), nil
+	//if err != nil {
+	//	return nil, err
+	//}
+	return nil, err
 }
 
 func (s *grpcServer) Verify(ctx context.Context, r *authpb.VerifyRequest) (*authpb.VerifyResponse, error) {
 	_, resp, err := s.verify.ServeGRPC(ctx, r)
-	if err != nil {
-		return nil, err
+	//if err != nil {
+	//	return nil, err
+	//}
+	//return resp.(*authpb.VerifyResponse), nil
+	if resp != nil {
+		return resp.(*authpb.VerifyResponse), err
 	}
-	return resp.(*authpb.VerifyResponse), nil
+	return nil, err
 }
 
 func NewAuthServer(ctx context.Context, endpoints endpoint.AuthEndpoints) authpb.AuthServiceServer {
@@ -36,7 +43,7 @@ func NewAuthServer(ctx context.Context, endpoints endpoint.AuthEndpoints) authpb
 			EncodeAuthResponse,
 		),
 		verify: grpc.NewServer(
-			endpoints.LoginEndpoint,
+			endpoints.VerifyEndpoint,
 			DecodeVerifyRequest,
 			EncodeVerifyResponse,
 		),

@@ -21,14 +21,26 @@ func (ue AuthEndpoints) Login(ctx context.Context, username, password string, un
 		Password:  password,
 		Unexpired: unexpired,
 	})
-	response := resp.(*authpb.AuthResponse)
-	return response.Token, err
+	if err != nil {
+		return "", err
+	}
+	if response, ok := resp.(*authpb.AuthResponse); ok {
+		return response.Token, nil
+	} else {
+		return "", ErrResponseNull
+	}
 }
 
 func (ue AuthEndpoints) Verify(ctx context.Context, token string) (bool, error) {
 	resp, err := ue.VerifyEndpoint(ctx, &authpb.VerifyRequest{Token: token})
-	response := resp.(*authpb.VerifyResponse)
-	return response.Passed, err
+	if err != nil {
+		return false, err
+	}
+	if response, ok := resp.(*authpb.VerifyResponse); ok {
+		return response.Passed, nil
+	} else {
+		return false, ErrResponseNull
+	}
 }
 
 var (
@@ -36,6 +48,7 @@ var (
 	ErrInvalidVerifyReqType = errors.New("RequestType has only one type: Verify")
 	ErrInvalidLoginRequest  = errors.New("request has only one class: AuthRequest")
 	ErrInvalidVerifyRequest = errors.New("request has only one class: VerifyRequest")
+	ErrResponseNull         = errors.New("response is null")
 )
 
 type AuthRequest struct {

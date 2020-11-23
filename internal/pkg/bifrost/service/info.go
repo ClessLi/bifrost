@@ -179,11 +179,11 @@ func (i *Info) bak() {
 
 		if bErr != nil && (!os.IsExist(bErr) && bErr != nginx.NoBackupRequired) { // 备份失败
 			//Log(CRITICAL, "[%s] Nginx Config backup to %s, but failed. <%s>", i.Name, bakPath, bErr)
-			fmt.Printf("[%s] Nginx Config backup to %s, but failed. <%s>", i.Name, bakPath, bErr)
+			fmt.Printf("[%s] Nginx Config backup to %s, but failed. <%s>\n", i.Name, bakPath, bErr)
 			//Log(NOTICE, "[%s] Nginx Config backup is stop.", i.Name)
 		} else if bErr == nil { // 备份成功
 			//Log(INFO, "[%s] Nginx Config backup to %s", i.Name, bakPath)
-			fmt.Printf("[%s] Nginx Config backup to %s", i.Name, bakPath)
+			fmt.Printf("[%s] Nginx Config backup to %s\n", i.Name, bakPath)
 		}
 	}
 }

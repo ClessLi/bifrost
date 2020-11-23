@@ -17,6 +17,7 @@ var (
 	ErrInvalidStatusReqType  = errors.New("RequestType has only one type: Status")
 	ErrInvalidOperateRequest = errors.New("request has only one class: OperateRequest")
 	ErrInvalidConfigRequest  = errors.New("request has only one class: ConfigRequest")
+	ErrResponseNull          = errors.New("response is null")
 )
 
 type BifrostEndpoints struct {
@@ -34,8 +35,14 @@ func (ue BifrostEndpoints) ViewConfig(ctx context.Context, token, svrName string
 		SvrName: svrName,
 	})
 
-	response := resp.(*bifrostpb.OperateResponse)
-	return response.Ret, err
+	if err != nil {
+		return nil, err
+	}
+	if response, ok := resp.(*bifrostpb.OperateResponse); ok {
+		return response.Ret, err
+	} else {
+		return nil, ErrResponseNull
+	}
 }
 
 func (ue BifrostEndpoints) GetConfig(ctx context.Context, token, srvName string) (jsonData []byte, err error) {
@@ -44,8 +51,14 @@ func (ue BifrostEndpoints) GetConfig(ctx context.Context, token, srvName string)
 		SvrName: srvName,
 	})
 
-	response := resp.(*bifrostpb.ConfigResponse)
-	return response.Ret.JData, err
+	if err != nil {
+		return nil, err
+	}
+	if response, ok := resp.(*bifrostpb.ConfigResponse); ok {
+		return response.Ret.JData, err
+	} else {
+		return nil, ErrResponseNull
+	}
 }
 
 func (ue BifrostEndpoints) UpdateConfig(ctx context.Context, token, svrName string, jsonData []byte) (data []byte, err error) {
@@ -56,8 +69,15 @@ func (ue BifrostEndpoints) UpdateConfig(ctx context.Context, token, svrName stri
 			JData: jsonData,
 		},
 	})
-	response := resp.(*bifrostpb.OperateResponse)
-	return response.Ret, err
+
+	if err != nil {
+		return nil, err
+	}
+	if response, ok := resp.(*bifrostpb.OperateResponse); ok {
+		return response.Ret, nil
+	} else {
+		return nil, ErrResponseNull
+	}
 }
 
 func (ue BifrostEndpoints) ViewStatistics(ctx context.Context, token, svrName string) (jsonData []byte, err error) {
@@ -66,8 +86,14 @@ func (ue BifrostEndpoints) ViewStatistics(ctx context.Context, token, svrName st
 		SvrName: svrName,
 	})
 
-	response := resp.(*bifrostpb.OperateResponse)
-	return response.Ret, err
+	if err != nil {
+		return nil, err
+	}
+	if response, ok := resp.(*bifrostpb.OperateResponse); ok {
+		return response.Ret, err
+	} else {
+		return nil, ErrResponseNull
+	}
 }
 
 func (ue BifrostEndpoints) Status(ctx context.Context, token string) (jsonData []byte, err error) {
@@ -76,8 +102,14 @@ func (ue BifrostEndpoints) Status(ctx context.Context, token string) (jsonData [
 		SvrName: "",
 	})
 
-	response := resp.(*bifrostpb.OperateResponse)
-	return response.Ret, err
+	if err != nil {
+		return nil, err
+	}
+	if response, ok := resp.(*bifrostpb.OperateResponse); ok {
+		return response.Ret, err
+	} else {
+		return nil, ErrResponseNull
+	}
 }
 
 type OperateRequest struct {

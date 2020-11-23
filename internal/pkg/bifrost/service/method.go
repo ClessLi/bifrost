@@ -28,19 +28,21 @@ func (b *BifrostService) Run() {
 	for i := 0; i < len(b.Infos); i++ {
 		switch b.Infos[i].Type {
 		case NGINX:
-			//Log(DEBUG, "[%b] 初始化bifrost服务相关接口。。。", b.ServiceInfos[i].Name)
+			//Log(DEBUG, "[%s] 初始化bifrost服务相关接口。。。", b.ServiceInfos[i].Name)
 			loadErr := b.Infos[i].ngLoad()
 			if loadErr != nil {
-				//Log(ERROR, "[%b] load config error: %b", b.ServiceInfos[i].Name, loadErr)
+				fmt.Printf("[%s] load config error: %s\n", b.Infos[i].Name, loadErr)
+				//Log(ERROR, "[%s] load config error: %s", b.ServiceInfos[i].Name, loadErr)
 				b.Infos[i].Disable()
 				break
 			}
 
 			// 检查nginx配置是否能被正常解析为json
-			//Log(DEBUG, "[%b] 校验nginx配置。。。", b.ServiceInfos[i].Name)
+			//Log(DEBUG, "[%s] 校验nginx配置。。。", b.ServiceInfos[i].Name)
 			_, jerr := json.Marshal(b.Infos[i].nginxConfig)
 			if jerr != nil {
-				//Log(CRITICAL, "[%b] bifrost service failed to start. Cased by '%b'", b.ServiceInfos[i].Name, jerr)
+				fmt.Printf("[%s] bifrost service failed to start. Cased by '%s'\n", b.Infos[i].Name, jerr)
+				//Log(CRITICAL, "[%s] bifrost service failed to start. Cased by '%s'", b.ServiceInfos[i].Name, jerr)
 				b.Infos[i].Disable()
 				break
 			}
@@ -48,10 +50,10 @@ func (b *BifrostService) Run() {
 			// DONE: 执行备份与自动加载
 			b.waitGroup.Add(1)
 			go b.Infos[i].Bak(b.waitGroup)
-			//Log(DEBUG, "[%b] 载入备份协程", b.ServiceInfos[i].Name)
+			//Log(DEBUG, "[%s] 载入备份协程", b.ServiceInfos[i].Name)
 			b.waitGroup.Add(1)
 			go b.Infos[i].AutoReload(b.waitGroup)
-			//Log(DEBUG, "[%b] 载入自动更新配置协程", b.ServiceInfos[i].Name)
+			//Log(DEBUG, "[%s] 载入自动更新配置协程", b.ServiceInfos[i].Name)
 
 		case HTTPD:
 			// TODO: apache httpd配置解析器
@@ -96,7 +98,7 @@ func (b *BifrostService) monitoring() {
 		if b.Infos[i].nginxConfig != nil && !checkPass[i] {
 			svrBinAbs, absErr := filepath.Abs(b.Infos[i].VerifyExecPath)
 			if absErr != nil {
-				//Log(WARN, "[%b] get web server bin dir err: %b", b.ServiceInfos[i].Name, absErr)
+				//Log(WARN, "[%s] get web server bin dir err: %s", b.ServiceInfos[i].Name, absErr)
 				checkPass[i] = true
 				continue
 
@@ -104,7 +106,7 @@ func (b *BifrostService) monitoring() {
 			//svrWS, wsErr := filepath.Rel(filepath.Dir(svrBinAbs),"..")
 			svrWS, wsErr := filepath.Abs(filepath.Join(filepath.Dir(svrBinAbs), ".."))
 			if wsErr != nil {
-				//Log(WARN, "[%b] get web server workspace err: %b", b.ServiceInfos[i].Name, wsErr)
+				//Log(WARN, "[%s] get web server workspace err: %s", b.ServiceInfos[i].Name, wsErr)
 				checkPass[i] = true
 				continue
 			}
@@ -132,7 +134,7 @@ func (b *BifrostService) monitoring() {
 			}()
 
 			if vErr != nil {
-				//Log(WARN, "[%b] web server version check error: %b", b.ServiceInfos[i].Name, vErr)
+				//Log(WARN, "[%s] web server version check error: %s", b.ServiceInfos[i].Name, vErr)
 			} else {
 				SysInfo.ServersVersion[i] = svrVersion
 			}
@@ -159,7 +161,7 @@ func (b *BifrostService) monitoring() {
 					svrPidFilePathAbs, pidErr = filepath.Abs(filepath.Join(svrWSs[i], svrPidFilePath))
 					if pidErr != nil {
 						if SysInfo.ServersStatus[i] != "unknow" {
-							//Log(WARN, "[%b] get web server pid file path failed: %b", b.ServiceInfos[i].Name, pidErr)
+							//Log(WARN, "[%s] get web server pid file path failed: %s", b.ServiceInfos[i].Name, pidErr)
 						}
 						SysInfo.ServersStatus[i] = "unknow"
 						continue
@@ -169,7 +171,7 @@ func (b *BifrostService) monitoring() {
 				svrPid, gPidErr := getPid(svrPidFilePathAbs)
 				if gPidErr != nil {
 					if SysInfo.ServersStatus[i] != "abnormal" {
-						//Log(WARN, "[%b] something wrong with web server: %b", b.ServiceInfos[i].Name, gPidErr)
+						//Log(WARN, "[%s] something wrong with web server: %s", b.ServiceInfos[i].Name, gPidErr)
 					}
 					SysInfo.ServersStatus[i] = "abnormal"
 					continue
@@ -178,14 +180,14 @@ func (b *BifrostService) monitoring() {
 				_, procErr := os.FindProcess(svrPid)
 				if procErr != nil {
 					if SysInfo.ServersStatus[i] != "abnormal" {
-						//Log(WARN, "[%b] something wrong with web server: %b", b.ServiceInfos[i].Name, gPidErr)
+						//Log(WARN, "[%s] something wrong with web server: %s", b.ServiceInfos[i].Name, gPidErr)
 					}
 					SysInfo.ServersStatus[i] = "abnormal"
 					continue
 				}
 
 				if SysInfo.ServersStatus[i] != "normal" {
-					//Log(INFO, "[%b] web server <PID: %d> is running.", b.ServiceInfos[i].Name, svrPid)
+					//Log(INFO, "[%s] web server <PID: %d> is running.", b.ServiceInfos[i].Name, svrPid)
 				}
 				SysInfo.ServersStatus[i] = "normal"
 			}
@@ -229,7 +231,7 @@ func (b *BifrostService) monitoring() {
 		}
 	}
 	//isHealthy = false
-	//Log(CRITICAL, "monitor is stopped, cased by '%b'", sysErr)
+	//Log(CRITICAL, "monitor is stopped, cased by '%s'", sysErr)
 	return
 }
 
@@ -253,14 +255,14 @@ func (b *BifrostService) KillCoroutines() {
 		b.monitorChan <- 9
 	}
 	for i := 0; i < len(b.Infos); i++ {
-		//Log(DEBUG, "[%b] stop backup proc", b.Service[i].Name)
+		//Log(DEBUG, "[%s] stop backup proc", b.Service[i].Name)
 		if b.Infos[i].bakChan != nil {
-			//Log(DEBUG, "[%b] stop backup proc", b.ServiceInfos[i].Name)
+			//Log(DEBUG, "[%s] stop backup proc", b.ServiceInfos[i].Name)
 			b.Infos[i].bakChan <- 9
 		}
-		//Log(DEBUG, "[%b] stop config auto reload proc", b.Service[i].Name)
+		//Log(DEBUG, "[%s] stop config auto reload proc", b.Service[i].Name)
 		if b.Infos[i].autoReloadChan != nil {
-			//Log(DEBUG, "[%b] stop config auto reload proc", b.ServiceInfos[i].Name)
+			//Log(DEBUG, "[%s] stop config auto reload proc", b.ServiceInfos[i].Name)
 			b.Infos[i].autoReloadChan <- 9
 		}
 	}
