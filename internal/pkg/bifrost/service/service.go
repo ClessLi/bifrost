@@ -2,7 +2,6 @@ package service
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/ClessLi/bifrost/pkg/client/auth"
 	ngStatistics "github.com/ClessLi/bifrost/pkg/statistics/nginx"
 	"golang.org/x/net/context"
@@ -17,8 +16,6 @@ type Service interface {
 	ViewStatistics(ctx context.Context, token, svrName string) (jsonData []byte, err error)
 	Status(ctx context.Context, token string) (jsonData []byte, err error)
 	// TODO: WatchLog暂用锁机制，一个日志文件仅允许一个终端访问
-	//WatchLog(ctx context.Context, token, svrName, param string, hasKey ...bool) (data []byte, err error)
-	//StopWatchLog(ctx context.Context, token, svrName, param string) (data []byte, err error)
 	WatchLog(ctx context.Context, token, svrName, logName string, dataChan chan<- []byte, signal <-chan int) error
 }
 
@@ -140,12 +137,12 @@ func (b *BifrostService) Status(ctx context.Context, token string) (jsonData []b
 }
 
 func (b *BifrostService) WatchLog(ctx context.Context, token, svrName, logName string, dataChan chan<- []byte, signal <-chan int) (err error) {
-	fmt.Println("svc接受到请求")
+	//fmt.Println("svc接收到请求")
 	if dataChan == nil || signal == nil {
 		return ErrChanNil
 	}
 	// 认证
-	fmt.Println("svc认证请求")
+	//fmt.Println("svc认证请求")
 	var pass bool
 	pass, err = b.checkToken(ctx, token)
 	if err != nil {
@@ -170,23 +167,19 @@ func (b *BifrostService) WatchLog(ctx context.Context, token, svrName, logName s
 		return err
 	}
 
-	//defer func() {
-	//	fmt.Println("stop tail log")
-	//	err = info.StopWatchLog(logName)
-	//}()
 	// 监听终止信号和每秒读取日志并发送
-	fmt.Println("监听终止信号及准备发送日志")
+	//fmt.Println("监听终止信号及准备发送日志")
 	for {
 		select {
 		case s := <-signal:
 			if s == 9 {
-				fmt.Println("watch log stopping...")
+				//fmt.Println("watch log stopping...")
 				err = info.StopWatchLog(logName)
-				fmt.Println("watch log is stopped")
+				//fmt.Println("watch log is stopped")
 				return err
 			}
 		case <-ticker:
-			fmt.Println("读取日志")
+			//fmt.Println("读取日志")
 			data, err := info.WatchLog(logName)
 			if err != nil {
 				stopErr := info.StopWatchLog(logName)
@@ -201,8 +194,7 @@ func (b *BifrostService) WatchLog(ctx context.Context, token, svrName, logName s
 			select {
 			case dataChan <- data:
 				// 日志推送后，客户端已经终止，handler日志推送阻断且发送了终止信号，由于日志推送阻断，接收终止信息被积压
-				fmt.Println("svc发送日志成功")
-				//break
+				//fmt.Println("svc发送日志成功")
 			case <-time.After(time.Second * 30):
 				_ = info.StopWatchLog(logName)
 				return ErrDataSendingTimeout

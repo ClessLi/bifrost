@@ -3,7 +3,6 @@ package transport
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb"
 	"github.com/ClessLi/bifrost/internal/pkg/bifrost/endpoint"
 	"github.com/go-kit/kit/transport/grpc"
@@ -230,10 +229,10 @@ func (s *grpcServer) WatchLog(stream bifrostpb.BifrostService_WatchLogServer) (e
 		return err
 	}
 
-	fmt.Println("接收到客户端请求")
+	//fmt.Println("接收到客户端请求")
 	// 初始化数据传输，信号传输管道，及WatchLogRequest
 	wlReq := endpoint.NewWatchLogRequest(req)
-	fmt.Println("初始化日志监看请求成功")
+	//fmt.Println("初始化日志监看请求成功")
 
 	// 监听WatchLogResponse中Result(dataChan)和ErrChan，监听stopSendSig、WatchLogTimeout
 	go func(stopSig chan int) {
@@ -241,14 +240,14 @@ func (s *grpcServer) WatchLog(stream bifrostpb.BifrostService_WatchLogServer) (e
 		for {
 			select {
 			case data := <-*wlReq.DataChan:
-				fmt.Println("发送日志数据")
+				//fmt.Println("发送日志数据")
 				err = stream.Send(&bifrostpb.OperateResponse{
 					Ret: data,
 					Err: "",
 				})
 			case sig := <-stopSig:
 				if sig == 9 { // 信号9传入则开始停止
-					fmt.Println("开始停止")
+					//fmt.Println("开始停止")
 					_, _ = <-*wlReq.DataChan
 					*wlReq.SignalChan <- sig // 发送终止信号9给svc方法进程
 					//sig = <-*response.Signal // 接收svc方法进程完成信号，规定为0
@@ -267,7 +266,7 @@ func (s *grpcServer) WatchLog(stream bifrostpb.BifrostService_WatchLogServer) (e
 		for {
 			// 接收客户端请求
 			in, err := stream.Recv()
-			fmt.Println("再次接受到客户端请求")
+			//fmt.Println("再次接受到客户端请求")
 			if err == nil && (in.SvrName != req.SvrName || in.Token != req.Token || in.Param != req.Param) {
 				err = ErrRequestInconsistent
 			}
@@ -289,9 +288,9 @@ func (s *grpcServer) WatchLog(stream bifrostpb.BifrostService_WatchLogServer) (e
 	}()
 
 	// 向endpoint发起请求，获取WatchLogResponse
-	fmt.Println("请求发往endpoint处理")
+	//fmt.Println("请求发往endpoint处理")
 	_, _, err = s.watchLog.ServeGRPC(stream.Context(), wlReq)
-	fmt.Println("endpoint处理完毕")
+	//fmt.Println("endpoint处理完毕")
 	return err
 }
 

@@ -5,7 +5,6 @@ package nginx
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/hpcloud/tail"
 	"os"
 	"path/filepath"
@@ -91,11 +90,11 @@ func (l *Log) StopWatch(logName string) error {
 	if !ok {
 		return ErrLogBufferIsNotExist
 	}
-	fmt.Printf("stop tail %s\n", logName)
+	//fmt.Printf("stop tail %s\n", logName)
 	err := tails.Stop()
 	delete(l.log, logName)
 	delete(l.locks, logName)
-	fmt.Printf("stop tail %s compelet\n", logName)
+	//fmt.Printf("stop tail %s compelet\n", logName)
 	return err
 }
 
