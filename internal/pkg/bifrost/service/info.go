@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	ngJson "github.com/ClessLi/bifrost/pkg/json/nginx"
+	ngLog "github.com/ClessLi/bifrost/pkg/log/nginx"
 	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
 	"os"
 	"path/filepath"
@@ -35,6 +36,7 @@ type Info struct {
 	VerifyExecPath string        `yaml:"verifyExecPath"`
 	confCaches     nginx.Caches
 	nginxConfig    *nginx.Config
+	nginxLog       *ngLog.Log
 	available      bool
 	bakChan        chan int
 	autoReloadChan chan int
@@ -238,6 +240,22 @@ func (i *Info) autoReload() error {
 		return nginx.NoReloadRequired
 	}
 	return ErrServiceNotAvailable
+}
+
+func (i *Info) StartWatchLog(logName string) error {
+	logDir, err := filepath.Abs(filepath.Join(filepath.Dir(filepath.Dir(i.VerifyExecPath)), "logs"))
+	if err != nil {
+		return err
+	}
+	return i.nginxLog.StartWatch(logName, logDir)
+}
+
+func (i *Info) WatchLog(logName string) (data []byte, err error) {
+	return i.nginxLog.Watch(logName)
+}
+
+func (i *Info) StopWatchLog(logName string) error {
+	return i.nginxLog.StopWatch(logName)
 }
 
 // checkHash, ServerInfo的web服务器配置文件是否已更改校验方法

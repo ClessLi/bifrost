@@ -10,6 +10,7 @@ require (
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang/protobuf v1.4.1
+	github.com/hpcloud/tail v1.0.0
 	github.com/shirou/gopsutil v2.20.5+incompatible
 	github.com/stretchr/testify v1.6.1 // indirect
 	golang.org/x/net v0.0.0-20190813141303-74dc4d7220e7

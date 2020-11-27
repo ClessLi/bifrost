@@ -139,6 +139,26 @@ func (mw loggingMiddleware) Status(ctx context.Context, token string) (jsonData 
 	return jsonData, err
 }
 
+func (mw loggingMiddleware) WatchLog(ctx context.Context, token, svrName, logName string, dataChan chan<- []byte, signal <-chan int) (err error) {
+	ip, cipErr := getClientIP(ctx)
+	defer func(begin time.Time) {
+		mw.logger.Log(
+			"functions", "WatchLog",
+			"clientIp", ip,
+			"token", token,
+			"svrName", svrName,
+			"logFile", logName,
+			"error", err,
+			"during", time.Since(begin),
+		)
+	}(time.Now().Local())
+	if cipErr != nil {
+		return cipErr
+	}
+	err = mw.Service.WatchLog(ctx, token, svrName, logName, dataChan, signal)
+	return err
+}
+
 func (mw loggingMiddleware) HealthCheck() (result bool) {
 	defer func(begin time.Time) {
 		mw.logger.Log(

@@ -61,6 +61,7 @@ func NewClient(svrAddr string) (*Client, error) {
 			encodeResponse,
 			&bifrostpb.OperateResponse{},
 		).Endpoint(),
+		WatchLogEndpoint: endpoint.MakeWatchLogClientEndpoint(conn),
 	}
 	return &Client{
 		ClientConn: conn,

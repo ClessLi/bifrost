@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ClessLi/bifrost/pkg/client/auth"
+	ngLog "github.com/ClessLi/bifrost/pkg/log/nginx"
 	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/disk"
@@ -54,7 +55,7 @@ func (b *BifrostService) Run() {
 			b.waitGroup.Add(1)
 			go b.Infos[i].AutoReload(b.waitGroup)
 			//Log(DEBUG, "[%s] 载入自动更新配置协程", b.ServiceInfos[i].Name)
-
+			b.Infos[i].nginxLog = ngLog.NewLog()
 		case HTTPD:
 			// TODO: apache httpd配置解析器
 			continue

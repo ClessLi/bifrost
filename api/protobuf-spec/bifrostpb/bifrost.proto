@@ -9,11 +9,13 @@ service BifrostService {
   rpc UpdateConfig(stream ConfigRequest) returns (OperateResponse) {}
   rpc ViewStatistics(OperateRequest) returns (stream OperateResponse) {}
   rpc Status(OperateRequest) returns (stream OperateResponse) {}
+  rpc WatchLog(stream OperateRequest) returns (stream OperateResponse) {}
 }
 
 message OperateRequest {
   string Token = 1;
   string SvrName = 2;
+  string Param = 3;
 }
 
 message OperateResponse {

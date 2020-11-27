@@ -49,6 +49,7 @@ func ServerRun() error {
 		UpdateConfigEndpoint:   endpoint.MakeUpdateConfigEndpoint(svc),
 		ViewStatisticsEndpoint: endpoint.MakeViewStatisticsEndpoint(svc),
 		StatusEndpoint:         endpoint.MakeStatusEndpoint(svc),
+		WatchLogEndpoint:       endpoint.MakeWatchLogEndpoint(svc),
 		HealthCheckEndpoint:    endpoint.MakeHealthCheckEndpoint(svc),
 	}
 
@@ -59,13 +60,15 @@ func ServerRun() error {
 	if lisErr != nil {
 		return lisErr
 	}
+	defer lis.Close()
 
-	gRPCServer := grpc.NewServer()
+	gRPCServer := grpc.NewServer(grpc.MaxSendMsgSize(transport.ChunkSize))
 	bifrostpb.RegisterBifrostServiceServer(gRPCServer, handler)
 	fmt.Println(logoStr)
 	svrErrChan := make(chan error, 1)
 	go func() {
 		svrErr := gRPCServer.Serve(lis)
+		Log(NOTICE, "bifrost service is running on %s", lis.Addr())
 		svrErrChan <- svrErr
 	}()
 

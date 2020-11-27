@@ -10,19 +10,20 @@ import (
 	"golang.org/x/net/context"
 	"os"
 	"testing"
+	"time"
 )
 
 var (
-	authClient    *auth.Client
-	bifrostClient *bifrost.Client
-	SvrName       = "bifrost-test"
-	initErr       error
-	token         string
+	authClient     *auth.Client
+	bifrostClient  *bifrost.Client
+	SvrName        = "bifrost-test"
+	initErr        error
+	token          string
+	bifrostSvrAddr = "192.168.220.11:12321"
 )
 
 func init() {
 	authSvrAddr := "192.168.220.11:12320"
-	bifrostSvrAddr := "192.168.220.11:12321"
 	username := "heimdall"
 	password := "Bultgang"
 	authClient, initErr = auth.NewClient(authSvrAddr)
@@ -76,7 +77,7 @@ func TestClientUC(t *testing.T) {
 		return
 	}
 
-	err = config.Insert(config.Children[0], nginx.TypeComment, "#test for client.UpdateConfig")
+	err = config.Insert(config.Children[0], nginx.TypeComment, fmt.Sprintf("#test for client.UpdateConfig at %s", time.Now()))
 	if err != nil {
 		t.Fatal(err)
 		return
@@ -114,4 +115,26 @@ func TestClientStatus(t *testing.T) {
 		return
 	}
 	t.Log(string(jdata))
+}
+
+func TestClientWatchLog(t *testing.T) {
+	defer bifrostClient.Close()
+	dataChan := make(chan []byte, 1)
+	signal := make(chan int, 1)
+	timeout := time.After(time.Second * 20)
+	go func() {
+		err := bifrostClient.WatchLog(context.Background(), token, SvrName, "access.log", dataChan, signal)
+		t.Log(err)
+	}()
+
+	defer func() { signal <- 9 }()
+	for {
+		select {
+		case data := <-dataChan:
+			t.Logf(string(data))
+		case <-timeout:
+			t.Log("test end")
+			return
+		}
+	}
 }

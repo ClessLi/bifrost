@@ -158,6 +158,8 @@ LogConfig:
 
 ## 接口文档
 
+支持web服务器（暂仅支持nginx）配置文件查看、序列化导出（json）、配置更新、配置统计信息查看、web服务器状态信息查看，及web服务器（暂仅支持nginx）日志监看功能
+
 详见
 
 [bifrost_gRPC接口定义](api/protobuf-spec/bifrostpb/bifrost.proto)
@@ -173,6 +175,8 @@ LogConfig:
 ~~详见~~[~~bifrost_gRPC接口示例~~](test/grpc_client)
 
 ## 客户端
+
+结合go-kit框架编写的客户端对象
 
 ### 认证客户端
 

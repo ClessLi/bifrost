@@ -26,6 +26,10 @@ func DecodeStatusRequest(ctx context.Context, r interface{}) (interface{}, error
 	return decodeRequest(ctx, r, "Status")
 }
 
+func DecodeWatchLogRequest(ctx context.Context, r interface{}) (request interface{}, err error) {
+	return r, nil
+}
+
 func decodeRequest(ctx context.Context, r interface{}, requestType string) (interface{}, error) {
 	switch requestType {
 	case "UpdateConfig":
@@ -44,6 +48,7 @@ func decodeRequest(ctx context.Context, r interface{}, requestType string) (inte
 				RequestType: requestType,
 				Token:       req.Token,
 				SvrName:     req.SvrName,
+				Param:       req.Param,
 			}, nil
 		}
 		return nil, ErrInvalidOperateRequest

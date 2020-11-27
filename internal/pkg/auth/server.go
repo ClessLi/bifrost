@@ -46,11 +46,14 @@ func ServerRun() error {
 	if lisErr != nil {
 		return lisErr
 	}
+	defer lis.Close()
+
 	gRPCServer := grpc.NewServer()
 	authpb.RegisterAuthServiceServer(gRPCServer, handler)
 	svrErrChan := make(chan error, 1)
 	go func() {
 		svrErr := gRPCServer.Serve(lis)
+		Log(NOTICE, "bifrost-auth service is running on %s", lis.Addr())
 		svrErrChan <- svrErr
 	}()
 
@@ -58,7 +61,7 @@ func ServerRun() error {
 	select {
 	case s := <-signalChan:
 		if s == 9 {
-			fmt.Println("stopping...")
+			//fmt.Println("stopping...")
 			Log(DEBUG, "stopping...")
 			break
 		}
@@ -66,7 +69,7 @@ func ServerRun() error {
 	case stopErr = <-svrErrChan:
 		break
 	}
-	fmt.Println("gRPC Server stopping...")
+	//fmt.Println("gRPC Server stopping...")
 	gRPCServer.Stop()
 	return stopErr
 }

@@ -96,6 +96,7 @@ func (s *AuthService) validUser(claims *JWTClaims) bool {
 	checkPasswd, err := s.getPasswd(sqlStr)
 	if err != nil && err != sql.ErrNoRows {
 		//Log(ERROR, err.Error())
+		fmt.Println(err.Error())
 		return false
 	} else if err == sql.ErrNoRows {
 		//Log(NOTICE, "user '%s' is not exist in bifrost", c.Username)
@@ -146,5 +147,5 @@ func (s *AuthService) getPasswd(sqlStr string) (string, error) {
 		}
 	}
 
-	return "", errors.New("sql: unkown error")
+	return "", errors.New("sql: unknown error")
 }
