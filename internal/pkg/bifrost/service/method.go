@@ -91,8 +91,10 @@ func (b *BifrostService) monitoring() {
 	defer b.waitGroup.Done()
 	b.monitorChan = make(chan int, 1)
 	infosNum := len(b.Infos)
-	SysInfo.ServersStatus = make([]string, infosNum)
-	SysInfo.ServersVersion = make([]string, infosNum)
+	//SysInfo.ServersStatus = make([]string, infosNum)
+	SysInfo.ServersStatus = make(map[string]string, infosNum)
+	//SysInfo.ServersVersion = make([]string, infosNum)
+	SysInfo.ServersVersion = make(map[string]string, infosNum)
 	checkPass := make([]bool, infosNum)
 	svrWSs := make([]string, infosNum)
 	for i := 0; i < infosNum; i++ {
@@ -137,7 +139,7 @@ func (b *BifrostService) monitoring() {
 			if vErr != nil {
 				//Log(WARN, "[%s] web server version check error: %s", b.ServiceInfos[i].Name, vErr)
 			} else {
-				SysInfo.ServersVersion[i] = svrVersion
+				SysInfo.ServersVersion[b.Infos[i].Name] = svrVersion
 			}
 
 		}
@@ -147,7 +149,7 @@ func (b *BifrostService) monitoring() {
 		for {
 			for i := 0; i < infosNum; i++ {
 				if !b.Infos[i].available {
-					SysInfo.ServersStatus[i] = "disable"
+					SysInfo.ServersStatus[b.Infos[i].Name] = "disable"
 					continue
 				}
 				svrPidFilePath := "logs/nginx.pid"
@@ -161,36 +163,36 @@ func (b *BifrostService) monitoring() {
 					var pidErr error
 					svrPidFilePathAbs, pidErr = filepath.Abs(filepath.Join(svrWSs[i], svrPidFilePath))
 					if pidErr != nil {
-						if SysInfo.ServersStatus[i] != "unknow" {
+						if SysInfo.ServersStatus[b.Infos[i].Name] != "unknow" {
 							//Log(WARN, "[%s] get web server pid file path failed: %s", b.ServiceInfos[i].Name, pidErr)
 						}
-						SysInfo.ServersStatus[i] = "unknow"
+						SysInfo.ServersStatus[b.Infos[i].Name] = "unknow"
 						continue
 					}
 				}
 
 				svrPid, gPidErr := getPid(svrPidFilePathAbs)
 				if gPidErr != nil {
-					if SysInfo.ServersStatus[i] != "abnormal" {
+					if SysInfo.ServersStatus[b.Infos[i].Name] != "abnormal" {
 						//Log(WARN, "[%s] something wrong with web server: %s", b.ServiceInfos[i].Name, gPidErr)
 					}
-					SysInfo.ServersStatus[i] = "abnormal"
+					SysInfo.ServersStatus[b.Infos[i].Name] = "abnormal"
 					continue
 				}
 
 				_, procErr := os.FindProcess(svrPid)
 				if procErr != nil {
-					if SysInfo.ServersStatus[i] != "abnormal" {
+					if SysInfo.ServersStatus[b.Infos[i].Name] != "abnormal" {
 						//Log(WARN, "[%s] something wrong with web server: %s", b.ServiceInfos[i].Name, gPidErr)
 					}
-					SysInfo.ServersStatus[i] = "abnormal"
+					SysInfo.ServersStatus[b.Infos[i].Name] = "abnormal"
 					continue
 				}
 
-				if SysInfo.ServersStatus[i] != "normal" {
+				if SysInfo.ServersStatus[b.Infos[i].Name] != "normal" {
 					//Log(INFO, "[%s] web server <PID: %d> is running.", b.ServiceInfos[i].Name, svrPid)
 				}
-				SysInfo.ServersStatus[i] = "normal"
+				SysInfo.ServersStatus[b.Infos[i].Name] = "normal"
 			}
 
 			time.Sleep(1 * time.Minute)
@@ -207,6 +209,7 @@ func (b *BifrostService) monitoring() {
 				return
 			}
 		default:
+			// cpu监控
 			cpupct, cpuErr := cpu.Percent(time.Second*5, false)
 			if cpuErr != nil {
 				sysErr = cpuErr
@@ -214,6 +217,7 @@ func (b *BifrostService) monitoring() {
 			}
 			SysInfo.Cpu = fmt.Sprintf("%.2f", cpupct[0])
 
+			// 内存监控
 			vmem, memErr := mem.VirtualMemory()
 			if memErr != nil {
 				sysErr = memErr
@@ -221,6 +225,7 @@ func (b *BifrostService) monitoring() {
 			}
 			SysInfo.Mem = fmt.Sprintf("%.2f", vmem.UsedPercent)
 
+			// 磁盘监控
 			diskInfo, diskErr := disk.Usage("/")
 			if diskErr != nil {
 				sysErr = diskErr
@@ -228,6 +233,8 @@ func (b *BifrostService) monitoring() {
 			}
 			SysInfo.Disk = fmt.Sprintf("%.2f", diskInfo.UsedPercent)
 
+			// 监控时间戳
+			SysInfo.Time = fmt.Sprintf("%s", time.Now().In(nginx.TZ).Format("2006/01/02 15:04:05"))
 			sysErr = nil
 		}
 	}
