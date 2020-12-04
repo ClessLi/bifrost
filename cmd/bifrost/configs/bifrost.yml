@@ -18,6 +18,9 @@ Service:
       backupSaveTime: 7
       confPath: "/GO_Project/src/bifrost/test/config_test/nginx.conf"
       verifyExecPath: "xxxxxxxxxxxx/nginx"
+RAConfig:
+  Host: "127.0.0.1"
+  Port: 9090
 LogConfig:
   logDir: "./logs"
   level: 2

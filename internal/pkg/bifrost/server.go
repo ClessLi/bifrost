@@ -11,6 +11,7 @@ import (
 	"github.com/ClessLi/bifrost/internal/pkg/bifrost/transport"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/health/grpc_health_v1"
 	"net"
 )
 
@@ -55,6 +56,7 @@ func ServerRun() error {
 
 	transport.ChunkSize = BifrostConf.Service.ChunckSize
 	handler := transport.NewBifrostServer(ctx, endpts)
+	healthCheckHandler := transport.NewHealthCheck(ctx, endpts)
 
 	lis, lisErr := net.Listen("tcp", fmt.Sprintf(":%d", BifrostConf.Service.Port))
 	if lisErr != nil {
@@ -64,6 +66,7 @@ func ServerRun() error {
 
 	gRPCServer := grpc.NewServer(grpc.MaxSendMsgSize(transport.ChunkSize))
 	bifrostpb.RegisterBifrostServiceServer(gRPCServer, handler)
+	grpc_health_v1.RegisterHealthServer(gRPCServer, healthCheckHandler)
 	fmt.Println(logoStr)
 	svrErrChan := make(chan error, 1)
 	go func() {
@@ -71,6 +74,9 @@ func ServerRun() error {
 		Log(NOTICE, "bifrost service is running on %s", lis.Addr())
 		svrErrChan <- svrErr
 	}()
+
+	go registerToRA(svrErrChan)
+	defer deregisterToRA()
 
 	var stopErr error
 	select {

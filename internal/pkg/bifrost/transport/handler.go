@@ -7,6 +7,7 @@ import (
 	"github.com/ClessLi/bifrost/internal/pkg/bifrost/endpoint"
 	"github.com/go-kit/kit/transport/grpc"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc/health/grpc_health_v1"
 	"io"
 	"time"
 )
@@ -16,11 +17,12 @@ var (
 
 	recvTimeout time.Duration = 5 // 5 minutes
 
-	ErrRequestInconsistent   = errors.New("the request is inconsistent")
-	ErrRecvTimeout           = errors.New("receive timeout during data wrap")
-	ErrUnknownRequest        = errors.New("unknown request error")
-	ErrInvalidOperateRequest = errors.New("request has only one: OperateRequest")
-	ErrInvalidConfigRequest  = errors.New("request has only one: ConfigRequest")
+	ErrRequestInconsistent       = errors.New("the request is inconsistent")
+	ErrRecvTimeout               = errors.New("receive timeout during data wrap")
+	ErrUnknownRequest            = errors.New("unknown request error")
+	ErrInvalidOperateRequest     = errors.New("request has only one: OperateRequest")
+	ErrInvalidConfigRequest      = errors.New("request has only one: ConfigRequest")
+	ErrInvalidHealthCheckRequest = errors.New("request has only one: HealthCheckRequest")
 )
 
 type grpcServer struct {
@@ -32,6 +34,7 @@ type grpcServer struct {
 	//startWatchLog  grpc.Handler
 	watchLog     grpc.Handler
 	stopWatchLog grpc.Handler
+	healthCheck  grpc.Handler
 }
 
 func (s *grpcServer) ViewConfig(r *bifrostpb.OperateRequest, stream bifrostpb.BifrostService_ViewConfigServer) error {
@@ -294,6 +297,26 @@ func (s *grpcServer) WatchLog(stream bifrostpb.BifrostService_WatchLogServer) (e
 	return err
 }
 
+func (s *grpcServer) Check(ctx context.Context, r *grpc_health_v1.HealthCheckRequest) (response *grpc_health_v1.HealthCheckResponse, err error) {
+	_, resp, err := s.healthCheck.ServeGRPC(ctx, r)
+	if err != nil {
+		return &grpc_health_v1.HealthCheckResponse{
+			Status: grpc_health_v1.HealthCheckResponse_NOT_SERVING,
+		}, err
+	}
+	var ok bool
+	if response, ok = resp.(*grpc_health_v1.HealthCheckResponse); ok {
+		return response, nil
+	}
+	return &grpc_health_v1.HealthCheckResponse{
+		Status: grpc_health_v1.HealthCheckResponse_SERVICE_UNKNOWN,
+	}, nil
+}
+
+func (s *grpcServer) Watch(req *grpc_health_v1.HealthCheckRequest, w grpc_health_v1.Health_WatchServer) error {
+	return nil
+}
+
 func NewBifrostServer(ctx context.Context, endpoints endpoint.BifrostEndpoints) bifrostpb.BifrostServiceServer {
 	return &grpcServer{
 		viewConfig:     grpc.NewServer(endpoints.ViewConfigEndpoint, DecodeViewConfigRequest, EncodeOperateResponse),
@@ -303,5 +326,12 @@ func NewBifrostServer(ctx context.Context, endpoints endpoint.BifrostEndpoints) 
 		status:         grpc.NewServer(endpoints.StatusEndpoint, DecodeStatusRequest, EncodeOperateResponse),
 		//watchLog:       grpc.NewServer(endpoints.WatchLogEndpoint, DecodeWatchLogRequest, EncodeWatchLogResponse),
 		watchLog: grpc.NewServer(endpoints.WatchLogEndpoint, DecodeWatchLogRequest, EncodeOperateResponse),
+		//healthCheck: grpc.NewServer(endpoints.HealthCheckEndpoint, DecodeHealthCheckRequest, EncodeHealthCheckResponse),
+	}
+}
+
+func NewHealthCheck(ctx context.Context, endpoints endpoint.BifrostEndpoints) grpc_health_v1.HealthServer {
+	return &grpcServer{
+		healthCheck: grpc.NewServer(endpoints.HealthCheckEndpoint, DecodeHealthCheckRequest, EncodeHealthCheckResponse),
 	}
 }

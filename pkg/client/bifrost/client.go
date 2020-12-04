@@ -2,9 +2,12 @@ package bifrost
 
 import (
 	"context"
+	"errors"
 	"github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb"
-	"github.com/ClessLi/bifrost/internal/pkg/bifrost/endpoint"
+	"github.com/ClessLi/bifrost/internal/pkg/bifrost/config"
+	bifrostendpoint "github.com/ClessLi/bifrost/internal/pkg/bifrost/endpoint"
 	"github.com/ClessLi/bifrost/internal/pkg/bifrost/service"
+	"github.com/ClessLi/skirnir/pkg/discover"
 	grpctransport "github.com/go-kit/kit/transport/grpc"
 	"google.golang.org/grpc"
 	"time"
@@ -15,12 +18,30 @@ type Client struct {
 	service.Service
 }
 
+func NewClientFromConsul(consulHost string, consulPort uint16) (*Client, error) {
+	discoveryClient, err := discover.NewKitConsulDiscoveryClient(consulHost, consulPort)
+	if err != nil {
+		return nil, err
+	}
+	factory := func(instance string) (interface{}, error) {
+		return NewClient(instance)
+	}
+	relay, err := discoveryClient.DiscoverServicesClient("com.github.ClessLi.api.bifrost", config.KitLogger, factory)
+	if err != nil {
+		return nil, err
+	}
+	if client, ok := relay.(*Client); ok {
+		return client, nil
+	}
+	return nil, errors.New("failed to initialize Bifrost service client")
+}
+
 func NewClient(svrAddr string) (*Client, error) {
 	conn, err := grpc.Dial(svrAddr, grpc.WithInsecure(), grpc.WithTimeout(time.Second))
 	if err != nil {
 		return nil, err
 	}
-	eps := endpoint.BifrostEndpoints{
+	eps := bifrostendpoint.BifrostEndpoints{
 		ViewConfigEndpoint: grpctransport.NewClient(
 			conn,
 			"bifrostpb.BifrostService",
@@ -61,7 +82,7 @@ func NewClient(svrAddr string) (*Client, error) {
 			encodeResponse,
 			&bifrostpb.OperateResponse{},
 		).Endpoint(),
-		WatchLogEndpoint: endpoint.MakeWatchLogClientEndpoint(conn),
+		WatchLogEndpoint: bifrostendpoint.MakeWatchLogClientEndpoint(conn),
 	}
 	return &Client{
 		ClientConn: conn,

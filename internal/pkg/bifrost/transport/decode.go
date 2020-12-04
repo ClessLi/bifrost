@@ -4,6 +4,7 @@ import (
 	"github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb"
 	"github.com/ClessLi/bifrost/internal/pkg/bifrost/endpoint"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
 func DecodeViewConfigRequest(ctx context.Context, r interface{}) (interface{}, error) {
@@ -30,6 +31,10 @@ func DecodeWatchLogRequest(ctx context.Context, r interface{}) (request interfac
 	return r, nil
 }
 
+func DecodeHealthCheckRequest(ctx context.Context, r interface{}) (interface{}, error) {
+	return decodeRequest(ctx, r, "HealthCheck")
+}
+
 func decodeRequest(ctx context.Context, r interface{}, requestType string) (interface{}, error) {
 	switch requestType {
 	case "UpdateConfig":
@@ -42,6 +47,11 @@ func decodeRequest(ctx context.Context, r interface{}, requestType string) (inte
 			}, nil
 		}
 		return nil, ErrInvalidConfigRequest
+	case "HealthCheck":
+		if _, ok := r.(*grpc_health_v1.HealthCheckRequest); ok {
+			return endpoint.HealthRequest{}, nil
+		}
+		return nil, ErrInvalidHealthCheckRequest
 	default:
 		if req, ok := r.(*bifrostpb.OperateRequest); ok {
 			return endpoint.OperateRequest{

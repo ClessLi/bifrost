@@ -2,11 +2,17 @@ package bifrost
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"github.com/ClessLi/bifrost/internal/pkg/bifrost/config"
+	"github.com/ClessLi/skirnir/pkg/discover"
 	"github.com/apsdehal/go-logger"
+	uuid "github.com/satori/go.uuid"
 	"io/ioutil"
+	"net"
 	"os"
 	"strconv"
+	"strings"
 )
 
 // readFile, 读取文件函数
@@ -119,18 +125,104 @@ func configCheck() error {
 	if BifrostConf.Service.ChunckSize == 0 {
 		BifrostConf.Service.ChunckSize = 4194304
 	}
-	// 初始化认证数据库或认证配置信息
-	//if BifrostConf.AuthService == nil {
-	//	BifrostConf.AuthService = new(AuthService)
-	//}
-	//if BifrostConf.AuthService.AuthDBConfig != nil {
-	//	authDBConfig = BifrostConf.AuthService.AuthDBConfig
-	//} else {
-	//	if BifrostConf.AuthService.AuthConfig != nil {
-	//		authConfig = BifrostConf.AuthService.AuthConfig
-	//	} else { // 使用默认认证信息
-	//		authConfig = &AuthConfig{"heimdall", "Bultgang"}
-	//	}
-	//}
+
+	if BifrostConf.RAConfig != nil {
+		if BifrostConf.RAConfig.Host == "" || BifrostConf.RAConfig.Port == 0 {
+			BifrostConf.RAConfig = nil
+		}
+	}
 	return nil
+}
+
+func registerToRA(errChan chan<- error) {
+	if BifrostConf.RAConfig == nil {
+		return
+	}
+
+	var err error
+	discoveryClient, err = discover.NewKitConsulRegistryClient(BifrostConf.RAConfig.Host, BifrostConf.RAConfig.Port)
+	if err != nil {
+		Log(WARN, "Get Consul Client failed. Cased by: %s", err)
+		errChan <- err
+		return
+	}
+
+	svcName := "com.github.ClessLi.api.bifrost"
+	//svcName := "bifrostpb.BifrostService"
+	//svcName := "BifrostService"
+	//svcName := "Health"
+
+	instanceId = svcName + "-" + uuid.NewV4().String()
+
+	instanceIP, err := externalIP()
+	if err != nil {
+		Log(WARN, "Failed to initialize service instance IP. Cased by: %s", err)
+		errChan <- err
+		return
+	}
+	instanceHost := instanceIP.String()
+
+	if !discoveryClient.Register(svcName, instanceId, instanceHost, BifrostConf.Service.Port, nil, config.KitLogger) {
+		err = fmt.Errorf("register service %s failed", svcName)
+		Log(WARN, err.Error())
+		errChan <- err
+		instanceId = ""
+		return
+	}
+}
+
+func deregisterToRA() {
+	if discoveryClient != nil && !strings.EqualFold(instanceId, "") {
+		if discoveryClient.DeRegister(instanceId, config.KitLogger) {
+			Log(INFO, "bifrost service (instance ID is '%s') has been unregistered from RA '%s:%d'", instanceId, BifrostConf.RAConfig.Host, BifrostConf.RAConfig.Port)
+		} else {
+			Log(WARN, "bifrost service (instance ID is '%s') failed to deregister from RA '%s:%d'", instanceId, BifrostConf.RAConfig.Host, BifrostConf.RAConfig.Port)
+		}
+	}
+}
+
+func externalIP() (net.IP, error) {
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return nil, err
+	}
+	for _, iface := range ifaces {
+		if iface.Flags&net.FlagUp == 0 {
+			continue // interface down
+		}
+		if iface.Flags&net.FlagLoopback != 0 {
+			continue // loopback interface
+		}
+		addrs, err := iface.Addrs()
+		if err != nil {
+			return nil, err
+		}
+		for _, addr := range addrs {
+			ip := getIpFromAddr(addr)
+			if ip == nil {
+				continue
+			}
+			return ip, nil
+		}
+	}
+	return nil, errors.New("external ip failed")
+}
+
+func getIpFromAddr(addr net.Addr) net.IP {
+	var ip net.IP
+	switch v := addr.(type) {
+	case *net.IPNet:
+		ip = v.IP
+	case *net.IPAddr:
+		ip = v.IP
+	}
+	if ip == nil || ip.IsLoopback() {
+		return nil
+	}
+	ip = ip.To4()
+	if ip == nil {
+		return nil // not an ipv4 address
+	}
+
+	return ip
 }

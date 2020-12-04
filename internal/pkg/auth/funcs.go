@@ -104,22 +104,6 @@ func getPid(path string) (int, error) {
 // 返回值:
 //     错误
 func configCheck() error {
-	//if AuthConf == nil {
-	//	return fmt.Errorf("bifrost config load error")
-	//}
-	//if len(AuthConf.Service.Infos) == 0 {
-	//	return fmt.Errorf("bifrost services config load error")
-	//}
-	//if AuthConf.LogDir == "" {
-	//	return fmt.Errorf("bifrost log config load error")
-	//}
-	//初始化服务信息配置
-	//if AuthConf.Service.Port == 0 {
-	//	AuthConf.Service.Port = 12321
-	//}
-	//if AuthConf.Service.ChunckSize == 0 {
-	//	AuthConf.Service.ChunckSize = 4194304
-	//}
 	// 初始化认证数据库或认证配置信息
 	if AuthConf.AuthService == nil {
 		AuthConf.AuthService = new(service.AuthService)

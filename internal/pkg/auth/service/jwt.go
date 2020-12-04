@@ -121,6 +121,7 @@ func (s *AuthService) getPasswd(sqlStr string) (string, error) {
 		return "", dbConnErr
 	}
 
+	// TODO: 存在数据库连接未断开的情况，导致连接池满后，导致认证失败
 	defer db.Close()
 
 	rows, queryErr := db.Query(sqlStr)

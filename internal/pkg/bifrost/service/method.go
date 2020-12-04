@@ -92,12 +92,14 @@ func (b *BifrostService) monitoring() {
 	b.monitorChan = make(chan int, 1)
 	infosNum := len(b.Infos)
 	//SysInfo.ServersStatus = make([]string, infosNum)
-	SysInfo.ServersStatus = make(map[string]string, infosNum)
+	//SysInfo.ServersStatus = make(map[string]string, infosNum)
+	SysInfo.StatusList = make([]ServerStatus, infosNum)
 	//SysInfo.ServersVersion = make([]string, infosNum)
-	SysInfo.ServersVersion = make(map[string]string, infosNum)
+	//SysInfo.ServersVersion = make(map[string]string, infosNum)
 	checkPass := make([]bool, infosNum)
 	svrWSs := make([]string, infosNum)
 	for i := 0; i < infosNum; i++ {
+		SysInfo.StatusList[i] = newStatus(b.Infos[i].Name)
 		if b.Infos[i].nginxConfig != nil && !checkPass[i] {
 			svrBinAbs, absErr := filepath.Abs(b.Infos[i].VerifyExecPath)
 			if absErr != nil {
@@ -139,7 +141,7 @@ func (b *BifrostService) monitoring() {
 			if vErr != nil {
 				//Log(WARN, "[%s] web server version check error: %s", b.ServiceInfos[i].Name, vErr)
 			} else {
-				SysInfo.ServersVersion[b.Infos[i].Name] = svrVersion
+				SysInfo.StatusList[i].setVersion(svrVersion)
 			}
 
 		}
@@ -149,7 +151,7 @@ func (b *BifrostService) monitoring() {
 		for {
 			for i := 0; i < infosNum; i++ {
 				if !b.Infos[i].available {
-					SysInfo.ServersStatus[b.Infos[i].Name] = "disable"
+					SysInfo.StatusList[i].setStatus(disable)
 					continue
 				}
 				svrPidFilePath := "logs/nginx.pid"
@@ -163,36 +165,36 @@ func (b *BifrostService) monitoring() {
 					var pidErr error
 					svrPidFilePathAbs, pidErr = filepath.Abs(filepath.Join(svrWSs[i], svrPidFilePath))
 					if pidErr != nil {
-						if SysInfo.ServersStatus[b.Infos[i].Name] != "unknow" {
-							//Log(WARN, "[%s] get web server pid file path failed: %s", b.ServiceInfos[i].Name, pidErr)
-						}
-						SysInfo.ServersStatus[b.Infos[i].Name] = "unknow"
+						//if SysInfo.StatusList[i].ServerStatus != "unknow" {
+						//Log(WARN, "[%s] get web server pid file path failed: %s", b.ServiceInfos[i].Name, pidErr)
+						//}
+						SysInfo.StatusList[i].setStatus(unknown)
 						continue
 					}
 				}
 
 				svrPid, gPidErr := getPid(svrPidFilePathAbs)
 				if gPidErr != nil {
-					if SysInfo.ServersStatus[b.Infos[i].Name] != "abnormal" {
-						//Log(WARN, "[%s] something wrong with web server: %s", b.ServiceInfos[i].Name, gPidErr)
-					}
-					SysInfo.ServersStatus[b.Infos[i].Name] = "abnormal"
+					//if SysInfo.StatusList[i].ServerStatus != "abnormal" {
+					//Log(WARN, "[%s] something wrong with web server: %s", b.ServiceInfos[i].Name, gPidErr)
+					//}
+					SysInfo.StatusList[i].setStatus(abnormal)
 					continue
 				}
 
 				_, procErr := os.FindProcess(svrPid)
 				if procErr != nil {
-					if SysInfo.ServersStatus[b.Infos[i].Name] != "abnormal" {
-						//Log(WARN, "[%s] something wrong with web server: %s", b.ServiceInfos[i].Name, gPidErr)
-					}
-					SysInfo.ServersStatus[b.Infos[i].Name] = "abnormal"
+					//if SysInfo.StatusList[i].ServerStatus != "abnormal" {
+					//Log(WARN, "[%s] something wrong with web server: %s", b.ServiceInfos[i].Name, gPidErr)
+					//}
+					SysInfo.StatusList[i].setStatus(abnormal)
 					continue
 				}
 
-				if SysInfo.ServersStatus[b.Infos[i].Name] != "normal" {
-					//Log(INFO, "[%s] web server <PID: %d> is running.", b.ServiceInfos[i].Name, svrPid)
-				}
-				SysInfo.ServersStatus[b.Infos[i].Name] = "normal"
+				//if SysInfo.StatusList[i].ServerStatus != "normal" {
+				//Log(INFO, "[%s] web server <PID: %d> is running.", b.ServiceInfos[i].Name, svrPid)
+				//}
+				SysInfo.StatusList[i].setStatus(normal)
 			}
 
 			time.Sleep(1 * time.Minute)

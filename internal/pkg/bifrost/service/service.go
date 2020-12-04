@@ -21,7 +21,7 @@ type Service interface {
 
 // BifrostService, bifrost配置文件对象中web服务器信息结构体，定义管控的web服务器配置文件相关信息
 type BifrostService struct {
-	Port           int     `yaml:"Port"`
+	Port           uint16  `yaml:"Port"`
 	ChunckSize     int     `yaml:"ChunkSize"`
 	AuthServerAddr string  `yaml:"AuthServerAddr"`
 	Infos          []*Info `yaml:"Infos,flow"`
@@ -205,7 +205,7 @@ func (b *BifrostService) WatchLog(ctx context.Context, token, svrName, logName s
 	}
 }
 
-func (b BifrostService) GetPort() int {
+func (b BifrostService) GetPort() uint16 {
 	return b.Port
 }
 

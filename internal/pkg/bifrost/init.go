@@ -8,6 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/ClessLi/bifrost/internal/pkg/bifrost/service"
+	"github.com/ClessLi/skirnir/pkg/discover"
 	"github.com/apsdehal/go-logger"
 	"github.com/shirou/gopsutil/host"
 	"gopkg.in/yaml.v2"
@@ -24,7 +25,7 @@ var (
 	//confBackupDelay = flag.Duration("b", 10, "how many minutes `delay` for backup nginx config")
 
 	// bifrost配置
-	BifrostConf = &Config{}
+	BifrostConf = new(Config)
 	//authDBConfig *AuthDBConfig
 	//authConfig   *AuthConfig
 
@@ -51,6 +52,10 @@ var (
 	// 初始化信号量
 	signalChan = make(chan int)
 	isInit     bool
+
+	// 服务实例id
+	instanceId      string
+	discoveryClient discover.RegistryClient
 )
 
 const (
@@ -70,24 +75,14 @@ const (
 type Config struct {
 	Service *service.BifrostService `yaml:"Service"`
 	//AuthService *AuthService `yaml:"AuthService"`
+	*RAConfig `yaml:"RAConfig"`
 	LogConfig `yaml:"LogConfig"`
 }
 
-// AuthDBConfig, mysql数据库信息结构体，该库用于存放用户认证信息（可选）
-//type AuthDBConfig struct {
-//	DBName   string `yaml:"DBName"`
-//	Host     string `yaml:"host"`
-//	Port     int    `yaml:"port"`
-//	Protocol string `yaml:"protocol"`
-//	User     string `yaml:"user"`
-//	Password string `yaml:"password"`
-//}
-
-// AuthConfig, 认证信息结构体，记录用户认证信息（可选）
-//type AuthConfig struct {
-//	Username string `yaml:"username"`
-//	Password string `yaml:"password"`
-//}
+type RAConfig struct {
+	Host string `yaml:"Host"`
+	Port uint16 `yaml:"Port"`
+}
 
 // LogConfig, bifrost日志信息结构体，定义日志目录、日志级别
 type LogConfig struct {
