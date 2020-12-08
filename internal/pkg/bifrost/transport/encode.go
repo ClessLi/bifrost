@@ -35,6 +35,10 @@ func EncodeConfigResponse(_ context.Context, r interface{}) (interface{}, error)
 	}, nil
 }
 
+func EncodeWatchLogResponse(_ context.Context, r interface{}) (interface{}, error) {
+	return r, nil
+}
+
 func EncodeHealthCheckResponse(_ context.Context, r interface{}) (interface{}, error) {
 	resp := r.(endpoint.HealthResponse)
 	status := grpc_health_v1.HealthCheckResponse_NOT_SERVING

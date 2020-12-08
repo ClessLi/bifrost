@@ -68,7 +68,7 @@ const (
 	DEBUG    = logger.DebugLevel
 
 	// 版本号
-	VERSION = "v1.0.1-alpha.1"
+	VERSION = "v1.0.1-alpha.2"
 )
 
 // Config, bifrost配置文件结构体，定义bifrost配置信息

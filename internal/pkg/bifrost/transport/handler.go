@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb"
 	"github.com/ClessLi/bifrost/internal/pkg/bifrost/endpoint"
+	"github.com/ClessLi/bifrost/internal/pkg/bifrost/service"
 	"github.com/go-kit/kit/transport/grpc"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/health/grpc_health_v1"
@@ -23,6 +24,7 @@ var (
 	ErrInvalidOperateRequest     = errors.New("request has only one: OperateRequest")
 	ErrInvalidConfigRequest      = errors.New("request has only one: ConfigRequest")
 	ErrInvalidHealthCheckRequest = errors.New("request has only one: HealthCheckRequest")
+	ErrUnknownResponse           = errors.New("unknown response error")
 )
 
 type grpcServer struct {
@@ -237,64 +239,59 @@ func (s *grpcServer) WatchLog(stream bifrostpb.BifrostService_WatchLogServer) (e
 	wlReq := endpoint.NewWatchLogRequest(req)
 	//fmt.Println("初始化日志监看请求成功")
 
+	// 向endpoint发起请求，获取WatchLogResponse
+	//fmt.Println("请求发往endpoint处理")
+	_, resp, err := s.watchLog.ServeGRPC(stream.Context(), wlReq)
+	if err != nil {
+		return err
+	}
+	logWatcher, ok := resp.(*service.LogWatcher)
+	if !ok {
+		return ErrUnknownResponse
+	}
+	//fmt.Println("endpoint处理完毕")
 	// 监听WatchLogResponse中Result(dataChan)和ErrChan，监听stopSendSig、WatchLogTimeout
 	go func(stopSig chan int) {
-		//timeout := time.After(time.Hour * 2)
 		for {
 			select {
-			case data := <-*wlReq.DataChan:
+			case data := <-logWatcher.DataC:
 				//fmt.Println("发送日志数据")
-				err = stream.Send(&bifrostpb.OperateResponse{
+				_ = stream.Send(&bifrostpb.OperateResponse{
 					Ret: data,
 					Err: "",
+				})
+			case err := <-logWatcher.ErrC:
+				_ = stream.Send(&bifrostpb.OperateResponse{
+					Ret: nil,
+					Err: err.Error(),
 				})
 			case sig := <-stopSig:
 				if sig == 9 { // 信号9传入则开始停止
 					//fmt.Println("开始停止")
-					_, _ = <-*wlReq.DataChan
-					*wlReq.SignalChan <- sig // 发送终止信号9给svc方法进程
-					//sig = <-*response.Signal // 接收svc方法进程完成信号，规定为0
+					_, _ = <-logWatcher.DataC
+					_, _ = <-logWatcher.ErrC
+					logWatcher.SignalC <- sig // 发送终止信号9给svc方法进程
 					return
 				}
-				//case <-timeout:
-				//	err = ErrWatchLogTimeout
 			}
-			//if err != nil {
-			//	return
-			//}
 		}
 	}(stopSendSig)
 
-	go func() {
-		for {
-			// 接收客户端请求
-			in, err := stream.Recv()
-			//fmt.Println("再次接受到客户端请求")
-			if err == nil && (in.SvrName != req.SvrName || in.Token != req.Token || in.Param != req.Param) {
-				err = ErrRequestInconsistent
-			}
-			if err != nil {
-				stopSendSig <- 9
-				//select {
-				//case s := <-stopSendSig:
-				//	if s == 0 {
-				//		break
-				//	}
-				//	err = fmt.Errorf("unknown signal %d from svc", s)
-				//}
-				if err == io.EOF {
-					err = nil
-				}
-				return
-			}
+	for {
+		// 接收客户端请求
+		in, err := stream.Recv()
+		//fmt.Println("再次接受到客户端请求")
+		if err == nil && (in.SvrName != req.SvrName || in.Token != req.Token || in.Param != req.Param) {
+			err = ErrRequestInconsistent
 		}
-	}()
-
-	// 向endpoint发起请求，获取WatchLogResponse
-	//fmt.Println("请求发往endpoint处理")
-	_, _, err = s.watchLog.ServeGRPC(stream.Context(), wlReq)
-	//fmt.Println("endpoint处理完毕")
-	return err
+		if err != nil {
+			stopSendSig <- 9
+			if err == io.EOF {
+				err = nil
+			}
+			return err
+		}
+	}
 }
 
 func (s *grpcServer) Check(ctx context.Context, r *grpc_health_v1.HealthCheckRequest) (response *grpc_health_v1.HealthCheckResponse, err error) {
@@ -324,9 +321,7 @@ func NewBifrostServer(ctx context.Context, endpoints endpoint.BifrostEndpoints) 
 		updateConfig:   grpc.NewServer(endpoints.UpdateConfigEndpoint, DecodeUpdateConfigRequest, EncodeOperateResponse),
 		viewStatistics: grpc.NewServer(endpoints.ViewStatisticsEndpoint, DecodeViewStatisticsRequest, EncodeOperateResponse),
 		status:         grpc.NewServer(endpoints.StatusEndpoint, DecodeStatusRequest, EncodeOperateResponse),
-		//watchLog:       grpc.NewServer(endpoints.WatchLogEndpoint, DecodeWatchLogRequest, EncodeWatchLogResponse),
-		watchLog: grpc.NewServer(endpoints.WatchLogEndpoint, DecodeWatchLogRequest, EncodeOperateResponse),
-		//healthCheck: grpc.NewServer(endpoints.HealthCheckEndpoint, DecodeHealthCheckRequest, EncodeHealthCheckResponse),
+		watchLog:       grpc.NewServer(endpoints.WatchLogEndpoint, DecodeWatchLogRequest, EncodeWatchLogResponse),
 	}
 }
 

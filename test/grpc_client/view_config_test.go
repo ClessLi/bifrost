@@ -119,19 +119,25 @@ func TestClientStatus(t *testing.T) {
 
 func TestClientWatchLog(t *testing.T) {
 	defer bifrostClient.Close()
-	dataChan := make(chan []byte, 1)
-	signal := make(chan int, 1)
 	timeout := time.After(time.Second * 20)
-	go func() {
-		err := bifrostClient.WatchLog(context.Background(), token, SvrName, "access.log", dataChan, signal)
-		t.Log(err)
-	}()
+	logWatcher, err := bifrostClient.WatchLog(context.Background(), token, SvrName, "access.log")
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
 
-	defer func() { signal <- 9 }()
+	defer func() {
+		err = logWatcher.Close()
+		if err != nil {
+			t.Fatal(err.Error())
+		}
+	}()
 	for {
 		select {
-		case data := <-dataChan:
+		case data := <-logWatcher.DataC:
 			t.Logf(string(data))
+		case err := <-logWatcher.ErrC:
+			t.Fatal(err.Error())
 		case <-timeout:
 			t.Log("test end")
 			return

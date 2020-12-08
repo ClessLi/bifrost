@@ -119,30 +119,31 @@ func (ue BifrostEndpoints) Status(ctx context.Context, token string) (jsonData [
 	}
 }
 
-func (ue BifrostEndpoints) WatchLog(ctx context.Context, token, svrName, logName string, dataChan chan<- []byte, signal <-chan int) (err error) {
+func (ue BifrostEndpoints) WatchLog(ctx context.Context, token, svrName, logName string) (logWatcher *service.LogWatcher, err error) {
 	// 客户端日志监看方法调用endpoint获取到gRPC客户端流对象
 	res, err := ue.WatchLogEndpoint(ctx, nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	// 判断endpoint传回并编码回的对象是否为gRPC客户端流对象
 	if stream, ok := res.(bifrostpb.BifrostService_WatchLogClient); ok {
 		//fmt.Println("初始化gRPC客户端成功")
 		// 初始化gRPC服务返回管道和错误返回管道
 		respChan := make(chan *bifrostpb.OperateResponse, 1)
-		errChan := make(chan error, 1)
+		logWatcher = service.NewLogWatcher()
+		//errChan := make(chan error, 1)
 		// 创建接收匿名函数
 		recv := func() {
 			r, err := stream.Recv()
 			if err != nil {
-				errChan <- err
+				logWatcher.ErrC <- err
 			}
 			respChan <- r
 		}
 		// 创建客户端传出匿名函数
 		sendOut := func(data []byte) error {
 			select {
-			case dataChan <- data:
+			case logWatcher.DataC <- data:
 				return nil
 			case <-time.After(time.Second * 30): // 30秒传出未被接收将超时
 				return service.ErrDataSendingTimeout
@@ -156,33 +157,45 @@ func (ue BifrostEndpoints) WatchLog(ctx context.Context, token, svrName, logName
 			Param:   logName,
 		})
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		// 进入日志数据接收循环
-		defer func() {
-			err = stream.CloseSend()
-		}()
-		for {
-			go recv() // 协程接收数据，包括数据和错误
-			select {
-			case sig := <-signal: // 客户端外边传入终止信号
-				if sig == 9 {
-					//fmt.Println("client shut down...")
-					return err
-				}
-			case resp := <-respChan: // 接收到数据
-				//fmt.Println("接收到数据")
-				err = sendOut(resp.Ret) // 客户端日志数据传出
+		go func() {
+			defer func() {
+				err := stream.CloseSend()
 				if err != nil {
-					return
+					logWatcher.ErrC <- err
 				}
-			case err = <-errChan: // 接收到gRPC服务错误返回
-				return err
+			}()
+			for {
+				go recv() // 协程接收数据，包括数据和错误
+				select {
+				case sig := <-logWatcher.SignalC: // 客户端外边传入终止信号
+					if sig == 9 {
+						//fmt.Println("client shut down...")
+						return
+					}
+				case resp := <-respChan: // 接收到数据
+					//fmt.Println("接收到数据")
+					if resp.Ret != nil {
+						err = sendOut(resp.Ret) // 客户端日志数据传出
+						if err != nil {
+							logWatcher.ErrC <- err
+							return
+						}
+					} else if resp.Err != "" {
+						logWatcher.ErrC <- errors.New(resp.Err)
+						return
+					} else {
+						logWatcher.ErrC <- errors.New("response is null")
+					}
+				}
 			}
-		}
+		}()
+		return logWatcher, nil
 	}
-	return ErrInvalidResponse
+	return nil, ErrInvalidResponse
 }
 
 type OperateRequest struct {
@@ -198,30 +211,18 @@ type OperateResponse struct {
 }
 
 type WatchLogRequest struct {
-	Token      string       `json:"token"`
-	SvrName    string       `json:"svr_name"`
-	Param      string       `json:"param"`
-	DataChan   *chan []byte `json:"data_chan"`
-	SignalChan *chan int    `json:"signal_chan"`
+	Token   string `json:"token"`
+	SvrName string `json:"svr_name"`
+	Param   string `json:"param"`
 }
 
 func NewWatchLogRequest(r *bifrostpb.OperateRequest) *WatchLogRequest {
-	dataChan := make(chan []byte, 1)
-	signalChan := make(chan int, 1)
 	return &WatchLogRequest{
-		Token:      r.Token,
-		SvrName:    r.SvrName,
-		Param:      r.Param,
-		DataChan:   &dataChan,
-		SignalChan: &signalChan,
+		Token:   r.Token,
+		SvrName: r.SvrName,
+		Param:   r.Param,
 	}
 }
-
-//type WatchLogResponse struct {
-//	Result *chan []byte `json:"result"`
-//	Signal *chan int `json:"signal"`
-//	ErrChan *chan error `json:"err_chan"`
-//}
 
 type Config struct {
 	JData []byte `json:"j_data"`
@@ -321,33 +322,9 @@ func MakeStatusEndpoint(svc service.Service) endpoint.Endpoint {
 
 func MakeWatchLogEndpoint(svc service.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		//if req, ok := request.(OperateRequest); ok {
-		//	if strings.EqualFold(req.RequestType, "WatchLog") {
-		//		dataChan := make(chan []byte, 1)
-		//		signal := make(chan int, 1)
-		//		errChan := make(chan error, 1)
-		//		// 重复进程异常
-		//		go func() {
-		//			errChan <- svc.WatchLog(ctx, req.Token, req.SvrName, req.Param, dataChan, signal)
-		//		}()
-		//		return WatchLogResponse{
-		//			Result: &dataChan,
-		//			Signal: &signal,
-		//			ErrChan: &errChan,
-		//		}, nil
-		//	}
-		//	return nil, ErrInvalidWLReqType
-		//}
-		//return nil, ErrInvalidOperateRequest
-		fmt.Println("接受到handler请求")
-		if req, ok := request.(*WatchLogRequest); ok {
-			fmt.Println("请求发往service处理")
-			err = svc.WatchLog(ctx, req.Token, req.SvrName, req.Param, *req.DataChan, *req.SignalChan)
-			fmt.Println("service处理完毕")
-			return OperateResponse{
-				Result: nil,
-				Error:  err,
-			}, nil
+		//fmt.Println("接受到handler请求")
+		if req, ok := request.(*OperateRequest); ok {
+			return svc.WatchLog(ctx, req.Token, req.SvrName, req.Param)
 		}
 		fmt.Printf("%T\n", request)
 		return nil, ErrInvalidWatchLogRequest

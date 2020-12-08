@@ -28,7 +28,8 @@ func DecodeStatusRequest(ctx context.Context, r interface{}) (interface{}, error
 }
 
 func DecodeWatchLogRequest(ctx context.Context, r interface{}) (request interface{}, err error) {
-	return r, nil
+	//return r, nil
+	return decodeRequest(ctx, r, "WatchLog")
 }
 
 func DecodeHealthCheckRequest(ctx context.Context, r interface{}) (interface{}, error) {
