@@ -129,6 +129,7 @@ func (s *AuthService) getPasswd(sqlStr string) (string, error) {
 		//Log(WARN, queryErr.Error())
 		return "", queryErr
 	}
+	defer rows.Close()
 
 	_, rowErr := rows.Columns()
 	if rowErr == sql.ErrNoRows {
