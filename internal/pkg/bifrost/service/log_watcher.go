@@ -25,6 +25,10 @@ func (l LogWatcher) Close() error {
 	}
 }
 
+func (l LogWatcher) GetChannels() (<-chan []byte, <-chan error) {
+	return l.DataC, l.ErrC
+}
+
 func NewLogWatcher() *LogWatcher {
 	return &LogWatcher{
 		DataC:    make(chan []byte, 1),

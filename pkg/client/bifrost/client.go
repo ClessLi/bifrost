@@ -18,6 +18,11 @@ type Client struct {
 	service.Service
 }
 
+type LogWatcher interface {
+	Close() error
+	GetChannels() (<-chan []byte, <-chan error)
+}
+
 func NewClientFromConsul(consulHost string, consulPort uint16) (*Client, error) {
 	discoveryClient, err := discover.NewKitConsulDiscoveryClient(consulHost, consulPort)
 	if err != nil {
