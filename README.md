@@ -6,7 +6,7 @@
 
 # 项目介绍
 
-**Bifrost** 是基于golang语言开发的项目，它目前还处于测试阶段，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用测试版本为[v1.0.1-alpha.2](https://github.com/ClessLi/bifrost/tree/v1.0.1-alpha.2) （v1.0.1-alpha.*取消http协议接口，改用gRPC协议接口。该版本仍在开发、测试中）。
+**Bifrost** 是基于golang语言开发的项目，它目前还处于测试阶段，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用测试版本为[v1.0.1-alpha.3](https://github.com/ClessLi/bifrost/tree/v1.0.1-alpha.3) （v1.0.1-alpha.*取消http协议接口，改用gRPC协议接口。该版本仍在开发、测试中）。
 
 # 项目特点
 
@@ -27,6 +27,18 @@
 # 使用方法
 
 ## 下载地址
+
+bifrost-auth-v1.0.1-alpha.3
+
+> Windows: [bifrost-auth.v1_0_1.alpha_3.win_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.1-alpha.3/bifrost-auth.v1_0_1.alpha_3.win_x64.zip)
+> 
+> Linux: [bifrost-auth.v1_0_1.alpha_3.linux_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.1-alpha.3/bifrost-auth.v1_0_1.alpha_3.linux_x64.zip)
+
+bifrost-v1.0.1-alpha.3
+
+> Windows: [bifrost.v1_0_1.alpha_3.win_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.1-alpha.3/bifrost.v1_0_1.alpha_3.win_x64.zip)
+> 
+> Linux: [bifrost.v1_0_1.alpha_3.linux_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.1-alpha.3/bifrost.v1_0_1.alpha_3.linux_x64.zip)
 
 bifrost-v1.0.1-alpha.2
 
@@ -143,7 +155,7 @@ LogConfig:
 `bifrost-auth`
 ```
 > ./bifrost-auth -h
-  bifrost-auth version: v1.0.1-alpha.1
+  bifrost-auth version: v1.0.1-alpha.3
   Usage: ./bifrost-auth [-hv] [-f filename] [-s signal]
   
   Options:
@@ -160,7 +172,7 @@ LogConfig:
 `bifrost`
 ```
 > ./bifrost -h
-  bifrost version: v1.0.1-alpha.2
+  bifrost version: v1.0.1-alpha.3
   Usage: ./bifrost [-hv] [-f filename] [-s signal]
   
   Options:
