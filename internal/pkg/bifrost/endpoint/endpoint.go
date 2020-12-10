@@ -2,7 +2,6 @@ package endpoint
 
 import (
 	"errors"
-	"fmt"
 	"github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb"
 	"github.com/ClessLi/bifrost/internal/pkg/bifrost/service"
 	"github.com/go-kit/kit/endpoint"
@@ -18,9 +17,9 @@ var (
 	ErrInvalidUCReqType       = errors.New("RequestType has only one type: UpdateConfig")
 	ErrInvalidVSReqType       = errors.New("RequestType has only one type: ViewStatistics")
 	ErrInvalidStatusReqType   = errors.New("RequestType has only one type: Status")
+	ErrInvalidWatchLogReqType = errors.New("RequestType has only one type: WatchLog")
 	ErrInvalidOperateRequest  = errors.New("request has only one class: OperateRequest")
 	ErrInvalidConfigRequest   = errors.New("request has only one class: ConfigRequest")
-	ErrInvalidWatchLogRequest = errors.New("request has only one class: WatchLogRequest")
 	ErrResponseNull           = errors.New("response is null")
 	ErrInvalidResponse        = errors.New("response is invalid")
 )
@@ -137,6 +136,7 @@ func (ue BifrostEndpoints) WatchLog(ctx context.Context, token, svrName, logName
 			r, err := stream.Recv()
 			if err != nil {
 				logWatcher.ErrC <- err
+				return
 			}
 			respChan <- r
 		}
@@ -208,20 +208,6 @@ type OperateRequest struct {
 type OperateResponse struct {
 	Result []byte `json:"result"`
 	Error  error  `json:"error"`
-}
-
-type WatchLogRequest struct {
-	Token   string `json:"token"`
-	SvrName string `json:"svr_name"`
-	Param   string `json:"param"`
-}
-
-func NewWatchLogRequest(r *bifrostpb.OperateRequest) *WatchLogRequest {
-	return &WatchLogRequest{
-		Token:   r.Token,
-		SvrName: r.SvrName,
-		Param:   r.Param,
-	}
 }
 
 type Config struct {
@@ -323,11 +309,15 @@ func MakeStatusEndpoint(svc service.Service) endpoint.Endpoint {
 func MakeWatchLogEndpoint(svc service.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		//fmt.Println("接受到handler请求")
-		if req, ok := request.(*OperateRequest); ok {
-			return svc.WatchLog(ctx, req.Token, req.SvrName, req.Param)
+		//fmt.Printf("endpoint svc's method WatchLog, req class is %T\n", request)
+		if req, ok := request.(OperateRequest); ok {
+			if strings.EqualFold(req.RequestType, "WatchLog") {
+				return svc.WatchLog(ctx, req.Token, req.SvrName, req.Param)
+			}
+			return nil, ErrInvalidWatchLogReqType
 		}
-		fmt.Printf("%T\n", request)
-		return nil, ErrInvalidWatchLogRequest
+		//fmt.Printf("%T\n", request)
+		return nil, ErrInvalidOperateRequest
 	}
 }
 

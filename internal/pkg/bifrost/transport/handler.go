@@ -234,14 +234,9 @@ func (s *grpcServer) WatchLog(stream bifrostpb.BifrostService_WatchLogServer) (e
 		return err
 	}
 
-	//fmt.Println("接收到客户端请求")
-	// 初始化数据传输，信号传输管道，及WatchLogRequest
-	wlReq := endpoint.NewWatchLogRequest(req)
-	//fmt.Println("初始化日志监看请求成功")
-
 	// 向endpoint发起请求，获取WatchLogResponse
 	//fmt.Println("请求发往endpoint处理")
-	_, resp, err := s.watchLog.ServeGRPC(stream.Context(), wlReq)
+	_, resp, err := s.watchLog.ServeGRPC(stream.Context(), req)
 	if err != nil {
 		return err
 	}
@@ -268,9 +263,11 @@ func (s *grpcServer) WatchLog(stream bifrostpb.BifrostService_WatchLogServer) (e
 			case sig := <-stopSig:
 				if sig == 9 { // 信号9传入则开始停止
 					//fmt.Println("开始停止")
-					_, _ = <-logWatcher.DataC
-					_, _ = <-logWatcher.ErrC
+					close(logWatcher.DataC)
+					close(logWatcher.ErrC)
+					//fmt.Println("开始发送停止信号")
 					logWatcher.SignalC <- sig // 发送终止信号9给svc方法进程
+					//fmt.Println("停止传递结束")
 					return
 				}
 			}

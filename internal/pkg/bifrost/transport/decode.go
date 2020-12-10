@@ -28,7 +28,7 @@ func DecodeStatusRequest(ctx context.Context, r interface{}) (interface{}, error
 }
 
 func DecodeWatchLogRequest(ctx context.Context, r interface{}) (request interface{}, err error) {
-	//return r, nil
+	//fmt.Println("decoding watch log")
 	return decodeRequest(ctx, r, "WatchLog")
 }
 
@@ -54,6 +54,7 @@ func decodeRequest(ctx context.Context, r interface{}, requestType string) (inte
 		}
 		return nil, ErrInvalidHealthCheckRequest
 	default:
+		//fmt.Printf("decode default request, req class is %T, type is %v\n", r, requestType)
 		if req, ok := r.(*bifrostpb.OperateRequest); ok {
 			return endpoint.OperateRequest{
 				RequestType: requestType,

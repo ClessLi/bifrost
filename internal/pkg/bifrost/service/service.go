@@ -138,10 +138,6 @@ func (b *BifrostService) Status(ctx context.Context, token string) (jsonData []b
 }
 
 func (b *BifrostService) WatchLog(ctx context.Context, token, svrName, logName string) (logWatcher *LogWatcher, err error) {
-	//fmt.Println("svc接收到请求")
-	//if dataChan == nil || signal == nil {
-	//	return ErrChanNil
-	//}
 	// 认证
 	//fmt.Println("svc认证请求")
 	var pass bool
@@ -175,11 +171,13 @@ func (b *BifrostService) WatchLog(ctx context.Context, token, svrName, logName s
 		for {
 			select {
 			case s := <-logWatcher.SignalC:
+				//fmt.Println("sig is:", s)
 				if s == 9 {
 					//fmt.Println("watch log stopping...")
 					err = info.StopWatchLog(logName)
 					//fmt.Println("watch log is stopped")
 					if err != nil {
+						//fmt.Println(err.Error())
 						logWatcher.ErrC <- err
 					}
 					return
@@ -188,10 +186,6 @@ func (b *BifrostService) WatchLog(ctx context.Context, token, svrName, logName s
 				//fmt.Println("读取日志")
 				data, err := info.WatchLog(logName)
 				if err != nil {
-					stopErr := info.StopWatchLog(logName)
-					if stopErr != nil {
-						err = stopErr
-					}
 					logWatcher.ErrC <- err
 					return
 				}
@@ -215,75 +209,6 @@ func (b *BifrostService) WatchLog(ctx context.Context, token, svrName, logName s
 	}()
 	return logWatcher, nil
 }
-
-//func (b *BifrostService) WatchLog(ctx context.Context, token, svrName, logName string, dataChan chan<- []byte, signal <-chan int) (err error) {
-//	//fmt.Println("svc接收到请求")
-//	if dataChan == nil || signal == nil {
-//		return ErrChanNil
-//	}
-//	// 认证
-//	//fmt.Println("svc认证请求")
-//	var pass bool
-//	pass, err = b.checkToken(ctx, token)
-//	if err != nil {
-//		return err
-//	}
-//	if !pass {
-//		return UnknownErrCheckToken
-//	}
-//
-//	// 获取info
-//	var info *Info
-//	info, err = b.getInfo(svrName)
-//	if err != nil {
-//		return err
-//	}
-//
-//	// 开始监控日志
-//	ticker := time.Tick(time.Second)
-//	timeout := time.After(time.Minute * 30)
-//	err = info.StartWatchLog(logName)
-//	if err != nil {
-//		return err
-//	}
-//
-//	// 监听终止信号和每秒读取日志并发送
-//	//fmt.Println("监听终止信号及准备发送日志")
-//	for {
-//		select {
-//		case s := <-signal:
-//			if s == 9 {
-//				//fmt.Println("watch log stopping...")
-//				err = info.StopWatchLog(logName)
-//				//fmt.Println("watch log is stopped")
-//				return err
-//			}
-//		case <-ticker:
-//			//fmt.Println("读取日志")
-//			data, err := info.WatchLog(logName)
-//			if err != nil {
-//				stopErr := info.StopWatchLog(logName)
-//				if stopErr != nil {
-//					err = stopErr
-//				}
-//				return err
-//			}
-//			if len(data) == 0 {
-//				break
-//			}
-//			select {
-//			case dataChan <- data:
-//				// 日志推送后，客户端已经终止，handler日志推送阻断且发送了终止信号，由于日志推送阻断，接收终止信息被积压
-//				//fmt.Println("svc发送日志成功")
-//			case <-time.After(time.Second * 30):
-//				_ = info.StopWatchLog(logName)
-//				return ErrDataSendingTimeout
-//			}
-//		case <-timeout:
-//			return ErrWatchLogTimeout
-//		}
-//	}
-//}
 
 func (b BifrostService) GetPort() uint16 {
 	return b.Port

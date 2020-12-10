@@ -135,7 +135,8 @@ func TestClientWatchLog(t *testing.T) {
 	for {
 		select {
 		case data := <-logWatcher.DataC:
-			t.Logf(string(data))
+			//t.Logf(string(data))
+			fmt.Println(string(data))
 		case err := <-logWatcher.ErrC:
 			t.Fatal(err.Error())
 		case <-timeout:

@@ -8,12 +8,40 @@ import (
 	"github.com/hpcloud/tail"
 	"os"
 	"path/filepath"
+	"sync"
+	"time"
 )
 
 // TODO: nginx日志读取包
 type Log struct {
-	log   map[string]*tail.Tail
+	logs  map[string]*logBuffer
 	locks map[string]bool
+}
+
+type logBuffer struct {
+	tail   *tail.Tail
+	buffer *bytes.Buffer
+	rwLock *sync.Mutex
+}
+
+func newLogBuffer(t *tail.Tail, buf *bytes.Buffer) *logBuffer {
+	return &logBuffer{
+		tail:   t,
+		buffer: buf,
+		rwLock: new(sync.Mutex),
+	}
+}
+
+func (l Log) getLog(logName string) (*logBuffer, error) {
+	if isLocked, ok := l.locks[logName]; !ok || !isLocked {
+		//_ = l.StopWatch(logName)
+		return nil, ErrUnknownLockError
+	}
+	log, ok := l.logs[logName]
+	if !ok {
+		return nil, ErrLogBufferIsNotExist
+	}
+	return log, nil
 }
 
 func (l *Log) StartWatch(logName, workspace string) (err error) {
@@ -21,6 +49,12 @@ func (l *Log) StartWatch(logName, workspace string) (err error) {
 	if ok && isLocked {
 		return ErrLogIsLocked
 	}
+
+	defer func() {
+		if err != nil {
+			_ = l.StopWatch(logName)
+		}
+	}()
 	dir, err := os.Stat(workspace)
 	if err != nil {
 		return err
@@ -29,7 +63,8 @@ func (l *Log) StartWatch(logName, workspace string) (err error) {
 		return ErrLogsDirPath
 	}
 
-	if _, ok := l.log[logName]; ok {
+	log, _ := l.getLog(logName)
+	if log != nil {
 		return ErrLogBufferIsExist
 	}
 
@@ -38,7 +73,7 @@ func (l *Log) StartWatch(logName, workspace string) (err error) {
 		return err
 	}
 
-	tails, err := tail.TailFile(logPath, tail.Config{
+	t, err := tail.TailFile(logPath, tail.Config{
 		Location: &tail.SeekInfo{
 			Offset: 0,
 			Whence: 2,
@@ -48,51 +83,76 @@ func (l *Log) StartWatch(logName, workspace string) (err error) {
 		Poll:      true,
 		Follow:    true,
 	})
-	defer func() {
-		if err != nil {
-			l.StopWatch(logName)
-		}
-	}()
+
 	if err != nil {
 		return err
 	}
-	l.log[logName] = tails
+	buf := bytes.NewBuffer(make([]byte, 0, 1024))
+	l.logs[logName] = newLogBuffer(t, buf)
 	l.locks[logName] = true
+	go func() {
+		var (
+			log *logBuffer
+			err error
+		)
+
+		for {
+			log, err = l.getLog(logName)
+			if err != nil || log == nil {
+				return
+			}
+			select {
+			case line, ok := <-log.tail.Lines:
+				if ok {
+					//fmt.Println("read lock")
+					log.rwLock.Lock()
+					log.buffer.Write([]byte(line.Text))
+					log.buffer.Write([]byte("\n"))
+					log.rwLock.Unlock()
+					//fmt.Println("read unlock")
+				} else {
+					time.Sleep(time.Millisecond)
+					break
+				}
+			}
+		}
+	}()
 	return nil
 }
 
 func (l *Log) Watch(logName string) (logData []byte, err error) {
-	if isLocked, ok := l.locks[logName]; !ok || !isLocked {
-		_ = l.StopWatch(logName)
-		return nil, ErrUnknownLockError
-	}
-	tails, ok := l.log[logName]
-	if !ok {
-		return nil, ErrLogBufferIsNotExist
-	}
-	// TODO: 优化缓存回收机制，类似rpc存根回收新增机制
-	buf := bytes.NewBuffer(make([]byte, 0, 1024))
-	select {
-	case line, ok := <-tails.Lines:
-		if ok {
-			buf.Write([]byte(line.Text))
-			buf.Write([]byte("\n"))
-		} else {
-			break
+	defer func() {
+		if err != nil {
+			_ = l.StopWatch(logName)
 		}
+	}()
+
+	// TODO: 优化缓存回收机制，类似rpc存根回收新增机制
+	log, err := l.getLog(logName)
+	if err != nil {
+		return nil, err
 	}
-	logData = buf.Bytes()
-	return logData, err
+	//fmt.Println("write lock")
+	log.rwLock.Lock()
+	logData = log.buffer.Bytes()
+	log.buffer.Reset()
+	log.rwLock.Unlock()
+	//fmt.Println("write unlock")
+	return logData, nil
 }
 
 func (l *Log) StopWatch(logName string) error {
-	tails, ok := l.log[logName]
+	log, ok := l.logs[logName]
 	if !ok {
 		return ErrLogBufferIsNotExist
 	}
 	//fmt.Printf("stop tail %s\n", logName)
-	err := tails.Stop()
-	delete(l.log, logName)
+	err := log.tail.Stop()
+	delete(l.logs, logName)
+	_, ok = l.locks[logName]
+	if !ok {
+		return ErrLogIsUnlocked
+	}
 	delete(l.locks, logName)
 	//fmt.Printf("stop tail %s compelet\n", logName)
 	return err
@@ -100,7 +160,7 @@ func (l *Log) StopWatch(logName string) error {
 
 func NewLog() *Log {
 	return &Log{
-		log:   make(map[string]*tail.Tail),
+		logs:  make(map[string]*logBuffer),
 		locks: make(map[string]bool),
 	}
 }
