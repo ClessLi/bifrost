@@ -28,37 +28,41 @@ func NewBifrostClient(conn *grpc.ClientConn) *BifrostClientEndpoints {
 			conn,
 			"bifrostpb.BifrostService",
 			"GetInfo",
-			DecodeBifrostServiceClientRequest,
-			EncodeBifrostServiceClientResponse,
-			new(bifrostpb.Request),
+			EncodeBifrostServiceClientRequest,
+			DecodeBifrostServiceClientResponse,
+			new(bifrostpb.Response),
 		).Endpoint(),
 		update: grpctransport.NewClient(
 			conn,
 			"bifrostpb.BifrostService",
-			"Update",
-			DecodeBifrostServiceClientRequest,
-			EncodeBifrostServiceClientResponse,
-			new(bifrostpb.Request),
+			"UpdateConfig",
+			EncodeBifrostServiceClientRequest,
+			DecodeBifrostServiceClientResponse,
+			new(bifrostpb.Response),
 		).Endpoint(),
 		watchInfo: MakeWatchLogClientEndpoint(conn),
 	}
 }
 
-func DecodeBifrostServiceClientRequest(ctx context.Context, r interface{}) (interface{}, error) {
-	return decodeClientRequest(ctx, r)
+func EncodeBifrostServiceClientRequest(ctx context.Context, r interface{}) (interface{}, error) {
+	return encodeClientRequest(ctx, r)
 }
 
-func EncodeBifrostServiceClientResponse(_ context.Context, r interface{}) (interface{}, error) {
+func DecodeBifrostServiceClientResponse(_ context.Context, r interface{}) (interface{}, error) {
 	if resp, ok := r.(*bifrostpb.Response); ok {
+		var respErr error
+		if resp.Err != "" {
+			respErr = errors.New(resp.Err)
+		}
 		return Response{
 			Result: resp.Ret,
-			Error:  errors.New(resp.Err),
+			Error:  respErr,
 		}, nil
 	}
 	return nil, ErrUnknownResponse
 }
 
-func decodeClientRequest(ctx context.Context, r interface{}) (interface{}, error) {
+func encodeClientRequest(ctx context.Context, r interface{}) (interface{}, error) {
 	if req, ok := r.(Request); ok {
 		return &bifrostpb.Request{
 			Token:       req.Token,
@@ -105,13 +109,19 @@ func (ue BifrostClientEndpoints) GetConfig(ctx context.Context, token, srvName s
 	}
 }
 
-func (ue BifrostClientEndpoints) UpdateConfig(ctx context.Context, token, svrName string, reqData []byte) (data []byte, err error) {
-	resp, err := ue.update(ctx, Request{
+func (ue BifrostClientEndpoints) UpdateConfig(ctx context.Context, token, svrName string, reqData []byte, params ...string) (data []byte, err error) {
+	req := Request{
 		RequestType: "UpdateConfig",
 		Token:       token,
 		ServerName:  svrName,
 		Data:        reqData,
-	})
+	}
+	if params != nil {
+		req.Param = params[0]
+	} else {
+		req.Param = "full"
+	}
+	resp, err := ue.update(ctx, req)
 
 	if err != nil {
 		return nil, err

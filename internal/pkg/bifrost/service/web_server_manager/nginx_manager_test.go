@@ -1,6 +1,7 @@
 package web_server_manager
 
 import (
+	"bytes"
 	"testing"
 	"time"
 )
@@ -18,4 +19,10 @@ func TestNewNginxManager(t *testing.T) {
 		t.Fatal(err)
 		return
 	}
+}
+
+func TestBytesBuffer(t *testing.T) {
+	buf := bytes.NewBuffer([]byte("test"))
+	t.Log(buf.Bytes())
+	t.Log(buf.Bytes())
 }

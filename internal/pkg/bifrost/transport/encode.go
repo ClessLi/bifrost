@@ -18,7 +18,7 @@ func EncodeBifrostServiceResponse(_ context.Context, r interface{}) (interface{}
 			Ret: r.(endpoint.Response).Result,
 			Err: errStr,
 		}, nil
-	case endpoint.Watcher:
+	case *endpoint.Watcher:
 		return r, nil
 	default:
 		return nil, ErrUnknownResponse

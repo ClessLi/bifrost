@@ -105,7 +105,7 @@ func (s *systemInfo) Start() error {
 
 			// 监控时间戳
 			s.Time = fmt.Sprintf("%s", time.Now().In(nginx.TZ).Format("2006/01/02 15:04:05"))
-			time.Sleep(time.Second * 5)
+			//time.Sleep(time.Second * 5)
 		}
 	}()
 	return nil

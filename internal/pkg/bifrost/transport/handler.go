@@ -95,9 +95,10 @@ func (s *grpcServer) UpdateConfig(stream bifrostpb.BifrostService_UpdateConfigSe
 				Token:       in.Token,
 				SvrName:     in.SvrName,
 				RequestType: in.RequestType,
+				Param:       in.Param,
 			}
 		} else {
-			if in.RequestType != req.RequestType || in.SvrName != req.SvrName || in.Token != req.Token {
+			if in.RequestType != req.RequestType || in.Param != req.Param || in.SvrName != req.SvrName || in.Token != req.Token {
 				err = ErrRequestInconsistent
 				return err
 			}
@@ -135,7 +136,7 @@ func (s *grpcServer) WatchInfo(stream bifrostpb.BifrostService_WatchInfoServer) 
 	if err != nil {
 		return err
 	}
-	watcher, ok := resp.(endpoint.Watcher)
+	watcher, ok := resp.(*endpoint.Watcher)
 	if !ok {
 		return ErrUnknownResponse
 	}

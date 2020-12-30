@@ -76,8 +76,10 @@ func (n nginxManager) ShowStatistics() ([]byte, error) {
 }
 
 func (n *nginxManager) UpdateConfig(data []byte, param string) error {
+	//utils.Logger.Debug("nginx manager update config")
 	switch param {
 	case "full":
+		//utils.Logger.Debug("nginx manager full update config")
 		if len(data) > 0 {
 
 			// check config
@@ -253,9 +255,9 @@ func (n *nginxManager) autoBackup() {
 			//Log(NOTICE, "[%s] Nginx Config backup is stop.", n.Name)
 		}
 	}()
-	n.autoBackupChan = make(chan int, 1)
-	defer close(n.autoBackupChan)
+	n.autoBackupChan = make(chan int)
 	go func() {
+		defer close(n.autoBackupChan)
 		for n.available {
 			select {
 			case <-time.NewTicker(5 * time.Minute).C: // 每5分钟定时执行备份操作
@@ -302,9 +304,9 @@ func (n *nginxManager) autoReload() {
 	//		Log(NOTICE, "[%s] Nginx Config auto reload is stop.", n.Name)
 	//	}
 	//}()
-	n.autoReloadChan = make(chan int, 1)
-	defer close(n.autoReloadChan)
+	n.autoReloadChan = make(chan int)
 	go func() {
+		defer close(n.autoReloadChan)
 		for n.available {
 			select {
 			case <-time.NewTicker(30 * time.Second).C: // 每30秒检查一次nginx配置文件是否已在后台更新

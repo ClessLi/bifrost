@@ -130,10 +130,7 @@ func (b *BifrostService) update(ctx context.Context, svrName string, reqType Req
 		if params != nil && len(params) > 0 {
 			param, ok := params[0].(string)
 			if ok {
-				err = manager.UpdateConfig(uData, param)
-				if err != nil {
-					return err
-				}
+				return manager.UpdateConfig(uData, param)
 			}
 			return web_server_manager.ErrWrongParamPassedIn
 		}

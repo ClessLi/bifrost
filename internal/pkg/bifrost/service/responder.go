@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"github.com/ClessLi/bifrost/internal/pkg/bifrost/service/web_server_manager"
 )
 
@@ -10,12 +11,12 @@ type Responder interface {
 }
 
 type queryOrUpdateResponse struct {
-	response []byte
+	response *bytes.Buffer
 	err      error
 }
 
 func (qr queryOrUpdateResponse) Bytes() ([]byte, error) {
-	return qr.response, qr.err
+	return qr.response.Bytes(), qr.err
 }
 
 func (qr queryOrUpdateResponse) GetWatcher() (web_server_manager.Watcher, error) {
@@ -24,7 +25,7 @@ func (qr queryOrUpdateResponse) GetWatcher() (web_server_manager.Watcher, error)
 
 func NewQueryOrUpdateResponse(response []byte, err error) Responder {
 	return &queryOrUpdateResponse{
-		response: response,
+		response: bytes.NewBuffer(response),
 		err:      err,
 	}
 }
