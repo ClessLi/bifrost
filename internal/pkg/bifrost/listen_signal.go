@@ -1,6 +1,7 @@
 package bifrost
 
 import (
+	"github.com/ClessLi/bifrost/internal/pkg/utils"
 	"os"
 	"os/signal"
 	"syscall"
@@ -11,8 +12,8 @@ func ListenSignal(sigChan chan<- int) {
 	signal.Notify(procSigs, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	select {
 	case s := <-procSigs:
-		Log(NOTICE, "Get system signal: %s", s.String())
+		utils.Logger.NoticeF("Get system signal: %s", s.String())
 		sigChan <- 9
-		Log(DEBUG, "Stop listen system signal")
+		utils.Logger.Debug("Stop listen system signal")
 	}
 }

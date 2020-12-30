@@ -7,36 +7,22 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
-func EncodeOperateResponse(_ context.Context, r interface{}) (interface{}, error) {
-	resp := r.(endpoint.OperateResponse)
-	if resp.Error != nil {
-		return &bifrostpb.OperateResponse{
-			Ret: nil,
-			Err: resp.Error.Error(),
+func EncodeBifrostServiceResponse(_ context.Context, r interface{}) (interface{}, error) {
+	switch r.(type) {
+	case endpoint.Response:
+		errStr := ""
+		if r.(endpoint.Response).Error != nil {
+			errStr = r.(endpoint.Response).Error.Error()
+		}
+		return &bifrostpb.Response{
+			Ret: r.(endpoint.Response).Result,
+			Err: errStr,
 		}, nil
+	case endpoint.Watcher:
+		return r, nil
+	default:
+		return nil, ErrUnknownResponse
 	}
-	return &bifrostpb.OperateResponse{
-		Ret: resp.Result,
-		Err: "",
-	}, nil
-}
-
-func EncodeConfigResponse(_ context.Context, r interface{}) (interface{}, error) {
-	resp := r.(endpoint.ConfigResponse)
-	if resp.Error != nil {
-		return &bifrostpb.ConfigResponse{
-			Ret: nil,
-			Err: resp.Error.Error(),
-		}, nil
-	}
-	return &bifrostpb.ConfigResponse{
-		Ret: &bifrostpb.Config{JData: resp.Result.JData},
-		Err: "",
-	}, nil
-}
-
-func EncodeWatchLogResponse(_ context.Context, r interface{}) (interface{}, error) {
-	return r, nil
 }
 
 func EncodeHealthCheckResponse(_ context.Context, r interface{}) (interface{}, error) {

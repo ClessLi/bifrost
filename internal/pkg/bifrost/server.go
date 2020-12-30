@@ -9,6 +9,7 @@ import (
 	"github.com/ClessLi/bifrost/internal/pkg/bifrost/logging"
 	"github.com/ClessLi/bifrost/internal/pkg/bifrost/service"
 	"github.com/ClessLi/bifrost/internal/pkg/bifrost/transport"
+	"github.com/ClessLi/bifrost/internal/pkg/utils"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
@@ -21,42 +22,27 @@ func ServerRun() error {
 		return errors.New("service related configuration not initialized")
 	}
 
-	Log(DEBUG, "Listening system call signal")
+	utils.Logger.Debug("Listening system call signal")
 	go ListenSignal(signalChan)
-	Log(DEBUG, "Listened system call signal")
+	utils.Logger.Debug("Listened system call signal")
 
 	ctx := context.Background()
 
-	var svc service.Service
+	// init service
+	svc := newService()
 	// init auth svc
-	connAuthErr := BifrostConf.Service.ConnAuthSvr()
-	if connAuthErr != nil {
-		return connAuthErr
-	}
-	defer BifrostConf.Service.AuthSvrConnClose()
+	svc = service.AuthenticationMiddleware(BifrostConf.Service.AuthServerAddr)(svc)
 
-	// init bifrost svr
-
-	// back svr run
-	BifrostConf.Service.Run()
-	defer BifrostConf.Service.KillCoroutines()
-
-	svc = BifrostConf.Service
+	// init kit logger
 	svc = logging.LoggingMiddleware(config.KitLogger)(svc)
+	defer svc.Stop()
 
-	endpts := endpoint.BifrostEndpoints{
-		ViewConfigEndpoint:     endpoint.MakeViewConfigEndpoint(svc),
-		GetConfigEndpoint:      endpoint.MakeGetConfigEndpoint(svc),
-		UpdateConfigEndpoint:   endpoint.MakeUpdateConfigEndpoint(svc),
-		ViewStatisticsEndpoint: endpoint.MakeViewStatisticsEndpoint(svc),
-		StatusEndpoint:         endpoint.MakeStatusEndpoint(svc),
-		WatchLogEndpoint:       endpoint.MakeWatchLogEndpoint(svc),
-		HealthCheckEndpoint:    endpoint.MakeHealthCheckEndpoint(svc),
-	}
+	// init kit endpoint
+	endpoints := endpoint.NewBifrostEndpoints(svc)
 
 	transport.ChunkSize = BifrostConf.Service.ChunckSize
-	handler := transport.NewBifrostServer(ctx, endpts)
-	healthCheckHandler := transport.NewHealthCheck(ctx, endpts)
+	handler := transport.NewBifrostServer(ctx, endpoints)
+	healthCheckHandler := transport.NewHealthCheck(ctx, endpoints)
 
 	lis, lisErr := net.Listen("tcp", fmt.Sprintf(":%d", BifrostConf.Service.Port))
 	if lisErr != nil {
@@ -67,11 +53,12 @@ func ServerRun() error {
 	gRPCServer := grpc.NewServer(grpc.MaxSendMsgSize(transport.ChunkSize))
 	bifrostpb.RegisterBifrostServiceServer(gRPCServer, handler)
 	grpc_health_v1.RegisterHealthServer(gRPCServer, healthCheckHandler)
-	fmt.Println(logoStr)
-	svrErrChan := make(chan error, 1)
+	utils.Logger.Info(logoStr)
+	svrErrChan := make(chan error, 0)
 	go func() {
+		utils.Logger.NoticeF("bifrost service is running on %s", lis.Addr())
 		svrErr := gRPCServer.Serve(lis)
-		Log(NOTICE, "bifrost service is running on %s", lis.Addr())
+		utils.Logger.NoticeF("bifrost service is stopped")
 		svrErrChan <- svrErr
 	}()
 
@@ -82,10 +69,10 @@ func ServerRun() error {
 	select {
 	case s := <-signalChan:
 		if s == 9 {
-			Log(DEBUG, "stopping...")
+			utils.Logger.Debug("bifrost service is stopping...")
 			gRPCServer.Stop()
 		}
-		Log(DEBUG, "stop signal error")
+		utils.Logger.Debug("stop signal error")
 	case stopErr = <-svrErrChan:
 		gRPCServer.Stop()
 		break

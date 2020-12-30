@@ -7,47 +7,52 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
-func DecodeViewConfigRequest(ctx context.Context, r interface{}) (interface{}, error) {
-	return decodeRequest(ctx, r, "ViewConfig")
-}
-
-func DecodeGetConfigRequest(ctx context.Context, r interface{}) (interface{}, error) {
-	return decodeRequest(ctx, r, "GetConfig")
-}
-
-func DecodeUpdateConfigRequest(ctx context.Context, r interface{}) (interface{}, error) {
-	return decodeRequest(ctx, r, "UpdateConfig")
-}
-
-func DecodeViewStatisticsRequest(ctx context.Context, r interface{}) (interface{}, error) {
-	return decodeRequest(ctx, r, "ViewStatistics")
-}
-
-func DecodeStatusRequest(ctx context.Context, r interface{}) (interface{}, error) {
-	return decodeRequest(ctx, r, "Status")
-}
-
-func DecodeWatchLogRequest(ctx context.Context, r interface{}) (request interface{}, err error) {
-	//fmt.Println("decoding watch log")
-	return decodeRequest(ctx, r, "WatchLog")
-}
+//func DecodeViewConfigRequest(ctx context.Context, r interface{}) (interface{}, error) {
+//	return decodeRequest(ctx, r, "ViewConfig")
+//}
+//
+//func DecodeGetConfigRequest(ctx context.Context, r interface{}) (interface{}, error) {
+//	return decodeRequest(ctx, r, "GetConfig")
+//}
+//
+//func DecodeUpdateConfigRequest(ctx context.Context, r interface{}) (interface{}, error) {
+//	return decodeRequest(ctx, r, "UpdateConfig")
+//}
+//
+//func DecodeViewStatisticsRequest(ctx context.Context, r interface{}) (interface{}, error) {
+//	return decodeRequest(ctx, r, "ViewStatistics")
+//}
+//
+//func DecodeStatusRequest(ctx context.Context, r interface{}) (interface{}, error) {
+//	return decodeRequest(ctx, r, "Status")
+//}
+//
+//func DecodeWatchLogRequest(ctx context.Context, r interface{}) (request interface{}, err error) {
+//	//fmt.Println("decoding watch log")
+//	return decodeRequest(ctx, r, "WatchLog")
+//}
 
 func DecodeHealthCheckRequest(ctx context.Context, r interface{}) (interface{}, error) {
 	return decodeRequest(ctx, r, "HealthCheck")
 }
 
-func decodeRequest(ctx context.Context, r interface{}, requestType string) (interface{}, error) {
-	switch requestType {
-	case "UpdateConfig":
-		if req, ok := r.(*bifrostpb.ConfigRequest); ok {
-			return endpoint.ConfigRequest{
-				RequestType: requestType,
+func DecodeBifrostServiceRequest(ctx context.Context, r interface{}) (interface{}, error) {
+	return decodeRequest(ctx, r, "BifrostService")
+}
+
+func decodeRequest(ctx context.Context, r interface{}, handleType string) (interface{}, error) {
+	switch handleType {
+	case "BifrostService":
+		if req, ok := r.(*bifrostpb.Request); ok {
+			return endpoint.Request{
+				RequestType: req.RequestType,
 				Token:       req.Token,
-				SvrName:     req.SvrName,
-				Ret:         endpoint.Config{JData: req.Req.JData},
+				ServerName:  req.SvrName,
+				Param:       req.Param,
+				Data:        req.Data,
 			}, nil
 		}
-		return nil, ErrInvalidConfigRequest
+		return nil, ErrInvalidBifrostServiceRequest
 	case "HealthCheck":
 		if _, ok := r.(*grpc_health_v1.HealthCheckRequest); ok {
 			return endpoint.HealthRequest{}, nil
@@ -55,14 +60,6 @@ func decodeRequest(ctx context.Context, r interface{}, requestType string) (inte
 		return nil, ErrInvalidHealthCheckRequest
 	default:
 		//fmt.Printf("decode default request, req class is %T, type is %v\n", r, requestType)
-		if req, ok := r.(*bifrostpb.OperateRequest); ok {
-			return endpoint.OperateRequest{
-				RequestType: requestType,
-				Token:       req.Token,
-				SvrName:     req.SvrName,
-				Param:       req.Param,
-			}, nil
-		}
-		return nil, ErrInvalidOperateRequest
+		return nil, ErrUnknownRequest
 	}
 }

@@ -1,217 +1,182 @@
 package service
 
 import (
-	"encoding/json"
-	"github.com/ClessLi/bifrost/pkg/client/auth"
-	ngStatistics "github.com/ClessLi/bifrost/pkg/statistics/nginx"
+	"github.com/ClessLi/bifrost/internal/pkg/bifrost/service/web_server_manager"
+	"github.com/ClessLi/bifrost/internal/pkg/utils"
 	"golang.org/x/net/context"
 	"sync"
-	"time"
 )
 
 type Service interface {
-	ViewConfig(ctx context.Context, token, svrName string) (data []byte, err error)
-	GetConfig(ctx context.Context, token, srvName string) (jsonData []byte, err error)
-	UpdateConfig(ctx context.Context, token, svrName string, jsonData []byte) (data []byte, err error)
-	ViewStatistics(ctx context.Context, token, svrName string) (jsonData []byte, err error)
-	Status(ctx context.Context, token string) (jsonData []byte, err error)
+	Deal(requester Requester) (Responder, error)
+	Stop() error
 	// TODO: WatchLog暂用锁机制，一个日志文件仅允许一个终端访问
-	//WatchLog(ctx context.Context, token, svrName, logName string, dataChan chan<- []byte, signal <-chan int) error
-	WatchLog(ctx context.Context, token, svrName, logName string) (logWatcher *LogWatcher, err error)
 }
 
 // BifrostService, bifrost配置文件对象中web服务器信息结构体，定义管控的web服务器配置文件相关信息
 type BifrostService struct {
-	Port           uint16  `yaml:"Port"`
-	ChunckSize     int     `yaml:"ChunkSize"`
-	AuthServerAddr string  `yaml:"AuthServerAddr"`
-	Infos          []*Info `yaml:"Infos,flow"`
-	monitorChan    chan int
-	authSvcCli     *auth.Client
-	waitGroup      *sync.WaitGroup
+	managers  map[string]web_server_manager.WebServerManager
+	monitor   Monitor
+	waitGroup *sync.WaitGroup
 }
 
-func (b *BifrostService) ViewConfig(ctx context.Context, token, svrName string) (data []byte, err error) {
-	var pass bool
-	pass, err = b.checkToken(ctx, token)
-	if err != nil {
-		return nil, err
+func NewService(managers map[string]web_server_manager.WebServerManager) Service {
+	if managers == nil {
+		return nil
 	}
-	if !pass {
-		return nil, UnknownErrCheckToken
-	}
-
-	var info *Info
-	info, err = b.getInfo(svrName)
-	if err != nil {
-		return nil, err
-	}
-	for _, s := range info.nginxConfig.String() {
-		data = append(data, []byte(s)...)
-	}
-	if data == nil {
-		err = ErrDataNotParsed
-		return nil, err
-	}
-	return data, err
-}
-
-func (b *BifrostService) GetConfig(ctx context.Context, token, svrName string) (jsonData []byte, err error) {
-	var pass bool
-	pass, err = b.checkToken(ctx, token)
-	if err != nil {
-		return nil, err
-	}
-	if !pass {
-		return nil, UnknownErrCheckToken
-	}
-
-	var info *Info
-	info, err = b.getInfo(svrName)
-	if err != nil {
-		return nil, err
-	}
-
-	return json.Marshal(info.nginxConfig)
-}
-
-func (b *BifrostService) UpdateConfig(ctx context.Context, token, svrName string, jsonData []byte) (data []byte, err error) {
-	var pass bool
-	pass, err = b.checkToken(ctx, token)
-	if err != nil {
-		return nil, err
-	}
-	if !pass {
-		return nil, UnknownErrCheckToken
-	}
-
-	var info *Info
-	info, err = b.getInfo(svrName)
-	if err != nil {
-		return nil, err
-	}
-
-	return info.update(jsonData)
-}
-
-func (b *BifrostService) ViewStatistics(ctx context.Context, token, svrName string) (jsonData []byte, err error) {
-	var pass bool
-	pass, err = b.checkToken(ctx, token)
-	if err != nil {
-		return nil, err
-	}
-	if !pass {
-		return nil, UnknownErrCheckToken
-	}
-
-	var info *Info
-	info, err = b.getInfo(svrName)
-	if err != nil {
-		return nil, err
-	}
-
-	httpServersNum, httpServers := ngStatistics.HTTPServers(info.nginxConfig)
-	httpPorts := ngStatistics.HTTPPorts(info.nginxConfig)
-	streamServersNum, streamPorts := ngStatistics.StreamServers(info.nginxConfig)
-	statistics := struct {
-		HttpSvrsNum   int              `json:"http_svrs_num"`
-		HttpSvrs      map[string][]int `json:"http_svrs"`
-		HttpPorts     []int            `json:"http_ports"`
-		StreamSvrsNum int              `json:"stream_svrs_num"`
-		StreamPorts   []int            `json:"stream_ports"`
-	}{HttpSvrsNum: httpServersNum, HttpSvrs: httpServers, HttpPorts: httpPorts, StreamSvrsNum: streamServersNum, StreamPorts: streamPorts}
-	return json.Marshal(statistics)
-}
-
-func (b *BifrostService) Status(ctx context.Context, token string) (jsonData []byte, err error) {
-	var pass bool
-	pass, err = b.checkToken(ctx, token)
-	if err != nil {
-		return nil, err
-	}
-	if !pass {
-		return nil, UnknownErrCheckToken
-	}
-
-	// TODO: SysInfo lock mechanism
-	return json.Marshal(SysInfo)
-}
-
-func (b *BifrostService) WatchLog(ctx context.Context, token, svrName, logName string) (logWatcher *LogWatcher, err error) {
-	// 认证
-	//fmt.Println("svc认证请求")
-	var pass bool
-	pass, err = b.checkToken(ctx, token)
-	if err != nil {
-		return nil, err
-	}
-	if !pass {
-		return nil, UnknownErrCheckToken
-	}
-
-	// 获取info
-	var info *Info
-	info, err = b.getInfo(svrName)
-	if err != nil {
-		return nil, err
-	}
-
-	// 开始监控日志
-	ticker := time.Tick(time.Second)
-	timeout := time.After(time.Minute * 30)
-	err = info.StartWatchLog(logName)
-	if err != nil {
-		return nil, err
-	}
-
-	logWatcher = NewLogWatcher()
-	// 监听终止信号和每秒读取日志并发送
-	//fmt.Println("监听终止信号及准备发送日志")
-	go func() {
-		for {
-			select {
-			case s := <-logWatcher.SignalC:
-				//fmt.Println("sig is:", s)
-				if s == 9 {
-					//fmt.Println("watch log stopping...")
-					err = info.StopWatchLog(logName)
-					//fmt.Println("watch log is stopped")
-					if err != nil {
-						//fmt.Println(err.Error())
-						logWatcher.ErrC <- err
-					}
-					return
-				}
-			case <-ticker:
-				//fmt.Println("读取日志")
-				data, err := info.WatchLog(logName)
-				if err != nil {
-					logWatcher.ErrC <- err
-					return
-				}
-				if len(data) == 0 {
-					break
-				}
-				select {
-				case logWatcher.DataC <- data:
-					// 日志推送后，客户端已经终止，handler日志推送阻断且发送了终止信号，由于日志推送阻断，接收终止信息被积压
-					//fmt.Println("svc发送日志成功")
-				case <-time.After(time.Second * 30):
-					_ = info.StopWatchLog(logName)
-					logWatcher.ErrC <- ErrDataSendingTimeout
-					return
-				}
-			case <-timeout:
-				logWatcher.ErrC <- ErrWatchLogTimeout
-				return
-			}
+	var err error
+	defer func() {
+		if err != nil {
+			utils.Logger.FatalF("failed to initialize bifrost service, cased by %s", err)
 		}
 	}()
-	return logWatcher, nil
+	svc := BifrostService{
+		managers:  managers,
+		monitor:   NewSysInfo(managers),
+		waitGroup: new(sync.WaitGroup),
+	}
+
+	for name, manager := range svc.managers {
+		managerErr := manager.Start()
+		if managerErr != nil {
+			utils.Logger.Warning(managerErr.Error())
+			delete(svc.managers, name)
+			break
+		}
+		svc.waitGroup.Add(1)
+	}
+
+	// 监控系统信息
+	err = svc.monitor.Start()
+	if err != nil {
+		return nil
+	}
+	svc.waitGroup.Add(1)
+	return &svc
 }
 
-func (b BifrostService) GetPort() uint16 {
-	return b.Port
+func (b BifrostService) Deal(requester Requester) (responder Responder, err error) {
+	switch requester.GetRequestType() {
+	case DisplayConfig, GetConfig, ShowStatistics:
+		resp, err := b.get(requester.GetContext(), requester.GetServerName(), requester.GetRequestType())
+		return NewQueryOrUpdateResponse(resp, err), nil
+	case DisplayStatus:
+		resp, err := b.status(requester.GetContext())
+		return NewQueryOrUpdateResponse(resp, err), nil
+	case UpdateConfig:
+		err := b.update(requester.GetContext(), requester.GetServerName(), requester.GetRequestType(), requester.GetRequestData(), requester.GetParam())
+		if err != nil {
+			return nil, err
+		}
+		return NewQueryOrUpdateResponse([]byte("Update succeeded"), err), nil
+	case WatchLog:
+		watcher, err := b.watch(requester.GetContext(), requester.GetServerName(), requester.GetRequestType(), requester.GetParam())
+		if err != nil {
+			return nil, err
+		}
+		return NewWatcherResponse(watcher), nil
+	default:
+		return nil, UnknownRequestType
+	}
+}
+
+// Stop, ServiceInfo关闭协程任务的方法
+func (b *BifrostService) Stop() error {
+	defer b.waitGroup.Wait()
+	err := b.monitor.Stop()
+	if err != nil {
+		// log
+	}
+	b.waitGroup.Done()
+	for _, manager := range b.managers {
+		err := manager.Stop()
+		if err != nil {
+			// log
+			continue
+		}
+		b.waitGroup.Done()
+	}
+	return err
+}
+
+func (b BifrostService) get(ctx context.Context, svrName string, reqType RequestType) (resp []byte, err error) {
+	if reqType == DisplayStatus {
+		return b.monitor.DisplayStatus()
+	}
+	manager, err := b.getWebServerConfigManager(svrName)
+	if err != nil {
+		return nil, err
+	}
+	switch reqType {
+	case DisplayConfig:
+		return manager.DisplayConfig()
+	case GetConfig:
+		return manager.GetConfig()
+	case ShowStatistics:
+		return manager.ShowStatistics()
+	default:
+		return nil, UnknownRequestType
+	}
+}
+
+func (b *BifrostService) update(ctx context.Context, svrName string, reqType RequestType, uData []byte, params ...interface{}) (err error) {
+	manager, err := b.getWebServerConfigManager(svrName)
+	if err != nil {
+		return err
+	}
+
+	switch reqType {
+	case UpdateConfig:
+		if params != nil && len(params) > 0 {
+			param, ok := params[0].(string)
+			if ok {
+				err = manager.UpdateConfig(uData, param)
+				if err != nil {
+					return err
+				}
+			}
+			return web_server_manager.ErrWrongParamPassedIn
+		}
+		return ErrParamNotPassedIn
+	default:
+		return UnknownRequestType
+	}
+}
+
+func (b BifrostService) watch(ctx context.Context, svrName string, reqType RequestType, params ...interface{}) (watcher web_server_manager.Watcher, err error) {
+	manager, err := b.getWebServerConfigManager(svrName)
+	if err != nil {
+		return nil, err
+	}
+	switch reqType {
+	case WatchLog:
+		if params != nil && len(params) > 0 {
+			logName, ok := params[0].(string)
+			if ok {
+				return manager.WatchLog(logName)
+			}
+		}
+		return nil, ErrParamNotPassedIn
+	default:
+		return nil, UnknownRequestType
+	}
+}
+
+func (b *BifrostService) status(ctx context.Context) (response []byte, err error) {
+	// TODO: SysInfo lock mechanism
+	return b.monitor.DisplayStatus()
+}
+
+// getWebServerConfigManager, 查询获取WebServerManager对象的方法
+// 参数:
+//     name: web服务名
+func (b BifrostService) getWebServerConfigManager(svrName string) (manager web_server_manager.WebServerManager, err error) {
+	var ok bool
+	manager, ok = b.managers[svrName]
+	if ok {
+		return manager, nil
+	}
+	return nil, ErrUnknownSvrName
 }
 
 // ServiceMiddleware define service middleware

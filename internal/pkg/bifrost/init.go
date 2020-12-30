@@ -8,9 +8,9 @@ import (
 	"flag"
 	"fmt"
 	"github.com/ClessLi/bifrost/internal/pkg/bifrost/service"
+	"github.com/ClessLi/bifrost/internal/pkg/utils"
 	"github.com/ClessLi/skirnir/pkg/discover"
 	"github.com/apsdehal/go-logger"
-	"github.com/shirou/gopsutil/host"
 	"gopkg.in/yaml.v2"
 	"os"
 	"path/filepath"
@@ -29,8 +29,6 @@ var (
 	//authDBConfig *AuthDBConfig
 	//authConfig   *AuthConfig
 
-	// 日志变量
-	myLogger *logger.Logger
 	// 日志文件
 	Logf    *os.File
 	Stdoutf *os.File
@@ -41,9 +39,6 @@ var (
 	// 进程文件
 	pidFilename = "bifrost.pid"
 	pidFile     string
-
-	// 错误变量
-	procStatusNotRunning = fmt.Errorf("process is not running")
 
 	// 初始化systemInfo监控对象
 	//sysInfo      = &systemInfo{}
@@ -58,25 +53,29 @@ var (
 	discoveryClient discover.RegistryClient
 )
 
-const (
-	// 日志级别
-	CRITICAL = logger.CriticalLevel
-	ERROR    = logger.ErrorLevel
-	WARN     = logger.WarningLevel
-	NOTICE   = logger.NoticeLevel
-	INFO     = logger.InfoLevel
-	DEBUG    = logger.DebugLevel
-
-	// 版本号
-	VERSION = "v1.0.1-alpha.3"
-)
-
 // Config, bifrost配置文件结构体，定义bifrost配置信息
 type Config struct {
-	Service *service.BifrostService `yaml:"Service"`
+	Service Service `yaml:"Service"`
 	//AuthService *AuthService `yaml:"AuthService"`
 	*RAConfig `yaml:"RAConfig"`
 	LogConfig `yaml:"LogConfig"`
+}
+
+type Service struct {
+	Port           uint16 `yaml:"Port"`
+	ChunckSize     int    `yaml:"ChunkSize"`
+	AuthServerAddr string `yaml:"AuthServerAddr"`
+	Infos          []Info `yaml:"Infos,flow"`
+}
+
+type Info struct {
+	Name           string                `yaml:"name"`
+	Type           service.WebServerType `yaml:"type"`
+	BackupCycle    int                   `yaml:"backupCycle"`
+	BackupSaveTime int                   `yaml:"backupSaveTime"`
+	BackupDir      string                `yaml:"backupDir,omitempty"`
+	ConfPath       string                `yaml:"confPath"`
+	VerifyExecPath string                `yaml:"verifyExecPath"`
 }
 
 type RAConfig struct {
@@ -91,7 +90,7 @@ type LogConfig struct {
 }
 
 func (l LogConfig) IsDebugLvl() bool {
-	return l.Level >= DEBUG
+	return l.Level >= utils.DEBUG
 }
 
 // usage, 重新定义flag.Usage 函数，为bifrost帮助信息提供版本信息及命令行工具传参信息
@@ -100,7 +99,7 @@ func usage() {
 Usage: %s [-hv] [-f filename] [-s signal]
 
 Options:
-`, VERSION, os.Args[0])
+`, utils.Version(), os.Args[0])
 	flag.PrintDefaults()
 }
 
@@ -114,9 +113,9 @@ func init() {
 	}
 
 	workspace = filepath.Dir(ex)
-	cdErr := os.Chdir(workspace)
-	if cdErr != nil {
-		panic(cdErr)
+	err = os.Chdir(workspace)
+	if err != nil {
+		panic(err)
 	}
 
 	// 初始化pid文件路径
@@ -135,14 +134,14 @@ func init() {
 	}
 
 	if *version {
-		fmt.Printf("bifrost version: %s\n", VERSION)
+		fmt.Printf("bifrost version: %s\n", utils.Version())
 		os.Exit(0)
 	}
 
 	// 判断传入配置文件目录
-	isExistConfig, pathErr := PathExists(*confPath)
+	isExistConfig, err := utils.PathExists(*confPath)
 	if !isExistConfig {
-		if pathErr != nil {
+		if err != nil {
 			fmt.Println("The bifrost config file", "'"+*confPath+"'", "is not found.")
 		} else {
 			fmt.Println("Unkown error of the bifrost config file.")
@@ -158,60 +157,49 @@ func init() {
 	}
 
 	// 初始化bifrost配置
-	confData, readErr := readFile(*confPath)
-	if readErr != nil {
-		fmt.Println(readErr)
+	confData, err := utils.ReadFile(*confPath)
+	if err != nil {
+		fmt.Println(err)
 		flag.Usage()
 		os.Exit(1)
 	}
 
 	// 加载bifrost配置
-	yamlErr := yaml.Unmarshal(confData, BifrostConf)
-	if yamlErr != nil {
-		fmt.Println(yamlErr)
+	err = yaml.Unmarshal(confData, BifrostConf)
+	if err != nil {
+		fmt.Println(err)
 		flag.Usage()
 		os.Exit(1)
 	}
 
 	// 配置必填项检查
-	checkErr := configCheck()
-	if checkErr != nil {
-		fmt.Println(checkErr)
+	err = configCheck()
+	if err != nil {
+		fmt.Println(err)
 		flag.Usage()
 		os.Exit(1)
 	}
 
 	// 初始化日志
-	logDir, absErr := filepath.Abs(BifrostConf.LogDir)
-	if absErr != nil {
-		panic(absErr)
-	}
-
-	logPath := filepath.Join(logDir, "bifrost.log")
-	Logf, openErr := os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
-	if openErr != nil {
-		panic(openErr)
-	}
-
-	myLogger, err = logger.New("Bifrost", BifrostConf.Level, Logf)
+	logDir, err := filepath.Abs(BifrostConf.LogDir)
 	if err != nil {
 		panic(err)
 	}
-	myLogger.SetFormat("[%{module}] %{time:2006-01-02 15:04:05.000} [%{level}] %{message}\n")
+
+	logPath := filepath.Join(logDir, "bifrost.log")
+	Logf, err = os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		panic(err)
+	}
+
+	utils.InitLogger(Logf, BifrostConf.LogConfig.Level)
 
 	// 初始化应用运行日志输出
 	stdoutPath := filepath.Join(logDir, "bifrost.out")
-	Stdoutf, openErr = os.OpenFile(stdoutPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
-	if openErr != nil {
-		panic(openErr)
+	Stdoutf, err = os.OpenFile(stdoutPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		panic(err)
 	}
 
-	platform, _, release, OSErr := host.PlatformInformation()
-	if OSErr != nil {
-		Log(CRITICAL, "bifrost is stopped, cased by '%s'", OSErr)
-		os.Exit(1)
-	}
-	service.SysInfo.OS = fmt.Sprintf("%s %s", platform, release)
-	service.SysInfo.BifrostVersion = VERSION
 	isInit = true
 }

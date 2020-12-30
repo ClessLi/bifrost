@@ -1,4 +1,4 @@
-package service
+package utils
 
 import (
 	"bytes"
@@ -7,15 +7,15 @@ import (
 	"strconv"
 )
 
-// getPid, 查询pid文件并返回pid
+// GetPid, 查询pid文件并返回pid
 // 返回值:
 //     pid
 //     错误
-func getPid(path string) (int, error) {
+func GetPid(path string) (int, error) {
 	// 判断pid文件是否存在
 	if _, err := os.Stat(path); err == nil || os.IsExist(err) { // 存在
 		// 读取pid文件
-		pidBytes, readPidErr := readFile(path)
+		pidBytes, readPidErr := ReadFile(path)
 		if readPidErr != nil {
 			//Log(ERROR, readPidErr.Error())
 			return -1, readPidErr
@@ -37,13 +37,13 @@ func getPid(path string) (int, error) {
 	}
 }
 
-// readFile, 读取文件函数
+// ReadFile, 读取文件函数
 // 参数:
 //     path: 文件路径字符串
 // 返回值:
 //     文件数据
 //     错误
-func readFile(path string) ([]byte, error) {
+func ReadFile(path string) ([]byte, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -54,4 +54,25 @@ func readFile(path string) ([]byte, error) {
 		return nil, err
 	}
 	return fd, nil
+}
+
+// PathExists, 判断文件路径是否存在函数
+// 参数:
+//     path: 待判断的文件路径字符串
+// 返回值:
+//     true: 存在; false: 不存在
+//     错误
+func PathExists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil || os.IsExist(err) {
+		return true, nil
+	} else if os.IsNotExist(err) {
+		return false, err
+	} else {
+		return false, nil
+	}
+}
+
+func Version() string {
+	return VERSION
 }
