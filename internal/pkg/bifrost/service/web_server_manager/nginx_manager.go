@@ -247,24 +247,25 @@ func (n *nginxManager) confLoad() error {
 //     c: 整型管道，用于停止备份
 func (n *nginxManager) autoBackup() {
 	n.waitGroup.Add(1)
-	defer n.waitGroup.Done()
-	defer func() {
-		if !n.available {
-			//Log(INFO, "[%s] %s, Nginx Config backup is stop.", n.Name, ErrServiceNotAvailable)
-		} else {
-			//Log(NOTICE, "[%s] Nginx Config backup is stop.", n.Name)
-		}
-	}()
+	//defer func() {
+	//	if !n.available {
+	//		//Log(INFO, "[%s] %s, Nginx Config backup is stop.", n.Name, ErrServiceNotAvailable)
+	//	} else {
+	//		//Log(NOTICE, "[%s] Nginx Config backup is stop.", n.Name)
+	//	}
+	//}()
 	n.autoBackupChan = make(chan int)
 	go func() {
-		defer close(n.autoBackupChan)
+		defer n.waitGroup.Done()
+		//defer close(n.autoBackupChan)
 		for n.available {
 			select {
 			case <-time.NewTicker(5 * time.Minute).C: // 每5分钟定时执行备份操作
-				//Log(DEBUG, "[%s] Nginx Config check and backup", n.Name)
+				utils.Logger.DebugF("[%s] Nginx Config check and backup", n.name)
 				n.bak()
 			case sig := <-n.autoBackupChan: // 获取管道传入信号
 				if sig == 9 { // 为9时，停止备份
+					utils.Logger.InfoF("[%s] Nginx Config autoBackup method stopping...", n.name)
 					goto stopHere
 				}
 			}
@@ -296,7 +297,6 @@ func (n *nginxManager) bak() {
 //     c: 整型管道，用于停止备份
 func (n *nginxManager) autoReload() {
 	n.waitGroup.Add(1)
-	defer n.waitGroup.Done()
 	//defer func() {
 	//	if !n.available {
 	//		Log(INFO, "[%s] %s, Nginx Config auto reload is stop.", ErrServiceNotAvailable, n.Name)
@@ -306,19 +306,21 @@ func (n *nginxManager) autoReload() {
 	//}()
 	n.autoReloadChan = make(chan int)
 	go func() {
-		defer close(n.autoReloadChan)
+		defer n.waitGroup.Done()
+		//defer close(n.autoReloadChan)
 		for n.available {
 			select {
 			case <-time.NewTicker(30 * time.Second).C: // 每30秒检查一次nginx配置文件是否已在后台更新
-				//Log(DEBUG, "[%s] Nginx Config check and reloading", n.Name)
+				utils.Logger.DebugF("[%s] Nginx Config check and reloading", n.name)
 				reloadErr := n.confReload()
 				if reloadErr != nil && reloadErr != nginx.NoReloadRequired {
-					//Log(WARN, "[%s] Nginx Config reload failed, cased by '%s'", n.Name, reloadErr)
+					utils.Logger.WarningF("[%s] Nginx Config reload failed, cased by '%s'", n.name, reloadErr)
 				} else if reloadErr == nil {
-					//Log(INFO, "[%s] Nginx Config reload successfully", n.Name)
+					utils.Logger.InfoF("[%s] Nginx Config reload successfully", n.name)
 				}
 			case sig := <-n.autoReloadChan: // 获取管道传入信号
 				if sig == 9 { // 为9时，停止备份
+					utils.Logger.InfoF("[%s] Nginx Config autoReload method stopping...", n.name)
 					goto stopHere
 				}
 			}
@@ -469,7 +471,7 @@ func (n nginxManager) DisplayStatus() status {
 	return Disabled
 }
 
-func (n *nginxManager) Start() (err error) {
+func (n *nginxManager) ManagementStart() (err error) {
 	//Log(DEBUG, "[%s] 初始化bifrost服务相关接口。。。", b.ServiceInfos[i].Name)
 	n.Enable()
 	defer func() {
@@ -502,17 +504,17 @@ func (n *nginxManager) Start() (err error) {
 	return nil
 }
 
-func (n *nginxManager) Stop() error {
-	defer n.waitGroup.Wait()
+func (n *nginxManager) ManagementStop() error {
 	defer n.Disable()
-	//Log(DEBUG, "[%s] stop backup proc", b.Service[i].Name)
+	defer n.waitGroup.Wait()
+	//utils.Logger.DebugF("[%s] stop backup proc", n.name)
 	if n.autoBackupChan != nil {
-		//Log(DEBUG, "[%s] stop backup proc", b.ServiceInfos[i].Name)
+		utils.Logger.DebugF("[%s] stop backup proc", n.name)
 		n.autoBackupChan <- 9
 	}
-	//Log(DEBUG, "[%s] stop config auto reload proc", b.Service[i].Name)
+	//utils.Logger.DebugF("[%s] stop config auto reload proc", n.name)
 	if n.autoReloadChan != nil {
-		//Log(DEBUG, "[%s] stop config auto reload proc", b.ServiceInfos[i].Name)
+		utils.Logger.DebugF("[%s] stop config auto reload proc", n.name)
 		n.autoReloadChan <- 9
 	}
 	return nil

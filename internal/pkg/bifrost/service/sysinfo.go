@@ -74,6 +74,7 @@ func (s *systemInfo) Start() error {
 	go func() {
 		var sysErr error
 		defer func() {
+			utils.Logger.DebugF("system info monitor is stopping...")
 			s.monitorErrChan <- sysErr
 		}()
 		for !s.isStoped {
@@ -112,7 +113,7 @@ func (s *systemInfo) Start() error {
 
 }
 
-func (s systemInfo) Stop() error {
+func (s *systemInfo) Stop() error {
 	s.locker.Lock()
 	s.isStoped = true
 	s.locker.Unlock()

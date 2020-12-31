@@ -19,6 +19,11 @@ type WebServerManager interface {
 	autoReload()
 	ShowVersion() string
 	DisplayStatus() status
-	Start() error
-	Stop() error
+	ManagementStart() error
+	ManagementStop() error
+}
+
+type WebServerConfigBackstageManager interface {
+	AutoBackup() error
+	AutoReload() error
 }

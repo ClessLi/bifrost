@@ -37,7 +37,7 @@ func NewService(managers map[string]web_server_manager.WebServerManager) Service
 	}
 
 	for name, manager := range svc.managers {
-		managerErr := manager.Start()
+		managerErr := manager.ManagementStart()
 		if managerErr != nil {
 			utils.Logger.Warning(managerErr.Error())
 			delete(svc.managers, name)
@@ -89,7 +89,7 @@ func (b *BifrostService) Stop() error {
 	}
 	b.waitGroup.Done()
 	for _, manager := range b.managers {
-		err := manager.Stop()
+		err := manager.ManagementStop()
 		if err != nil {
 			// log
 			continue
