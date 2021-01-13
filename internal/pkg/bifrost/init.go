@@ -30,10 +30,6 @@ var (
 	//authDBConfig *AuthDBConfig
 	//authConfig   *AuthConfig
 
-	// 日志文件
-	Logf    *os.File
-	Stdoutf *os.File
-
 	// 程序工作目录
 	workspace string
 
@@ -188,24 +184,24 @@ func init() {
 	}
 
 	logPath := filepath.Join(logDir, "bifrost.log")
-	Logf, err = os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	utils.Logf, err = os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		panic(err)
 	}
 
-	utils.InitLogger(Logf, BifrostConf.LogConfig.Level)
+	utils.InitLogger(utils.Logf, BifrostConf.LogConfig.Level)
 
 	// 初始化应用运行日志输出
 	stdoutPath := filepath.Join(logDir, "bifrost.out")
-	Stdoutf, err = os.OpenFile(stdoutPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	utils.Stdoutf, err = os.OpenFile(stdoutPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		panic(err)
 	}
-	os.Stdout = Stdoutf
-	os.Stderr = Stdoutf
 }
 
 func initConfig() {
+	os.Stdout = utils.Stdoutf
+	os.Stderr = utils.Stdoutf
 	// 初始化web服务器配置服务控制器
 	BifrostConf.ServiceConfig.BifrostServiceController = service.NewBifrostServiceController(BifrostConf.ServiceConfig.WebServerConfigInfos...)
 

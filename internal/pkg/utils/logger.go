@@ -5,7 +5,12 @@ import (
 	"os"
 )
 
-var Logger *logger.Logger
+var (
+	Logger *logger.Logger
+	// 日志文件
+	Logf    *os.File
+	Stdoutf *os.File
+)
 
 func InitLogger(stdout *os.File, level logger.LogLevel) {
 	var err error

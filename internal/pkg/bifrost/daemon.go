@@ -46,7 +46,7 @@ func Start() (err error) {
 
 		args := append([]string{exec}, os.Args[1:]...)
 		_, procErr := os.StartProcess(exec, args, &os.ProcAttr{
-			Files: []*os.File{os.Stdin, os.Stdout, os.Stderr},
+			Files: []*os.File{os.Stdin, utils.Stdoutf, utils.Stdoutf},
 		})
 		return procErr
 
