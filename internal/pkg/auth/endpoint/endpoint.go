@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// The service.ServiceConfig method of AuthEndpoints is used for the endpoint of the client
+// The service.Service method of AuthEndpoints is used for the endpoint of the client
 type AuthEndpoints struct {
 	LoginEndpoint       endpoint.Endpoint
 	VerifyEndpoint      endpoint.Endpoint
