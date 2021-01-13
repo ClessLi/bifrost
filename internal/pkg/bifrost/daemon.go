@@ -19,10 +19,10 @@ import (
 // 返回值:
 //     错误
 func Start() (err error) {
+
 	// 判断当前进程是子进程还是主进程
 	if isMain() { // 主进程时
 		// 执行主进程
-		utils.Logger.Debug("Running Main Process")
 
 		// 判断是否已存在子进程
 		if pid, pidErr := utils.GetPid(pidFile); pidErr == nil {
@@ -38,9 +38,7 @@ func Start() (err error) {
 		}
 
 		// 启动子进程
-		utils.Logger.Notice("Starting bifrost...")
-		os.Stdout = Stdoutf
-		os.Stderr = Stdoutf
+		fmt.Println("Starting bifrost...")
 		exec, pathErr := filepath.Abs(os.Args[0])
 		if pathErr != nil {
 			return pathErr
@@ -53,6 +51,8 @@ func Start() (err error) {
 		return procErr
 
 	} else { // 子进程时
+
+		initConfig()
 		utils.Logger.Debug("Running Sub Process")
 		if BifrostConf.IsDebugLvl() {
 			go func() {
@@ -117,6 +117,16 @@ func Stop() error {
 		}
 	}
 
+	for i := 0; i < 300; i++ {
+		_, procErr := getProc(pidFile)
+		if procErr != nil {
+			break
+		}
+		if i == 299 {
+			return fmt.Errorf("an unknown error occurred in terminating bifrost")
+		}
+		time.Sleep(time.Second)
+	}
 	return nil
 }
 
@@ -129,17 +139,6 @@ func Restart() error {
 		if err := Stop(); err != nil {
 			utils.Logger.ErrorF("stop bifrost failed cased by: '%s'", err.Error())
 			return err
-		}
-
-		for i := 0; i < 300; i++ {
-			_, procErr := getProc(pidFile)
-			if procErr != nil {
-				break
-			}
-			if i == 299 {
-				return fmt.Errorf("an unknown error occurred in terminating bifrost")
-			}
-			time.Sleep(time.Second)
 		}
 
 		return Start()

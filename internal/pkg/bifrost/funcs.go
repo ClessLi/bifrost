@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/ClessLi/bifrost/internal/pkg/bifrost/config"
 	"github.com/ClessLi/bifrost/internal/pkg/bifrost/service"
-	"github.com/ClessLi/bifrost/internal/pkg/bifrost/service/web_server_manager"
 	"github.com/ClessLi/bifrost/internal/pkg/utils"
 	"github.com/ClessLi/skirnir/pkg/discover"
 	uuid "github.com/satori/go.uuid"
@@ -37,18 +36,18 @@ func configCheck() error {
 	if BifrostConf == nil {
 		return fmt.Errorf("bifrost config load error")
 	}
-	if len(BifrostConf.Service.Infos) == 0 {
+	if len(BifrostConf.ServiceConfig.WebServerConfigInfos) == 0 {
 		return fmt.Errorf("bifrost services config load error")
 	}
 	if BifrostConf.LogDir == "" {
 		return fmt.Errorf("bifrost log config load error")
 	}
 	// 初始化服务信息配置
-	if BifrostConf.Service.Port == 0 {
-		BifrostConf.Service.Port = 12321
+	if BifrostConf.ServiceConfig.Port == 0 {
+		BifrostConf.ServiceConfig.Port = 12321
 	}
-	if BifrostConf.Service.ChunckSize == 0 {
-		BifrostConf.Service.ChunckSize = 4194304
+	if BifrostConf.ServiceConfig.ChunckSize == 0 {
+		BifrostConf.ServiceConfig.ChunckSize = 4194304
 	}
 
 	if BifrostConf.RAConfig != nil {
@@ -87,7 +86,7 @@ func registerToRA(errChan chan<- error) {
 	}
 	instanceHost := instanceIP.String()
 
-	if !discoveryClient.Register(svcName, instanceId, instanceHost, BifrostConf.Service.Port, nil, config.KitLogger) {
+	if !discoveryClient.Register(svcName, instanceId, instanceHost, BifrostConf.ServiceConfig.Port, nil, config.KitLogger) {
 		err = fmt.Errorf("register service %s failed", svcName)
 		utils.Logger.Warning(err.Error())
 		errChan <- err
@@ -153,19 +152,14 @@ func getIpFromAddr(addr net.Addr) net.IP {
 }
 
 func newService() service.Service {
-	managers := make(map[string]web_server_manager.WebServerManager)
-	for i := 0; i < len(BifrostConf.Service.Infos); i++ {
-		info := BifrostConf.Service.Infos[i]
-		switch info.Type {
-		case service.NGINX:
-			manager := web_server_manager.NewNginxManager(info.Name, info.BackupCycle, info.BackupSaveTime, info.BackupDir, info.ConfPath, info.VerifyExecPath)
-			managers[info.Name] = manager
-		case service.HTTPD:
-			// TODO: apache httpd配置解析器
-			continue
-		default:
-			continue
-		}
-	}
-	return service.NewService(managers)
+	bifrostService := BifrostConf.ServiceConfig.BifrostServiceController.GetService()
+	return service.NewService(bifrostService)
+}
+
+func bifrostServiceStart() error {
+	return BifrostConf.ServiceConfig.BifrostServiceController.Start()
+}
+
+func bifrostServiceStop() error {
+	return BifrostConf.ServiceConfig.BifrostServiceController.Stop()
 }

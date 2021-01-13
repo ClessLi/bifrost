@@ -5,71 +5,178 @@ import (
 	"golang.org/x/net/context"
 )
 
-type Requester interface {
-	GetContext() context.Context
-	GetRequestType() RequestType
-	GetToken() string
-	GetServerName() string
-	GetParam() string
-	GetRequestData() (data []byte)
+type ViewRequester interface {
+	contextQuerier
+	serverNameQuerier
+	requestTypeQuerier
+	tokenQuerier
 }
 
-type request struct {
-	ctx         context.Context
+type viewRequester struct {
+	context     context.Context
+	serverName  string
 	requestType RequestType
 	token       string
-	serverName  string
-	param       string
-	data        *bytes.Buffer
 }
 
-func NewRequest(ctx context.Context, reqType, token, svrName, param string, data []byte) Requester {
+func NewViewRequester(ctx context.Context, reqType, serverName, token string) ViewRequester {
 	requestType := Unknown
 	switch reqType {
 	case "DisplayConfig":
 		requestType = DisplayConfig
 	case "GetConfig":
 		requestType = GetConfig
-	case "UpdateConfig":
-		requestType = UpdateConfig
 	case "ShowStatistics":
 		requestType = ShowStatistics
 	case "DisplayStatus":
 		requestType = DisplayStatus
+	}
+	return &viewRequester{
+		context:     ctx,
+		serverName:  serverName,
+		requestType: requestType,
+		token:       token,
+	}
+}
+
+func (v viewRequester) Context() context.Context {
+	return v.context
+}
+
+func (v viewRequester) GetServerName() string {
+	return v.serverName
+}
+
+func (v viewRequester) GetRequestType() RequestType {
+	return v.requestType
+}
+
+func (v viewRequester) GetToken() string {
+	return v.token
+}
+
+type UpdateRequester interface {
+	contextQuerier
+	serverNameQuerier
+	requestTypeQuerier
+	tokenQuerier
+	dataQuerier
+}
+
+type updateRequester struct {
+	context     context.Context
+	serverName  string
+	requestType RequestType
+	token       string
+	data        *bytes.Buffer
+}
+
+func NewUpdateRequester(ctx context.Context, reqType, serverName, token string, data []byte) UpdateRequester {
+	requestType := Unknown
+	switch reqType {
+	case "UpdateConfig":
+		requestType = UpdateConfig
+	}
+	return &updateRequester{
+		context:     ctx,
+		serverName:  serverName,
+		requestType: requestType,
+		token:       token,
+		data:        bytes.NewBuffer(data),
+	}
+}
+
+func (u updateRequester) Context() context.Context {
+	return u.context
+}
+
+func (u updateRequester) GetServerName() string {
+	return u.serverName
+}
+
+func (u updateRequester) GetRequestType() RequestType {
+	return u.requestType
+}
+
+func (u updateRequester) GetToken() string {
+	return u.token
+}
+
+func (u updateRequester) GetData() []byte {
+	return u.data.Bytes()
+}
+
+type WatchRequester interface {
+	contextQuerier
+	serverNameQuerier
+	requestTypeQuerier
+	tokenQuerier
+	objectQuerier
+}
+
+type watchRequester struct {
+	context     context.Context
+	serverName  string
+	requestType RequestType
+	token       string
+	objectName  string
+}
+
+func NewWatchRequester(ctx context.Context, reqType, serverName, token, objectName string) WatchRequester {
+	requestType := Unknown
+	switch reqType {
 	case "WatchLog":
 		requestType = WatchLog
 	}
-	dataR := bytes.NewBuffer(data)
-	return &request{
-		ctx:         ctx,
+	return &watchRequester{
+		context:     ctx,
+		serverName:  serverName,
 		requestType: requestType,
 		token:       token,
-		serverName:  svrName,
-		param:       param,
-		data:        dataR,
+		objectName:  objectName,
 	}
 }
 
-func (r request) GetContext() context.Context {
-	return r.ctx
+func (w watchRequester) Context() context.Context {
+	return w.context
 }
 
-func (r request) GetRequestType() RequestType {
-	return r.requestType
+func (w watchRequester) GetServerName() string {
+	return w.serverName
 }
 
-func (r request) GetToken() string {
-	return r.token
+func (w watchRequester) GetRequestType() RequestType {
+	return w.requestType
 }
 
-func (r request) GetServerName() string {
-	return r.serverName
+func (w watchRequester) GetToken() string {
+	return w.token
 }
 
-func (r request) GetParam() string {
-	return r.param
+func (w watchRequester) GetObjectName() string {
+	return w.objectName
 }
 
-func (r request) GetRequestData() (data []byte) {
-	return r.data.Bytes()
+type contextQuerier interface {
+	Context() context.Context
+}
+
+type tokenQuerier interface {
+	GetToken() string
+}
+
+type requestTypeQuerier interface {
+	GetRequestType() RequestType
+}
+
+type serverNameQuerier interface {
+	GetServerName() string
+}
+
+type objectQuerier interface {
+	GetObjectName() string
+}
+
+type dataQuerier interface {
+	GetData() []byte
 }

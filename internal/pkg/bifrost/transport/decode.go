@@ -33,33 +33,55 @@ import (
 //}
 
 func DecodeHealthCheckRequest(ctx context.Context, r interface{}) (interface{}, error) {
-	return decodeRequest(ctx, r, "HealthCheck")
+	if _, ok := r.(*grpc_health_v1.HealthCheckRequest); ok {
+		return endpoint.HealthRequest{}, nil
+	}
+	return nil, ErrInvalidHealthCheckRequest
 }
 
-func DecodeBifrostServiceRequest(ctx context.Context, r interface{}) (interface{}, error) {
-	return decodeRequest(ctx, r, "BifrostService")
+func DecodeViewRequest(ctx context.Context, r interface{}) (interface{}, error) {
+	if req, ok := r.(*bifrostpb.ViewRequest); ok {
+		return newViewRequest(req), nil
+	}
+	return nil, ErrUnknownRequest
 }
 
-func decodeRequest(ctx context.Context, r interface{}, handleType string) (interface{}, error) {
-	switch handleType {
-	case "BifrostService":
-		if req, ok := r.(*bifrostpb.Request); ok {
-			return endpoint.Request{
-				RequestType: req.RequestType,
-				Token:       req.Token,
-				ServerName:  req.SvrName,
-				Param:       req.Param,
-				Data:        req.Data,
-			}, nil
-		}
-		return nil, ErrInvalidBifrostServiceRequest
-	case "HealthCheck":
-		if _, ok := r.(*grpc_health_v1.HealthCheckRequest); ok {
-			return endpoint.HealthRequest{}, nil
-		}
-		return nil, ErrInvalidHealthCheckRequest
-	default:
-		//fmt.Printf("decode default request, req class is %T, type is %v\n", r, requestType)
-		return nil, ErrUnknownRequest
+func newViewRequest(req *bifrostpb.ViewRequest) *endpoint.ViewRequest {
+	return &endpoint.ViewRequest{
+		ViewType:   req.ViewType,
+		ServerName: req.ServerName,
+		Token:      req.Token,
+	}
+}
+
+func DecodeUpdateRequest(ctx context.Context, r interface{}) (interface{}, error) {
+	if req, ok := r.(*bifrostpb.UpdateRequest); ok {
+		return newUpdateRequest(req), nil
+	}
+	return nil, ErrUnknownRequest
+}
+
+func newUpdateRequest(req *bifrostpb.UpdateRequest) *endpoint.UpdateRequest {
+	return &endpoint.UpdateRequest{
+		UpdateType: req.UpdateType,
+		ServerName: req.ServerName,
+		Token:      req.Token,
+		Data:       req.Data,
+	}
+}
+
+func DecodeWatchRequest(ctx context.Context, r interface{}) (interface{}, error) {
+	if req, ok := r.(*bifrostpb.WatchRequest); ok {
+		return newWatchRequest(req), nil
+	}
+	return nil, ErrUnknownRequest
+}
+
+func newWatchRequest(req *bifrostpb.WatchRequest) *endpoint.WatchRequest {
+	return &endpoint.WatchRequest{
+		WatchType:   req.WatchType,
+		ServerName:  req.ServerName,
+		Token:       req.Token,
+		WatchObject: req.WatchObject,
 	}
 }

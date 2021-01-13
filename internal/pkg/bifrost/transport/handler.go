@@ -17,44 +17,50 @@ var (
 
 	recvTimeout time.Duration = 5 // 5 minutes
 
-	ErrRequestInconsistent          = errors.New("the request is inconsistent")
-	ErrRecvTimeout                  = errors.New("receive timeout during data wrap")
-	ErrUnknownRequest               = errors.New("unknown request error")
-	ErrInvalidBifrostServiceRequest = errors.New("request has only one: Request")
-	ErrInvalidHealthCheckRequest    = errors.New("request has only one: HealthCheckRequest")
-	ErrUnknownResponse              = errors.New("unknown response error")
+	ErrRequestInconsistent       = errors.New("the request is inconsistent")
+	ErrRecvTimeout               = errors.New("receive timeout during data wrap")
+	ErrUnknownRequest            = errors.New("unknown request error")
+	ErrInvalidHealthCheckRequest = errors.New("request has only one: HealthCheckRequest")
+	ErrUnknownResponse           = errors.New("unknown response error")
+
+	ErrWatcherCloseTimeout = errors.New("close watcher timeout")
 )
 
-type grpcServer struct {
-	bifrostService grpc.Handler
-	healthCheck    grpc.Handler
+type gRPCHandlers struct {
+	viewService   grpc.Handler
+	updateService grpc.Handler
+	watchService  grpc.Handler
 }
 
-func (s *grpcServer) GetInfo(r *bifrostpb.Request, stream bifrostpb.BifrostService_GetInfoServer) error {
-	_, resp, err := s.bifrostService.ServeGRPC(stream.Context(), r)
+type gRPCHealthCheckHandler struct {
+	healthCheck grpc.Handler
+}
+
+func (s *gRPCHandlers) View(r *bifrostpb.ViewRequest, stream bifrostpb.ViewService_ViewServer) error {
+	_, resp, err := s.viewService.ServeGRPC(stream.Context(), r)
 	if err != nil {
-		return stream.Send(&bifrostpb.Response{
+		return stream.Send(&bifrostpb.BytesResponse{
 			Ret: nil,
 			Err: err.Error(),
 		})
 	}
-	response := resp.(*bifrostpb.Response)
+	response := resp.(*bifrostpb.BytesResponse)
 	n := len(response.Ret)
 	for i := 0; i < n; i += ChunkSize {
 		// TODO: response优化为[][]byte，用BifrostService.ChunckSize定义每个[]byte切片容积
 		if n <= i+ChunkSize {
-			err = stream.Send(&bifrostpb.Response{
+			err = stream.Send(&bifrostpb.BytesResponse{
 				Ret: response.Ret[i:],
 				Err: "",
 			})
 		} else {
-			err = stream.Send(&bifrostpb.Response{
+			err = stream.Send(&bifrostpb.BytesResponse{
 				Ret: response.Ret[i : i+ChunkSize],
 				Err: "",
 			})
 		}
 		if err != nil {
-			return stream.Send(&bifrostpb.Response{
+			return stream.Send(&bifrostpb.BytesResponse{
 				Ret: nil,
 				Err: err.Error(),
 			})
@@ -63,19 +69,18 @@ func (s *grpcServer) GetInfo(r *bifrostpb.Request, stream bifrostpb.BifrostServi
 	return nil
 }
 
-func (s *grpcServer) UpdateConfig(stream bifrostpb.BifrostService_UpdateConfigServer) error {
+func (s *gRPCHandlers) Update(stream bifrostpb.UpdateService_UpdateServer) error {
 	var err error
 	defer func() {
 		if err != nil {
-			_ = stream.SendAndClose(&bifrostpb.Response{
-				Ret: nil,
+			_ = stream.SendAndClose(&bifrostpb.ErrorResponse{
 				Err: err.Error(),
 			})
 		}
 	}()
 	buffer := bytes.NewBuffer(make([]byte, 0, 1024))
 	defer buffer.Reset()
-	var req *bifrostpb.Request
+	var req *bifrostpb.UpdateRequest
 	recvStartTime := time.Now()
 	//recvTOPoint := time.Now().Unix() + recvTimeout
 	var isTimeout bool
@@ -91,14 +96,13 @@ func (s *grpcServer) UpdateConfig(stream bifrostpb.BifrostService_UpdateConfigSe
 			return err
 		}
 		if req == nil {
-			req = &bifrostpb.Request{
-				Token:       in.Token,
-				SvrName:     in.SvrName,
-				RequestType: in.RequestType,
-				Param:       in.Param,
+			req = &bifrostpb.UpdateRequest{
+				ServerName: in.ServerName,
+				Token:      in.Token,
+				UpdateType: in.UpdateType,
 			}
 		} else {
-			if in.RequestType != req.RequestType || in.Param != req.Param || in.SvrName != req.SvrName || in.Token != req.Token {
+			if in.ServerName != req.ServerName || in.Token != req.Token || in.UpdateType != req.UpdateType {
 				err = ErrRequestInconsistent
 				return err
 			}
@@ -114,15 +118,15 @@ func (s *grpcServer) UpdateConfig(stream bifrostpb.BifrostService_UpdateConfigSe
 		return err
 	}
 	req.Data = buffer.Bytes()
-	_, resp, err := s.bifrostService.ServeGRPC(stream.Context(), req)
+	_, resp, err := s.updateService.ServeGRPC(stream.Context(), req)
 	if err != nil {
-		return stream.SendAndClose(&bifrostpb.Response{Err: err.Error()})
+		return stream.SendAndClose(&bifrostpb.ErrorResponse{Err: err.Error()})
 	}
-	response := resp.(*bifrostpb.Response)
+	response := resp.(*bifrostpb.ErrorResponse)
 	return stream.SendAndClose(response)
 }
 
-func (s *grpcServer) WatchInfo(stream bifrostpb.BifrostService_WatchInfoServer) (err error) {
+func (s *gRPCHandlers) Watch(stream bifrostpb.WatchService_WatchServer) (err error) {
 	stopSendSig := make(chan int, 1)
 	// 获取gRPC客户端请求
 	req, err := stream.Recv()
@@ -132,11 +136,11 @@ func (s *grpcServer) WatchInfo(stream bifrostpb.BifrostService_WatchInfoServer) 
 
 	// 向endpoint发起请求，获取WatchLogResponse
 	//fmt.Println("请求发往endpoint处理")
-	_, resp, err := s.bifrostService.ServeGRPC(stream.Context(), req)
+	_, resp, err := s.watchService.ServeGRPC(stream.Context(), req)
 	if err != nil {
 		return err
 	}
-	watcher, ok := resp.(*endpoint.Watcher)
+	responder, ok := resp.(*watchResponder)
 	if !ok {
 		return ErrUnknownResponse
 	}
@@ -145,22 +149,13 @@ func (s *grpcServer) WatchInfo(stream bifrostpb.BifrostService_WatchInfoServer) 
 	go func(stopSig chan int) {
 		for {
 			select {
-			case data := <-watcher.GetDataChan():
-				//fmt.Println("发送日志数据")
-				_ = stream.Send(&bifrostpb.Response{
-					Ret: data,
-					Err: "",
-				})
-			case err := <-watcher.GetErrChan():
-				_ = stream.Send(&bifrostpb.Response{
-					Ret: nil,
-					Err: err.Error(),
-				})
+			case response := <-responder.Respond():
+				_ = stream.Send(response)
 			case sig := <-stopSig:
 				if sig == 9 { // 信号9传入则开始停止
 					//fmt.Println("开始停止")
 					//fmt.Println("开始发送停止信号")
-					err = watcher.Close()
+					err = responder.Close()
 					//fmt.Println("停止传递结束")
 					return
 				}
@@ -172,7 +167,7 @@ func (s *grpcServer) WatchInfo(stream bifrostpb.BifrostService_WatchInfoServer) 
 		// 接收客户端请求
 		in, err := stream.Recv()
 		//fmt.Println("再次接受到客户端请求")
-		if err == nil && (in.SvrName != req.SvrName || in.Token != req.Token || in.Param != req.Param) {
+		if err == nil && (in.ServerName != req.ServerName || in.Token != req.Token || in.WatchType != req.WatchType || in.WatchObject != req.WatchObject) {
 			err = ErrRequestInconsistent
 		}
 		if err != nil {
@@ -185,7 +180,7 @@ func (s *grpcServer) WatchInfo(stream bifrostpb.BifrostService_WatchInfoServer) 
 	}
 }
 
-func (s *grpcServer) Check(ctx context.Context, r *grpc_health_v1.HealthCheckRequest) (response *grpc_health_v1.HealthCheckResponse, err error) {
+func (s *gRPCHealthCheckHandler) Check(ctx context.Context, r *grpc_health_v1.HealthCheckRequest) (response *grpc_health_v1.HealthCheckResponse, err error) {
 	_, resp, err := s.healthCheck.ServeGRPC(ctx, r)
 	if err != nil {
 		return &grpc_health_v1.HealthCheckResponse{
@@ -201,18 +196,20 @@ func (s *grpcServer) Check(ctx context.Context, r *grpc_health_v1.HealthCheckReq
 	}, nil
 }
 
-func (s *grpcServer) Watch(req *grpc_health_v1.HealthCheckRequest, w grpc_health_v1.Health_WatchServer) error {
+func (s *gRPCHealthCheckHandler) Watch(req *grpc_health_v1.HealthCheckRequest, w grpc_health_v1.Health_WatchServer) error {
 	return nil
 }
 
-func NewBifrostServer(ctx context.Context, endpoints endpoint.BifrostEndpoints) bifrostpb.BifrostServiceServer {
-	return &grpcServer{
-		bifrostService: grpc.NewServer(endpoints.BifrostEndpoint, DecodeBifrostServiceRequest, EncodeBifrostServiceResponse),
+func NewGRPCHandlers(ctx context.Context, endpoints endpoint.BifrostEndpoints) *gRPCHandlers {
+	return &gRPCHandlers{
+		viewService:   grpc.NewServer(endpoints.ViewerEndpoint, DecodeViewRequest, EncodeViewResponse),
+		updateService: grpc.NewServer(endpoints.UpdaterEndpoint, DecodeUpdateRequest, EncodeUpdateResponse),
+		watchService:  grpc.NewServer(endpoints.WatcherEndpoint, DecodeWatchRequest, EncodeWatchResponse),
 	}
 }
 
-func NewHealthCheck(ctx context.Context, endpoints endpoint.BifrostEndpoints) grpc_health_v1.HealthServer {
-	return &grpcServer{
+func NewHealthCheckHandler(ctx context.Context, endpoints endpoint.BifrostEndpoints) grpc_health_v1.HealthServer {
+	return &gRPCHealthCheckHandler{
 		healthCheck: grpc.NewServer(endpoints.HealthCheckEndpoint, DecodeHealthCheckRequest, EncodeHealthCheckResponse),
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/ClessLi/bifrost/internal/pkg/bifrost/service"
+	"github.com/ClessLi/bifrost/internal/pkg/bifrost/service/web_server_manager"
 	"github.com/ClessLi/bifrost/internal/pkg/utils"
 	"github.com/ClessLi/skirnir/pkg/discover"
 	"github.com/apsdehal/go-logger"
@@ -55,28 +56,29 @@ var (
 
 // Config, bifrost配置文件结构体，定义bifrost配置信息
 type Config struct {
-	Service Service `yaml:"Service"`
+	ServiceConfig ServiceConfig `yaml:"Service"`
 	//AuthService *AuthService `yaml:"AuthService"`
 	*RAConfig `yaml:"RAConfig"`
 	LogConfig `yaml:"LogConfig"`
 }
 
-type Service struct {
-	Port           uint16 `yaml:"Port"`
-	ChunckSize     int    `yaml:"ChunkSize"`
-	AuthServerAddr string `yaml:"AuthServerAddr"`
-	Infos          []Info `yaml:"Infos,flow"`
+type ServiceConfig struct {
+	Port                     uint16                                   `yaml:"Port"`
+	ChunckSize               int                                      `yaml:"ChunkSize"`
+	AuthServerAddr           string                                   `yaml:"AuthServerAddr"`
+	WebServerConfigInfos     []web_server_manager.WebServerConfigInfo `yaml:"Infos,flow"`
+	BifrostServiceController *service.BifrostServiceController
 }
 
-type Info struct {
-	Name           string                `yaml:"name"`
-	Type           service.WebServerType `yaml:"type"`
-	BackupCycle    int                   `yaml:"backupCycle"`
-	BackupSaveTime int                   `yaml:"backupSaveTime"`
-	BackupDir      string                `yaml:"backupDir,omitempty"`
-	ConfPath       string                `yaml:"confPath"`
-	VerifyExecPath string                `yaml:"verifyExecPath"`
-}
+//type Info struct {
+//	Name           string                `yaml:"name"`
+//	Type           web_server_manager.WebServerType `yaml:"type"`
+//	BackupCycle    int                   `yaml:"backupCycle"`
+//	BackupSaveTime int                   `yaml:"backupSaveTime"`
+//	BackupDir      string                `yaml:"backupDir,omitempty"`
+//	ConfPath       string                `yaml:"confPath"`
+//	VerifyExecPath string                `yaml:"verifyExecPath"`
+//}
 
 type RAConfig struct {
 	Host string `yaml:"Host"`
@@ -90,7 +92,7 @@ type LogConfig struct {
 }
 
 func (l LogConfig) IsDebugLvl() bool {
-	return l.Level >= utils.DEBUG
+	return l.Level >= logger.DebugLevel
 }
 
 // usage, 重新定义flag.Usage 函数，为bifrost帮助信息提供版本信息及命令行工具传参信息
@@ -155,7 +157,6 @@ func init() {
 		flag.Usage()
 		os.Exit(1)
 	}
-
 	// 初始化bifrost配置
 	confData, err := utils.ReadFile(*confPath)
 	if err != nil {
@@ -200,6 +201,13 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+	os.Stdout = Stdoutf
+	os.Stderr = Stdoutf
+}
+
+func initConfig() {
+	// 初始化web服务器配置服务控制器
+	BifrostConf.ServiceConfig.BifrostServiceController = service.NewBifrostServiceController(BifrostConf.ServiceConfig.WebServerConfigInfos...)
 
 	isInit = true
 }

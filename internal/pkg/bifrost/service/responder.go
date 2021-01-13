@@ -2,46 +2,115 @@ package service
 
 import (
 	"bytes"
-	"github.com/ClessLi/bifrost/internal/pkg/bifrost/service/web_server_manager"
 )
 
-type Responder interface {
-	Bytes() ([]byte, error)
-	GetWatcher() (web_server_manager.Watcher, error)
+type ViewResponder interface {
+	serverNameQuerier
+	dataResponder
+	errorResponder
 }
 
-type queryOrUpdateResponse struct {
-	response *bytes.Buffer
-	err      error
+type viewResponder struct {
+	serverName string
+	data       *bytes.Buffer
+	err        error
 }
 
-func (qr queryOrUpdateResponse) Bytes() ([]byte, error) {
-	return qr.response.Bytes(), qr.err
-}
-
-func (qr queryOrUpdateResponse) GetWatcher() (web_server_manager.Watcher, error) {
-	return nil, ErrNotWatcherResponse
-}
-
-func NewQueryOrUpdateResponse(response []byte, err error) Responder {
-	return &queryOrUpdateResponse{
-		response: bytes.NewBuffer(response),
-		err:      err,
+func NewViewResponder(serverName string, data []byte, err error) ViewResponder {
+	return &viewResponder{
+		serverName: serverName,
+		data:       bytes.NewBuffer(data),
+		err:        err,
 	}
 }
 
-type watcherResponse struct {
-	response web_server_manager.Watcher
+func (v viewResponder) GetServerName() string {
+	return v.serverName
 }
 
-func (wr watcherResponse) Bytes() ([]byte, error) {
-	return nil, ErrNotBytesResponse
+func (v viewResponder) Bytes() []byte {
+	return v.data.Bytes()
 }
 
-func (wr watcherResponse) GetWatcher() (web_server_manager.Watcher, error) {
-	return wr.response, nil
+func (v viewResponder) Error() error {
+	return v.err
 }
 
-func NewWatcherResponse(response web_server_manager.Watcher) Responder {
-	return &watcherResponse{response: response}
+type UpdateResponder interface {
+	serverNameQuerier
+	errorResponder
+}
+
+type updateResponder struct {
+	serverName string
+	err        error
+}
+
+func NewUpdateResponder(serverName string, err error) UpdateResponder {
+	return &updateResponder{
+		serverName: serverName,
+		err:        err,
+	}
+}
+
+func (u updateResponder) GetServerName() string {
+	return u.serverName
+}
+
+func (u updateResponder) Error() error {
+	return u.err
+}
+
+type WatchResponder interface {
+	serverNameQuerier
+	BytesChan() <-chan []byte
+	TransferErrorChan() <-chan error
+	errorResponder
+	Close() error
+}
+
+type watchResponder struct {
+	serverName      string
+	dataChan        <-chan []byte
+	transferErrChan <-chan error
+	closeFunc       func() error
+	err             error
+}
+
+func NewWatchResponder(serverName string, closeFunc func() error, dataChan <-chan []byte, transferErrChan <-chan error, err error) WatchResponder {
+	return &watchResponder{
+		serverName:      serverName,
+		dataChan:        dataChan,
+		transferErrChan: transferErrChan,
+		closeFunc:       closeFunc,
+		err:             err,
+	}
+}
+
+func (w watchResponder) GetServerName() string {
+	return w.serverName
+}
+
+func (w watchResponder) BytesChan() <-chan []byte {
+	return w.dataChan
+}
+
+func (w watchResponder) TransferErrorChan() <-chan error {
+	return w.transferErrChan
+}
+
+func (w watchResponder) Close() error {
+	return w.closeFunc()
+}
+
+func (w watchResponder) Error() error {
+	return w.err
+}
+
+type dataResponder interface {
+	Bytes() []byte
+}
+
+type errorResponder interface {
+	Error() error
 }

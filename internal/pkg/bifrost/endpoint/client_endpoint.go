@@ -1,6 +1,7 @@
 package endpoint
 
 import (
+	"bytes"
 	"errors"
 	"github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb"
 	"github.com/ClessLi/bifrost/internal/pkg/bifrost/service/web_server_manager"
@@ -15,168 +16,189 @@ var (
 	ErrInvalidBifrostServiceEndpointRequest = errors.New("request has only one: endpoint.Request")
 )
 
-// The service.Service method of BifrostEndpoints is used for the endpoint of the client
+// The service.ServiceConfig method of BifrostEndpoints is used for the endpoint of the client
 type BifrostClientEndpoints struct {
-	getInfo   endpoint.Endpoint
-	update    endpoint.Endpoint
-	watchInfo endpoint.Endpoint
+	viewEndpoint   endpoint.Endpoint
+	updateEndpoint endpoint.Endpoint
+	watchEndpoint  endpoint.Endpoint
 }
 
 func NewBifrostClient(conn *grpc.ClientConn) *BifrostClientEndpoints {
 	return &BifrostClientEndpoints{
-		getInfo: grpctransport.NewClient(
+		viewEndpoint: grpctransport.NewClient(
 			conn,
-			"bifrostpb.BifrostService",
-			"GetInfo",
-			EncodeBifrostServiceClientRequest,
-			DecodeBifrostServiceClientResponse,
-			new(bifrostpb.Response),
+			"bifrostpb.ViewService",
+			"View",
+			encodeClientRequest,
+			decodeClientResponse,
+			new(bifrostpb.BytesResponse),
 		).Endpoint(),
-		update: grpctransport.NewClient(
+		updateEndpoint: grpctransport.NewClient(
 			conn,
-			"bifrostpb.BifrostService",
-			"UpdateConfig",
-			EncodeBifrostServiceClientRequest,
-			DecodeBifrostServiceClientResponse,
-			new(bifrostpb.Response),
+			"bifrostpb.UpdateService",
+			"Update",
+			encodeClientRequest,
+			decodeClientResponse,
+			new(bifrostpb.ErrorResponse),
 		).Endpoint(),
-		watchInfo: MakeWatchLogClientEndpoint(conn),
+		watchEndpoint: MakeWatchLogClientEndpoint(conn),
 	}
 }
 
-func EncodeBifrostServiceClientRequest(ctx context.Context, r interface{}) (interface{}, error) {
-	return encodeClientRequest(ctx, r)
+//func EncodeViewServiceClientRequest(ctx context.Context, r interface{}) (interface{}, error) {
+//	return encodeClientRequest(ctx, r)
+//}
+//
+//func DecodeViewServiceClientResponse(ctx context.Context, r interface{}) (interface{}, error) {
+//	return decodeClientResponse(ctx, r)
+//}
+//
+//func EncodeUpdateServiceClientRequest(ctx context.Context, r interface{}) (interface{}, error) {
+//	return encodeClientRequest(ctx, r)
+//}
+
+func encodeClientRequest(ctx context.Context, r interface{}) (interface{}, error) {
+	switch r.(type) {
+	case ViewRequest:
+		req := r.(ViewRequest)
+		return &bifrostpb.ViewRequest{
+			ViewType:   req.ViewType,
+			ServerName: req.ServerName,
+			Token:      req.Token,
+		}, nil
+	case UpdateRequest:
+		req := r.(UpdateRequest)
+		return &bifrostpb.UpdateRequest{
+			UpdateType: req.UpdateType,
+			ServerName: req.ServerName,
+			Token:      req.Token,
+			Data:       req.Data,
+		}, nil
+	}
+
+	return nil, ErrInvalidBifrostServiceEndpointRequest
 }
 
-func DecodeBifrostServiceClientResponse(_ context.Context, r interface{}) (interface{}, error) {
-	if resp, ok := r.(*bifrostpb.Response); ok {
+func decodeClientResponse(_ context.Context, r interface{}) (interface{}, error) {
+	switch r.(type) {
+	case *bifrostpb.BytesResponse:
+		resp := r.(*bifrostpb.BytesResponse)
 		var respErr error
 		if resp.Err != "" {
 			respErr = errors.New(resp.Err)
 		}
-		return Response{
-			Result: resp.Ret,
-			Error:  respErr,
+		return &bytesResponder{
+			Result: bytes.NewBuffer(resp.Ret),
+			Err:    respErr,
 		}, nil
+	case *bifrostpb.ErrorResponse:
+		resp := r.(*bifrostpb.ErrorResponse)
+		var respErr error
+		if resp.Err != "" {
+			respErr = errors.New(resp.Err)
+		}
+		return &errorResponder{Err: respErr}, nil
 	}
 	return nil, ErrUnknownResponse
 }
 
-func encodeClientRequest(ctx context.Context, r interface{}) (interface{}, error) {
-	if req, ok := r.(Request); ok {
-		return &bifrostpb.Request{
-			Token:       req.Token,
-			SvrName:     req.ServerName,
-			RequestType: req.RequestType,
-			Param:       req.Param,
-			Data:        req.Data,
-		}, nil
-	}
-	return nil, ErrInvalidBifrostServiceEndpointRequest
-}
-
 func (ue BifrostClientEndpoints) ViewConfig(ctx context.Context, token, svrName string) (data []byte, err error) {
-	resp, err := ue.getInfo(ctx, Request{
-		RequestType: "DisplayConfig",
-		Token:       token,
-		ServerName:  svrName,
+	resp, err := ue.viewEndpoint(ctx, ViewRequest{
+		ViewType:   "DisplayConfig",
+		Token:      token,
+		ServerName: svrName,
 	})
 
 	if err != nil {
 		return nil, err
 	}
-	if response, ok := resp.(Response); ok {
-		return response.Result, response.Error
+	if responder, ok := resp.(*bytesResponder); ok {
+		return responder.Respond(), responder.Err
 	} else {
 		return nil, ErrResponseNull
 	}
 }
 
 func (ue BifrostClientEndpoints) GetConfig(ctx context.Context, token, srvName string) (data []byte, err error) {
-	resp, err := ue.getInfo(ctx, Request{
-		RequestType: "GetConfig",
-		Token:       token,
-		ServerName:  srvName,
+	resp, err := ue.viewEndpoint(ctx, ViewRequest{
+		ViewType:   "GetConfig",
+		Token:      token,
+		ServerName: srvName,
 	})
 
 	if err != nil {
 		return nil, err
 	}
-	if response, ok := resp.(Response); ok {
-		return response.Result, response.Error
+	if responder, ok := resp.(*bytesResponder); ok {
+		return responder.Respond(), responder.Err
 	} else {
 		return nil, ErrResponseNull
 	}
 }
 
 func (ue BifrostClientEndpoints) UpdateConfig(ctx context.Context, token, svrName string, reqData []byte, params ...string) (data []byte, err error) {
-	req := Request{
-		RequestType: "UpdateConfig",
-		Token:       token,
-		ServerName:  svrName,
-		Data:        reqData,
+	req := UpdateRequest{
+		UpdateType: "UpdateConfig",
+		Token:      token,
+		ServerName: svrName,
+		Data:       reqData,
 	}
-	if params != nil {
-		req.Param = params[0]
-	} else {
-		req.Param = "full"
-	}
-	resp, err := ue.update(ctx, req)
+	resp, err := ue.updateEndpoint(ctx, req)
 
 	if err != nil {
 		return nil, err
 	}
-	if response, ok := resp.(Response); ok {
-		return response.Result, response.Error
+	if responder, ok := resp.(*errorResponder); ok {
+		return nil, responder.Err
 	} else {
 		return nil, ErrResponseNull
 	}
 }
 
 func (ue BifrostClientEndpoints) ViewStatistics(ctx context.Context, token, svrName string) (data []byte, err error) {
-	resp, err := ue.getInfo(ctx, Request{
-		RequestType: "ShowStatistics",
-		Token:       token,
-		ServerName:  svrName,
+	resp, err := ue.viewEndpoint(ctx, ViewRequest{
+		ViewType:   "ShowStatistics",
+		Token:      token,
+		ServerName: svrName,
 	})
 
 	if err != nil {
 		return nil, err
 	}
-	if response, ok := resp.(Response); ok {
-		return response.Result, response.Error
+	if responder, ok := resp.(*bytesResponder); ok {
+		return responder.Respond(), responder.Err
 	} else {
 		return nil, ErrResponseNull
 	}
 }
 
 func (ue BifrostClientEndpoints) Status(ctx context.Context, token string) (data []byte, err error) {
-	resp, err := ue.getInfo(ctx, Request{
-		RequestType: "DisplayStatus",
-		Token:       token,
+	resp, err := ue.viewEndpoint(ctx, ViewRequest{
+		ViewType: "DisplayStatus",
+		Token:    token,
 	})
 
 	if err != nil {
 		return nil, err
 	}
-	if response, ok := resp.(Response); ok {
-		return response.Result, response.Error
+	if responder, ok := resp.(*bytesResponder); ok {
+		return responder.Respond(), responder.Err
 	} else {
 		return nil, ErrResponseNull
 	}
 }
 
-func (ue BifrostClientEndpoints) WatchLog(ctx context.Context, token, svrName, logName string) (logWatcher *Watcher, err error) {
+func (ue BifrostClientEndpoints) WatchLog(ctx context.Context, token, svrName, logName string) (logWatcher ClientWatcher, err error) {
 	// 客户端日志监看方法调用endpoint获取到gRPC客户端流对象
-	res, err := ue.watchInfo(ctx, nil)
+	res, err := ue.watchEndpoint(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
 	// 判断endpoint传回并编码回的对象是否为gRPC客户端流对象
-	if stream, ok := res.(bifrostpb.BifrostService_WatchInfoClient); ok {
+	if stream, ok := res.(bifrostpb.WatchService_WatchClient); ok {
 		//fmt.Println("初始化gRPC客户端成功")
 		// 初始化gRPC服务返回管道和错误返回管道
-		respChan := make(chan *bifrostpb.Response)
+		respChan := make(chan *bifrostpb.BytesResponse)
 		dataChan := make(chan []byte)
 		errChan := make(chan error)
 		sigChan := make(chan int)
@@ -184,7 +206,7 @@ func (ue BifrostClientEndpoints) WatchLog(ctx context.Context, token, svrName, l
 			sigChan <- 9
 			return nil
 		}
-		logWatcher = NewWatcher(dataChan, errChan, closeFunc)
+		logWatcher = newClientLogWatcher(dataChan, errChan, closeFunc)
 		// 创建接收匿名函数
 		recv := func() {
 			r, err := stream.Recv()
@@ -205,11 +227,11 @@ func (ue BifrostClientEndpoints) WatchLog(ctx context.Context, token, svrName, l
 		}
 		// 发起request请求
 		//fmt.Println("向gRPC服务端发送请求")
-		err = stream.Send(&bifrostpb.Request{
-			RequestType: "WatchLog",
+		err = stream.Send(&bifrostpb.WatchRequest{
+			WatchType:   "WatchLog",
+			ServerName:  svrName,
 			Token:       token,
-			SvrName:     svrName,
-			Param:       logName,
+			WatchObject: logName,
 		})
 		if err != nil {
 			return nil, err
@@ -255,7 +277,7 @@ func (ue BifrostClientEndpoints) WatchLog(ctx context.Context, token, svrName, l
 
 func MakeWatchLogClientEndpoint(conn *grpc.ClientConn) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		client := bifrostpb.NewBifrostServiceClient(conn)
-		return client.WatchInfo(ctx)
+		client := bifrostpb.NewWatchServiceClient(conn)
+		return client.Watch(ctx)
 	}
 }
