@@ -40,6 +40,12 @@ func (g *Graph) AddEdge(sid, tid string) error {
 	tv := g.GetVertex(tid)
 	if tv == nil {
 		g.graph[tid] = newVertex(tid)
+	} else {
+		err = g.topoLogicalSortByKahn()
+		if err != nil {
+			sv.DelEdge(tid)
+			return err
+		}
 	}
 	return nil
 }
@@ -52,7 +58,7 @@ func (g Graph) GetVertex(sid string) *Vertex {
 	return nil
 }
 
-func (g *Graph) TopoLogicalSortByKahn() error {
+func (g *Graph) topoLogicalSortByKahn() error {
 	vertexCount := len(g.graph)
 	inDegrees := make(map[string]int)
 	for idx := range g.graph {

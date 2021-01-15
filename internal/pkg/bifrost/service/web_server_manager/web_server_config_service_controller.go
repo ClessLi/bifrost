@@ -2,7 +2,7 @@ package web_server_manager
 
 import (
 	"fmt"
-	"github.com/ClessLi/bifrost/internal/pkg/utils"
+	"github.com/ClessLi/bifrost/pkg/queue"
 	"sync"
 	"time"
 )
@@ -66,7 +66,7 @@ func (m *WebServerConfigServicesController) offstagesStatusControl(expectedState
 	if expectedState == Unknown || expectedState == Abnormal {
 		return ErrWrongStateExpectation
 	}
-	workQueue := new(utils.StringQueue)
+	workQueue := new(queue.StringQueue)
 	workTimesLimit := make(map[string]int)
 	//workIsWait := make(map[string]bool)
 	workIsWait := new(sync.Map)

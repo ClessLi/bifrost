@@ -9,8 +9,8 @@ import (
 )
 
 func TestLoad(t *testing.T) {
-	//conf, err := resolv.Load("config_test/nginx.conf")
-	path, caches, err := nginx.Load("test_circle_load/nginx.conf")
+	path, caches, err := nginx.Load("config_test/nginx.conf")
+	//path, caches, err := nginx.Load("test_circle_load/nginx.conf")
 
 	if err != nil {
 		t.Log(err)
