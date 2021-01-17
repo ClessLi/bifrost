@@ -24,6 +24,7 @@ func NewContext(value string, parserType parser_type.ParserType, position parser
 	}
 	switch parserType {
 	case parser_type.TypeConfig:
+		basicContext.Value = value
 		basicContext.Position = parser_position.NewParserPosition(position.ConfigAbsPath(), position.ConfigDeep(), 0)
 		return &Config{basicContext}
 	case parser_type.TypeEvents:
@@ -38,7 +39,7 @@ func NewContext(value string, parserType parser_type.ParserType, position parser
 		return &If{basicContext}
 	case parser_type.TypeInclude:
 		basicContext.Value = value
-		return &Include{basicContext, nil} // TODO: 待调整
+		return &Include{basicContext}
 	case parser_type.TypeLimitExcept:
 		basicContext.Value = value
 		return &LimitExcept{basicContext}

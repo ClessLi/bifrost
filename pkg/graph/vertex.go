@@ -1,4 +1,4 @@
-package config_graph
+package graph
 
 import "strings"
 

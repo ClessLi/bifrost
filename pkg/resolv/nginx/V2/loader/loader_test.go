@@ -3,7 +3,7 @@ package loader
 import "testing"
 
 func TestLoader_LoadFromFilePath(t *testing.T) {
-	configPath := "../../../../../test/config_test/nginx.conf"
+	configPath := "../../../../../test/nginx/conf/nginx.conf"
 	loader, err := NewLoader(configPath)
 	if err != nil {
 		t.Fatal(err)

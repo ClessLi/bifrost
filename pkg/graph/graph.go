@@ -1,4 +1,4 @@
-package config_graph
+package graph
 
 import (
 	"github.com/ClessLi/bifrost/pkg/queue"
@@ -7,25 +7,25 @@ import (
 type Graph struct {
 	graph          map[string]*Vertex
 	StartingVertex *Vertex
-	currentVertex  *Vertex
+	//currentVertex  *Vertex
 }
 
-func (g *Graph) SetCurrentVertex(id string) error {
-	v := g.GetVertex(id)
-	if v == nil {
-		return ErrVertexNotExist
-	}
-	g.currentVertex = v
-	return nil
-}
+//func (g *Graph) SetCurrentVertex(id string) error {
+//	v := g.GetVertex(id)
+//	if v == nil {
+//		return ErrVertexNotExist
+//	}
+//	g.currentVertex = v
+//	return nil
+//}
 
-func (g Graph) GetCurrentVertexId() string {
-	return g.currentVertex.id
-}
+//func (g Graph) GetCurrentVertexId() string {
+//	return g.currentVertex.id
+//}
 
-func (g *Graph) AddEdgeFromCurrentVertex(tid string) error {
-	return g.AddEdge(g.currentVertex.id, tid)
-}
+//func (g *Graph) AddEdgeFromCurrentVertex(tid string) error {
+//	return g.AddEdge(g.currentVertex.id, tid)
+//}
 
 func (g *Graph) AddEdge(sid, tid string) error {
 	sv := g.GetVertex(sid)
@@ -129,7 +129,7 @@ func NewGraph(startingVertexId string) *Graph {
 	graph := &Graph{
 		graph:          make(map[string]*Vertex),
 		StartingVertex: v,
-		currentVertex:  v,
+		//currentVertex:  v,
 	}
 	graph.graph[startingVertexId] = v
 	return graph

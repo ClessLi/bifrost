@@ -1,6 +1,7 @@
 package loader
 
 import (
+	"fmt"
 	"github.com/ClessLi/bifrost/pkg/resolv/nginx/V2/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/nginx/V2/context/parser"
 	"github.com/ClessLi/bifrost/pkg/resolv/nginx/V2/parser_position"
@@ -45,13 +46,29 @@ func (l *loader) LoadFromFilePath(path string) (context.Context, error) {
 		return nil, err
 	}
 
-	var parserErr error
+	var parseErr error
 	index := 0
 	parsers := make([]parser.Parser, 0)
 	configDeep := 0
 
 	position := parser_position.NewParserPosition(configAbsPath, configDeep, 0)
-	config := context.NewContext("", parser_type.TypeConfig, position)
+	config := context.NewContext(configAbsPath, parser_type.TypeConfig, position)
+
+	parseBlankLine := func() bool {
+		if matchIndexes := RegBlankLine.FindIndex(configData[index:]); matchIndexes != nil {
+			index += matchIndexes[len(matchIndexes)-1]
+			return true
+		}
+		return false
+	}
+
+	parseErrorHead := func() bool {
+		if matchIndexes := RegErrorHeed.FindIndex(configData[index:]); matchIndexes != nil {
+			index += matchIndexes[0]
+			return true
+		}
+		return false
+	}
 
 	parseContext := func(reg *regexp.Regexp) bool {
 		var (
@@ -111,13 +128,13 @@ func (l *loader) LoadFromFilePath(path string) (context.Context, error) {
 			if lowerContext, ok := checkContext(parsers); ok {
 				parsers = append(parsers[:0], parsers[1:]...)
 				if upperContext, ok := checkContext(parsers); ok {
-					parserErr = upperContext.Insert(lowerContext, upperContext.Len())
-					if parserErr != nil {
+					parseErr = upperContext.Insert(lowerContext, upperContext.Len())
+					if parseErr != nil {
 						return false
 					}
 				} else {
-					parserErr = config.Insert(lowerContext, config.Len())
-					if parserErr != nil {
+					parseErr = config.Insert(lowerContext, config.Len())
+					if parseErr != nil {
 						return false
 					}
 				}
@@ -134,13 +151,13 @@ func (l *loader) LoadFromFilePath(path string) (context.Context, error) {
 			index += matchIndexes[len(matchIndexes)-1]
 			cmt := parser.NewComment(string(subMatch[2]), !strings.Contains(string(subMatch[1]), "\n") && index != 0, position)
 			if ctx, ok := checkContext(parsers); ok {
-				parserErr = ctx.Insert(cmt, ctx.Len())
-				if parserErr != nil {
+				parseErr = ctx.Insert(cmt, ctx.Len())
+				if parseErr != nil {
 					return false
 				}
 			} else {
-				parserErr = config.Insert(cmt, config.Len())
-				if parserErr != nil {
+				parseErr = config.Insert(cmt, config.Len())
+				if parseErr != nil {
 					return false
 				}
 			}
@@ -171,8 +188,8 @@ func (l *loader) LoadFromFilePath(path string) (context.Context, error) {
 
 			if strings.EqualFold(string(subMatch[1]), parser_type.TypeInclude.String()) {
 				p = context.NewContext(value, parser_type.TypeInclude, position)
-				parserErr = l.loadIncludeConfigs(p.(*context.Include))
-				if parserErr != nil {
+				parseErr = l.loadIncludeConfigs(p.(*context.Include))
+				if parseErr != nil {
 					return false
 				}
 			} else {
@@ -180,13 +197,13 @@ func (l *loader) LoadFromFilePath(path string) (context.Context, error) {
 			}
 
 			if ctx, ok := checkContext(parsers); ok {
-				parserErr = ctx.Insert(p, ctx.Len())
-				if parserErr != nil {
+				parseErr = ctx.Insert(p, ctx.Len())
+				if parseErr != nil {
 					return false
 				}
 			} else {
-				parserErr = config.Insert(p, config.Len())
-				if parserErr != nil {
+				parseErr = config.Insert(p, config.Len())
+				if parseErr != nil {
 					return false
 				}
 			}
@@ -197,7 +214,10 @@ func (l *loader) LoadFromFilePath(path string) (context.Context, error) {
 
 	for {
 		switch {
-		case parseContext(RegEventsHead),
+		case parseErrorHead():
+			parseErr = parseErrLine(configAbsPath, configData, index)
+		case parseBlankLine(),
+			parseContext(RegEventsHead),
 			parseContext(RegHttpHead),
 			parseContext(RegStreamHead),
 			parseContext(RegServerHead),
@@ -212,14 +232,14 @@ func (l *loader) LoadFromFilePath(path string) (context.Context, error) {
 			parseContextEnd(),
 			parseKeyOrInclude(RegKeyValue),
 			parseKeyOrInclude(RegKey):
-			if parserErr != nil {
-				return nil, parserErr
+			if parseErr != nil {
+				return nil, parseErr
 			}
 			continue
 		}
 		break
 	}
-	return config, nil
+	return config, parseErr
 
 }
 
@@ -235,11 +255,25 @@ func (l *loader) loadIncludeConfigs(include *context.Include) error {
 
 	for _, path := range configAbsPaths {
 
+		// 校验引入的Config是否形成环路
+		err := l.cacher.CheckIncludeConfig(include.Position.ConfigAbsPath(), path)
+		if err != nil {
+			return err
+		}
+
+		// 加载引入的Config
 		config, err := l.LoadFromFilePath(path)
 		if err != nil {
 			return err
 		}
 
+		// 写入Config缓存
+		err = l.cacher.SetConfig(config.(*context.Config))
+		if err != nil {
+			return err
+		}
+
+		// Include引入Config
 		err = include.Insert(config, include.Len())
 		if err != nil {
 			return err
@@ -267,4 +301,14 @@ func checkContext(parsers []parser.Parser) (context.Context, bool) {
 	} else {
 		return nil, false
 	}
+}
+
+func parseErrLine(path string, configData []byte, index int) error {
+	line := 1
+	for i := 0; i < index+1; i++ {
+		if configData[i] == []byte("\n")[0] {
+			line++
+		}
+	}
+	return fmt.Errorf("%s at line %d of %s", ConfigParseError, line, path)
 }

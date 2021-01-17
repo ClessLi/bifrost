@@ -4,12 +4,10 @@ import (
 	"bytes"
 	"github.com/ClessLi/bifrost/pkg/resolv/nginx/V2/context/parser"
 	"github.com/ClessLi/bifrost/pkg/resolv/nginx/V2/dump_cacher"
-	"github.com/ClessLi/bifrost/pkg/resolv/nginx/config_graph"
 )
 
 type Include struct {
 	BasicContext
-	configGraph *config_graph.Graph
 }
 
 func (i Include) Bytes() []byte {
