@@ -50,6 +50,15 @@ func (g *Graph) AddEdge(sid, tid string) error {
 	return nil
 }
 
+func (g *Graph) DelEdge(sid, tid string) error {
+	sv := g.GetVertex(sid)
+	if sv == nil {
+		return ErrVertexNotExist
+	}
+	sv.DelEdge(tid)
+	return nil
+}
+
 func (g Graph) GetVertex(sid string) *Vertex {
 	v, ok := g.graph[sid]
 	if ok {
