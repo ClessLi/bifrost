@@ -23,16 +23,16 @@ func (n nginxConfigServiceWithLocker) RUnlock() {
 	n.locker.RUnlock()
 }
 
-func (n nginxConfigServiceWithLocker) checkConfigsHash() (bool, error) {
-	n.RLock()
-	defer n.RUnlock()
-	return n.service.checkConfigsHash()
-}
+//func (n nginxConfigServiceWithLocker) checkConfigsHash() (bool, error) {
+//	n.RLock()
+//	defer n.RUnlock()
+//	return n.service.checkConfigsHash()
+//}
 
-func (n nginxConfigServiceWithLocker) configLoad() error {
+func (n nginxConfigServiceWithLocker) configReload() error {
 	n.RLock()
 	defer n.RUnlock()
-	return n.service.configLoad()
+	return n.service.configReload()
 }
 
 func (n nginxConfigServiceWithLocker) configBackup() error {

@@ -7,6 +7,7 @@ import (
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/dumper"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loop_preventer"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_type"
+	"github.com/ClessLi/bifrost/pkg/resolv/V2/utils"
 	"sync"
 )
 
@@ -33,12 +34,14 @@ type Configuration interface {
 	StatisticsByJson() []byte
 	Dump() map[string][]byte
 	//setConfig(config *parser.Config)
+	renewConfiguration(Configuration) error
 }
 
 type configuration struct {
 	config        *parser.Config
 	rwLocker      *sync.RWMutex
 	loopPreventer loop_preventer.LoopPreventer
+	utils.ConfigFingerprinter
 }
 
 func (c *configuration) InsertByKeyword(insertParser parser.Parser, keyword string) error {
@@ -233,16 +236,28 @@ func (c *configuration) Dump() map[string][]byte {
 	return d.ReadAll()
 }
 
-func (c *configuration) setConfig(config *parser.Config) {
+func (c *configuration) renewConfiguration(conf Configuration) error {
+	newConf, ok := conf.(*configuration)
+	if !ok {
+		return ErrConfigurationTypeMismatch
+	}
 	c.rwLocker.Lock()
 	defer c.rwLocker.Unlock()
-	c.config = config
+	if !c.Diff(newConf.ConfigFingerprinter) {
+		return ErrSameConfigFingerprint
+	}
+	c.config = newConf.config
+	c.ConfigFingerprinter = newConf.ConfigFingerprinter
+	c.loopPreventer = newConf.loopPreventer
+	return nil
 }
 
 func NewConfiguration(config *parser.Config, preventer loop_preventer.LoopPreventer) Configuration {
-	return &configuration{
+	conf := &configuration{
 		rwLocker:      new(sync.RWMutex),
 		loopPreventer: preventer,
 		config:        config,
 	}
+	conf.ConfigFingerprinter = utils.NewConfigFingerprinter(conf.Dump())
+	return conf
 }

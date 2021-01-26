@@ -98,6 +98,7 @@ func (u *unmarshaler) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	if u.contextType == parser_type.TypeConfig {
+		u.indention = parser_indention.NewIndention()
 		if u.LoopPreventer == nil {
 			u.LoopPreventer = loop_preventer.NewLoopPreverter(u.unmarshalContext.GetValue())
 		} else {
@@ -139,7 +140,12 @@ func (u *unmarshaler) UnmarshalJSON(bytes []byte) error {
 		var parserType parser_type.ParserType
 		var p parser.Parser
 		var unmarshalCtx UnmarshalContext
-		indention := u.indention.NextIndention()
+		var indention parser_indention.Indention
+		if u.contextType == parser_type.TypeConfig {
+			indention = u.indention
+		} else {
+			indention = u.indention.NextIndention()
+		}
 		switch {
 		case parseContext(*child, JsonUnmarshalRegCommentHead):
 			comment := parser.NewComment("", false, indention)

@@ -2,7 +2,7 @@ package web_server_manager
 
 import (
 	"github.com/ClessLi/bifrost/internal/pkg/utils"
-	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
+	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration"
 	"sync"
 	"time"
 )
@@ -68,8 +68,8 @@ func (n *nginxConfigServiceController) toNormal() (err error) {
 	}
 
 	n.service.SetState(Initializing)
-	err = n.service.configLoad()
-	if err != nil {
+	err = n.service.configReload()
+	if err != nil && err != configuration.NoReloadRequired {
 		//fmt.Printf("[%s] load config error: %s\n", n.name, err)
 		utils.Logger.ErrorF("[%s] load config error: %s", n.serverName(), err)
 		return err
@@ -137,7 +137,8 @@ func (n *nginxConfigServiceController) autoReload() {
 			case <-time.NewTicker(30 * time.Second).C: // 每30秒检查一次nginx配置文件是否已在后台更新
 				utils.Logger.DebugF("[%s] Nginx Config check and reloading", n.serverName())
 				reloadErr := n.configReload()
-				if reloadErr != nil && reloadErr != nginx.NoReloadRequired {
+				//if reloadErr != nil && reloadErr != nginx.NoReloadRequired {
+				if reloadErr != nil && reloadErr != configuration.NoReloadRequired {
 					utils.Logger.WarningF("[%s] Nginx Config reload failed, cased by '%s'", n.serverName(), reloadErr)
 					if n.Status() == Normal {
 						n.service.SetState(Abnormal)
@@ -157,18 +158,19 @@ func (n *nginxConfigServiceController) autoReload() {
 
 // autoReload, ServerInfo的web服务器配置文件自动热加载子方法
 func (n *nginxConfigServiceController) configReload() error {
-	// 校验配置文件是否更新
-	isSame, checkErr := n.service.checkConfigsHash()
-	if checkErr != nil {
-		return checkErr
-	}
-
-	// 如果有差别，则重新读取配置
-	if !isSame {
-		//Log(DEBUG, "[%s] reloading nginx config", n.Name)
-		return n.service.configLoad()
-	}
-	return nginx.NoReloadRequired
+	return n.service.configReload()
+	//// 校验配置文件是否更新
+	//isSame, checkErr := n.service.checkConfigsHash()
+	//if checkErr != nil {
+	//	return checkErr
+	//}
+	//
+	//// 如果有差别，则重新读取配置
+	//if !isSame {
+	//	//Log(DEBUG, "[%s] reloading nginx config", n.Name)
+	//	return n.service.configLoad()
+	//}
+	//return nginx.NoReloadRequired
 }
 
 func (n nginxConfigServiceController) GetService() WebServerConfigService {
@@ -176,9 +178,10 @@ func (n nginxConfigServiceController) GetService() WebServerConfigService {
 }
 
 func NewNginxConfigServiceController(info WebServerConfigInfo) WebServerConfigServiceController {
+	service := newNginxConfigServiceWithState(info)
 	return &nginxConfigServiceController{
-		service:       newNginxConfigServiceWithState(info),
-		expectedState: Unknown,
+		service:       service,
+		expectedState: service.status,
 		waitGroup:     new(sync.WaitGroup),
 	}
 }

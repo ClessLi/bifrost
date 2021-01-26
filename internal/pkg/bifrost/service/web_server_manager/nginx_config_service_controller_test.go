@@ -2,11 +2,15 @@ package web_server_manager
 
 import (
 	"bytes"
+	"github.com/ClessLi/bifrost/internal/pkg/utils"
+	"github.com/apsdehal/go-logger"
+	"os"
 	"testing"
 	"time"
 )
 
 func TestNewNginxManager(t *testing.T) {
+	utils.InitLogger(os.Stdout, logger.DebugLevel)
 	info := WebServerConfigInfo{
 		Name:           "config_test",
 		Type:           NGINX,

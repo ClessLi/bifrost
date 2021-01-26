@@ -2,15 +2,12 @@ package loader
 
 import (
 	"regexp"
-	"time"
 )
 
 var (
-	//system vars
-	TZ = time.Local
 
 	// regexp
-	RegEndWithCR       = regexp.MustCompile("}\n+$")
+	//RegEndWithCR       = regexp.MustCompile("}\n+$")
 	RegEventsHead      = regexp.MustCompile(`^\s*events\s*{`)
 	RegHttpHead        = regexp.MustCompile(`^\s*http\s*{`)
 	RegStreamHead      = regexp.MustCompile(`^\s*stream\s*{`)
@@ -26,9 +23,9 @@ var (
 	RegCommentHead     = regexp.MustCompile(`^(\s*)#+[ \r\t\f]*(.*?)\n`)
 	RegKeyValue        = regexp.MustCompile(S)
 	RegKey             = regexp.MustCompile(`^\s*(\S+);`)
-	RegBlankLine       = regexp.MustCompile(`^\s*` + LineBreak)
+	RegBlankLine       = regexp.MustCompile(`^\n\s*` + LineBreak)
 	RegErrorHeed       = regexp.MustCompile(Abnormal)
-	RegLine            = regexp.MustCompile(LineBreak)
+	//RegLine            = regexp.MustCompile(LineBreak)
 
 	// json unmarshal
 

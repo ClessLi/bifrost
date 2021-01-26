@@ -12,6 +12,9 @@ type Config struct {
 func (c Config) Bytes() []byte {
 	buff := bytes.NewBuffer([]byte(""))
 	for _, child := range c.Children {
+		if cmt, ok := child.(*Comment); ok && cmt.Inline {
+			buff.Truncate(buff.Len() - 1)
+		}
 		child.SetGlobalDeep(c.indention.GlobalDeep())
 		buff.Write(child.Bytes())
 	}

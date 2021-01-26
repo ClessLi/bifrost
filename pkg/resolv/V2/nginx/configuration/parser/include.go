@@ -13,6 +13,9 @@ type Include struct {
 func (i Include) Bytes() []byte {
 	buff := bytes.NewBuffer([]byte(""))
 	for _, child := range i.Children {
+		if cmt, ok := child.(*Comment); ok && cmt.Inline {
+			buff.Truncate(buff.Len() - 1)
+		}
 		child.SetGlobalDeep(i.indention.GlobalDeep())
 		buff.Write(child.Bytes())
 	}

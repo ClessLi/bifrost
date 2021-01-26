@@ -28,8 +28,8 @@ type WebServerConfigWatcher interface {
 
 type WebServerConfigService interface {
 	serverName() string
-	checkConfigsHash() (bool, error)
-	configLoad() error
+	//checkConfigsHash() (bool, error)
+	configReload() error
 	configBackup() error
 	WebServerConfigViewer
 	WebServerConfigUpdater

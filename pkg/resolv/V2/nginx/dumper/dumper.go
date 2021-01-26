@@ -3,9 +3,12 @@ package dumper
 import (
 	"bytes"
 	"errors"
+	"fmt"
 )
 
 type Dumper interface {
+	Len(k string) int
+	Truncate(k string, n int) error
 	Write(k string, b []byte)
 	Done(k string) error
 	Read(k string) ([]byte, error)
@@ -19,6 +22,26 @@ var (
 type dumper struct {
 	cache   map[string]*bytes.Buffer
 	doneMap map[string]bool
+}
+
+func (d *dumper) Truncate(k string, n int) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("%s", r)
+		}
+	}()
+	if buff, ok := d.cache[k]; ok {
+		buff.Truncate(n)
+		return nil
+	}
+	return ErrCacheNotExist
+}
+
+func (d dumper) Len(k string) int {
+	if buff, ok := d.cache[k]; ok {
+		return buff.Len()
+	}
+	return 0
 }
 
 func (d *dumper) Write(k string, b []byte) {

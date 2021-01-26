@@ -18,12 +18,18 @@ func (c Comment) Dump(dumper dumper.Dumper) error {
 	/*// debug config Position
 	fmt.Println(c.Position.ConfigIndents()+string(c.GetType()))
 	// debug config Position end*/
-	dumper.Write(c.position.Id(), []byte(c.indention.ConfigIndents()+c.string()))
+	if c.Inline {
+		err := dumper.Truncate(c.position.Id(), dumper.Len(c.position.Id())-1)
+		if err != nil {
+			return err
+		}
+	}
+	dumper.Write(c.position.Id(), []byte(c.string()))
 	return nil
 }
 
 func (c Comment) Bytes() []byte {
-	return []byte(c.indention.GlobalIndents() + c.string())
+	return []byte(c.string())
 }
 
 func (c Comment) GetType() parser_type.ParserType {
@@ -56,7 +62,10 @@ func (c *Comment) Match(words KeyWords) bool {
 }
 
 func (c Comment) string() string {
-	return "# " + c.Comments + "\n"
+	if c.Inline {
+		return "  # " + c.Comments + "\n"
+	}
+	return c.indention.GlobalIndents() + "# " + c.Comments + "\n"
 }
 
 func NewComment(comments string, inline bool, indention parser_indention.Indention) Parser {

@@ -15,7 +15,21 @@ import (
 //     3) key:sep: server_name test1\.com
 //     4) comment:sep: :reg: .*
 type Queryer interface {
+	// keyword string: <parser type>[':sep: <value string>', ':sep: :reg: <value regexp>']
+	//
+	// e.g. for Nginx Config keyword string:
+	//     1) server
+	//     2) location:sep: :reg: \^\~\s+\/
+	//     3) key:sep: server_name test1\.com
+	//     4) comment:sep: :reg: .*
 	Query(keyword string) (Queryer, error)
+	// keyword string: <parser type>[':sep: <value string>', ':sep: :reg: <value regexp>']
+	//
+	// e.g. for Nginx Config keyword string:
+	//     1) server
+	//     2) location:sep: :reg: \^\~\s+\/
+	//     3) key:sep: server_name test1\.com
+	//     4) comment:sep: :reg: .*
 	QueryAll(keyword string) ([]Queryer, error)
 	Self() parser.Parser
 	fatherContext() parser.Context
@@ -127,6 +141,8 @@ func parseKeyword(keyword string) (parser.KeyWords, error) {
 		} else {
 			keyValue = strings.TrimSpace(kv)
 		}
+	} else if len(kw) == 1 {
+		parserType = parser_type.ParserType(kw[0])
 	} else {
 		return nil, nginx.KeywordStringError
 	}

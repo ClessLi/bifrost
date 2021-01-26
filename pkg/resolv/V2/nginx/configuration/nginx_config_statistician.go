@@ -69,7 +69,7 @@ func NewStatistician(c *configuration) *Statistician {
 }
 
 func Port(q Queryer) int {
-	keyQueryer, err := q.Query("listen: .*")
+	keyQueryer, err := q.Query("key:sep: :reg: listen .*")
 	if err != nil {
 		return -1
 	}
@@ -122,7 +122,7 @@ func HttpServers(q Queryer) (int, map[string][]int) {
 	serverPortCount := make(map[string][]int)
 	for _, serverQueryer := range serverQueryers {
 		serverCount++
-		serverNameKeyQueryer, err := serverQueryer.Query("server_name: .*")
+		serverNameKeyQueryer, err := serverQueryer.Query("key:sep: :reg: server_name .*")
 		if err != nil {
 			if err != nginx.ErrNotFound {
 				return 0, nil

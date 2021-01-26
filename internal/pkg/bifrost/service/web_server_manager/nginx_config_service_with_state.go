@@ -21,16 +21,17 @@ func (n *nginxConfigServiceWithState) Unlock() {
 	n.service.Unlock()
 }
 
-func (n *nginxConfigServiceWithState) checkConfigsHash() (bool, error) {
-	if n.status > Disabled {
-		return n.service.checkConfigsHash()
-	}
-	return false, ErrDisabledService
-}
+//
+//func (n *nginxConfigServiceWithState) checkConfigsHash() (bool, error) {
+//	if n.status > Disabled {
+//		return n.service.checkConfigsHash()
+//	}
+//	return false, ErrDisabledService
+//}
 
-func (n *nginxConfigServiceWithState) configLoad() error {
+func (n *nginxConfigServiceWithState) configReload() error {
 	if n.status > Disabled {
-		return n.service.configLoad()
+		return n.service.configReload()
 	}
 	return ErrDisabledService
 }
@@ -96,8 +97,13 @@ func (n *nginxConfigServiceWithState) WatchLog(logName string) (LogWatcher, erro
 }
 
 func newNginxConfigServiceWithState(info WebServerConfigInfo) *nginxConfigServiceWithState {
+	service := newNginxConfigServiceWithLocker(info)
+	state := Unknown
+	if service == nil {
+		state = Abnormal
+	}
 	return &nginxConfigServiceWithState{
-		service: newNginxConfigServiceWithLocker(info),
-		status:  Unknown,
+		service: service,
+		status:  state,
 	}
 }

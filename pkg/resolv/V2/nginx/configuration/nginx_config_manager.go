@@ -6,9 +6,12 @@ import (
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loader"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/utils"
+	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sync"
+	"time"
 )
 
 type configManager struct {
@@ -17,6 +20,45 @@ type configManager struct {
 	mainConfigPath string
 	configPaths    []string
 	serverBinPath  string
+	rwLocker       *sync.RWMutex
+}
+
+func (c configManager) Query(keyword string) (Queryer, error) {
+	return c.configuration.Query(keyword)
+}
+
+func (c configManager) QueryAll(keyword string) ([]Queryer, error) {
+	return c.configuration.QueryAll(keyword)
+}
+
+func (c configManager) Self() parser.Parser {
+	return nil
+}
+
+func (c configManager) fatherContext() parser.Context {
+	return nil
+}
+
+func (c configManager) index() int {
+	return 0
+}
+
+func (c configManager) Read() []byte {
+	c.rwLocker.RLock()
+	defer c.rwLocker.RUnlock()
+	return c.configuration.View()
+}
+
+func (c configManager) ReadJson() []byte {
+	c.rwLocker.RLock()
+	defer c.rwLocker.RUnlock()
+	return c.configuration.Json()
+}
+
+func (c configManager) ReadStatistics() []byte {
+	c.rwLocker.RLock()
+	defer c.rwLocker.RUnlock()
+	return c.configuration.StatisticsByJson()
 }
 
 func (c *configManager) UpdateFromJsonBytes(data []byte) error {
@@ -28,42 +70,88 @@ func (c *configManager) UpdateFromJsonBytes(data []byte) error {
 	if !ok {
 		return errors.New("not config json bytes")
 	}
-	c.configuration = NewConfiguration(config, loopPreventer)
-	return nil
+	c.rwLocker.Lock()
+	defer c.rwLocker.Unlock()
+	err = c.configuration.renewConfiguration(NewConfiguration(config, loopPreventer))
+	if err != nil {
+		return err
+	}
+	return c.SaveWithCheck()
+
 }
 
-func (c configManager) Backup(filePath string) error {
+func (c configManager) Backup(backupDir string, retentionTime, backupCycleTime int) error {
+	c.rwLocker.Lock()
+	defer c.rwLocker.Unlock()
 	err := c.SaveWithCheck()
-	if err != nil {
+	if err != nil && err != ErrSameConfigFingerprint {
 		return err
 	}
-	archivePath, err := filepath.Abs(filepath.Join(filepath.Dir(c.configuration.Self().GetValue()), "nginx.conf.tgz"))
+	//system time
+	TZ := time.Local
+	// 归档日期初始化
+	now := time.Now().In(TZ)
+	dt := now.Format("20060102")
+	backupName := fmt.Sprintf("nginx.%s.tgz", dt)
+	archiveDir, err := filepath.Abs(filepath.Dir(c.configuration.Self().GetValue()))
+	archivePath := filepath.Join(archiveDir, backupName)
+
+	// 确认是否为指定归档路径
+	var isSpecialBackupDir bool
+
+	if backupDir != "" {
+		isSpecialBackupDir = true
+		backupDir, err = filepath.Abs(backupDir)
+		if err != nil {
+			return err
+		}
+	} else {
+		backupDir = archiveDir
+	}
+
+	// 判断是否需要备份
+	needBackup, err := utils.CheckBackups(backupName, backupDir, retentionTime, backupCycleTime, now)
 	if err != nil {
 		return err
 	}
 
+	if !needBackup {
+		return NoBackupRequired
+	}
+
+	// 压缩归档
 	err = utils.TarGZ(archivePath, c.configPaths)
 	if err != nil {
 		return err
 	}
-	if filePath != "" {
-		filePath, err := filepath.Abs(filePath)
-		if err != nil {
-			return err
-		}
-		return os.Rename(archivePath, filePath)
+
+	// 根据需要调整归档路径
+	if isSpecialBackupDir {
+		backupPath := filepath.Join(backupDir, backupName)
+		return os.Rename(archivePath, backupPath)
 	}
 	return nil
 
 }
 
 func (c *configManager) Reload() error {
+	c.rwLocker.Lock()
+	defer c.rwLocker.Unlock()
 	config, configPaths, err := c.load()
 	if err != nil {
 		return err
 	}
-	c.configuration = config
-	//c.mainConfigPath = config.GetValue()
+	if c.configuration != nil {
+		err = c.configuration.renewConfiguration(config)
+		if err != nil {
+			if err == ErrSameConfigFingerprint {
+				return NoReloadRequired
+			}
+			return err
+		}
+	} else {
+		c.configuration = config
+	}
 	c.configPaths = configPaths
 	return nil
 }
@@ -96,7 +184,7 @@ func (c *configManager) SaveWithCheck() error {
 
 	defer func() {
 		if err != nil {
-			c.configuration = oldConfig
+			err = c.configuration.renewConfiguration(oldConfig)
 			err = utils.RemoveFiles(oldConfigPaths)
 			err = c.save()
 			err = c.Check()
@@ -114,14 +202,15 @@ func (c configManager) save() error {
 	dumps := c.configuration.Dump()
 	configPaths := make([]string, 0)
 	for s, bytes := range dumps {
-		/*err := ioutil.WriteFile(s, bytes, 0755)
+		err := ioutil.WriteFile(s, bytes, 0755)
 		if err != nil {
 			return err
-		}*/
+		}
 
-		// debug test
-		fmt.Println(bytes)
-		// debug test end
+		/*// debug test
+		fmt.Println(s, ":")
+		fmt.Println(string(bytes))
+		// debug test end*/
 
 		configPaths = append(configPaths, s)
 	}
@@ -131,17 +220,13 @@ func (c configManager) save() error {
 }
 
 func (c configManager) Check() error {
-	/*cmd := exec.Command(c.serverBinPath, "-tc", c.mainConfigPath)
+	cmd := exec.Command(c.serverBinPath, "-tc", c.mainConfigPath)
 	cmd.Stderr = os.Stderr
-	return cmd.Run()*/
+	return cmd.Run()
 
-	// debug test
+	/*// debug test
 	return nil
-	// debug test end
-}
-
-func (c configManager) GetConfiguration() Configuration {
-	return c.configuration
+	// debug test end*/
 }
 
 func NewConfigManager(serverBinPath, configAbsPath string) (*configManager, error) {
@@ -149,17 +234,18 @@ func NewConfigManager(serverBinPath, configAbsPath string) (*configManager, erro
 		loader:         loader.NewLoader(),
 		mainConfigPath: configAbsPath,
 		serverBinPath:  serverBinPath,
-		configuration: &configuration{
-			rwLocker: new(sync.RWMutex),
-		},
+		//configuration: &configuration{
+		//	rwLocker: new(sync.RWMutex),
+		//},
+		rwLocker: new(sync.RWMutex),
 	}
 	err := cm.Reload()
 	if err != nil {
 		return nil, err
 	}
-	err = cm.Check()
-	if err != nil {
-		return nil, err
-	}
+	//err = cm.Check()
+	//if err != nil {
+	//	return nil, err
+	//}
 	return cm, nil
 }

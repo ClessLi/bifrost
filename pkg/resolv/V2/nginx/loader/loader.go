@@ -166,7 +166,8 @@ func (l *loader) loadFromConfigPosition(configAbsPath string) (parser.Context, e
 	parseComment := func(indention parser_indention.Indention) bool {
 		if subMatch := RegCommentHead.FindSubmatch(configData[index:]); len(subMatch) == 3 {
 			matchIndexes := RegCommentHead.FindIndex(configData[index:])
-			index += matchIndexes[len(matchIndexes)-1]
+			//matchStr := string(configData[index:index+matchIndexes[len(matchIndexes)-1]])
+			//fmt.Println(matchStr)
 			cmt := parser.NewComment(string(subMatch[2]), !strings.Contains(string(subMatch[1]), "\n") && index != 0, indention)
 			if ctx, ok := checkContext(parsers); ok {
 				parseErr = ctx.Insert(cmt, ctx.Len())
@@ -179,6 +180,7 @@ func (l *loader) loadFromConfigPosition(configAbsPath string) (parser.Context, e
 					return false
 				}
 			}
+			index += matchIndexes[len(matchIndexes)-1] - 1
 			return true
 		}
 		return false
@@ -193,6 +195,8 @@ func (l *loader) loadFromConfigPosition(configAbsPath string) (parser.Context, e
 
 		if matchIndexes := reg.FindIndex(configData[index:]); matchIndexes != nil {
 			subMatch := reg.FindSubmatch(configData[index:])
+			//matchStr := string(configData[index:index+matchIndexes[len(matchIndexes)-1]])
+			//fmt.Println(matchStr)
 			index += matchIndexes[len(matchIndexes)-1]
 			switch reg {
 			case RegKey:

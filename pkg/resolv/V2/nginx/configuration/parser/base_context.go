@@ -19,6 +19,9 @@ type BasicContext struct {
 func (b BasicContext) Bytes() []byte {
 	buff := bytes.NewBuffer([]byte(b.indention.GlobalIndents() + b.headString()))
 	for _, child := range b.Children {
+		if cmt, ok := child.(*Comment); ok && cmt.Inline {
+			buff.Truncate(buff.Len() - 1)
+		}
 		child.SetGlobalDeep(b.indention.GlobalDeep() + 1)
 		buff.Write(child.Bytes())
 	}
@@ -84,11 +87,15 @@ func (b *BasicContext) Insert(parser Parser, index int) error {
 		}
 	}
 	n := b.Len()
+	//parsers := &b.Children
+	//*parsers = append(*parsers, nil)
 	b.Children = append(b.Children, nil)
 	for i := n; i > index; i-- {
 		b.Children[i] = b.Children[i-1]
+		//(*parsers)[i] = (*parsers)[i-1]
 	}
 	b.Children[index] = parser
+	//(*parsers)[index] = parser
 	return nil
 }
 
@@ -115,10 +122,10 @@ func (b BasicContext) Match(words KeyWords) bool {
 	return words.Match(&b)
 }
 
-func (b BasicContext) Query(words KeyWords) (Context, int) {
+func (b *BasicContext) Query(words KeyWords) (Context, int) {
 	for idx, child := range b.Children {
 		if child.Match(words) {
-			return &b, idx
+			return b, idx
 		}
 		if c, ok := child.(Context); ok {
 			ctx, index := c.Query(words)
@@ -130,11 +137,11 @@ func (b BasicContext) Query(words KeyWords) (Context, int) {
 	return nil, 0
 }
 
-func (b BasicContext) QueryAll(words KeyWords) map[Context][]int {
+func (b *BasicContext) QueryAll(words KeyWords) map[Context][]int {
 	result := make(map[Context][]int)
 	for idx, child := range b.Children {
 		if child.Match(words) {
-			result[&b] = append(result[&b], idx)
+			result[b] = append(result[b], idx)
 		}
 		if c, ok := child.(Context); ok {
 			subResult := c.QueryAll(words)
