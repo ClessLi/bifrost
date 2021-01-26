@@ -9,13 +9,14 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ClessLi/bifrost/internal/pkg/bifrost"
+	"github.com/ClessLi/bifrost/internal/pkg/utils"
 	"os"
 )
 
 func main() {
 
-	defer bifrost.Logf.Close()
-	defer bifrost.Stdoutf.Close()
+	defer utils.Logf.Close()
+	defer utils.Stdoutf.Close()
 
 	err := errors.New("unkown signal")
 	switch *bifrost.Signal {
@@ -28,7 +29,7 @@ func main() {
 		err = bifrost.Stop()
 		if err == nil {
 			if os.Getppid() != 1 {
-				fmt.Println("bifrost is stopping...")
+				fmt.Println("bifrost is stopped")
 			}
 			os.Exit(0)
 		}

@@ -20,9 +20,15 @@
 
 # 合作项目
 
-## [Heimdallr](https://github.com/tanganyu1114/Heimdallr)
+## [Heimedallr-Reborn](https://github.com/tanganyu1114/heimdallr-reborn)
 
-基于SDRMS创建的Nginx管理平台，目前已完成nginx配置文件信息，操作系统基础信息的展示
+nginx后管平台
+
+基于 gin-vue-admin 框架制作
+
+目前仅支持配置文件查看和日志信息读取
+
+配置nginx信息功能还在开发中
 
 # 使用方法
 
@@ -125,7 +131,7 @@ LogConfig:
 
 `bifrost`
 ```yaml
-Service:
+ServiceConfig:
   Port: 12321
   ChunkSize: 4194304
   AuthServerAddr: "127.0.0.1:12320"

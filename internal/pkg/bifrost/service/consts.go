@@ -1,7 +1,15 @@
 package service
 
+type RequestType int
+
 const (
-	// Web服务类型
-	NGINX WebServerType = "nginx"
-	HTTPD WebServerType = "httpd"
+	Unknown RequestType = iota
+	DisplayConfig
+	GetConfig
+	ShowStatistics
+	DisplayStatus
+
+	UpdateConfig
+
+	WatchLog
 )

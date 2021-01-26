@@ -10,178 +10,185 @@ import (
 	"time"
 )
 
-// loggingMiddleware Make a new type
-// that contains BifrostService interface and logger instance
-type loggingMiddleware struct {
-	service.Service
+type loggingViewer struct {
+	viewer service.Viewer
 	logger log.Logger
 }
 
-// LoggingMiddleware make logging middleware
-func LoggingMiddleware(logger log.Logger) service.ServiceMiddleware {
-	return func(next service.Service) service.Service {
-		return loggingMiddleware{next, logger}
-	}
-}
-
-func (mw loggingMiddleware) ViewConfig(ctx context.Context, token, svrName string) (data []byte, err error) {
-	ip, cipErr := getClientIP(ctx)
+func (v loggingViewer) View(requester service.ViewRequester) (responder service.ViewResponder) {
+	ip, err := getClientIP(requester.Context())
 	defer func(begin time.Time) {
 		n := 100
-		if len(data) < n {
-			n = len(data)
+		if responder != nil {
+			data := responder.Bytes()
+			if data != nil {
+				if len(data) < n {
+					n = len(data)
+				}
+			} else {
+				data = []byte("")
+				n = 0
+			}
+			v.logger.Log(
+				"functions", "View",
+				"requestType", requester.GetRequestType(),
+				"clientIp", ip,
+				"token", requester.GetToken(),
+				"webServerName", responder.GetServerName(),
+				"result", string(data[:n])+"...",
+				"error", responder.Error(),
+				"took", time.Since(begin),
+			)
+			return
 		}
-		mw.logger.Log(
-			"functions", "ViewConfig",
+		v.logger.Log(
+			"functions", "View",
+			"requestType", requester.GetRequestType(),
 			"clientIp", ip,
-			"token", token,
-			"svrName", svrName,
-			"result", string(data[:n])+"...",
-			"took", time.Since(begin),
-		)
-	}(time.Now().Local())
-	if cipErr != nil {
-		return data, cipErr
-	}
-	data, err = mw.Service.ViewConfig(ctx, token, svrName)
-	return data, err
-}
-
-func (mw loggingMiddleware) GetConfig(ctx context.Context, token, svrName string) (jsonData []byte, err error) {
-	ip, cipErr := getClientIP(ctx)
-	defer func(begin time.Time) {
-		n := 100
-		if len(jsonData) < n {
-			n = len(jsonData)
-		}
-		mw.logger.Log(
-			"functions", "GetConfig",
-			"clientIp", ip,
-			"token", token,
-			"svrName", svrName,
-			"result", string(jsonData[:n])+"...",
-			"took", time.Since(begin),
-		)
-	}(time.Now().Local())
-	if cipErr != nil {
-		return jsonData, cipErr
-	}
-	jsonData, err = mw.Service.GetConfig(ctx, token, svrName)
-	return jsonData, err
-}
-
-func (mw loggingMiddleware) UpdateConfig(ctx context.Context, token, svrName string, jsonData []byte) (data []byte, err error) {
-	ip, cipErr := getClientIP(ctx)
-	defer func(begin time.Time) {
-		n := 100
-		if len(jsonData) < n {
-			n = len(jsonData)
-		}
-		mw.logger.Log(
-			"functions", "UpdateConfig",
-			"clientIp", ip,
-			"token", token,
-			"svrName", svrName,
-			"reqJsonData", string(jsonData[:n])+"...",
-			"errorMsg", err,
-			"took", time.Since(begin),
-		)
-	}(time.Now().Local())
-	if cipErr != nil {
-		return nil, cipErr
-	}
-	data, err = mw.Service.UpdateConfig(ctx, token, svrName, jsonData)
-	return data, err
-}
-
-func (mw loggingMiddleware) ViewStatistics(ctx context.Context, token, svrName string) (jsonData []byte, err error) {
-	ip, cipErr := getClientIP(ctx)
-	defer func(begin time.Time) {
-		n := 100
-		if len(jsonData) < n {
-			n = len(jsonData)
-		}
-		mw.logger.Log(
-			"functions", "ViewStatistics",
-			"clientIp", ip,
-			"token", token,
-			"svrName", svrName,
-			"result", string(jsonData[:n])+"...",
-			"took", time.Since(begin),
-		)
-	}(time.Now().Local())
-	if cipErr != nil {
-		return jsonData, cipErr
-	}
-	jsonData, err = mw.Service.ViewStatistics(ctx, token, svrName)
-	return jsonData, err
-}
-
-func (mw loggingMiddleware) Status(ctx context.Context, token string) (jsonData []byte, err error) {
-	ip, cipErr := getClientIP(ctx)
-	defer func(begin time.Time) {
-		n := 100
-		if len(jsonData) < n {
-			n = len(jsonData)
-		}
-		mw.logger.Log(
-			"functions", "Status",
-			"clientIp", ip,
-			"token", token,
-			"result", string(jsonData[:n])+"...",
-			"took", time.Since(begin),
-		)
-	}(time.Now().Local())
-	if cipErr != nil {
-		return jsonData, cipErr
-	}
-	jsonData, err = mw.Service.Status(ctx, token)
-	return jsonData, err
-}
-
-func (mw loggingMiddleware) WatchLog(ctx context.Context, token, svrName, logName string) (logWatcher *service.LogWatcher, err error) {
-	ip, cipErr := getClientIP(ctx)
-	defer func(begin time.Time) {
-		mw.logger.Log(
-			"functions", "WatchLog",
-			"clientIp", ip,
-			"token", token,
-			"svrName", svrName,
-			"logFile", logName,
+			"token", requester.GetToken(),
+			"webServerName", requester.GetServerName(),
+			"responder", responder,
 			"error", err,
 			"took", time.Since(begin),
 		)
+
 	}(time.Now().Local())
-	if cipErr != nil {
-		return nil, cipErr
+	if err != nil {
+		return service.NewViewResponder(requester.GetServerName(), []byte(""), err)
 	}
-	logWatcher, err = mw.Service.WatchLog(ctx, token, svrName, logName)
-	return logWatcher, err
+	responder = v.viewer.View(requester)
+	return
 }
 
-//func (mw loggingMiddleware) WatchLog(ctx context.Context, token, svrName, logName string, dataChan chan<- []byte, signal <-chan int) (err error) {
-//	ip, cipErr := getClientIP(ctx)
-//	defer func(begin time.Time) {
-//		mw.logger.Log(
-//			"functions", "WatchLog",
-//			"clientIp", ip,
-//			"token", token,
-//			"svrName", svrName,
-//			"logFile", logName,
-//			"error", err,
-//			"during", time.Since(begin),
-//		)
-//	}(time.Now().Local())
-//	if cipErr != nil {
-//		return cipErr
-//	}
-//	err = mw.Service.WatchLog(ctx, token, svrName, logName, dataChan, signal)
-//	return err
-//}
+func loggingViewerMiddleware(logger log.Logger) service.ViewerMiddleware {
+	return func(next service.Viewer) service.Viewer {
+		return loggingViewer{
+			viewer: next,
+			logger: logger,
+		}
+	}
+}
 
-func (mw loggingMiddleware) HealthCheck() (result bool) {
+type loggingUpdater struct {
+	updater service.Updater
+	logger  log.Logger
+}
+
+func (u loggingUpdater) Update(requester service.UpdateRequester) (responder service.UpdateResponder) {
+	ip, err := getClientIP(requester.Context())
 	defer func(begin time.Time) {
-		mw.logger.Log(
+		if responder != nil {
+			u.logger.Log(
+				"functions", "Update",
+				"requestType", requester.GetRequestType(),
+				"clientIp", ip,
+				"token", requester.GetToken(),
+				"webServerName", responder.GetServerName(),
+				"error", responder.Error(),
+				"took", time.Since(begin),
+			)
+			return
+		}
+		u.logger.Log(
+			"functions", "Update",
+			"requestType", requester.GetRequestType(),
+			"clientIp", ip,
+			"token", requester.GetToken(),
+			"webServerName", requester.GetServerName(),
+			"responder", responder,
+			"error", err,
+			"took", time.Since(begin),
+		)
+
+	}(time.Now().Local())
+	if err != nil {
+		return service.NewUpdateResponder(requester.GetServerName(), err)
+	}
+	responder = u.updater.Update(requester)
+	return
+}
+
+func loggingUpdaterMiddleware(logger log.Logger) service.UpdaterMiddleware {
+	return func(next service.Updater) service.Updater {
+		return loggingUpdater{
+			updater: next,
+			logger:  logger,
+		}
+	}
+}
+
+type loggingWatcher struct {
+	watcher service.Watcher
+	logger  log.Logger
+}
+
+func (w loggingWatcher) Watch(requester service.WatchRequester) (responder service.WatchResponder) {
+	ip, err := getClientIP(requester.Context())
+	defer func(begin time.Time) {
+		if responder != nil {
+			w.logger.Log(
+				"functions", "Watch",
+				"requestType", requester.GetRequestType(),
+				"clientIp", ip,
+				"token", requester.GetToken(),
+				"webServerName", responder.GetServerName(),
+				"error", responder.Error(),
+				"took", time.Since(begin),
+			)
+			return
+		}
+		w.logger.Log(
+			"functions", "Watch",
+			"requestType", requester.GetRequestType(),
+			"clientIp", ip,
+			"token", requester.GetToken(),
+			"webServerName", requester.GetServerName(),
+			"responder", responder,
+			"error", err,
+			"took", time.Since(begin),
+		)
+
+	}(time.Now().Local())
+	if err != nil {
+		return service.NewWatchResponder(requester.GetServerName(), nil, nil, nil, err)
+	}
+	responder = w.watcher.Watch(requester)
+	return
+}
+
+func loggingWatcherMiddleware(logger log.Logger) service.WatcherMiddleware {
+	return func(next service.Watcher) service.Watcher {
+		return loggingWatcher{
+			watcher: next,
+			logger:  logger,
+		}
+	}
+}
+
+// loggingMiddleware Make a new type
+// that contains BifrostService interface and logger instance
+type loggingMiddleware struct {
+	viewer  service.Viewer
+	updater service.Updater
+	watcher service.Watcher
+	logger  log.Logger
+}
+
+func (lmw loggingMiddleware) Viewer() service.Viewer {
+	return lmw.viewer
+}
+
+func (lmw loggingMiddleware) Updater() service.Updater {
+	return lmw.updater
+}
+
+func (lmw loggingMiddleware) Watcher() service.Watcher {
+	return lmw.watcher
+}
+
+func (lmw loggingMiddleware) HealthCheck() (result bool) {
+	defer func(begin time.Time) {
+		lmw.logger.Log(
 			"function", "HealthChcek",
 			"result", result,
 			"took", time.Since(begin),
@@ -189,6 +196,18 @@ func (mw loggingMiddleware) HealthCheck() (result bool) {
 	}(time.Now().Local())
 	result = true
 	return
+}
+
+// LoggingMiddleware make logging middleware
+func LoggingMiddleware(logger log.Logger) service.ServiceMiddleware {
+	return func(next service.Service) service.Service {
+		return loggingMiddleware{
+			viewer:  loggingViewerMiddleware(logger)(next.Viewer()),
+			updater: loggingUpdaterMiddleware(logger)(next.Updater()),
+			watcher: loggingWatcherMiddleware(logger)(next.Watcher()),
+			logger:  logger,
+		}
+	}
 }
 
 func getClientIP(ctx context.Context) (ip string, err error) {

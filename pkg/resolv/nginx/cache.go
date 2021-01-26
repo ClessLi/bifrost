@@ -15,16 +15,16 @@ func NewCaches() Caches {
 	return Caches{}
 }
 
-func (cs Caches) SetCache(config *Config, file ...interface{}) error {
+func (cs *Caches) SetCache(config *Config, file ...interface{}) error {
 	cache, err := newCache(config, file...)
 	if err != nil {
 		return err
 	}
-	oldCache, ok := cs[config.Value]
+	oldCache, ok := (*cs)[config.Value]
 	if ok && oldCache.hash == cache.hash {
 		return IsInCaches
 	}
-	cs[config.Value] = cache
+	(*cs)[config.Value] = cache
 	return nil
 }
 
