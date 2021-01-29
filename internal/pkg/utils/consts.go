@@ -2,5 +2,5 @@ package utils
 
 const (
 	// 版本号
-	VERSION = "v1.0.1-alpha.4"
+	VERSION = "v1.0.2-alpha.1"
 )

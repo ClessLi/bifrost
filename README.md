@@ -40,65 +40,11 @@ bifrost-auth-v1.0.1-alpha.3
 > 
 > Linux: [bifrost-auth.v1_0_1.alpha_3.linux_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.1-alpha.3/bifrost-auth.v1_0_1.alpha_3.linux_x64.zip)
 
-bifrost-v1.0.1-alpha.3
+bifrost-v1.0.2-alpha.1
 
-> Windows: [bifrost.v1_0_1.alpha_3.win_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.1-alpha.3/bifrost.v1_0_1.alpha_3.win_x64.zip)
+> Windows: [bifrost.v1_0_2.alpha_1.win_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.2-alpha.1/bifrost.v1_0_2.alpha_1.win_x64.zip)
 > 
-> Linux: [bifrost.v1_0_1.alpha_3.linux_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.1-alpha.3/bifrost.v1_0_1.alpha_3.linux_x64.zip)
-
-bifrost-v1.0.1-alpha.2
-
-> Windows: [bifrost.v1_0_1.alpha_2.win_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.1-alpha.2/bifrost.v1_0_1.alpha_2.win_x64.zip)
-> 
-> Linux: [bifrost.v1_0_1.alpha_2.linux_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.1-alpha.2/bifrost.v1_0_1.alpha_2.linux_x64.zip)
-
-bifrost-auth-v1.0.1-alpha.1
-
-> Windows: [bifrost-auth.v1_0_1.alpha_1.win_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.1-alpha.1/bifrost-auth.v1_0_1.alpha_1.win_x64.zip)
-> 
-> Linux: [bifrost-auth.v1_0_1.alpha_1.linux_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.1-alpha.1/bifrost-auth.v1_0_1.alpha_1.linux_x64.zip)
-
-bifrost-v1.0.1-alpha.1
-
-> Windows: [bifrost.v1_0_1.alpha_1.win_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.1-alpha.1/bifrost.v1_0_1.alpha_1.win_x64.zip)
-> 
-> Linux: [bifrost.v1_0_1.alpha_1.linux_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.1-alpha.1/bifrost.v1_0_1.alpha_1.linux_x64.zip)
-
-bifrost-v1.0.0-alpha.7
-
-> Windows: [bifrost.v1_0_0.alpha_7.win_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.0-alpha.7/bifrost.v1_0_0.alpha_7.win_x64.zip)
-> 
-> Linux: [bifrost.v1_0_0.alpha_7.linux_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.0-alpha.7/bifrost.v1_0_0.alpha_7.linux_x64.zip)
-
-bifrost-v1.0.0-alpha.6
-
-> Windows: [bifrost.v1_0_0.alpha_6.win_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.0-alpha.6/bifrost.v1_0_0.alpha_6.win_x64.zip)
-> 
-> Linux: [bifrost.v1_0_0.alpha_6.linux_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.0-alpha.6/bifrost.v1_0_0.alpha_6.linux_x64.zip)
-
-bifrost-v1.0.0-alpha.5
-
-> Windows: [bifrost.v1_0_0.alpha_5.win_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.0-alpha.5/bifrost.v1_0_0.alpha_5.win_x64.zip)
-> 
-> Linux: [bifrost.v1_0_0.alpha_5.linux_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.0-alpha.5/bifrost.v1_0_0.alpha_5.linux_x64.zip)
-
-bifrost-v1.0.0-alpha.4
-
-> Windows: [bifrost.v1_0_0.alpha_4.win_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.0-alpha.4/bifrost.v1_0_0.alpha_4.win_x64.zip)
-> 
-> Linux: [bifrost.v1_0_0.alpha_4.linux_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.0-alpha.4/bifrost.v1_0_0.alpha_4.linux_x64.zip)
-
-bifrost-v1.0.0-alpha.1
-
-> Windows: [bifrost.v1_0_0.alpha_1.win_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.0-alpha.1/bifrost.v1_0_0.alpha_1.win_x64.zip)
-> 
-> Linux: [bifrost.v1_0_0.alpha_1.linux_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.0-alpha.1/bifrost.v1_0_0.alpha_1.linux_x64.zip)
-
-bifrost-v0.0.3
-
-> Windows: [bifrost.v0_0_3.win_x64](https://github.com/ClessLi/bifrost/releases/download/v0.0.3/bifrost.v0_0_3.win_x64.zip)
-> 
-> Linux: [bifrost.v0_0_3.linux_x64](https://github.com/ClessLi/bifrost/releases/download/v0.0.3/bifrost.v0_0_3.linux_x64.zip)
+> Linux: [bifrost.v1_0_2.alpha_1.linux_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.2-alpha.1/bifrost.v1_0_2.alpha_1.linux_x64.zip)
 
 ## 应用配置
 
@@ -178,7 +124,7 @@ LogConfig:
 `bifrost`
 ```
 > ./bifrost -h
-  bifrost version: v1.0.1-alpha.3
+  bifrost version: v1.0.2-alpha.1
   Usage: ./bifrost [-hv] [-f filename] [-s signal]
   
   Options:
@@ -191,6 +137,26 @@ LogConfig:
     -v version
       	this version 
 ```
+
+## 配置解析库
+
+### Nginx配置管理器
+
+Nginx配置管理器提供配置读取、更新、保存、备份及重载，方法详见其接口文档（[ConfigManager](pkg/resolv/V2/nginx/configuration/configuration_manager.go)）
+
+实例化方法如下：
+
+```go
+package main
+
+import (
+"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration"
+)
+
+nginxConfigManager, err := configuration.NewNginxConfigurationManager(nginxExecPath, configAbsPath)
+...
+```
+
 
 ## 接口文档
 
@@ -205,10 +171,6 @@ LogConfig:
 [auth_gRPC接口定义](api/protobuf-spec/authpb/auth.proto)
 
 注：gRPC服务端口侦听为auth配置中AuthService.Port值。
-
-### ~~接口示例~~(已改用客户端方式，详见[客户端使用示例](#test))
-
-~~详见~~[~~bifrost_gRPC接口示例~~](test/grpc_client)
 
 ## 客户端
 

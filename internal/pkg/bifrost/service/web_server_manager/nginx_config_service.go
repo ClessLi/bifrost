@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/ClessLi/bifrost/internal/pkg/utils"
 	ngLog "github.com/ClessLi/bifrost/pkg/log/nginx"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration_manager"
+	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -14,15 +14,13 @@ import (
 )
 
 type nginxConfigService struct {
-	name           string
-	backupCycle    int
-	backupSaveTime int
-	backupDir      string
-	confPath       string
-	verifyExecPath string
-	//confCaches     nginx.Caches
-	//nginxConfig    *nginx.Config
-	nginxConfigManager configuration_manager.ConfigManager
+	name               string
+	backupCycle        int
+	backupSaveTime     int
+	backupDir          string
+	confPath           string
+	verifyExecPath     string
+	nginxConfigManager configuration.ConfigManager
 	nginxLog           *ngLog.Log
 }
 
@@ -31,12 +29,7 @@ func (n nginxConfigService) serverName() string {
 }
 
 func (n nginxConfigService) DisplayWebServerStatus() State {
-	//svrPidFileKW := nginx.NewKeyWords(nginx.TypeKey, "pid", "*", false, false)
 	svrPidFilePath := "logs/nginx.pid"
-	//svrPidFileKey, ok := n.nginxConfig.QueryByKeywords(svrPidFileKW).(*nginx.Key)
-	//if ok && svrPidFileKey != nil {
-	//	svrPidFilePath = svrPidFileKey.Value
-	//}
 	svrPidQueryer, err := n.nginxConfigManager.Query("key:sep: :reg:pid .*")
 	if err == nil {
 		svrPidFilePath = strings.Split(svrPidQueryer.Self().GetValue(), " ")[1]
@@ -85,7 +78,6 @@ func (n nginxConfigService) DisplayWebServerVersion() string {
 	}
 	svrVersion, vErr := func() (string, error) {
 		cmd := exec.Command(svrBinAbs, "-v")
-		//cmd.Stderr = Stdoutf
 		stdoutPipe, pipeErr := cmd.StderrPipe()
 		if pipeErr != nil {
 			return "", pipeErr
@@ -112,9 +104,6 @@ func (n nginxConfigService) DisplayWebServerVersion() string {
 }
 
 func (n nginxConfigService) DisplayConfig() (resp []byte, err error) {
-	//for _, s := range n.nginxConfig.String() {
-	//	resp = append(resp, []byte(s)...)
-	//}
 	resp = n.nginxConfigManager.Read()
 	if resp == nil {
 		err = ErrDataNotParsed
@@ -124,7 +113,6 @@ func (n nginxConfigService) DisplayConfig() (resp []byte, err error) {
 }
 
 func (n nginxConfigService) GetConfig() (resp []byte, err error) {
-	//return json.Marshal(n.nginxConfig)
 	resp = n.nginxConfigManager.ReadJson()
 	if resp == nil {
 		err = ErrDataNotParsed
@@ -134,17 +122,6 @@ func (n nginxConfigService) GetConfig() (resp []byte, err error) {
 }
 
 func (n nginxConfigService) ShowStatistics() (resp []byte, err error) {
-	//httpServersNum, httpServers := ngStatistics.HTTPServers(n.nginxConfig)
-	//httpPorts := ngStatistics.HTTPPorts(n.nginxConfig)
-	//streamServersNum, streamPorts := ngStatistics.StreamServers(n.nginxConfig)
-	//statistics := struct {
-	//	HttpSvrsNum   int              `json:"http_svrs_num"`
-	//	HttpSvrs      map[string][]int `json:"http_svrs"`
-	//	HttpPorts     []int            `json:"http_ports"`
-	//	StreamSvrsNum int              `json:"stream_svrs_num"`
-	//	StreamPorts   []int            `json:"stream_ports"`
-	//}{HttpSvrsNum: httpServersNum, HttpSvrs: httpServers, HttpPorts: httpPorts, StreamSvrsNum: streamServersNum, StreamPorts: streamPorts}
-	//return json.Marshal(statistics)
 	resp = n.nginxConfigManager.ReadStatistics()
 	if resp == nil {
 		err = ErrDataNotParsed
@@ -160,55 +137,6 @@ func (n *nginxConfigService) UpdateConfig(data []byte) error {
 			return err
 		}
 		return nil
-
-		//// check config
-		//newConfig, err := ngJson.Unmarshal(data)
-		//if err != nil {
-		//	//Log(DEBUG, "[%s] [%s] buffer detail: %s", info.Name, ip, buffer.String())
-		//	//Log(WARN, "[%s] [%s] %s detailed error: %s", info.Name, ip, bifrostpb.ConfigUnmarshalErr, err)
-		//	return err
-		//}
-		//
-		////fmt.Println("获取web服务配置校验二进制文件路径")
-		//verifyBin, err := filepath.Abs(n.verifyExecPath)
-		//if err != nil {
-		//	err = ErrValidationNotExist
-		//	return err
-		//}
-		//
-		//// delete old config
-		//err = nginx.Delete(n.nginxConfig)
-		//if err != nil {
-		//	//message = fmt.Sprintf("Delete nginx ng failed. <%s>", err)
-		//	//Log(ERROR, "[%s] [%s] %s", info.Name, ip, message)
-		//	return err
-		//}
-		//
-		//newCaches, err := nginx.SaveWithCheck(newConfig, verifyBin)
-		//// roll back
-		//if err != nil {
-		//	var rollErr error
-		//	rollErr = nginx.Delete(newConfig)
-		//	if rollErr != nil {
-		//		//Log(ERROR, "[%s] Delete new nginx ng failed. <%s>", info.Name, err)
-		//		//message = "New nginx config verify failed. And delete new nginx config failed."
-		//		return rollErr
-		//	}
-		//
-		//	_, rollErr = nginx.Save(n.nginxConfig)
-		//	if rollErr != nil {
-		//		//Log(CRITICAL, "[%s] Nginx ng rollback failed. <%s>", info.Name, err)
-		//		//message = "New nginx config verify failed. And nginx config rollback failed."
-		//		return rollErr
-		//	}
-		//
-		//	return err
-		//}
-		//n.confCaches = newCaches
-		//n.nginxConfig = newConfig
-		//n.confPath = newConfig.Value
-		//
-		//return nil
 	}
 	return ErrEmptyConfig
 }
@@ -287,69 +215,18 @@ func (n *nginxConfigService) stopWatchLog(logName string) error {
 	return n.nginxLog.StopWatch(logName)
 }
 
-// checkHash, ServerInfo的web服务器配置文件是否已更改校验方法
-//func (n nginxConfigService) checkConfigsHash() (isSame bool, err error) {
-//	isSame = true
-//	for path := range n.confCaches {
-//		if isSame, err = n.confCaches.CheckHash(path); !isSame {
-//			return
-//		}
-//	}
-//	return
-//}
-
 // configReload, nginxConfigService的nginx配置重载方法，根据nginx配置文件信息加载nginx配置并记录文件基准信息
 // 返回值:
 //     nginx配置对象指针
 //     错误
 func (n *nginxConfigService) configReload() error {
 	return n.nginxConfigManager.Reload()
-	//// 加载nginx配置并获取缓存
-	////Log(DEBUG, "[%s] load config...", n.name)
-	//path, caches, err := nginx.Load(n.confPath)
-	//if err != nil {
-	//	//Log(DEBUG, "[%s] load config failed: %s", n.Name, err.Error())
-	//	return err
-	//}
-	//
-	//config, err := caches.GetConfig(n.confPath)
-	//if err != nil {
-	//	//Log(DEBUG, "[%s] load config failed: %s", n.Name, err.Error())
-	//	return err
-	//}
-	//// 检查nginx配置是否能被正常解析为json
-	////Log(DEBUG, "[%s] 校验nginx配置。。。", b.ServiceInfos[i].Name)
-	//_, err = json.Marshal(config)
-	//if err != nil {
-	//	//fmt.Printf("[%s] bifrost service failed to start. Cased by '%s'\n", n.name, err)
-	//	utils.Logger.CriticalF("[%s] bifrost service failed to start. Cased by '%s'", n.name, err)
-	//	return err
-	//}
-	//// 记录缓存
-	//n.confCaches = caches
-	//n.confPath = path
-	//n.nginxConfig = config
-	//
-	////Log(DEBUG, "[%s] load config success", n.name)
-	//return nil
 }
 
 // bak, ServerInfo的nginx配置文件备份子方法
 // 参数:
 func (n *nginxConfigService) configBackup() error {
 	return n.nginxConfigManager.Backup(n.backupDir, n.backupSaveTime, n.backupCycle)
-	//bakPath, bErr := nginx.Backup(n.nginxConfig, "nginx.conf", n.backupSaveTime, n.backupCycle, n.backupDir)
-	//
-	//if bErr != nil && (!os.IsExist(bErr) && bErr != nginx.NoBackupRequired) { // 备份失败
-	//	//Log(CRITICAL, "[%s] Nginx Config backup to %s, but failed. <%s>", n.Name, bakPath, bErr)
-	//	utils.Logger.CriticalF("[%s] Nginx Config backup to %s, but failed. <%s>", n.name, bakPath, bErr)
-	//	//Log(NOTICE, "[%s] Nginx Config backup is stop.", n.Name)
-	//	return bErr
-	//} else if bErr == nil { // 备份成功
-	//	//Log(INFO, "[%s] Nginx Config backup to %s", n.Name, bakPath)
-	//	utils.Logger.InfoF("[%s] Nginx Config backup to %s", n.name, bakPath)
-	//}
-	//return nil
 }
 
 func newNginxConfigService(info WebServerConfigInfo) WebServerConfigService {
@@ -358,7 +235,7 @@ func newNginxConfigService(info WebServerConfigInfo) WebServerConfigService {
 		utils.Logger.FatalF("[%s] config path error: %s", info.Name, err)
 		return nil
 	}
-	nginxConfigManager, err := configuration_manager.NewNginxConfigurationManager(info.VerifyExecPath, configAbsPath)
+	nginxConfigManager, err := configuration.NewNginxConfigurationManager(info.VerifyExecPath, configAbsPath)
 	if err != nil {
 		utils.Logger.FatalF("[%s] config manager initial error: %s", info.Name, err)
 		return nil

@@ -113,7 +113,11 @@ func (n *nginxConfigServiceController) autoBackup() {
 			select {
 			case <-time.NewTicker(5 * time.Minute).C: // 每5分钟定时执行备份操作
 				utils.Logger.DebugF("[%s] Nginx Config check and backup", n.serverName())
-				_ = n.service.configBackup()
+				//_ = n.service.configBackup()
+				err := n.service.configBackup()
+				if err != nil && err != configuration.NoBackupRequired {
+					utils.Logger.Errorf("[%s] Nginx Config backup error, cased by: %s", n.serverName(), err)
+				}
 			case sig := <-n.autoBackupChan: // 获取管道传入信号
 				if sig == 9 { // 为9时，停止备份
 					//utils.Logger.InfoF("[%s] Nginx Config autoBackup method stopping...", n.serverName())

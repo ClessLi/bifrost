@@ -84,7 +84,7 @@ func (c configManager) Backup(backupDir string, retentionTime, backupCycleTime i
 	c.rwLocker.Lock()
 	defer c.rwLocker.Unlock()
 	err := c.SaveWithCheck()
-	if err != nil && err != ErrSameConfigFingerprint {
+	if err != nil && err != ErrSameConfigFingerprint && err != ErrSameConfigFingerprintBetweenFilesAndConfiguration {
 		return err
 	}
 	//system time
@@ -176,6 +176,10 @@ func (c *configManager) SaveWithCheck() error {
 		return err
 	}
 
+	if !c.configuration.diff(oldConfig) {
+		return ErrSameConfigFingerprintBetweenFilesAndConfiguration
+	}
+
 	// remove old configs
 	err = utils.RemoveFiles(oldConfigPaths)
 	if err != nil {
@@ -227,25 +231,4 @@ func (c configManager) Check() error {
 	/*// debug test
 	return nil
 	// debug test end*/
-}
-
-func NewConfigManager(serverBinPath, configAbsPath string) (*configManager, error) {
-	cm := &configManager{
-		loader:         loader.NewLoader(),
-		mainConfigPath: configAbsPath,
-		serverBinPath:  serverBinPath,
-		//configuration: &configuration{
-		//	rwLocker: new(sync.RWMutex),
-		//},
-		rwLocker: new(sync.RWMutex),
-	}
-	err := cm.Reload()
-	if err != nil {
-		return nil, err
-	}
-	//err = cm.Check()
-	//if err != nil {
-	//	return nil, err
-	//}
-	return cm, nil
 }

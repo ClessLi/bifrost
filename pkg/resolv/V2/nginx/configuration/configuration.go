@@ -35,6 +35,7 @@ type Configuration interface {
 	Dump() map[string][]byte
 	//setConfig(config *parser.Config)
 	renewConfiguration(Configuration) error
+	diff(Configuration) bool
 }
 
 type configuration struct {
@@ -237,19 +238,29 @@ func (c *configuration) Dump() map[string][]byte {
 }
 
 func (c *configuration) renewConfiguration(conf Configuration) error {
+	if !c.diff(conf) {
+		return ErrSameConfigFingerprint
+	}
 	newConf, ok := conf.(*configuration)
 	if !ok {
 		return ErrConfigurationTypeMismatch
 	}
 	c.rwLocker.Lock()
 	defer c.rwLocker.Unlock()
-	if !c.Diff(newConf.ConfigFingerprinter) {
-		return ErrSameConfigFingerprint
-	}
 	c.config = newConf.config
 	c.ConfigFingerprinter = newConf.ConfigFingerprinter
 	c.loopPreventer = newConf.loopPreventer
 	return nil
+}
+
+func (c configuration) diff(conf Configuration) bool {
+	newConf, ok := conf.(*configuration)
+	if !ok {
+		return true
+	}
+	c.rwLocker.RLock()
+	defer c.rwLocker.RUnlock()
+	return c.ConfigFingerprinter.Diff(newConf.ConfigFingerprinter)
 }
 
 func NewConfiguration(config *parser.Config, preventer loop_preventer.LoopPreventer) Configuration {

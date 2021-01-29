@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -36,10 +35,12 @@ func CheckBackups(name, backupDir string, retentionTime, backupCycleTime int, no
 	needBackup := true
 	saveDate := now.Add(-24 * time.Hour * time.Duration(retentionTime))
 	cycleDate := now.Add(-24 * time.Hour * time.Duration(backupCycleTime))
-	bakFilePattern := fmt.Sprintf(`^%s\.(\d{8})\.tgz$`, name)
+	//bakFilePattern := fmt.Sprintf(`^%s\.(\d{8})\.tgz$`, name)
+	bakFilePattern := `^nginx\.(\d{8})\.tgz$`
 	bakFileReg := regexp.MustCompile(bakFilePattern)
 
-	baks, gErr := filepath.Glob(filepath.Join(backupDir, fmt.Sprintf("%s.*.tgz", name)))
+	//baks, gErr := filepath.Glob(filepath.Join(backupDir, fmt.Sprintf("%s.*.tgz", name)))
+	baks, gErr := filepath.Glob(filepath.Join(backupDir, "nginx.*.tgz"))
 	if gErr != nil {
 		return false, gErr
 	}

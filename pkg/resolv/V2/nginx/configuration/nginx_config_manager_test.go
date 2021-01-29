@@ -6,11 +6,11 @@ import (
 )
 
 func exampleNewConfigManager() (*configManager, error) {
-	manager, err := NewConfigManager("test", "F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
+	manager, err := NewNginxConfigurationManager("test", "F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
 	if err != nil {
 		return nil, err
 	}
-	return manager, nil
+	return manager.(*configManager), nil
 }
 
 func TestConfigManager_SaveWithCheck(t *testing.T) {

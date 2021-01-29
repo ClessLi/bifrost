@@ -68,7 +68,7 @@ func Start() (err error) {
 			// 捕获panic
 			if r := recover(); r != nil {
 				err = fmt.Errorf("%s", r)
-				utils.Logger.FatalF(err.Error())
+				utils.Logger.FatalF("panic: %s", err.Error())
 
 			}
 			//Log(NOTICE, "bifrost is finished")
