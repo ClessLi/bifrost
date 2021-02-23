@@ -98,7 +98,7 @@ func TestConfiguration_InsertLoopConfig(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	q := queryer{
+	q := querier{
 		Parser:    nil,
 		fatherCtx: loopInclude,
 		selfIndex: 0,

@@ -10,86 +10,90 @@ import (
 )
 
 var (
-	ErrInvalidRequest  = errors.New("request has only one class: Request")
-	ErrResponseNull    = errors.New("response is null")
-	ErrInvalidResponse = errors.New("response is invalid")
-	ErrUnknownResponse = errors.New("unknown response")
+	ErrInvalidRequest = errors.New("request has only one class: Request")
 )
 
-type ViewRequest struct {
+// ViewRequestInfo 信息展示请求信息
+type ViewRequestInfo struct {
 	ViewType   string `json:"view_type"`
 	ServerName string `json:"server_name"`
 	Token      string `json:"token"`
 }
 
-type UpdateRequest struct {
+// UpdateRequestInfo 数据更新请求信息
+type UpdateRequestInfo struct {
 	UpdateType string `json:"update_type"`
 	ServerName string `json:"server_name"`
 	Token      string `json:"token"`
 	Data       []byte `json:"data"`
 }
 
-type WatchRequest struct {
+// WatchRequestInfo 数据监看请求信息
+type WatchRequestInfo struct {
 	WatchType   string `json:"watch_type"`
 	ServerName  string `json:"server_name"`
 	Token       string `json:"token"`
 	WatchObject string `json:"watch_object"`
 }
 
-type BytesResponder interface {
+// BytesResponseInfo 字节数据反馈信息接口对象
+type BytesResponseInfo interface {
 	Respond() []byte
 	Error() string
 }
 
-type ErrorResponder interface {
+// ErrorResponseInfo 错误反馈信息接口对象
+type ErrorResponseInfo interface {
 	Error() string
 }
 
-type WatchResponder interface {
-	Respond() <-chan BytesResponder
+// WatchResponseInfo 数据监看反馈信息接口对象
+type WatchResponseInfo interface {
+	Respond() <-chan BytesResponseInfo
 	Close() error
 }
 
-type bytesResponder struct {
+type bytesResponseInfo struct {
 	Result *bytes.Buffer `json:"result"`
 	Err    error         `json:"error"`
 }
 
-func (br bytesResponder) Respond() []byte {
+func (br bytesResponseInfo) Respond() []byte {
 	return br.Result.Bytes()
 }
 
-func (br bytesResponder) Error() string {
+func (br bytesResponseInfo) Error() string {
 	if br.Err != nil {
 		return br.Err.Error()
 	}
 	return ""
 }
 
-type errorResponder struct {
+type errorResponseInfo struct {
 	Err error `json:"error"`
 }
 
-func (er errorResponder) Error() string {
+func (er errorResponseInfo) Error() string {
 	if er.Err != nil {
 		return er.Err.Error()
 	}
 	return ""
 }
 
-type watchResponder struct {
-	Result    chan BytesResponder `json:"result"`
+type watchResponseInfo struct {
+	Result    chan BytesResponseInfo `json:"result"`
 	closeFunc func() error
 }
 
-func (wr watchResponder) Respond() <-chan BytesResponder {
+func (wr watchResponseInfo) Respond() <-chan BytesResponseInfo {
 	return wr.Result
 }
 
-func (wr watchResponder) Close() error {
+func (wr watchResponseInfo) Close() error {
 	return wr.closeFunc()
 }
 
+// BifrostEndpoints bifrost gRPC服务Endpoint层结构体
 type BifrostEndpoints struct {
 	ViewerEndpoint      endpoint.Endpoint
 	UpdaterEndpoint     endpoint.Endpoint
@@ -109,80 +113,82 @@ func NewBifrostEndpoints(svc service.Service) BifrostEndpoints {
 func MakeViewerEndpoint(viewer service.Viewer) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		utils.Logger.Debug("request to bifrost viewer endpoint")
-		if req, ok := request.(*ViewRequest); ok {
-			svcRequester := service.NewViewRequester(ctx, req.ViewType, req.ServerName, req.Token)
-			svcResponder := viewer.View(svcRequester)
-			viewResponder := newViewResponder(svcResponder)
-			return viewResponder, nil
+		if req, ok := request.(*ViewRequestInfo); ok {
+			svcRequestInfo := service.NewViewRequestInfo(ctx, req.ViewType, req.ServerName, req.Token)
+			svcResponseInfo := viewer.View(svcRequestInfo)
+			viewResponseInfo := newViewResponseInfo(svcResponseInfo)
+			return viewResponseInfo, nil
 		}
 		return nil, ErrInvalidRequest
 	}
 }
 
-func newViewResponder(svcResponder service.ViewResponder) BytesResponder {
-	return &bytesResponder{
-		Result: bytes.NewBuffer(svcResponder.Bytes()),
-		Err:    svcResponder.Error(),
+func newViewResponseInfo(svcResponseInfo service.ViewResponseInfo) BytesResponseInfo {
+	return &bytesResponseInfo{
+		Result: bytes.NewBuffer(svcResponseInfo.Bytes()),
+		Err:    svcResponseInfo.Error(),
 	}
 }
 
 func MakeUpdaterEndpoint(updater service.Updater) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		utils.Logger.Debug("request to bifrost updater endpoint")
-		if req, ok := request.(*UpdateRequest); ok {
-			svcRequester := service.NewUpdateRequester(ctx, req.UpdateType, req.ServerName, req.Token, req.Data)
-			svcResponder := updater.Update(svcRequester)
-			updateResponder := newUpdateResponder(svcResponder)
-			return updateResponder, nil
+		if req, ok := request.(*UpdateRequestInfo); ok {
+			svcRequestInfo := service.NewUpdateRequestInfo(ctx, req.UpdateType, req.ServerName, req.Token, req.Data)
+			svcResponseInfo := updater.Update(svcRequestInfo)
+			updateResponseInfo := newUpdateResponseInfo(svcResponseInfo)
+			return updateResponseInfo, nil
 		}
 		return nil, ErrInvalidRequest
 	}
 }
 
-func newUpdateResponder(svcResponder service.UpdateResponder) ErrorResponder {
-	return &errorResponder{Err: svcResponder.Error()}
+func newUpdateResponseInfo(svcResponseInfo service.UpdateResponseInfo) ErrorResponseInfo {
+	return &errorResponseInfo{Err: svcResponseInfo.Error()}
 }
 
 func MakeWatcherEndpoint(watcher service.Watcher) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		utils.Logger.Debug("request to bifrost watcher endpoint")
-		if req, ok := request.(*WatchRequest); ok {
-			svcRequester := service.NewWatchRequester(ctx, req.WatchType, req.ServerName, req.Token, req.WatchObject)
-			svcResponder := watcher.Watch(svcRequester)
-			if svcResponder.Error() != nil {
-				return nil, svcResponder.Error()
+		if req, ok := request.(*WatchRequestInfo); ok {
+			svcRequestInfo := service.NewWatchRequestInfo(ctx, req.WatchType, req.ServerName, req.Token, req.WatchObject)
+			svcResponseInfo := watcher.Watch(svcRequestInfo)
+			if svcResponseInfo.Error() != nil {
+				return nil, svcResponseInfo.Error()
 			}
-			watchResponder := newWatchResponder(svcResponder)
-			return watchResponder, nil
+			watchRespInfo := newWatchResponseInfo(svcResponseInfo)
+			return watchRespInfo, nil
 		}
 		return nil, ErrInvalidRequest
 	}
 }
 
-func newWatchResponder(svcResponder service.WatchResponder) WatchResponder {
+func newWatchResponseInfo(svcResponseInfo service.WatchResponseInfo) WatchResponseInfo {
 	signalChan := make(chan int)
 	closeFunc := func() error {
 		signalChan <- 9
 		return nil
 	}
-	BytesResponderChan := make(chan BytesResponder)
+	BytesResponseInfoChan := make(chan BytesResponseInfo)
 	go func() {
 		for {
 			select {
-			case b := <-svcResponder.BytesChan():
-				BytesResponderChan <- &bytesResponder{
+			case b := <-svcResponseInfo.BytesChan():
+				BytesResponseInfoChan <- &bytesResponseInfo{
 					Result: bytes.NewBuffer(b),
 					Err:    nil,
 				}
-			case err := <-svcResponder.TransferErrorChan():
-				BytesResponderChan <- &bytesResponder{
+			case err := <-svcResponseInfo.TransferErrorChan():
+				BytesResponseInfoChan <- &bytesResponseInfo{
 					Result: bytes.NewBuffer([]byte("")),
 					Err:    err,
 				}
 			case sig := <-signalChan:
 				if sig == 9 {
-					err := svcResponder.Close()
-					utils.Logger.WarningF("[%s] service watch responder close error, cased by %s", svcResponder.GetServerName(), err)
+					err := svcResponseInfo.Close()
+					if err != nil {
+						utils.Logger.WarningF("[%s] service watch responseInfo close error, cased by %s", svcResponseInfo.GetServerName(), err)
+					}
 					goto stopHere
 				}
 			}
@@ -190,8 +196,8 @@ func newWatchResponder(svcResponder service.WatchResponder) WatchResponder {
 	stopHere:
 		return
 	}()
-	return &watchResponder{
-		Result:    BytesResponderChan,
+	return &watchResponseInfo{
+		Result:    BytesResponseInfoChan,
 		closeFunc: closeFunc,
 	}
 }
@@ -205,7 +211,7 @@ type HealthResponse struct {
 }
 
 // MakeHealthCheckEndpoint 创建健康检查Endpoint
-func MakeHealthCheckEndpoint(svc service.Service) endpoint.Endpoint {
+func MakeHealthCheckEndpoint(_ service.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		return HealthResponse{true}, nil
 	}

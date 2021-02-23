@@ -12,6 +12,7 @@ import (
 	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
 	"golang.org/x/net/context"
 	"os"
+	"sync"
 	"testing"
 	"time"
 )
@@ -23,6 +24,7 @@ var (
 	initErr        error
 	token          string
 	bifrostSvrAddr = "192.168.220.11:12321"
+	//bifrostSvrAddr = "127.0.0.1:12321"
 )
 
 func init() {
@@ -105,7 +107,8 @@ func TestClientUpdateConfigV2(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	conf := configuration.NewConfiguration(config.(*parser.Config), preventer)
+	rwLocker := new(sync.RWMutex)
+	conf := configuration.NewConfiguration(config.(*parser.Config), preventer, rwLocker)
 	q, err := conf.Query("comment:sep: :reg: pid.*")
 	if err != nil {
 		t.Fatal(err)

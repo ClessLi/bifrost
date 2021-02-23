@@ -19,35 +19,19 @@ func main() {
 	defer utils.Stdoutf.Close()
 
 	err := errors.New("unkown signal")
+	daemon := bifrost.NewDaemon()
 	switch *bifrost.Signal {
 	case "":
-		err = bifrost.Start()
-		if err == nil {
-			os.Exit(0)
-		}
+		err = daemon.Start()
 	case "stop":
-		err = bifrost.Stop()
-		if err == nil {
-			if os.Getppid() != 1 {
-				fmt.Println("bifrost is stopped")
-			}
-			os.Exit(0)
-		}
+		err = daemon.Stop()
 	case "restart":
-		err = bifrost.Restart()
-		if err == nil {
-			os.Exit(0)
-		}
+		err = daemon.Restart()
 	case "status":
-		pid, statErr := bifrost.Status()
-		if statErr != nil {
-			fmt.Printf("bifrost is abnormal with error: %s\n", statErr.Error())
-			os.Exit(1)
-		} else {
-			fmt.Printf("bifrost <PID %d> is running\n", pid)
-			os.Exit(0)
-		}
+		err = daemon.Status()
 	}
-	fmt.Println(err.Error())
-	os.Exit(1)
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
 }

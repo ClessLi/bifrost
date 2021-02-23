@@ -5,6 +5,7 @@ import (
 	"github.com/ClessLi/bifrost/pkg/client/bifrost"
 	"github.com/ClessLi/skirnir/pkg/discover"
 	"golang.org/x/net/context"
+	"os"
 	"testing"
 )
 
@@ -14,7 +15,7 @@ func TestDiscoverBifrost(t *testing.T) {
 		t.Fatal(err)
 		return
 	}
-	instance := client.DiscoverServices("com.github.ClessLi.api.bifrost", config.KitLogger)
+	instance := client.DiscoverServices("com.github.ClessLi.api.bifrost", config.KitLogger(os.Stdout))
 	t.Log(instance)
 }
 

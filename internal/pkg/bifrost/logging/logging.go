@@ -15,12 +15,12 @@ type loggingViewer struct {
 	logger log.Logger
 }
 
-func (v loggingViewer) View(requester service.ViewRequester) (responder service.ViewResponder) {
-	ip, err := getClientIP(requester.Context())
+func (v loggingViewer) View(requestInfo service.ViewRequestInfo) (responseInfo service.ViewResponseInfo) {
+	ip, err := getClientIP(requestInfo.Context())
 	defer func(begin time.Time) {
 		n := 100
-		if responder != nil {
-			data := responder.Bytes()
+		if responseInfo != nil {
+			data := responseInfo.Bytes()
 			if data != nil {
 				if len(data) < n {
 					n = len(data)
@@ -31,32 +31,32 @@ func (v loggingViewer) View(requester service.ViewRequester) (responder service.
 			}
 			v.logger.Log(
 				"functions", "View",
-				"requestType", requester.GetRequestType(),
+				"requestType", requestInfo.GetRequestType(),
 				"clientIp", ip,
-				"token", requester.GetToken(),
-				"webServerName", responder.GetServerName(),
+				"token", requestInfo.GetToken(),
+				"webServerName", responseInfo.GetServerName(),
 				"result", string(data[:n])+"...",
-				"error", responder.Error(),
+				"error", responseInfo.Error(),
 				"took", time.Since(begin),
 			)
 			return
 		}
 		v.logger.Log(
 			"functions", "View",
-			"requestType", requester.GetRequestType(),
+			"requestType", requestInfo.GetRequestType(),
 			"clientIp", ip,
-			"token", requester.GetToken(),
-			"webServerName", requester.GetServerName(),
-			"responder", responder,
+			"token", requestInfo.GetToken(),
+			"webServerName", requestInfo.GetServerName(),
+			"responseInfo", responseInfo,
 			"error", err,
 			"took", time.Since(begin),
 		)
 
 	}(time.Now().Local())
 	if err != nil {
-		return service.NewViewResponder(requester.GetServerName(), []byte(""), err)
+		return service.NewViewResponseInfo(requestInfo.GetServerName(), []byte(""), err)
 	}
-	responder = v.viewer.View(requester)
+	responseInfo = v.viewer.View(requestInfo)
 	return
 }
 
@@ -74,37 +74,37 @@ type loggingUpdater struct {
 	logger  log.Logger
 }
 
-func (u loggingUpdater) Update(requester service.UpdateRequester) (responder service.UpdateResponder) {
-	ip, err := getClientIP(requester.Context())
+func (u loggingUpdater) Update(requestInfo service.UpdateRequestInfo) (responseInfo service.UpdateResponseInfo) {
+	ip, err := getClientIP(requestInfo.Context())
 	defer func(begin time.Time) {
-		if responder != nil {
+		if responseInfo != nil {
 			u.logger.Log(
 				"functions", "Update",
-				"requestType", requester.GetRequestType(),
+				"requestType", requestInfo.GetRequestType(),
 				"clientIp", ip,
-				"token", requester.GetToken(),
-				"webServerName", responder.GetServerName(),
-				"error", responder.Error(),
+				"token", requestInfo.GetToken(),
+				"webServerName", responseInfo.GetServerName(),
+				"error", responseInfo.Error(),
 				"took", time.Since(begin),
 			)
 			return
 		}
 		u.logger.Log(
 			"functions", "Update",
-			"requestType", requester.GetRequestType(),
+			"requestType", requestInfo.GetRequestType(),
 			"clientIp", ip,
-			"token", requester.GetToken(),
-			"webServerName", requester.GetServerName(),
-			"responder", responder,
+			"token", requestInfo.GetToken(),
+			"webServerName", requestInfo.GetServerName(),
+			"responseInfo", responseInfo,
 			"error", err,
 			"took", time.Since(begin),
 		)
 
 	}(time.Now().Local())
 	if err != nil {
-		return service.NewUpdateResponder(requester.GetServerName(), err)
+		return service.NewUpdateResponseInfo(requestInfo.GetServerName(), err)
 	}
-	responder = u.updater.Update(requester)
+	responseInfo = u.updater.Update(requestInfo)
 	return
 }
 
@@ -122,37 +122,37 @@ type loggingWatcher struct {
 	logger  log.Logger
 }
 
-func (w loggingWatcher) Watch(requester service.WatchRequester) (responder service.WatchResponder) {
-	ip, err := getClientIP(requester.Context())
+func (w loggingWatcher) Watch(requestInfo service.WatchRequestInfo) (responseInfo service.WatchResponseInfo) {
+	ip, err := getClientIP(requestInfo.Context())
 	defer func(begin time.Time) {
-		if responder != nil {
+		if responseInfo != nil {
 			w.logger.Log(
 				"functions", "Watch",
-				"requestType", requester.GetRequestType(),
+				"requestType", requestInfo.GetRequestType(),
 				"clientIp", ip,
-				"token", requester.GetToken(),
-				"webServerName", responder.GetServerName(),
-				"error", responder.Error(),
+				"token", requestInfo.GetToken(),
+				"webServerName", responseInfo.GetServerName(),
+				"error", responseInfo.Error(),
 				"took", time.Since(begin),
 			)
 			return
 		}
 		w.logger.Log(
 			"functions", "Watch",
-			"requestType", requester.GetRequestType(),
+			"requestType", requestInfo.GetRequestType(),
 			"clientIp", ip,
-			"token", requester.GetToken(),
-			"webServerName", requester.GetServerName(),
-			"responder", responder,
+			"token", requestInfo.GetToken(),
+			"webServerName", requestInfo.GetServerName(),
+			"responseInfo", responseInfo,
 			"error", err,
 			"took", time.Since(begin),
 		)
 
 	}(time.Now().Local())
 	if err != nil {
-		return service.NewWatchResponder(requester.GetServerName(), nil, nil, nil, err)
+		return service.NewWatchResponseInfo(requestInfo.GetServerName(), nil, nil, nil, err)
 	}
-	responder = w.watcher.Watch(requester)
+	responseInfo = w.watcher.Watch(requestInfo)
 	return
 }
 

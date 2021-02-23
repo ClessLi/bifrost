@@ -14,7 +14,7 @@ import (
 //     2) location:sep: :reg: \^\~\s+\/
 //     3) key:sep: server_name test1\.com
 //     4) comment:sep: :reg: .*
-type Queryer interface {
+type Querier interface {
 	// keyword string: <parser type>[':sep: <value string>', ':sep: :reg: <value regexp>']
 	//
 	// e.g. for Nginx Config keyword string:
@@ -22,7 +22,7 @@ type Queryer interface {
 	//     2) location:sep: :reg: \^\~\s+\/
 	//     3) key:sep: server_name test1\.com
 	//     4) comment:sep: :reg: .*
-	Query(keyword string) (Queryer, error)
+	Query(keyword string) (Querier, error)
 	// keyword string: <parser type>[':sep: <value string>', ':sep: :reg: <value regexp>']
 	//
 	// e.g. for Nginx Config keyword string:
@@ -30,19 +30,19 @@ type Queryer interface {
 	//     2) location:sep: :reg: \^\~\s+\/
 	//     3) key:sep: server_name test1\.com
 	//     4) comment:sep: :reg: .*
-	QueryAll(keyword string) ([]Queryer, error)
+	QueryAll(keyword string) ([]Querier, error)
 	Self() parser.Parser
 	fatherContext() parser.Context
 	index() int
 }
 
-type queryer struct {
+type querier struct {
 	parser.Parser
 	fatherCtx parser.Context
 	selfIndex int
 }
 
-func (q queryer) Query(keyword string) (Queryer, error) {
+func (q querier) Query(keyword string) (Querier, error) {
 	ctx, ok := q.Parser.(parser.Context)
 	if !ok {
 		return nil, nil
@@ -60,14 +60,14 @@ func (q queryer) Query(keyword string) (Queryer, error) {
 		return nil, err
 	}
 
-	return &queryer{
+	return &querier{
 		Parser:    foundParser,
 		fatherCtx: foundCtx,
 		selfIndex: index,
 	}, nil
 }
 
-func (q queryer) QueryAll(keyword string) ([]Queryer, error) {
+func (q querier) QueryAll(keyword string) ([]Querier, error) {
 	ctx, ok := q.Parser.(parser.Context)
 	if !ok {
 		return nil, nil
@@ -76,7 +76,7 @@ func (q queryer) QueryAll(keyword string) ([]Queryer, error) {
 	if err != nil {
 		return nil, err
 	}
-	queryers := make([]Queryer, 0)
+	queryers := make([]Querier, 0)
 	for foundCtx, indexes := range ctx.QueryAll(parserKeyword) {
 		if indexes == nil {
 			continue
@@ -86,7 +86,7 @@ func (q queryer) QueryAll(keyword string) ([]Queryer, error) {
 			if err != nil {
 				return nil, err
 			}
-			queryers = append(queryers, &queryer{
+			queryers = append(queryers, &querier{
 				Parser:    foundParser,
 				fatherCtx: foundCtx,
 				selfIndex: index,
@@ -96,24 +96,24 @@ func (q queryer) QueryAll(keyword string) ([]Queryer, error) {
 	return queryers, nil
 }
 
-func (q queryer) Self() parser.Parser {
+func (q querier) Self() parser.Parser {
 	return q.Parser
 }
 
-func (q queryer) fatherContext() parser.Context {
+func (q querier) fatherContext() parser.Context {
 	return q.fatherCtx
 }
 
-func (q queryer) index() int {
+func (q querier) index() int {
 	return q.selfIndex
 }
 
-func NewQueryer(fatherContext parser.Context, selfIndex int) (Queryer, error) {
+func NewQuerier(fatherContext parser.Context, selfIndex int) (Querier, error) {
 	p, err := fatherContext.GetChild(selfIndex)
 	if err != nil {
 		return nil, err
 	}
-	return &queryer{
+	return &querier{
 		Parser:    p,
 		fatherCtx: fatherContext,
 		selfIndex: selfIndex,

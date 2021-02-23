@@ -1,7 +1,7 @@
 package service
 
 type Viewer interface {
-	View(ViewRequester) ViewResponder
+	View(ViewRequestInfo) ViewResponseInfo
 }
 
 type viewer struct {
@@ -12,7 +12,7 @@ func NewViewer(offstage offstageViewer) Viewer {
 	return &viewer{offstage: offstage}
 }
 
-func (v viewer) View(req ViewRequester) ViewResponder {
+func (v viewer) View(req ViewRequestInfo) ViewResponseInfo {
 	serverName := req.GetServerName()
 	data := make([]byte, 0)
 	var err error
@@ -29,5 +29,5 @@ func (v viewer) View(req ViewRequester) ViewResponder {
 	default:
 		err = UnknownRequestType
 	}
-	return NewViewResponder(serverName, data, err)
+	return NewViewResponseInfo(serverName, data, err)
 }

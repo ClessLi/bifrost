@@ -140,7 +140,7 @@ func (s *gRPCHandlers) Watch(stream bifrostpb.WatchService_WatchServer) (err err
 	if err != nil {
 		return err
 	}
-	responder, ok := resp.(*watchResponder)
+	responseInfo, ok := resp.(*watchResponseInfo)
 	if !ok {
 		return ErrUnknownResponse
 	}
@@ -149,13 +149,13 @@ func (s *gRPCHandlers) Watch(stream bifrostpb.WatchService_WatchServer) (err err
 	go func(stopSig chan int) {
 		for {
 			select {
-			case response := <-responder.Respond():
+			case response := <-responseInfo.Respond():
 				_ = stream.Send(response)
 			case sig := <-stopSig:
 				if sig == 9 { // 信号9传入则开始停止
 					//fmt.Println("开始停止")
 					//fmt.Println("开始发送停止信号")
-					err = responder.Close()
+					err = responseInfo.Close()
 					//fmt.Println("停止传递结束")
 					return
 				}

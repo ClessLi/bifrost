@@ -2,14 +2,20 @@ package configuration
 
 import (
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
+	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loader"
+	"sync"
 	"testing"
+	"time"
 )
 
 func exampleNewConfigManager() (*configManager, error) {
-	manager, err := NewNginxConfigurationManager("test", "F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
+	l := loader.NewLoader()
+	ctx, loopPreventer, err := l.LoadFromFilePath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
 	if err != nil {
 		return nil, err
 	}
+	c := NewConfiguration(ctx.(*parser.Config), loopPreventer, new(sync.RWMutex))
+	manager := NewNginxConfigurationManager(l, c, ".", "", 1, 7, new(sync.RWMutex))
 	return manager.(*configManager), nil
 }
 
@@ -43,63 +49,12 @@ func TestConfigManager_Backup(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = manager.Backup("", 7, 1)
+	err = manager.regularlyBackup(time.Second, make(chan int))
 	if err != nil {
 		t.Fatal(err)
 	}
-}
-
-func TestConfigManager_Read(t *testing.T) {
-
-	manager, err := exampleNewConfigManager()
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(string(manager.Read()))
-}
-
-func TestConfigManager_ReadJson(t *testing.T) {
-
-	manager, err := exampleNewConfigManager()
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(string(manager.ReadJson()))
-}
-
-func TestConfigManager_ReadStatistics(t *testing.T) {
-
-	manager, err := exampleNewConfigManager()
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(string(manager.ReadStatistics()))
-}
-
-func TestConfigManager_UpdateFromJsonBytes(t *testing.T) {
-
-	manager, err := exampleNewConfigManager()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	config := manager.configuration
-	c, err := config.Query("comment:sep: :reg: .*")
-	if err != nil {
-		t.Fatal(err)
-	}
-	newC := parser.NewComment("testConfigManager_update...", false, c.Self().GetIndention())
-	err = config.InsertByQueryer(newC, c)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	manager2, err := exampleNewConfigManager()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = manager2.UpdateFromJsonBytes(config.Json())
+	time.Sleep(time.Second * 5)
+	err = manager.Stop()
 	if err != nil {
 		t.Fatal(err)
 	}

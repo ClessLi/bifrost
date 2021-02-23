@@ -8,16 +8,16 @@ import (
 	"time"
 )
 
-type watchResponder struct {
+type watchResponseInfo struct {
 	bytesResponseChan chan *bifrostpb.BytesResponse
 	signalChan        chan int
 }
 
-func (wr watchResponder) Respond() <-chan *bifrostpb.BytesResponse {
+func (wr watchResponseInfo) Respond() <-chan *bifrostpb.BytesResponse {
 	return wr.bytesResponseChan
 }
 
-func (wr watchResponder) Close() error {
+func (wr watchResponseInfo) Close() error {
 	select {
 	case wr.signalChan <- 9:
 		return nil
@@ -26,32 +26,32 @@ func (wr watchResponder) Close() error {
 	}
 }
 
-func newWatchResponder(epWatchResponder endpoint.WatchResponder) *watchResponder {
-	responder := &watchResponder{
+func newWatchResponseInfo(epWatchResponseInfo endpoint.WatchResponseInfo) *watchResponseInfo {
+	responseInfo := &watchResponseInfo{
 		bytesResponseChan: make(chan *bifrostpb.BytesResponse),
 		signalChan:        make(chan int),
 	}
 	go func() {
 		for {
 			select {
-			case byteResponder := <-epWatchResponder.Respond():
-				responder.bytesResponseChan <- &bifrostpb.BytesResponse{
-					Ret: byteResponder.Respond(),
-					Err: byteResponder.Error(),
+			case bytesResponseInfo := <-epWatchResponseInfo.Respond():
+				responseInfo.bytesResponseChan <- &bifrostpb.BytesResponse{
+					Ret: bytesResponseInfo.Respond(),
+					Err: bytesResponseInfo.Error(),
 				}
-			case signal := <-responder.signalChan:
+			case signal := <-responseInfo.signalChan:
 				if signal == 9 {
-					epWatchResponder.Close()
+					epWatchResponseInfo.Close()
 					return
 				}
 			}
 		}
 	}()
-	return responder
+	return responseInfo
 }
 
 func EncodeViewResponse(_ context.Context, r interface{}) (interface{}, error) {
-	if resp, ok := r.(endpoint.BytesResponder); ok {
+	if resp, ok := r.(endpoint.BytesResponseInfo); ok {
 		return &bifrostpb.BytesResponse{
 			Ret: resp.Respond(),
 			Err: resp.Error(),
@@ -61,15 +61,15 @@ func EncodeViewResponse(_ context.Context, r interface{}) (interface{}, error) {
 }
 
 func EncodeUpdateResponse(_ context.Context, r interface{}) (interface{}, error) {
-	if resp, ok := r.(endpoint.ErrorResponder); ok {
+	if resp, ok := r.(endpoint.ErrorResponseInfo); ok {
 		return &bifrostpb.ErrorResponse{Err: resp.Error()}, nil
 	}
 	return nil, ErrUnknownResponse
 }
 
 func EncodeWatchResponse(_ context.Context, r interface{}) (interface{}, error) {
-	if resp, ok := r.(endpoint.WatchResponder); ok {
-		return newWatchResponder(resp), nil
+	if resp, ok := r.(endpoint.WatchResponseInfo); ok {
+		return newWatchResponseInfo(resp), nil
 	}
 	return nil, ErrUnknownResponse
 }

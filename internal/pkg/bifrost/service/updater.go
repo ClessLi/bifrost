@@ -1,7 +1,7 @@
 package service
 
 type Updater interface {
-	Update(UpdateRequester) UpdateResponder
+	Update(UpdateRequestInfo) UpdateResponseInfo
 }
 
 type updater struct {
@@ -12,7 +12,7 @@ func NewUpdater(offstage offstageUpdater) Updater {
 	return &updater{offstage: offstage}
 }
 
-func (u *updater) Update(req UpdateRequester) UpdateResponder {
+func (u *updater) Update(req UpdateRequestInfo) UpdateResponseInfo {
 	serverName := req.GetServerName()
 	var err error
 	switch req.GetRequestType() {
@@ -21,5 +21,5 @@ func (u *updater) Update(req UpdateRequester) UpdateResponder {
 	default:
 		err = UnknownRequestType
 	}
-	return NewUpdateResponder(serverName, err)
+	return NewUpdateResponseInfo(serverName, err)
 }

@@ -7,12 +7,7 @@ package bifrost
 import (
 	"flag"
 	"fmt"
-	"github.com/ClessLi/bifrost/internal/pkg/bifrost/service"
-	"github.com/ClessLi/bifrost/internal/pkg/bifrost/service/web_server_manager"
 	"github.com/ClessLi/bifrost/internal/pkg/utils"
-	"github.com/ClessLi/skirnir/pkg/discover"
-	"github.com/apsdehal/go-logger"
-	"gopkg.in/yaml.v2"
 	"os"
 	"path/filepath"
 )
@@ -25,71 +20,13 @@ var (
 	version  = flag.Bool("v", false, "this `version`")
 	//confBackupDelay = flag.Duration("b", 10, "how many minutes `delay` for backup nginx config")
 
-	// bifrost配置
-	BifrostConf = new(Config)
-	//authDBConfig *AuthDBConfig
-	//authConfig   *AuthConfig
-
 	// 程序工作目录
 	workspace string
 
 	// 进程文件
 	pidFilename = "bifrost.pid"
 	pidFile     string
-
-	// 初始化systemInfo监控对象
-	//sysInfo      = &systemInfo{}
-	//svrPidFileKW = nginx.NewKeyWords(nginx.TypeKey, "pid", "*", false, false)
-
-	// 初始化信号量
-	signalChan = make(chan int)
-	isInit     bool
-
-	// 服务实例id
-	instanceId      string
-	discoveryClient discover.RegistryClient
 )
-
-// Config, bifrost配置文件结构体，定义bifrost配置信息
-type Config struct {
-	ServiceConfig ServiceConfig `yaml:"Service"`
-	//AuthService *AuthService `yaml:"AuthService"`
-	*RAConfig `yaml:"RAConfig"`
-	LogConfig `yaml:"LogConfig"`
-}
-
-type ServiceConfig struct {
-	Port                     uint16                                   `yaml:"Port"`
-	ChunckSize               int                                      `yaml:"ChunkSize"`
-	AuthServerAddr           string                                   `yaml:"AuthServerAddr"`
-	WebServerConfigInfos     []web_server_manager.WebServerConfigInfo `yaml:"Infos,flow"`
-	BifrostServiceController *service.BifrostServiceController
-}
-
-//type Info struct {
-//	Name           string                `yaml:"name"`
-//	Type           web_server_manager.WebServerType `yaml:"type"`
-//	BackupCycle    int                   `yaml:"backupCycle"`
-//	BackupSaveTime int                   `yaml:"backupSaveTime"`
-//	BackupDir      string                `yaml:"backupDir,omitempty"`
-//	ConfPath       string                `yaml:"confPath"`
-//	VerifyExecPath string                `yaml:"verifyExecPath"`
-//}
-
-type RAConfig struct {
-	Host string `yaml:"Host"`
-	Port uint16 `yaml:"Port"`
-}
-
-// LogConfig, bifrost日志信息结构体，定义日志目录、日志级别
-type LogConfig struct {
-	LogDir string          `yaml:"logDir"`
-	Level  logger.LogLevel `yaml:"level"`
-}
-
-func (l LogConfig) IsDebugLvl() bool {
-	return l.Level >= logger.DebugLevel
-}
 
 // usage, 重新定义flag.Usage 函数，为bifrost帮助信息提供版本信息及命令行工具传参信息
 func usage() {
@@ -121,7 +58,13 @@ func init() {
 
 	// 初始化应用传参
 	flag.Usage = usage
+	// 判断是否为单元测试
+	if len(os.Args) > 3 && os.Args[1] == "-test.v" && os.Args[2] == "-test.run" {
+		fmt.Println(workspace)
+		return
+	}
 	flag.Parse()
+
 	if *confPath == "" {
 		*confPath = "./configs/bifrost.yml"
 	}
@@ -153,57 +96,4 @@ func init() {
 		flag.Usage()
 		os.Exit(1)
 	}
-	// 初始化bifrost配置
-	confData, err := utils.ReadFile(*confPath)
-	if err != nil {
-		fmt.Println(err)
-		flag.Usage()
-		os.Exit(1)
-	}
-
-	// 加载bifrost配置
-	err = yaml.Unmarshal(confData, BifrostConf)
-	if err != nil {
-		fmt.Println(err)
-		flag.Usage()
-		os.Exit(1)
-	}
-
-	// 配置必填项检查
-	err = configCheck()
-	if err != nil {
-		fmt.Println(err)
-		flag.Usage()
-		os.Exit(1)
-	}
-
-	// 初始化日志
-	logDir, err := filepath.Abs(BifrostConf.LogDir)
-	if err != nil {
-		panic(err)
-	}
-
-	logPath := filepath.Join(logDir, "bifrost.log")
-	utils.Logf, err = os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		panic(err)
-	}
-
-	utils.InitLogger(utils.Logf, BifrostConf.LogConfig.Level)
-
-	// 初始化应用运行日志输出
-	stdoutPath := filepath.Join(logDir, "bifrost.out")
-	utils.Stdoutf, err = os.OpenFile(stdoutPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		panic(err)
-	}
-}
-
-func initConfig() {
-	os.Stdout = utils.Stdoutf
-	os.Stderr = utils.Stdoutf
-	// 初始化web服务器配置服务控制器
-	BifrostConf.ServiceConfig.BifrostServiceController = service.NewBifrostServiceController(BifrostConf.ServiceConfig.WebServerConfigInfos...)
-
-	isInit = true
 }

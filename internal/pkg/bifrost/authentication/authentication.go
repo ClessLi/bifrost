@@ -11,15 +11,15 @@ type viewerWithAuthentication struct {
 	authSvcCli *auth.Client
 }
 
-func (v viewerWithAuthentication) View(requester service.ViewRequester) service.ViewResponder {
-	ctx := requester.Context()
-	token := requester.GetToken()
+func (v viewerWithAuthentication) View(requestInfo service.ViewRequestInfo) service.ViewResponseInfo {
+	ctx := requestInfo.Context()
+	token := requestInfo.GetToken()
 	err := checkToken(ctx, token, v.authSvcCli)
 	if err != nil {
-		return service.NewViewResponder(requester.GetServerName(), []byte(""), err)
+		return service.NewViewResponseInfo(requestInfo.GetServerName(), []byte(""), err)
 	}
 
-	return v.viewer.View(requester)
+	return v.viewer.View(requestInfo)
 
 }
 
@@ -28,15 +28,15 @@ type updaterWithAuthentication struct {
 	authSvcCli *auth.Client
 }
 
-func (u updaterWithAuthentication) Update(requester service.UpdateRequester) service.UpdateResponder {
-	ctx := requester.Context()
-	token := requester.GetToken()
+func (u updaterWithAuthentication) Update(requestInfo service.UpdateRequestInfo) service.UpdateResponseInfo {
+	ctx := requestInfo.Context()
+	token := requestInfo.GetToken()
 	err := checkToken(ctx, token, u.authSvcCli)
 	if err != nil {
-		return service.NewUpdateResponder(requester.GetServerName(), err)
+		return service.NewUpdateResponseInfo(requestInfo.GetServerName(), err)
 	}
 
-	return u.updater.Update(requester)
+	return u.updater.Update(requestInfo)
 }
 
 type watcherWithAuthentication struct {
@@ -44,14 +44,14 @@ type watcherWithAuthentication struct {
 	authSvcCli *auth.Client
 }
 
-func (w watcherWithAuthentication) Watch(requester service.WatchRequester) service.WatchResponder {
-	ctx := requester.Context()
-	token := requester.GetToken()
+func (w watcherWithAuthentication) Watch(requestInfo service.WatchRequestInfo) service.WatchResponseInfo {
+	ctx := requestInfo.Context()
+	token := requestInfo.GetToken()
 	err := checkToken(ctx, token, w.authSvcCli)
 	if err != nil {
-		return service.NewWatchResponder(requester.GetServerName(), nil, nil, nil, err)
+		return service.NewWatchResponseInfo(requestInfo.GetServerName(), nil, nil, nil, err)
 	}
-	return w.watcher.Watch(requester)
+	return w.watcher.Watch(requestInfo)
 }
 
 type authenticationMiddleware struct {

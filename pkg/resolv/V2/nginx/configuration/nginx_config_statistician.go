@@ -68,7 +68,7 @@ func NewStatistician(c *configuration) *Statistician {
 	return &Statistician{configuration: c}
 }
 
-func Port(q Queryer) int {
+func Port(q Querier) int {
 	keyQueryer, err := q.Query("key:sep: :reg: listen .*")
 	if err != nil {
 		return -1
@@ -85,7 +85,7 @@ func Port(q Queryer) int {
 	return -1
 }
 
-func Ports(qs []Queryer) []int {
+func Ports(qs []Querier) []int {
 	ports := make([]int, 0)
 	for _, q := range qs {
 		port := Port(q)
@@ -96,7 +96,7 @@ func Ports(qs []Queryer) []int {
 	return ports
 }
 
-func HttpPorts(q Queryer) []int {
+func HttpPorts(q Querier) []int {
 	httpQueryer, err := q.Query("http")
 	if err != nil {
 		return nil
@@ -108,7 +108,7 @@ func HttpPorts(q Queryer) []int {
 	return Ports(serverQueryers)
 }
 
-func HttpServers(q Queryer) (int, map[string][]int) {
+func HttpServers(q Querier) (int, map[string][]int) {
 	serverCount := 0
 	httpQueryer, err := q.Query("http")
 	if err != nil {
@@ -142,7 +142,7 @@ func HttpServers(q Queryer) (int, map[string][]int) {
 	return serverCount, serverPortCount
 }
 
-func StreamServers(q Queryer) (int, []int) {
+func StreamServers(q Querier) (int, []int) {
 	serverCount := 0
 	streamQueryer, err := q.Query("stream")
 	if err != nil {

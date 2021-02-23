@@ -3,15 +3,15 @@ package bifrost
 import (
 	"errors"
 	"github.com/ClessLi/bifrost/internal/pkg/bifrost/config"
-	bifrostendpoint "github.com/ClessLi/bifrost/internal/pkg/bifrost/endpoint"
 	"github.com/ClessLi/skirnir/pkg/discover"
 	"google.golang.org/grpc"
+	"os"
 	"time"
 )
 
 type Client struct {
 	*grpc.ClientConn
-	*bifrostendpoint.BifrostClientEndpoints
+	*bifrostClientEndpoints
 }
 
 func NewClientFromConsul(consulHost string, consulPort uint16) (*Client, error) {
@@ -22,7 +22,7 @@ func NewClientFromConsul(consulHost string, consulPort uint16) (*Client, error) 
 	factory := func(instance string) (interface{}, error) {
 		return NewClient(instance)
 	}
-	relay, err := discoveryClient.DiscoverServicesClient("com.github.ClessLi.api.bifrost", config.KitLogger, factory)
+	relay, err := discoveryClient.DiscoverServicesClient("com.github.ClessLi.api.bifrost", config.KitLogger(os.Stdout), factory)
 	if err != nil {
 		return nil, err
 	}
@@ -37,9 +37,9 @@ func NewClient(svrAddr string) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	eps := bifrostendpoint.NewBifrostClient(conn)
+	eps := NewBifrostClient(conn)
 	return &Client{
 		ClientConn:             conn,
-		BifrostClientEndpoints: eps,
+		bifrostClientEndpoints: eps,
 	}, nil
 }

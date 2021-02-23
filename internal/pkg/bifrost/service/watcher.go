@@ -1,9 +1,7 @@
 package service
 
-import "github.com/ClessLi/bifrost/internal/pkg/bifrost/service/web_server_manager"
-
 type Watcher interface {
-	Watch(WatchRequester) WatchResponder
+	Watch(info WatchRequestInfo) WatchResponseInfo
 }
 
 type watcher struct {
@@ -14,7 +12,7 @@ func NewWatcher(offstage offstageWatcher) Watcher {
 	return &watcher{offstage: offstage}
 }
 
-func (w watcher) Watch(req WatchRequester) WatchResponder {
+func (w watcher) Watch(req WatchRequestInfo) WatchResponseInfo {
 	serverName := req.GetServerName()
 	objectName := req.GetObjectName()
 	var dataChan <-chan []byte
@@ -23,7 +21,7 @@ func (w watcher) Watch(req WatchRequester) WatchResponder {
 	var err error
 	switch req.GetRequestType() {
 	case WatchLog:
-		var logWatcher web_server_manager.LogWatcher
+		var logWatcher LogWatcher
 		logWatcher, err = w.offstage.WatchLog(serverName, objectName)
 		if logWatcher != nil {
 			dataChan = logWatcher.GetDataChan()
@@ -35,5 +33,5 @@ func (w watcher) Watch(req WatchRequester) WatchResponder {
 	default:
 		err = UnknownRequestType
 	}
-	return NewWatchResponder(serverName, closeFunc, dataChan, transferErrChan, err)
+	return NewWatchResponseInfo(serverName, closeFunc, dataChan, transferErrChan, err)
 }

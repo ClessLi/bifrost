@@ -13,11 +13,11 @@ type service struct {
 	watcher Watcher
 }
 
-func NewService(offstageService *BifrostService) Service {
+func NewService(viewer Viewer, updater Updater, watcher Watcher) Service {
 	return &service{
-		viewer:  NewViewer(offstageService),
-		updater: NewUpdater(offstageService),
-		watcher: NewWatcher(offstageService),
+		viewer:  viewer,
+		updater: updater,
+		watcher: watcher,
 	}
 }
 
