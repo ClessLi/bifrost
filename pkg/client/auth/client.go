@@ -11,7 +11,7 @@ import (
 )
 
 type Client struct {
-	*grpc.ClientConn
+	//*grpc.ClientConn
 	service.Service
 }
 
@@ -38,8 +38,7 @@ func NewClient(svrAddr string) (*Client, error) {
 		).Endpoint(),
 	}
 	return &Client{
-		ClientConn: conn,
-		Service:    eps,
+		Service: eps,
 	}, nil
 }
 

@@ -239,8 +239,12 @@ func (o Offstage) WatchLog(serverName, logName string) (LogWatcher, error) {
 	signalChan := make(chan int)
 
 	lw := NewLogWatcher(dataChan, transferErrChan, func() error {
-		signalChan <- 9
-		return nil
+		select {
+		case signalChan <- 9:
+			return nil
+		case <-time.After(time.Second * 10):
+			return ErrLogWatcherCloseTimeout
+		}
 	})
 	// 监听终止信号和每秒读取日志并发送
 	//fmt.Println("监听终止信号及准备发送日志")

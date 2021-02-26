@@ -49,7 +49,9 @@ func (w watcherWithAuthentication) Watch(requestInfo service.WatchRequestInfo) s
 	token := requestInfo.GetToken()
 	err := checkToken(ctx, token, w.authSvcCli)
 	if err != nil {
-		return service.NewWatchResponseInfo(requestInfo.GetServerName(), nil, nil, nil, err)
+		return service.NewWatchResponseInfo(requestInfo.GetServerName(), func() error {
+			return service.ErrInvalidResponseInfo
+		}, nil, nil, err)
 	}
 	return w.watcher.Watch(requestInfo)
 }

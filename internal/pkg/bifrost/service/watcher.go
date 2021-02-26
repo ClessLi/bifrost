@@ -17,7 +17,9 @@ func (w watcher) Watch(req WatchRequestInfo) WatchResponseInfo {
 	objectName := req.GetObjectName()
 	var dataChan <-chan []byte
 	var transferErrChan <-chan error
-	closeFunc := func() error { return nil }
+	closeFunc := func() error {
+		return ErrInvalidResponseInfo
+	}
 	var err error
 	switch req.GetRequestType() {
 	case WatchLog:

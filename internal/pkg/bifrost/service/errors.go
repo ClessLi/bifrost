@@ -12,6 +12,9 @@ var (
 	ErrMonitoringServiceSuspension = errors.New("monitoring service suspension")
 	ErrMonitoringStarted           = errors.New("monitoring started")
 	// offstage Error
-	ErrDataSendingTimeout = errors.New("data sending timeout")
-	ErrWatchLogTimeout    = errors.New("the WatchLog operation timed out")
+	ErrDataSendingTimeout     = errors.New("data sending timeout")
+	ErrWatchLogTimeout        = errors.New("the WatchLog operation timed out")
+	ErrLogWatcherCloseTimeout = errors.New("the LogWatcher Close timed out")
+	// responseInfo Error
+	ErrInvalidResponseInfo = errors.New("invalid response info object")
 )

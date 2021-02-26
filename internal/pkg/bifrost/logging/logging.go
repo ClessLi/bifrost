@@ -54,7 +54,7 @@ func (v loggingViewer) View(requestInfo service.ViewRequestInfo) (responseInfo s
 
 	}(time.Now().Local())
 	if err != nil {
-		return service.NewViewResponseInfo(requestInfo.GetServerName(), []byte(""), err)
+		return service.NewViewResponseInfo(requestInfo.GetServerName(), nil, err)
 	}
 	responseInfo = v.viewer.View(requestInfo)
 	return
