@@ -9,7 +9,7 @@ const ( // RequestType
 	DisplayConfig
 	GetConfig
 	ShowStatistics
-	DisplayStatus
+	DisplayServersStatus
 
 	UpdateConfig
 

@@ -9,13 +9,25 @@ type viewer struct {
 }
 
 func NewViewer(offstage offstageViewer) Viewer {
+
+	if offstage == nil {
+		panic("offstage is nil")
+	}
+
 	return &viewer{offstage: offstage}
 }
 
 func (v viewer) View(req ViewRequestInfo) ViewResponseInfo {
-	serverName := req.GetServerName()
-	data := make([]byte, 0)
 	var err error
+	var data []byte
+
+	if req == nil {
+		err = ErrNilRequestInfo
+		return NewViewResponseInfo("", data, err)
+	}
+
+	serverName := req.GetServerName()
+
 	switch req.GetRequestType() {
 	case DisplayConfig:
 		data, err = v.offstage.DisplayConfig(serverName)
@@ -23,11 +35,12 @@ func (v viewer) View(req ViewRequestInfo) ViewResponseInfo {
 		data, err = v.offstage.GetConfig(serverName)
 	case ShowStatistics:
 		data, err = v.offstage.ShowStatistics(serverName)
-	case DisplayStatus:
-		data, err = v.offstage.DisplayStatus()
+	case DisplayServersStatus:
+		data, err = v.offstage.DisplayServersStatus()
 		serverName = ""
 	default:
-		err = UnknownRequestType
+		err = ErrUnknownRequestType
 	}
+
 	return NewViewResponseInfo(serverName, data, err)
 }

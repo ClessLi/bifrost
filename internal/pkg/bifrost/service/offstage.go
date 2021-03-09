@@ -24,7 +24,7 @@ type offstageViewer interface {
 	DisplayConfig(serverName string) ([]byte, error)
 	GetConfig(serverName string) ([]byte, error)
 	ShowStatistics(serverName string) ([]byte, error)
-	DisplayStatus() ([]byte, error)
+	DisplayServersStatus() ([]byte, error)
 }
 
 type offstageUpdater interface {
@@ -61,6 +61,17 @@ type metrics struct {
 	locker            *sync.RWMutex
 }
 
+func NewMetrics(webServerInfoFunc func() []WebServerInfo, errChan chan error) Metrics {
+	return &metrics{
+		StatusList:        make([]WebServerInfo, 0),
+		BifrostVersion:    utils.Version(),
+		isStoped:          true,
+		monitorErrChan:    errChan,
+		webServerInfoFunc: webServerInfoFunc,
+		locker:            new(sync.RWMutex),
+	}
+}
+
 func (m *metrics) Start() error {
 	m.locker.Lock()
 	defer m.locker.Unlock()
@@ -69,22 +80,24 @@ func (m *metrics) Start() error {
 	}
 
 	m.isStoped = false
+	utils.Logger.DebugF("metrics is starting...")
 	go func() {
 		var sysErr error
 		defer func() {
 			m.locker.Lock()
 			m.isStoped = true
 			m.locker.Unlock()
-			utils.Logger.DebugF("system info monitor is stopping...")
+			utils.Logger.DebugF("metrics is stopping...")
 			m.monitorErrChan <- sysErr
 		}()
 		platform, _, release, OSErr := host.PlatformInformation()
 		if OSErr != nil {
-			utils.Logger.FatalF("Failed to initialize monitor, cased by '%s'", OSErr)
+			utils.Logger.FatalF("Failed to initialize metrics, cased by '%s'", OSErr)
 			m.isStoped = true
 		} else {
 			m.OS = fmt.Sprintf("%s %s", platform, release)
 		}
+		utils.Logger.DebugF("metrics is running")
 		for !m.isStoped {
 			// 监控数据获取
 
@@ -145,17 +158,6 @@ func (m *metrics) Report() ([]byte, error) {
 	return json.Marshal(m)
 }
 
-func NewMetrics(webServerInfoFunc func() []WebServerInfo, errChan chan error) Metrics {
-	return &metrics{
-		StatusList:        make([]WebServerInfo, 0),
-		BifrostVersion:    utils.Version(),
-		isStoped:          true,
-		monitorErrChan:    errChan,
-		webServerInfoFunc: webServerInfoFunc,
-		locker:            new(sync.RWMutex),
-	}
-}
-
 type WebServerInfo struct {
 	Name    string `json:"name"`
 	Status  State  `json:"status"`
@@ -174,6 +176,14 @@ type Offstage struct {
 	webServerConfigServices map[string]WebServerConfigService
 	webServerConfigManagers map[string]configuration.ConfigManager
 	metrics                 Metrics
+}
+
+func NewOffstage(services map[string]WebServerConfigService, configManagers map[string]configuration.ConfigManager, metrics Metrics) *Offstage {
+	return &Offstage{
+		webServerConfigServices: services,
+		webServerConfigManagers: configManagers,
+		metrics:                 metrics,
+	}
 }
 
 func (o Offstage) Range(rangeFunc func(serverName string, configService WebServerConfigService) bool) {
@@ -208,7 +218,7 @@ func (o Offstage) ShowStatistics(serverName string) ([]byte, error) {
 	return nil, ErrWebServerConfigServiceNotExist
 }
 
-func (o Offstage) DisplayStatus() ([]byte, error) {
+func (o Offstage) DisplayServersStatus() ([]byte, error) {
 	return o.metrics.Report()
 }
 
@@ -272,10 +282,12 @@ func (o Offstage) WatchLog(serverName, logName string) (LogWatcher, error) {
 					return
 				}
 				if len(data) > 0 {
+					utils.Logger.DebugF("读取到日志（'%s'）更新", filepath.Join(svc.logsDir, logName))
 					select {
 					case dataChan <- data:
 						// 日志推送后，客户端已经终止，handler日志推送阻断且发送了终止信号，由于日志推送阻断，接收终止信息被积压
 						//fmt.Println("svc发送日志成功")
+						utils.Logger.DebugF("service发送日志（'%s'）成功", filepath.Join(svc.logsDir, logName))
 					case <-time.After(time.Second * 30):
 						transferErr = ErrDataSendingTimeout
 						return
@@ -328,19 +340,20 @@ func (o *Offstage) Stop() error {
 	return nil
 }
 
-func NewOffstage(services map[string]WebServerConfigService, configManagers map[string]configuration.ConfigManager, metrics Metrics) *Offstage {
-	return &Offstage{
-		webServerConfigServices: services,
-		webServerConfigManagers: configManagers,
-		metrics:                 metrics,
-	}
-}
-
 type WebServerConfigService struct {
 	configuration configuration.Configuration
 	serverBinPath string
 	logsDir       string
 	log           *ngLog.Log
+}
+
+func NewWebServerConfigService(configuration configuration.Configuration, serverBinPath, logsDir string, log *ngLog.Log) WebServerConfigService {
+	return WebServerConfigService{
+		configuration: configuration,
+		serverBinPath: serverBinPath,
+		logsDir:       logsDir,
+		log:           log,
+	}
 }
 
 func (w WebServerConfigService) ServerVersion() string {
@@ -409,15 +422,6 @@ func (w WebServerConfigService) ServerStatus() State {
 		return Abnormal
 	}
 	return Normal
-}
-
-func NewWebServerConfigService(configuration configuration.Configuration, serverBinPath, logsDir string, log *ngLog.Log) WebServerConfigService {
-	return WebServerConfigService{
-		configuration: configuration,
-		serverBinPath: serverBinPath,
-		logsDir:       logsDir,
-		log:           log,
-	}
 }
 
 type LogWatcher interface {

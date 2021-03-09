@@ -1,7 +1,7 @@
 package service
 
 type Watcher interface {
-	Watch(info WatchRequestInfo) WatchResponseInfo
+	Watch(WatchRequestInfo) WatchResponseInfo
 }
 
 type watcher struct {
@@ -9,31 +9,44 @@ type watcher struct {
 }
 
 func NewWatcher(offstage offstageWatcher) Watcher {
+
+	if offstage == nil {
+		panic("offstage is nil")
+	}
+
 	return &watcher{offstage: offstage}
 }
 
 func (w watcher) Watch(req WatchRequestInfo) WatchResponseInfo {
-	serverName := req.GetServerName()
-	objectName := req.GetObjectName()
 	var dataChan <-chan []byte
 	var transferErrChan <-chan error
 	closeFunc := func() error {
 		return ErrInvalidResponseInfo
 	}
 	var err error
+
+	if req == nil {
+		err = ErrNilRequestInfo
+		return NewWatchResponseInfo("", closeFunc, dataChan, transferErrChan, err)
+	}
+
+	serverName := req.GetServerName()
+	objectName := req.GetWatchedObjectName()
 	switch req.GetRequestType() {
 	case WatchLog:
-		var logWatcher LogWatcher
-		logWatcher, err = w.offstage.WatchLog(serverName, objectName)
-		if logWatcher != nil {
-			dataChan = logWatcher.GetDataChan()
-			transferErrChan = logWatcher.GetTransferErrorChan()
-			closeFunc = func() error {
-				return logWatcher.Close()
-			}
+		logWatcherIns, logWatcherErr := w.offstage.WatchLog(serverName, objectName)
+		err = logWatcherErr
+		if logWatcherIns != nil {
+			dataChan = logWatcherIns.GetDataChan()
+			transferErrChan = logWatcherIns.GetTransferErrorChan()
+			//closeFunc = func() error {
+			//	return logWatcherIns.Close()
+			//}
+			closeFunc = logWatcherIns.Close
 		}
 	default:
-		err = UnknownRequestType
+		err = ErrUnknownRequestType
 	}
+
 	return NewWatchResponseInfo(serverName, closeFunc, dataChan, transferErrChan, err)
 }

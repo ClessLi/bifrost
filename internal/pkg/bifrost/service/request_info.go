@@ -5,6 +5,30 @@ import (
 	"golang.org/x/net/context"
 )
 
+type contextQuerier interface {
+	Context() context.Context
+}
+
+type tokenQuerier interface {
+	GetToken() string
+}
+
+type requestTypeQuerier interface {
+	GetRequestType() RequestType
+}
+
+type serverNameQuerier interface {
+	GetServerName() string
+}
+
+type watchedObjectQuerier interface {
+	GetWatchedObjectName() string
+}
+
+type dataQuerier interface {
+	GetData() []byte
+}
+
 type ViewRequestInfo interface {
 	contextQuerier
 	serverNameQuerier
@@ -19,17 +43,17 @@ type viewRequestInfo struct {
 	token       string
 }
 
-func NewViewRequestInfo(ctx context.Context, reqType, serverName, token string) ViewRequestInfo {
+func NewViewRequestInfo(ctx context.Context, reqTypeStr, serverName, token string) ViewRequestInfo {
 	requestType := UnknownReqType
-	switch reqType {
+	switch reqTypeStr {
 	case "DisplayConfig":
 		requestType = DisplayConfig
 	case "GetConfig":
 		requestType = GetConfig
 	case "ShowStatistics":
 		requestType = ShowStatistics
-	case "DisplayStatus":
-		requestType = DisplayStatus
+	case "DisplayServersStatus":
+		requestType = DisplayServersStatus
 	}
 	return &viewRequestInfo{
 		context:     ctx,
@@ -68,12 +92,12 @@ type updateRequestInfo struct {
 	serverName  string
 	requestType RequestType
 	token       string
-	data        *bytes.Buffer
+	dataBuffer  *bytes.Buffer
 }
 
-func NewUpdateRequestInfo(ctx context.Context, reqType, serverName, token string, data []byte) UpdateRequestInfo {
+func NewUpdateRequestInfo(ctx context.Context, reqTypeStr, serverName, token string, data []byte) UpdateRequestInfo {
 	requestType := UnknownReqType
-	switch reqType {
+	switch reqTypeStr {
 	case "UpdateConfig":
 		requestType = UpdateConfig
 	}
@@ -82,7 +106,7 @@ func NewUpdateRequestInfo(ctx context.Context, reqType, serverName, token string
 		serverName:  serverName,
 		requestType: requestType,
 		token:       token,
-		data:        bytes.NewBuffer(data),
+		dataBuffer:  bytes.NewBuffer(data),
 	}
 }
 
@@ -103,7 +127,7 @@ func (u updateRequestInfo) GetToken() string {
 }
 
 func (u updateRequestInfo) GetData() []byte {
-	return u.data.Bytes()
+	return u.dataBuffer.Bytes()
 }
 
 type WatchRequestInfo interface {
@@ -111,29 +135,29 @@ type WatchRequestInfo interface {
 	serverNameQuerier
 	requestTypeQuerier
 	tokenQuerier
-	objectQuerier
+	watchedObjectQuerier
 }
 
 type watchRequestInfo struct {
-	context     context.Context
-	serverName  string
-	requestType RequestType
-	token       string
-	objectName  string
+	context           context.Context
+	serverName        string
+	requestType       RequestType
+	token             string
+	watchedObjectName string
 }
 
-func NewWatchRequestInfo(ctx context.Context, reqType, serverName, token, objectName string) WatchRequestInfo {
+func NewWatchRequestInfo(ctx context.Context, reqTypeStr, serverName, token, watchedObjectName string) WatchRequestInfo {
 	requestType := UnknownReqType
-	switch reqType {
+	switch reqTypeStr {
 	case "WatchLog":
 		requestType = WatchLog
 	}
 	return &watchRequestInfo{
-		context:     ctx,
-		serverName:  serverName,
-		requestType: requestType,
-		token:       token,
-		objectName:  objectName,
+		context:           ctx,
+		serverName:        serverName,
+		requestType:       requestType,
+		token:             token,
+		watchedObjectName: watchedObjectName,
 	}
 }
 
@@ -153,30 +177,6 @@ func (w watchRequestInfo) GetToken() string {
 	return w.token
 }
 
-func (w watchRequestInfo) GetObjectName() string {
-	return w.objectName
-}
-
-type contextQuerier interface {
-	Context() context.Context
-}
-
-type tokenQuerier interface {
-	GetToken() string
-}
-
-type requestTypeQuerier interface {
-	GetRequestType() RequestType
-}
-
-type serverNameQuerier interface {
-	GetServerName() string
-}
-
-type objectQuerier interface {
-	GetObjectName() string
-}
-
-type dataQuerier interface {
-	GetData() []byte
+func (w watchRequestInfo) GetWatchedObjectName() string {
+	return w.watchedObjectName
 }

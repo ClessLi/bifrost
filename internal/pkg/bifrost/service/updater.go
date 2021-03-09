@@ -9,17 +9,30 @@ type updater struct {
 }
 
 func NewUpdater(offstage offstageUpdater) Updater {
+
+	if offstage == nil {
+		panic("offstage is nil")
+	}
+
 	return &updater{offstage: offstage}
 }
 
 func (u *updater) Update(req UpdateRequestInfo) UpdateResponseInfo {
-	serverName := req.GetServerName()
 	var err error
+
+	if req == nil {
+		err = ErrNilRequestInfo
+		return NewUpdateResponseInfo("", err)
+	}
+
+	serverName := req.GetServerName()
+
 	switch req.GetRequestType() {
 	case UpdateConfig:
 		err = u.offstage.UpdateConfig(serverName, req.GetData())
 	default:
-		err = UnknownRequestType
+		err = ErrUnknownRequestType
 	}
+
 	return NewUpdateResponseInfo(serverName, err)
 }

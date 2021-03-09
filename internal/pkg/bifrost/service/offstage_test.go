@@ -1,13 +1,16 @@
 package service
 
 import (
+	"github.com/ClessLi/bifrost/internal/pkg/utils"
 	ngLog "github.com/ClessLi/bifrost/pkg/log/nginx"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loader"
+	"os"
 	"reflect"
 	"sync"
 	"testing"
+	"time"
 )
 
 func TestNewLogWatcher(t *testing.T) {
@@ -53,49 +56,6 @@ func TestNewLogWatcher(t *testing.T) {
 		})
 	}
 }
-
-//func TestNewMetrics(t *testing.T) {
-//	type args struct {
-//		webServerInfoFunc func() []WebServerInfo
-//		errChan           chan error
-//	}
-//	tests := []struct {
-//		name string
-//		args args
-//		want Metrics
-//	}{
-//		// TODO: Add test cases.
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			if got := NewMetrics(tt.args.webServerInfoFunc, tt.args.errChan); !reflect.DeepEqual(got, tt.want) {
-//				t.Errorf("NewMetrics() = %v, want %v", got, tt.want)
-//			}
-//		})
-//	}
-//}
-
-//func TestNewOffstage(t *testing.T) {
-//	type args struct {
-//		services       map[string]WebServerConfigService
-//		configManagers map[string]configuration.ConfigManager
-//		metrics        Metrics
-//	}
-//	tests := []struct {
-//		name string
-//		args args
-//		want *Offstage
-//	}{
-//		// TODO: Add test cases.
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			if got := NewOffstage(tt.args.services, tt.args.configManagers, tt.args.metrics); !reflect.DeepEqual(got, tt.want) {
-//				t.Errorf("NewOffstage() = %v, want %v", got, tt.want)
-//			}
-//		})
-//	}
-//}
 
 func TestNewWebServerConfigService(t *testing.T) {
 	type args struct {
@@ -165,7 +125,7 @@ func TestOffstage_DisplayConfig(t *testing.T) {
 		serverName string
 	}
 	l := loader.NewLoader()
-	ctx, loopPreventer, err := l.LoadFromFilePath("F:\\GO_Project\\src\\bifrost\\test\\config_test\\nginx.conf")
+	ctx, loopPreventer, err := l.LoadFromFilePath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -240,7 +200,7 @@ func TestOffstage_DisplayStatus(t *testing.T) {
 		metrics                 Metrics
 	}
 	l := loader.NewLoader()
-	ctx, loopPreventer, err := l.LoadFromFilePath("F:\\GO_Project\\src\\bifrost\\test\\config_test\\nginx.conf")
+	ctx, loopPreventer, err := l.LoadFromFilePath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -256,7 +216,7 @@ func TestOffstage_DisplayStatus(t *testing.T) {
 		}}
 	}, make(chan error))
 	wantOffstage := NewOffstage(wscServices, configManagers, metrics)
-	want, wantErr := wantOffstage.DisplayStatus()
+	want, wantErr := wantOffstage.DisplayServersStatus()
 	tests := []struct {
 		name    string
 		fields  fields
@@ -264,7 +224,7 @@ func TestOffstage_DisplayStatus(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "test Offstage.DisplayStatus method",
+			name: "test Offstage.DisplayServersStatus method",
 			fields: fields{
 				webServerConfigServices: wscServices,
 				webServerConfigManagers: configManagers,
@@ -281,13 +241,13 @@ func TestOffstage_DisplayStatus(t *testing.T) {
 				webServerConfigManagers: tt.fields.webServerConfigManagers,
 				metrics:                 tt.fields.metrics,
 			}
-			got, err := o.DisplayStatus()
+			got, err := o.DisplayServersStatus()
 			if (err != nil) != tt.wantErr {
-				t.Errorf("DisplayStatus() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("DisplayServersStatus() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("DisplayStatus() got = %v, want %v", got, tt.want)
+				t.Errorf("DisplayServersStatus() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -303,7 +263,7 @@ func TestOffstage_GetConfig(t *testing.T) {
 		serverName string
 	}
 	l := loader.NewLoader()
-	ctx, loopPreventer, err := l.LoadFromFilePath("F:\\GO_Project\\src\\bifrost\\test\\config_test\\nginx.conf")
+	ctx, loopPreventer, err := l.LoadFromFilePath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -381,7 +341,7 @@ func TestOffstage_Range(t *testing.T) {
 		rangeFunc func(serverName string, configService WebServerConfigService) bool
 	}
 	l := loader.NewLoader()
-	ctx, loopPreventer, err := l.LoadFromFilePath("F:\\GO_Project\\src\\bifrost\\test\\config_test\\nginx.conf")
+	ctx, loopPreventer, err := l.LoadFromFilePath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -496,7 +456,7 @@ func TestOffstage_ShowStatistics(t *testing.T) {
 		serverName string
 	}
 	l := loader.NewLoader()
-	ctx, loopPreventer, err := l.LoadFromFilePath("F:\\GO_Project\\src\\bifrost\\test\\config_test\\nginx.conf")
+	ctx, loopPreventer, err := l.LoadFromFilePath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -570,12 +530,39 @@ func TestOffstage_Start(t *testing.T) {
 		webServerConfigManagers map[string]configuration.ConfigManager
 		metrics                 Metrics
 	}
+	l := loader.NewLoader()
+	ctx, loopPreventer, err := l.LoadFromFilePath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	serverName := "testWebServer"
+	testConfiguration := configuration.NewConfiguration(ctx.(*parser.Config), loopPreventer, new(sync.RWMutex))
+	wscServices := map[string]WebServerConfigService{serverName: NewWebServerConfigService(testConfiguration, "null", "null", ngLog.NewLog())}
+	configManagers := map[string]configuration.ConfigManager{serverName: configuration.NewNginxConfigurationManager(l, testConfiguration, "null", "", 1, 7, new(sync.RWMutex))}
+	metrics := NewMetrics(func() []WebServerInfo {
+		return []WebServerInfo{{
+			Name:    serverName,
+			Status:  Normal,
+			Version: "test version",
+		}}
+	}, make(chan error))
+	wantOffstage := NewOffstage(wscServices, configManagers, metrics)
+	wantErr := wantOffstage.Start()
+	_ = wantOffstage.Stop()
 	tests := []struct {
 		name    string
 		fields  fields
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "test Offstage.Start method",
+			fields: fields{
+				webServerConfigServices: wscServices,
+				webServerConfigManagers: configManagers,
+				metrics:                 metrics,
+			},
+			wantErr: wantErr != nil,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -587,6 +574,7 @@ func TestOffstage_Start(t *testing.T) {
 			if err := o.Start(); (err != nil) != tt.wantErr {
 				t.Errorf("Start() error = %v, wantErr %v", err, tt.wantErr)
 			}
+			defer o.Stop()
 		})
 	}
 }
@@ -597,12 +585,39 @@ func TestOffstage_Stop(t *testing.T) {
 		webServerConfigManagers map[string]configuration.ConfigManager
 		metrics                 Metrics
 	}
+	l := loader.NewLoader()
+	ctx, loopPreventer, err := l.LoadFromFilePath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	serverName := "testWebServer"
+	testConfiguration := configuration.NewConfiguration(ctx.(*parser.Config), loopPreventer, new(sync.RWMutex))
+	wscServices := map[string]WebServerConfigService{serverName: NewWebServerConfigService(testConfiguration, "null", "null", ngLog.NewLog())}
+	configManagers := map[string]configuration.ConfigManager{serverName: configuration.NewNginxConfigurationManager(l, testConfiguration, "null", "", 1, 7, new(sync.RWMutex))}
+	metrics := NewMetrics(func() []WebServerInfo {
+		return []WebServerInfo{{
+			Name:    serverName,
+			Status:  Normal,
+			Version: "test version",
+		}}
+	}, make(chan error))
+	wantOffstage := NewOffstage(wscServices, configManagers, metrics)
+	_ = wantOffstage.Start()
+	wantErr := wantOffstage.Stop()
 	tests := []struct {
 		name    string
 		fields  fields
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "test Offstage.Stop method",
+			fields: fields{
+				webServerConfigServices: wscServices,
+				webServerConfigManagers: configManagers,
+				metrics:                 metrics,
+			},
+			wantErr: wantErr != nil,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -611,6 +626,7 @@ func TestOffstage_Stop(t *testing.T) {
 				webServerConfigManagers: tt.fields.webServerConfigManagers,
 				metrics:                 tt.fields.metrics,
 			}
+			_ = o.Start()
 			if err := o.Stop(); (err != nil) != tt.wantErr {
 				t.Errorf("Stop() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -628,13 +644,151 @@ func TestOffstage_UpdateConfig(t *testing.T) {
 		serverName string
 		data       []byte
 	}
+	l := loader.NewLoader()
+	ctx, loopPreventer, err := l.LoadFromFilePath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	serverName := "testWebServer"
+	notExistServerName := "testNotExistServer"
+	testConfiguration := configuration.NewConfiguration(ctx.(*parser.Config), loopPreventer, new(sync.RWMutex))
+	wscServices := map[string]WebServerConfigService{serverName: NewWebServerConfigService(testConfiguration, "null", "null", ngLog.NewLog())}
+	configManagers := map[string]configuration.ConfigManager{serverName: configuration.NewNginxConfigurationManager(l, testConfiguration, "null", "", 1, 7, new(sync.RWMutex))}
+	metrics := NewMetrics(func() []WebServerInfo {
+		return []WebServerInfo{{
+			Name:    serverName,
+			Status:  Normal,
+			Version: "test version",
+		}}
+	}, make(chan error))
+	wantOffstage := NewOffstage(wscServices, configManagers, metrics)
+	enabledData, err := wantOffstage.GetConfig(serverName)
+	if err != nil {
+		t.Fatal(err)
+	}
+	disabledData := []byte("disabled config data")
+	_ = wantOffstage.Start()
+	wantErr := wantOffstage.UpdateConfig(serverName, enabledData)
+	_ = wantOffstage.Stop()
 	tests := []struct {
 		name    string
 		fields  fields
 		args    args
 		wantErr bool
+		isStart bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "1) test Offstage.UpdateConfig method with disabled config data, not started and not exist web server",
+			fields: fields{
+				webServerConfigServices: wscServices,
+				webServerConfigManagers: configManagers,
+				metrics:                 metrics,
+			},
+			args: args{
+				serverName: notExistServerName,
+				data:       disabledData,
+			},
+			wantErr: wantErr != nil,
+			isStart: false,
+		},
+		{
+			name: "2) test Offstage.UpdateConfig method with disabled config data, not started and exist web server",
+			fields: fields{
+				webServerConfigServices: wscServices,
+				webServerConfigManagers: configManagers,
+				metrics:                 metrics,
+			},
+			args: args{
+				serverName: serverName,
+				data:       disabledData,
+			},
+			wantErr: wantErr != nil,
+			isStart: false,
+		},
+		{
+			name: "3) test Offstage.UpdateConfig method with disabled config data, started and not exist web server",
+			fields: fields{
+				webServerConfigServices: wscServices,
+				webServerConfigManagers: configManagers,
+				metrics:                 metrics,
+			},
+			args: args{
+				serverName: notExistServerName,
+				data:       disabledData,
+			},
+			wantErr: wantErr != nil,
+			isStart: true,
+		},
+		{
+			name: "4) test Offstage.UpdateConfig method with enabled config data, not started and not exist web server",
+			fields: fields{
+				webServerConfigServices: wscServices,
+				webServerConfigManagers: configManagers,
+				metrics:                 metrics,
+			},
+			args: args{
+				serverName: notExistServerName,
+				data:       enabledData,
+			},
+			wantErr: wantErr != nil,
+			isStart: false,
+		},
+		{
+			name: "5) test Offstage.UpdateConfig method with disabled config data, started and exist web server",
+			fields: fields{
+				webServerConfigServices: wscServices,
+				webServerConfigManagers: configManagers,
+				metrics:                 metrics,
+			},
+			args: args{
+				serverName: serverName,
+				data:       disabledData,
+			},
+			wantErr: wantErr != nil,
+			isStart: true,
+		},
+		{
+			name: "6) test Offstage.UpdateConfig method with enabled config data, not started and exist web server",
+			fields: fields{
+				webServerConfigServices: wscServices,
+				webServerConfigManagers: configManagers,
+				metrics:                 metrics,
+			},
+			args: args{
+				serverName: serverName,
+				data:       enabledData,
+			},
+			wantErr: wantErr != nil,
+			isStart: false,
+		},
+		{
+			name: "7) test Offstage.UpdateConfig method with enabled config data, started and not exist web server",
+			fields: fields{
+				webServerConfigServices: wscServices,
+				webServerConfigManagers: configManagers,
+				metrics:                 metrics,
+			},
+			args: args{
+				serverName: notExistServerName,
+				data:       enabledData,
+			},
+			wantErr: wantErr != nil,
+			isStart: true,
+		},
+		{
+			name: "8) test Offstage.UpdateConfig method with enabled config data, started and exist web server",
+			fields: fields{
+				webServerConfigServices: wscServices,
+				webServerConfigManagers: configManagers,
+				metrics:                 metrics,
+			},
+			args: args{
+				serverName: serverName,
+				data:       enabledData,
+			},
+			wantErr: wantErr != nil,
+			isStart: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -643,8 +797,14 @@ func TestOffstage_UpdateConfig(t *testing.T) {
 				webServerConfigManagers: tt.fields.webServerConfigManagers,
 				metrics:                 tt.fields.metrics,
 			}
+			if tt.isStart {
+				_ = o.Start()
+			}
 			if err := o.UpdateConfig(tt.args.serverName, tt.args.data); (err != nil) != tt.wantErr {
 				t.Errorf("UpdateConfig() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if tt.isStart {
+				_ = o.Stop()
 			}
 		})
 	}
@@ -660,29 +820,153 @@ func TestOffstage_WatchLog(t *testing.T) {
 		serverName string
 		logName    string
 	}
+	l := loader.NewLoader()
+	ctx, loopPreventer, err := l.LoadFromFilePath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	serverName := "testWebServer"
+	notExistServerName := "testNotExistServer"
+	testLogData := []byte("test access log\n")
+	testConfiguration := configuration.NewConfiguration(ctx.(*parser.Config), loopPreventer, new(sync.RWMutex))
+	wscServices := map[string]WebServerConfigService{serverName: NewWebServerConfigService(testConfiguration, "null", "F:\\GO_Project\\src\\bifrost\\test\\nginx\\logs", ngLog.NewLog())}
+	configManagers := map[string]configuration.ConfigManager{serverName: configuration.NewNginxConfigurationManager(l, testConfiguration, "null", "", 1, 7, new(sync.RWMutex))}
+	metrics := NewMetrics(func() []WebServerInfo {
+		return []WebServerInfo{{
+			Name:    serverName,
+			Status:  Normal,
+			Version: "test version",
+		}}
+	}, make(chan error))
+	wantOffstage := NewOffstage(wscServices, configManagers, metrics)
+	_, wantDisabledErr := wantOffstage.WatchLog(serverName, "error.log")
+	_, wantNotExistErr := wantOffstage.WatchLog(notExistServerName, "access.log")
+	wantLogWatcher, wantErr := wantOffstage.WatchLog(serverName, "access.log")
+	if wantLogWatcher == nil {
+		t.Fatal(wantErr)
+	}
+	time.Sleep(time.Second)
+
+	accessLog, err := os.OpenFile("F:\\GO_Project\\src\\bifrost\\test\\nginx\\logs\\access.log", os.O_APPEND, 0755)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = accessLog.Write(testLogData)
+	if err != nil {
+		_ = accessLog.Close()
+		t.Fatal(err)
+	}
+	_ = accessLog.Close()
+	var want []byte
+	select {
+	case <-time.After(time.Second * 5):
+		t.Fatal("catch want access.log data timeout")
+	case want = <-wantLogWatcher.GetDataChan():
+		t.Logf("want data: %s", want)
+		break
+	}
+
+	wantCloseErr := wantLogWatcher.Close()
+	time.Sleep(time.Second)
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    LogWatcher
-		wantErr bool
+		name         string
+		fields       fields
+		args         args
+		want         []byte
+		wantErr      bool
+		wantCloseErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "test Offstage.WatchLog method with enabled log and exist web server",
+			fields: fields{
+				webServerConfigServices: wscServices,
+				webServerConfigManagers: configManagers,
+				metrics:                 metrics,
+			},
+			args: args{
+				serverName: serverName,
+				logName:    "access.log",
+			},
+			want:         want,
+			wantErr:      wantErr != nil,
+			wantCloseErr: wantCloseErr != nil,
+		},
+		{
+			name: "test Offstage.WatchLog method with disabled log and exist web server",
+			fields: fields{
+				webServerConfigServices: wscServices,
+				webServerConfigManagers: configManagers,
+				metrics:                 metrics,
+			},
+			args: args{
+				serverName: serverName,
+				logName:    "error.log",
+			},
+			want:         nil,
+			wantErr:      wantDisabledErr != nil,
+			wantCloseErr: false,
+		},
+		{
+			name: "test Offstage.WatchLog method with not exist web server",
+			fields: fields{
+				webServerConfigServices: wscServices,
+				webServerConfigManagers: configManagers,
+				metrics:                 metrics,
+			},
+			args: args{
+				serverName: notExistServerName,
+				logName:    "access.log",
+			},
+			want:         nil,
+			wantErr:      wantNotExistErr != nil,
+			wantCloseErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			defer time.Sleep(time.Second)
 			o := Offstage{
 				webServerConfigServices: tt.fields.webServerConfigServices,
 				webServerConfigManagers: tt.fields.webServerConfigManagers,
 				metrics:                 tt.fields.metrics,
 			}
-			got, err := o.WatchLog(tt.args.serverName, tt.args.logName)
+			gotLogWatcher, err := o.WatchLog(tt.args.serverName, tt.args.logName)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("WatchLog() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
+			if err != nil {
+				return
+			}
+
+			time.Sleep(time.Second)
+			gotAccessLog, err := os.OpenFile("F:\\GO_Project\\src\\bifrost\\test\\nginx\\logs\\access.log", os.O_APPEND, 0755)
+			if err != nil {
+				t.Fatal(err)
+			}
+			_, err = gotAccessLog.Write(testLogData)
+			if err != nil {
+				_ = gotAccessLog.Close()
+				t.Fatal(err)
+			}
+
+			_ = gotAccessLog.Close()
+
+			var got []byte
+			select {
+			case <-time.After(time.Second * 5):
+				t.Errorf("catch got access.log data timeout")
+			case got = <-gotLogWatcher.GetDataChan():
+				break
+			}
+
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("WatchLog() got = %v, want %v", got, tt.want)
+			}
+			err = gotLogWatcher.Close()
+			if (err != nil) != tt.wantCloseErr {
+				t.Errorf("LogWatcher.Close() error = %v, wantCloseErr %v", err, tt.wantCloseErr)
+				return
 			}
 		})
 	}
@@ -695,12 +979,32 @@ func TestWebServerConfigService_ServerStatus(t *testing.T) {
 		logsDir       string
 		log           *ngLog.Log
 	}
+	l := loader.NewLoader()
+	ctx, loopPreventer, err := l.LoadFromFilePath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	logDir := "F:\\GO_Project\\src\\bifrost\\test\\nginx\\logs"
+	nginxLog := ngLog.NewLog()
+	testConfiguration := configuration.NewConfiguration(ctx.(*parser.Config), loopPreventer, new(sync.RWMutex))
+	wantWebServerConfigService := NewWebServerConfigService(testConfiguration, "null", logDir, nginxLog)
+	want := wantWebServerConfigService.ServerStatus()
+
 	tests := []struct {
 		name   string
 		fields fields
 		want   State
 	}{
-		// TODO: Add test cases.
+		{
+			name: "test WebServerConfigService.ServerStatus method",
+			fields: fields{
+				configuration: testConfiguration,
+				serverBinPath: "null",
+				logsDir:       logDir,
+				log:           nginxLog,
+			},
+			want: want,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -724,12 +1028,31 @@ func TestWebServerConfigService_ServerVersion(t *testing.T) {
 		logsDir       string
 		log           *ngLog.Log
 	}
+	l := loader.NewLoader()
+	ctx, loopPreventer, err := l.LoadFromFilePath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	logDir := "F:\\GO_Project\\src\\bifrost\\test\\nginx\\logs"
+	nginxLog := ngLog.NewLog()
+	testConfiguration := configuration.NewConfiguration(ctx.(*parser.Config), loopPreventer, new(sync.RWMutex))
+	wantWebServerConfigService := NewWebServerConfigService(testConfiguration, "null", logDir, nginxLog)
+	want := wantWebServerConfigService.ServerVersion()
 	tests := []struct {
 		name   string
 		fields fields
 		want   string
 	}{
-		// TODO: Add test cases.
+		{
+			name: "test WebServerConfigService.ServerVersion method",
+			fields: fields{
+				configuration: testConfiguration,
+				serverBinPath: "null",
+				logsDir:       logDir,
+				log:           nginxLog,
+			},
+			want: want,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -741,87 +1064,6 @@ func TestWebServerConfigService_ServerVersion(t *testing.T) {
 			}
 			if got := w.ServerVersion(); got != tt.want {
 				t.Errorf("ServerVersion() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func Test_logWatcher_Close(t *testing.T) {
-	type fields struct {
-		dataChan          chan []byte
-		transferErrorChan chan error
-		closeFunc         func() error
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			l := logWatcher{
-				dataChan:          tt.fields.dataChan,
-				transferErrorChan: tt.fields.transferErrorChan,
-				closeFunc:         tt.fields.closeFunc,
-			}
-			if err := l.Close(); (err != nil) != tt.wantErr {
-				t.Errorf("Close() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func Test_logWatcher_GetDataChan(t *testing.T) {
-	type fields struct {
-		dataChan          chan []byte
-		transferErrorChan chan error
-		closeFunc         func() error
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   <-chan []byte
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			l := logWatcher{
-				dataChan:          tt.fields.dataChan,
-				transferErrorChan: tt.fields.transferErrorChan,
-				closeFunc:         tt.fields.closeFunc,
-			}
-			if got := l.GetDataChan(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetDataChan() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func Test_logWatcher_GetTransferErrorChan(t *testing.T) {
-	type fields struct {
-		dataChan          chan []byte
-		transferErrorChan chan error
-		closeFunc         func() error
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   <-chan error
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			l := logWatcher{
-				dataChan:          tt.fields.dataChan,
-				transferErrorChan: tt.fields.transferErrorChan,
-				closeFunc:         tt.fields.closeFunc,
-			}
-			if got := l.GetTransferErrorChan(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetTransferErrorChan() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -841,13 +1083,40 @@ func Test_metrics_Report(t *testing.T) {
 		webServerInfoFunc func() []WebServerInfo
 		locker            *sync.RWMutex
 	}
+	serverName := "testWebServer"
+	wsiFunc := func() []WebServerInfo {
+		return []WebServerInfo{{
+			Name:    serverName,
+			Status:  Normal,
+			Version: "test version",
+		}}
+	}
+	wantMetrics := NewMetrics(wsiFunc, make(chan error))
+	want, wantErr := wantMetrics.Report()
 	tests := []struct {
 		name    string
 		fields  fields
 		want    []byte
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "test metrics Report method",
+			fields: fields{
+				OS:                wantMetrics.(*metrics).OS,
+				Time:              wantMetrics.(*metrics).Time,
+				Cpu:               wantMetrics.(*metrics).Cpu,
+				Mem:               wantMetrics.(*metrics).Mem,
+				Disk:              wantMetrics.(*metrics).Disk,
+				StatusList:        make([]WebServerInfo, 0),
+				BifrostVersion:    utils.Version(),
+				isStoped:          true,
+				monitorErrChan:    make(chan error),
+				webServerInfoFunc: wsiFunc,
+				locker:            new(sync.RWMutex),
+			},
+			want:    want,
+			wantErr: wantErr != nil,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -870,7 +1139,7 @@ func Test_metrics_Report(t *testing.T) {
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Report() got = %v, want %v", got, tt.want)
+				t.Errorf("Report() got = %s, want %s", got, tt.want)
 			}
 		})
 	}
@@ -890,12 +1159,39 @@ func Test_metrics_Start(t *testing.T) {
 		webServerInfoFunc func() []WebServerInfo
 		locker            *sync.RWMutex
 	}
+	serverName := "testWebServer"
+	wsiFunc := func() []WebServerInfo {
+		return []WebServerInfo{{
+			Name:    serverName,
+			Status:  Normal,
+			Version: "test version",
+		}}
+	}
+	wantMetrics := NewMetrics(wsiFunc, make(chan error))
+	wantErr := wantMetrics.Start()
+	_ = wantMetrics.Stop()
 	tests := []struct {
 		name    string
 		fields  fields
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "test metrics Start method",
+			fields: fields{
+				OS:                wantMetrics.(*metrics).OS,
+				Time:              wantMetrics.(*metrics).Time,
+				Cpu:               wantMetrics.(*metrics).Cpu,
+				Mem:               wantMetrics.(*metrics).Mem,
+				Disk:              wantMetrics.(*metrics).Disk,
+				StatusList:        make([]WebServerInfo, 0),
+				BifrostVersion:    utils.Version(),
+				isStoped:          true,
+				monitorErrChan:    make(chan error),
+				webServerInfoFunc: wsiFunc,
+				locker:            new(sync.RWMutex),
+			},
+			wantErr: wantErr != nil,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -915,6 +1211,7 @@ func Test_metrics_Start(t *testing.T) {
 			if err := m.Start(); (err != nil) != tt.wantErr {
 				t.Errorf("Start() error = %v, wantErr %v", err, tt.wantErr)
 			}
+			_ = m.Stop()
 		})
 	}
 }
@@ -933,12 +1230,39 @@ func Test_metrics_Stop(t *testing.T) {
 		webServerInfoFunc func() []WebServerInfo
 		locker            *sync.RWMutex
 	}
+	serverName := "testWebServer"
+	wsiFunc := func() []WebServerInfo {
+		return []WebServerInfo{{
+			Name:    serverName,
+			Status:  Normal,
+			Version: "test version",
+		}}
+	}
+	wantMetrics := NewMetrics(wsiFunc, make(chan error))
+	_ = wantMetrics.Start()
+	wantErr := wantMetrics.Stop()
 	tests := []struct {
 		name    string
 		fields  fields
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "test metrics Stop method",
+			fields: fields{
+				OS:                wantMetrics.(*metrics).OS,
+				Time:              wantMetrics.(*metrics).Time,
+				Cpu:               wantMetrics.(*metrics).Cpu,
+				Mem:               wantMetrics.(*metrics).Mem,
+				Disk:              wantMetrics.(*metrics).Disk,
+				StatusList:        make([]WebServerInfo, 0),
+				BifrostVersion:    utils.Version(),
+				isStoped:          true,
+				monitorErrChan:    make(chan error),
+				webServerInfoFunc: wsiFunc,
+				locker:            new(sync.RWMutex),
+			},
+			wantErr: wantErr != nil,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -955,6 +1279,7 @@ func Test_metrics_Stop(t *testing.T) {
 				webServerInfoFunc: tt.fields.webServerInfoFunc,
 				locker:            tt.fields.locker,
 			}
+			_ = m.Start()
 			if err := m.Stop(); (err != nil) != tt.wantErr {
 				t.Errorf("Stop() error = %v, wantErr %v", err, tt.wantErr)
 			}

@@ -14,6 +14,15 @@ type service struct {
 }
 
 func NewService(viewer Viewer, updater Updater, watcher Watcher) Service {
+	if viewer == nil {
+		panic("viewer is nil")
+	}
+	if updater == nil {
+		panic("updater is nil")
+	}
+	if watcher == nil {
+		panic("watcher is nil")
+	}
 	return &service{
 		viewer:  viewer,
 		updater: updater,
@@ -22,14 +31,23 @@ func NewService(viewer Viewer, updater Updater, watcher Watcher) Service {
 }
 
 func (s service) Viewer() Viewer {
+	if s.viewer == nil {
+		panic("viewer is nil")
+	}
 	return s.viewer
 }
 
 func (s service) Updater() Updater {
+	if s.updater == nil {
+		panic("updater is nil")
+	}
 	return s.updater
 }
 
 func (s service) Watcher() Watcher {
+	if s.watcher == nil {
+		panic("watcher is nil")
+	}
 	return s.watcher
 }
 
