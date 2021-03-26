@@ -37,6 +37,24 @@ type VerifyResponse struct {
 	Error  error `json:"error"`
 }
 
+type AuthEndpoints struct {
+	LoginEndpoint       endpoint.Endpoint
+	VerifyEndpoint      endpoint.Endpoint
+	HealthCheckEndpoint endpoint.Endpoint
+}
+
+func NewAuthEndpoints(loginEP, verifyEP, healthCheckEP endpoint.Endpoint) AuthEndpoints {
+	return AuthEndpoints{
+		LoginEndpoint:       loginEP,
+		VerifyEndpoint:      verifyEP,
+		HealthCheckEndpoint: healthCheckEP,
+	}
+}
+
+func MakeAuthEndpoints(svc service.Service) AuthEndpoints {
+	return NewAuthEndpoints(MakeLoginEndpoint(svc), MakeVerifyEndpoint(svc), MakeHealthCheckEndpoint(svc))
+}
+
 func MakeLoginEndpoint(svc service.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		if req, ok := request.(AuthRequest); ok {

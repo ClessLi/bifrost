@@ -8,24 +8,24 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/ClessLi/bifrost/internal/pkg/auth"
+	"github.com/ClessLi/bifrost/internal/pkg/auth/daemon"
 	"os"
 )
 
 func main() {
 
-	defer auth.Logf.Close()
-	defer auth.Stdoutf.Close()
+	defer daemon.Logf.Close()
+	defer daemon.Stdoutf.Close()
 
 	err := errors.New("unkown signal")
-	switch *auth.Signal {
+	switch *daemon.Signal {
 	case "":
-		err = auth.Start()
+		err = daemon.Start()
 		if err == nil {
 			os.Exit(0)
 		}
 	case "stop":
-		err = auth.Stop()
+		err = daemon.Stop()
 		if err == nil {
 			if os.Getppid() != 1 {
 				fmt.Println("bifrost is stopping...")
@@ -33,12 +33,12 @@ func main() {
 			os.Exit(0)
 		}
 	case "restart":
-		err = auth.Restart()
+		err = daemon.Restart()
 		if err == nil {
 			os.Exit(0)
 		}
 	case "status":
-		pid, statErr := auth.Status()
+		pid, statErr := daemon.Status()
 		if statErr != nil {
 			fmt.Printf("bifrost-auth is abnormal with error: %s\n", statErr.Error())
 			os.Exit(1)

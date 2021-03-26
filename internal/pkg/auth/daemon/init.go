@@ -1,12 +1,13 @@
-// auth 包, 该包包含了bifrost项目共用的一些变量，封装了http进程相关接口函数、一些公共函数和守护进程函数
+// auth.daemon 包, 该包包含了bifrostAuth项目的daemon守护进程所需的一些变量及类
 // 创建人：ClessLi
-// 创建时间：2020/06/10
+// 创建时间：2021/03/26
 
-package auth
+package daemon
 
 import (
 	"flag"
 	"fmt"
+	"github.com/ClessLi/bifrost/internal/pkg/auth/config"
 	"github.com/ClessLi/bifrost/internal/pkg/auth/service"
 	"github.com/apsdehal/go-logger"
 	"gopkg.in/yaml.v2"
@@ -55,9 +56,6 @@ const (
 	NOTICE   = logger.NoticeLevel
 	INFO     = logger.InfoLevel
 	DEBUG    = logger.DebugLevel
-
-	// 版本号
-	VERSION = "v1.0.1-alpha.3"
 )
 
 // Config, bifrost配置文件结构体，定义bifrost配置信息
@@ -82,11 +80,11 @@ func usage() {
 Usage: %s [-hv] [-f filename] [-s signal]
 
 Options:
-`, VERSION, os.Args[0])
+`, config.GetVersion(), os.Args[0])
 	flag.PrintDefaults()
 }
 
-// init, bifrost包初始化函数
+// init, auth.daemon包初始化函数
 func init() {
 	// DONE: nginx配置文件后台更新后自动热加载功能
 	// 初始化工作目录
@@ -117,7 +115,7 @@ func init() {
 	}
 
 	if *version {
-		fmt.Printf("bifrost-auth version: %s\n", VERSION)
+		fmt.Printf("bifrost-auth version: %s\n", config.VERSION)
 		os.Exit(0)
 	}
 

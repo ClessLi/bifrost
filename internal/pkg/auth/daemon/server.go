@@ -1,4 +1,4 @@
-package auth
+package daemon
 
 import (
 	"context"
@@ -34,13 +34,9 @@ func ServerRun() error {
 	svc = AuthConf.AuthService
 	svc = logging.LoggingMiddleware(config.KitLogger)(svc)
 
-	endpts := endpoint.AuthEndpoints{
-		LoginEndpoint:       endpoint.MakeLoginEndpoint(svc),
-		VerifyEndpoint:      endpoint.MakeVerifyEndpoint(svc),
-		HealthCheckEndpoint: endpoint.MakeHealthCheckEndpoint(svc),
-	}
+	eps := endpoint.MakeAuthEndpoints(svc)
 
-	handler := transport.NewAuthServer(ctx, endpts)
+	handler := transport.NewAuthServer(ctx, eps)
 
 	lis, lisErr := net.Listen("tcp", fmt.Sprintf(":%d", AuthConf.AuthService.Port))
 	if lisErr != nil {
