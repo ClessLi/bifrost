@@ -24,7 +24,7 @@ jobs:
       
     - name: bifrost Build Test
       run: go build -v -race
-      working-directory: ./cmd/biforst
+      working-directory: ./cmd/bifrost
       
     - name: ng_conf_format Build Test
       run: go build -v -race
