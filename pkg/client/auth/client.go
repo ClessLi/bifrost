@@ -11,22 +11,21 @@ type Client struct {
 	service.Service
 }
 
-func NewClientFromGRPCServerAddress(svrAddr string) (*Client, error) {
+func NewClient(svrAddr string) (*Client, error) {
 	conn, err := grpc.Dial(svrAddr, grpc.WithInsecure(), grpc.WithTimeout(time.Second))
 	if err != nil {
 		return nil, err
 	}
 
-	eps := NewAuthClientEndpoints(
+	eps := newAuthClientEndpoints(
 		makeLoginClientEndpoint(conn),
 		makeVerifyClientEndpoint(conn),
-		nil,
 	)
 
-	return NewClient(conn, eps), nil
+	return newClient(conn, eps), nil
 }
 
-func NewClient(conn *grpc.ClientConn, endpoints AuthClientEndpoints) *Client {
+func newClient(conn *grpc.ClientConn, endpoints *authClientEndpoints) *Client {
 	return &Client{
 		ClientConn: conn,
 		Service:    endpoints,

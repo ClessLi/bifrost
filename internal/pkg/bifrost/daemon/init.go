@@ -2,11 +2,12 @@
 // 创建人：ClessLi
 // 创建时间：2020/06/10
 
-package bifrost
+package daemon
 
 import (
 	"flag"
 	"fmt"
+	"github.com/ClessLi/bifrost/internal/pkg/bifrost/config"
 	"github.com/ClessLi/bifrost/internal/pkg/utils"
 	"os"
 	"path/filepath"
@@ -34,7 +35,7 @@ func usage() {
 Usage: %s [-hv] [-f filename] [-s signal]
 
 Options:
-`, utils.Version(), os.Args[0])
+`, config.GetVersion(), os.Args[0])
 	flag.PrintDefaults()
 }
 
@@ -75,7 +76,7 @@ func init() {
 	}
 
 	if *version {
-		fmt.Printf("bifrost version: %s\n", utils.Version())
+		fmt.Printf("bifrost version: %s\n", config.GetVersion())
 		os.Exit(0)
 	}
 

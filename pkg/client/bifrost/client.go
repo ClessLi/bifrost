@@ -20,7 +20,7 @@ func NewClientFromConsul(consulHost string, consulPort uint16) (*Client, error) 
 		return nil, err
 	}
 	factory := func(instance string) (interface{}, error) {
-		return NewClientFromServerAddress(instance)
+		return NewClient(instance)
 	}
 	relay, err := discoveryClient.DiscoverServicesClient("com.github.ClessLi.api.bifrost", config.KitLogger(os.Stdout), factory)
 	if err != nil {
@@ -32,16 +32,16 @@ func NewClientFromConsul(consulHost string, consulPort uint16) (*Client, error) 
 	return nil, errors.New("failed to initialize Bifrost service client")
 }
 
-func NewClientFromServerAddress(svrAddr string) (*Client, error) {
+func NewClient(svrAddr string) (*Client, error) {
 	conn, err := grpc.Dial(svrAddr, grpc.WithInsecure(), grpc.WithTimeout(time.Second))
 	if err != nil {
 		return nil, err
 	}
 	eps := NewBifrostClientEndpoints(conn)
-	return NewClient(conn, eps), nil
+	return newClient(conn, eps), nil
 }
 
-func NewClient(conn *grpc.ClientConn, endpoints *bifrostClientEndpoints) *Client {
+func newClient(conn *grpc.ClientConn, endpoints *bifrostClientEndpoints) *Client {
 	return &Client{
 		ClientConn:             conn,
 		bifrostClientEndpoints: endpoints,

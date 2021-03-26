@@ -6,7 +6,7 @@
 
 # 项目介绍
 
-**Bifrost** 是基于golang语言开发的项目，它目前还处于测试阶段，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用测试版本为[v1.0.2-alpha.1](https://github.com/ClessLi/bifrost/tree/v1.0.2-alpha.1) （从v1.0.1-alpha开始取消http协议接口，改用gRPC协议接口。该版本仍在开发、测试中）。
+**Bifrost** 是基于golang语言开发的项目，它目前还处于测试阶段，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用测试版本为[v1.0.2-alpha.2](https://github.com/ClessLi/bifrost/tree/v1.0.2-alpha.2) （从v1.0.1-alpha开始取消http协议接口，改用gRPC协议接口。该版本仍在开发、测试中）。
 
 # 项目特点
 
@@ -34,17 +34,17 @@ nginx后管平台
 
 ## 下载地址
 
-bifrost-auth-v1.0.1-alpha.3
+bifrost-auth-v1.0.2-alpha.1
 
-> Windows: [bifrost-auth.v1_0_1.alpha_3.win_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.1-alpha.3/bifrost-auth.v1_0_1.alpha_3.win_x64.zip)
+> Windows: [bifrost-auth.v1_0_2.alpha_1.win_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.2-alpha.1/bifrost-auth.v1_0_2.alpha_1.win_x64.zip)
 > 
-> Linux: [bifrost-auth.v1_0_1.alpha_3.linux_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.1-alpha.3/bifrost-auth.v1_0_1.alpha_3.linux_x64.zip)
+> Linux: [bifrost-auth.v1_0_2.alpha_1.linux_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.2-alpha.1/bifrost-auth.v1_0_2.alpha_1.linux_x64.zip)
 
-bifrost-v1.0.2-alpha.1
+bifrost-v1.0.2-alpha.2
 
-> Windows: [bifrost.v1_0_2.alpha_1.win_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.2-alpha.1/bifrost.v1_0_2.alpha_1.win_x64.zip)
+> Windows: [bifrost.v1_0_2.alpha_2.win_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.2-alpha.2/bifrost.v1_0_2.alpha_2.win_x64.zip)
 > 
-> Linux: [bifrost.v1_0_2.alpha_1.linux_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.2-alpha.1/bifrost.v1_0_2.alpha_1.linux_x64.zip)
+> Linux: [bifrost.v1_0_2.alpha_2.linux_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.2-alpha.2/bifrost.v1_0_2.alpha_2.linux_x64.zip)
 
 ## 应用配置
 
@@ -107,7 +107,7 @@ LogConfig:
 `bifrost-auth`
 ```
 > ./bifrost-auth -h
-  bifrost-auth version: v1.0.1-alpha.3
+  bifrost-auth version: v1.0.2-alpha.1
   Usage: ./bifrost-auth [-hv] [-f filename] [-s signal]
   
   Options:
@@ -124,7 +124,7 @@ LogConfig:
 `bifrost`
 ```
 > ./bifrost -h
-  bifrost version: v1.0.2-alpha.1
+  bifrost version: v1.0.2-alpha.2
   Usage: ./bifrost [-hv] [-f filename] [-s signal]
   
   Options:
@@ -150,10 +150,11 @@ Nginx配置管理器提供配置读取、更新、保存、备份及重载，方
 package main
 
 import (
-"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration"
+    "github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration"
 )
 
-nginxConfigManager, err := configuration.NewNginxConfigurationManager(nginxExecPath, configAbsPath)
+nginxConfFromPath, err := configuration.NewConfigurationFromPath(configAbsPath)
+nginxConfFromJsonBytes, err := configuration.NewConfigurationFromJsonBytes(configJsonBytes)
 ...
 ```
 

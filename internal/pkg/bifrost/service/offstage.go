@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/ClessLi/bifrost/internal/pkg/bifrost/config"
 	"github.com/ClessLi/bifrost/internal/pkg/utils"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration"
 	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
@@ -64,7 +65,7 @@ type metrics struct {
 func NewMetrics(webServerInfoFunc func() []WebServerInfo, errChan chan error) Metrics {
 	return &metrics{
 		StatusList:        make([]WebServerInfo, 0),
-		BifrostVersion:    utils.Version(),
+		BifrostVersion:    config.GetVersion(),
 		isStoped:          true,
 		monitorErrChan:    errChan,
 		webServerInfoFunc: webServerInfoFunc,

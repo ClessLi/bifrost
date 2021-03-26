@@ -1,8 +1,12 @@
-package bifrost
+package config
 
 import (
 	"fmt"
+	"github.com/ClessLi/bifrost/internal/pkg/utils"
 	"github.com/apsdehal/go-logger"
+	"gopkg.in/yaml.v2"
+	"os"
+	"path/filepath"
 )
 
 // Config, bifrost配置文件结构体，定义bifrost配置信息
@@ -10,6 +14,53 @@ type Config struct {
 	ServiceConfig ServiceConfig `yaml:"Service"`
 	*RAConfig     `yaml:"RAConfig"`
 	LogConfig     `yaml:"LogConfig"`
+}
+
+func NewBifrostConfig(configFilePath string) *Config {
+
+	// 初始化bifrost配置
+	confData, err := utils.ReadFile(configFilePath)
+	if err != nil {
+		panic(err)
+	}
+	BifrostConf := new(Config)
+	// 加载bifrost配置
+	err = yaml.Unmarshal(confData, BifrostConf)
+	if err != nil {
+		panic(err)
+	}
+
+	// 配置必填项检查
+	err = BifrostConf.check()
+	if err != nil {
+		panic(err)
+	}
+
+	// 初始化日志
+	logDir, err := filepath.Abs(BifrostConf.LogDir)
+	if err != nil {
+		panic(err)
+	}
+
+	logPath := filepath.Join(logDir, "bifrost.log")
+	utils.Logf, err = os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		panic(err)
+	}
+
+	utils.InitLogger(utils.Logf, BifrostConf.LogConfig.Level)
+
+	// 初始化应用运行日志输出
+	stdoutPath := filepath.Join(logDir, "bifrost.out")
+	utils.Stdoutf, err = os.OpenFile(stdoutPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		panic(err)
+	}
+
+	os.Stdout = utils.Stdoutf
+	os.Stderr = utils.Stdoutf
+
+	return BifrostConf
 }
 
 func (c *Config) check() error {
@@ -26,8 +77,8 @@ func (c *Config) check() error {
 	if c.ServiceConfig.Port == 0 {
 		c.ServiceConfig.Port = 12321
 	}
-	if c.ServiceConfig.ChunckSize == 0 {
-		c.ServiceConfig.ChunckSize = 4194304
+	if c.ServiceConfig.ChunkSize == 0 {
+		c.ServiceConfig.ChunkSize = 4194304
 	}
 
 	if c.RAConfig != nil {
@@ -40,7 +91,7 @@ func (c *Config) check() error {
 
 type ServiceConfig struct {
 	Port                 uint16                `yaml:"Port"`
-	ChunckSize           int                   `yaml:"ChunkSize"`
+	ChunkSize            int                   `yaml:"ChunkSize"`
 	AuthServerAddr       string                `yaml:"AuthServerAddr"`
 	WebServerConfigInfos []WebServerConfigInfo `yaml:"Infos,flow"`
 }

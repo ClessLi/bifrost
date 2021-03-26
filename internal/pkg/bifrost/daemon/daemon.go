@@ -1,7 +1,8 @@
-package bifrost
+package daemon
 
 import (
 	"fmt"
+	"github.com/ClessLi/bifrost/internal/pkg/bifrost/config"
 	"github.com/ClessLi/bifrost/internal/pkg/bifrost/service"
 	"github.com/ClessLi/bifrost/internal/pkg/utils"
 	"github.com/ClessLi/skirnir/pkg/discover"
@@ -197,7 +198,7 @@ func (s subDaemon) serverRun() error {
 	svrErrChan := make(chan error)
 	s.server.Start(svrErrChan)
 
-	utils.Logger.Info(logoStr)
+	utils.Logger.Info(config.LOGO)
 	var stopErr error
 	select {
 	case sig := <-s.signalChan:
@@ -270,7 +271,7 @@ func NewDaemon() Daemon {
 	// 初始化bifrost服务
 	errChan := make(chan error)
 	svc, managers := newService(errChan)
-	gRPCServer := newGRPCServer(bifrostConf.ServiceConfig.ChunckSize, svc)
+	gRPCServer := newGRPCServer(bifrostConf.ServiceConfig.ChunkSize, svc)
 	serviceName := "com.github.ClessLi.api.bifrost"
 	instanceId := serviceName + "-" + uuid.NewV4().String()
 	var registryClient discover.RegistryClient

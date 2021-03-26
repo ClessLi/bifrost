@@ -1,6 +1,8 @@
-package bifrost
+package config
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestConfig_check(t *testing.T) {
 	type fields struct {

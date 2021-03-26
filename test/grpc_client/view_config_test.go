@@ -8,11 +8,9 @@ import (
 	ngJson "github.com/ClessLi/bifrost/pkg/json/nginx"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loader"
 	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
 	"golang.org/x/net/context"
 	"os"
-	"sync"
 	"testing"
 	"time"
 )
@@ -31,13 +29,13 @@ func init() {
 	authSvrAddr := "192.168.220.11:12320"
 	username := "heimdall"
 	password := "Bultgang"
-	authClient, initErr = auth.NewClientFromGRPCServerAddress(authSvrAddr)
+	authClient, initErr = auth.NewClient(authSvrAddr)
 	if initErr != nil {
 		fmt.Println(initErr)
 		os.Exit(1)
 	}
 	defer authClient.Close()
-	bifrostClient, initErr = bifrost.NewClientFromServerAddress(bifrostSvrAddr)
+	bifrostClient, initErr = bifrost.NewClient(bifrostSvrAddr)
 	if initErr != nil {
 		fmt.Println(initErr)
 		os.Exit(2)
@@ -102,13 +100,10 @@ func TestClientUpdateConfigV2(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	l := loader.NewLoader()
-	config, preventer, err := l.LoadFromJsonBytes(jdata)
+	conf, err := configuration.NewConfigurationFromJsonBytes(jdata)
 	if err != nil {
 		t.Fatal(err)
 	}
-	rwLocker := new(sync.RWMutex)
-	conf := configuration.NewConfiguration(config.(*parser.Config), preventer, rwLocker)
 	q, err := conf.Query("comment:sep: :reg: pid.*")
 	if err != nil {
 		t.Fatal(err)

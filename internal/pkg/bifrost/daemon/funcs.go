@@ -1,4 +1,4 @@
-package bifrost
+package daemon
 
 import (
 	"errors"
@@ -12,12 +12,10 @@ import (
 	"github.com/ClessLi/bifrost/internal/pkg/utils"
 	"github.com/ClessLi/bifrost/pkg/client/auth"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loader"
 	"github.com/ClessLi/bifrost/pkg/server_log/nginx"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
-	"gopkg.in/yaml.v2"
 	"net"
 	"os"
 	"path/filepath"
@@ -28,55 +26,15 @@ var (
 	onceForAuthSvcClient       sync.Once
 	singletonAuthServiceClient *auth.Client
 	onceForBifrostConf         sync.Once
-	singletonBifrostConf       *Config
+	singletonBifrostConf       *config.Config
 )
 
-func getBifrostConfInstance() *Config {
+func getBifrostConfInstance() *config.Config {
 	onceForBifrostConf.Do(func() {
 		if singletonBifrostConf != nil {
 			return
 		}
-		// 初始化bifrost配置
-		confData, err := utils.ReadFile(*confPath)
-		if err != nil {
-			panic(err)
-		}
-		singletonBifrostConf = new(Config)
-		// 加载bifrost配置
-		err = yaml.Unmarshal(confData, singletonBifrostConf)
-		if err != nil {
-			panic(err)
-		}
-
-		// 配置必填项检查
-		err = singletonBifrostConf.check()
-		if err != nil {
-			panic(err)
-		}
-
-		// 初始化日志
-		logDir, err := filepath.Abs(singletonBifrostConf.LogDir)
-		if err != nil {
-			panic(err)
-		}
-
-		logPath := filepath.Join(logDir, "bifrost.log")
-		utils.Logf, err = os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
-		if err != nil {
-			panic(err)
-		}
-
-		utils.InitLogger(utils.Logf, singletonBifrostConf.LogConfig.Level)
-
-		// 初始化应用运行日志输出
-		stdoutPath := filepath.Join(logDir, "bifrost.out")
-		utils.Stdoutf, err = os.OpenFile(stdoutPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
-		if err != nil {
-			panic(err)
-		}
-
-		os.Stdout = utils.Stdoutf
-		os.Stderr = utils.Stdoutf
+		singletonBifrostConf = config.NewBifrostConfig(*confPath)
 	})
 	return singletonBifrostConf
 }
@@ -87,7 +45,7 @@ func getAuthServiceClientInstance() *auth.Client {
 			return
 		}
 		var err error
-		singletonAuthServiceClient, err = auth.NewClientFromGRPCServerAddress(getBifrostConfInstance().ServiceConfig.AuthServerAddr)
+		singletonAuthServiceClient, err = auth.NewClient(getBifrostConfInstance().ServiceConfig.AuthServerAddr)
 		if err != nil {
 			panic(err)
 		}
@@ -154,12 +112,10 @@ func newService(errChan chan error) (service.Service, service.OffstageManager) {
 	configManagers := make(map[string]configuration.ConfigManager)
 	for _, info := range getBifrostConfInstance().ServiceConfig.WebServerConfigInfos {
 		// 加载配置文件对象
-		l := loader.NewLoader()
-		ctx, loopPreventer, err := l.LoadFromFilePath(info.ConfPath)
+		c, err := configuration.NewConfigurationFromPath(info.ConfPath)
 		if err != nil {
 			utils.Logger.FatalF("[%s] Load error: %s", info.Name, err)
 		}
-		c := configuration.NewConfiguration(ctx.(*parser.Config), loopPreventer, new(sync.RWMutex))
 		// 初始化日志目录
 		logsDir, err := filepath.Abs(filepath.Join(filepath.Dir(filepath.Dir(info.VerifyExecPath)), "logs"))
 		if err != nil {
@@ -168,7 +124,7 @@ func newService(errChan chan error) (service.Service, service.OffstageManager) {
 		// 添加服务到web服务器配置服务表
 		webServerConfigServices[info.Name] = service.NewWebServerConfigService(c, info.VerifyExecPath, logsDir, nginx.NewLog())
 		// 添加管理服务到配置服务表
-		configManagers[info.Name] = configuration.NewNginxConfigurationManager(l, c, info.VerifyExecPath, info.BackupDir, info.BackupCycle, info.BackupSaveTime, new(sync.RWMutex))
+		configManagers[info.Name] = configuration.NewNginxConfigurationManager(loader.NewLoader(), c, info.VerifyExecPath, info.BackupDir, info.BackupCycle, info.BackupSaveTime, new(sync.RWMutex))
 	}
 	// 初始化后台服务对象
 	var offstage *service.Offstage

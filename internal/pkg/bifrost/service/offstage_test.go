@@ -1,9 +1,8 @@
 package service
 
 import (
-	"github.com/ClessLi/bifrost/internal/pkg/utils"
+	"github.com/ClessLi/bifrost/internal/pkg/bifrost/config"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loader"
 	ngLog "github.com/ClessLi/bifrost/pkg/server_log/nginx"
 	"os"
@@ -124,16 +123,14 @@ func TestOffstage_DisplayConfig(t *testing.T) {
 	type args struct {
 		serverName string
 	}
-	l := loader.NewLoader()
-	ctx, loopPreventer, err := l.LoadFromFilePath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
+	serverName := "testWebServer"
+	notExistServerName := "testNotExistServer"
+	testConfiguration, err := configuration.NewConfigurationFromPath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
 	if err != nil {
 		t.Fatal(err)
 	}
-	serverName := "testWebServer"
-	notExistServerName := "testNotExistServer"
-	testConfiguration := configuration.NewConfiguration(ctx.(*parser.Config), loopPreventer, new(sync.RWMutex))
 	wscServices := map[string]WebServerConfigService{serverName: NewWebServerConfigService(testConfiguration, "null", "null", ngLog.NewLog())}
-	configManagers := map[string]configuration.ConfigManager{serverName: configuration.NewNginxConfigurationManager(l, testConfiguration, "null", "", 1, 7, new(sync.RWMutex))}
+	configManagers := map[string]configuration.ConfigManager{serverName: configuration.NewNginxConfigurationManager(loader.NewLoader(), testConfiguration, "null", "", 1, 7, new(sync.RWMutex))}
 	metrics := NewMetrics(func() []WebServerInfo {
 		return []WebServerInfo{{
 			Name:    serverName,
@@ -199,15 +196,13 @@ func TestOffstage_DisplayStatus(t *testing.T) {
 		webServerConfigManagers map[string]configuration.ConfigManager
 		metrics                 Metrics
 	}
-	l := loader.NewLoader()
-	ctx, loopPreventer, err := l.LoadFromFilePath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
+	serverName := "testWebServer"
+	testConfiguration, err := configuration.NewConfigurationFromPath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
 	if err != nil {
 		t.Fatal(err)
 	}
-	serverName := "testWebServer"
-	testConfiguration := configuration.NewConfiguration(ctx.(*parser.Config), loopPreventer, new(sync.RWMutex))
 	wscServices := map[string]WebServerConfigService{serverName: NewWebServerConfigService(testConfiguration, "null", "null", ngLog.NewLog())}
-	configManagers := map[string]configuration.ConfigManager{serverName: configuration.NewNginxConfigurationManager(l, testConfiguration, "null", "", 1, 7, new(sync.RWMutex))}
+	configManagers := map[string]configuration.ConfigManager{serverName: configuration.NewNginxConfigurationManager(loader.NewLoader(), testConfiguration, "null", "", 1, 7, new(sync.RWMutex))}
 	metrics := NewMetrics(func() []WebServerInfo {
 		return []WebServerInfo{{
 			Name:    serverName,
@@ -262,16 +257,14 @@ func TestOffstage_GetConfig(t *testing.T) {
 	type args struct {
 		serverName string
 	}
-	l := loader.NewLoader()
-	ctx, loopPreventer, err := l.LoadFromFilePath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
+	serverName := "testWebServer"
+	notExistServerName := "testNotExistServer"
+	testConfiguration, err := configuration.NewConfigurationFromPath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
 	if err != nil {
 		t.Fatal(err)
 	}
-	serverName := "testWebServer"
-	notExistServerName := "testNotExistServer"
-	testConfiguration := configuration.NewConfiguration(ctx.(*parser.Config), loopPreventer, new(sync.RWMutex))
 	wscServices := map[string]WebServerConfigService{serverName: NewWebServerConfigService(testConfiguration, "null", "null", ngLog.NewLog())}
-	configManagers := map[string]configuration.ConfigManager{serverName: configuration.NewNginxConfigurationManager(l, testConfiguration, "null", "", 1, 7, new(sync.RWMutex))}
+	configManagers := map[string]configuration.ConfigManager{serverName: configuration.NewNginxConfigurationManager(loader.NewLoader(), testConfiguration, "null", "", 1, 7, new(sync.RWMutex))}
 	metrics := NewMetrics(func() []WebServerInfo {
 		return []WebServerInfo{{
 			Name:    serverName,
@@ -340,15 +333,13 @@ func TestOffstage_Range(t *testing.T) {
 	type args struct {
 		rangeFunc func(serverName string, configService WebServerConfigService) bool
 	}
-	l := loader.NewLoader()
-	ctx, loopPreventer, err := l.LoadFromFilePath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
+	serverName := "testWebServer"
+	testConfiguration, err := configuration.NewConfigurationFromPath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
 	if err != nil {
 		t.Fatal(err)
 	}
-	serverName := "testWebServer"
-	testConfiguration := configuration.NewConfiguration(ctx.(*parser.Config), loopPreventer, new(sync.RWMutex))
 	wscServices := map[string]WebServerConfigService{serverName: NewWebServerConfigService(testConfiguration, "null", "null", ngLog.NewLog())}
-	configManagers := map[string]configuration.ConfigManager{serverName: configuration.NewNginxConfigurationManager(l, testConfiguration, "null", "", 1, 7, new(sync.RWMutex))}
+	configManagers := map[string]configuration.ConfigManager{serverName: configuration.NewNginxConfigurationManager(loader.NewLoader(), testConfiguration, "null", "", 1, 7, new(sync.RWMutex))}
 	metrics := NewMetrics(func() []WebServerInfo {
 		return []WebServerInfo{{
 			Name:    serverName,
@@ -455,16 +446,14 @@ func TestOffstage_ShowStatistics(t *testing.T) {
 	type args struct {
 		serverName string
 	}
-	l := loader.NewLoader()
-	ctx, loopPreventer, err := l.LoadFromFilePath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
+	serverName := "testWebServer"
+	notExistServerName := "testNotExistServer"
+	testConfiguration, err := configuration.NewConfigurationFromPath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
 	if err != nil {
 		t.Fatal(err)
 	}
-	serverName := "testWebServer"
-	notExistServerName := "testNotExistServer"
-	testConfiguration := configuration.NewConfiguration(ctx.(*parser.Config), loopPreventer, new(sync.RWMutex))
 	wscServices := map[string]WebServerConfigService{serverName: NewWebServerConfigService(testConfiguration, "null", "null", ngLog.NewLog())}
-	configManagers := map[string]configuration.ConfigManager{serverName: configuration.NewNginxConfigurationManager(l, testConfiguration, "null", "", 1, 7, new(sync.RWMutex))}
+	configManagers := map[string]configuration.ConfigManager{serverName: configuration.NewNginxConfigurationManager(loader.NewLoader(), testConfiguration, "null", "", 1, 7, new(sync.RWMutex))}
 	metrics := NewMetrics(func() []WebServerInfo {
 		return []WebServerInfo{{
 			Name:    serverName,
@@ -530,15 +519,13 @@ func TestOffstage_Start(t *testing.T) {
 		webServerConfigManagers map[string]configuration.ConfigManager
 		metrics                 Metrics
 	}
-	l := loader.NewLoader()
-	ctx, loopPreventer, err := l.LoadFromFilePath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
+	serverName := "testWebServer"
+	testConfiguration, err := configuration.NewConfigurationFromPath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
 	if err != nil {
 		t.Fatal(err)
 	}
-	serverName := "testWebServer"
-	testConfiguration := configuration.NewConfiguration(ctx.(*parser.Config), loopPreventer, new(sync.RWMutex))
 	wscServices := map[string]WebServerConfigService{serverName: NewWebServerConfigService(testConfiguration, "null", "null", ngLog.NewLog())}
-	configManagers := map[string]configuration.ConfigManager{serverName: configuration.NewNginxConfigurationManager(l, testConfiguration, "null", "", 1, 7, new(sync.RWMutex))}
+	configManagers := map[string]configuration.ConfigManager{serverName: configuration.NewNginxConfigurationManager(loader.NewLoader(), testConfiguration, "null", "", 1, 7, new(sync.RWMutex))}
 	metrics := NewMetrics(func() []WebServerInfo {
 		return []WebServerInfo{{
 			Name:    serverName,
@@ -585,15 +572,13 @@ func TestOffstage_Stop(t *testing.T) {
 		webServerConfigManagers map[string]configuration.ConfigManager
 		metrics                 Metrics
 	}
-	l := loader.NewLoader()
-	ctx, loopPreventer, err := l.LoadFromFilePath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
+	serverName := "testWebServer"
+	testConfiguration, err := configuration.NewConfigurationFromPath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
 	if err != nil {
 		t.Fatal(err)
 	}
-	serverName := "testWebServer"
-	testConfiguration := configuration.NewConfiguration(ctx.(*parser.Config), loopPreventer, new(sync.RWMutex))
 	wscServices := map[string]WebServerConfigService{serverName: NewWebServerConfigService(testConfiguration, "null", "null", ngLog.NewLog())}
-	configManagers := map[string]configuration.ConfigManager{serverName: configuration.NewNginxConfigurationManager(l, testConfiguration, "null", "", 1, 7, new(sync.RWMutex))}
+	configManagers := map[string]configuration.ConfigManager{serverName: configuration.NewNginxConfigurationManager(loader.NewLoader(), testConfiguration, "null", "", 1, 7, new(sync.RWMutex))}
 	metrics := NewMetrics(func() []WebServerInfo {
 		return []WebServerInfo{{
 			Name:    serverName,
@@ -644,16 +629,14 @@ func TestOffstage_UpdateConfig(t *testing.T) {
 		serverName string
 		data       []byte
 	}
-	l := loader.NewLoader()
-	ctx, loopPreventer, err := l.LoadFromFilePath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
+	serverName := "testWebServer"
+	notExistServerName := "testNotExistServer"
+	testConfiguration, err := configuration.NewConfigurationFromPath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
 	if err != nil {
 		t.Fatal(err)
 	}
-	serverName := "testWebServer"
-	notExistServerName := "testNotExistServer"
-	testConfiguration := configuration.NewConfiguration(ctx.(*parser.Config), loopPreventer, new(sync.RWMutex))
 	wscServices := map[string]WebServerConfigService{serverName: NewWebServerConfigService(testConfiguration, "null", "null", ngLog.NewLog())}
-	configManagers := map[string]configuration.ConfigManager{serverName: configuration.NewNginxConfigurationManager(l, testConfiguration, "null", "", 1, 7, new(sync.RWMutex))}
+	configManagers := map[string]configuration.ConfigManager{serverName: configuration.NewNginxConfigurationManager(loader.NewLoader(), testConfiguration, "null", "", 1, 7, new(sync.RWMutex))}
 	metrics := NewMetrics(func() []WebServerInfo {
 		return []WebServerInfo{{
 			Name:    serverName,
@@ -820,17 +803,15 @@ func TestOffstage_WatchLog(t *testing.T) {
 		serverName string
 		logName    string
 	}
-	l := loader.NewLoader()
-	ctx, loopPreventer, err := l.LoadFromFilePath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
-	if err != nil {
-		t.Fatal(err)
-	}
 	serverName := "testWebServer"
 	notExistServerName := "testNotExistServer"
 	testLogData := []byte("test access log\n")
-	testConfiguration := configuration.NewConfiguration(ctx.(*parser.Config), loopPreventer, new(sync.RWMutex))
+	testConfiguration, err := configuration.NewConfigurationFromPath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
 	wscServices := map[string]WebServerConfigService{serverName: NewWebServerConfigService(testConfiguration, "null", "F:\\GO_Project\\src\\bifrost\\test\\nginx\\logs", ngLog.NewLog())}
-	configManagers := map[string]configuration.ConfigManager{serverName: configuration.NewNginxConfigurationManager(l, testConfiguration, "null", "", 1, 7, new(sync.RWMutex))}
+	configManagers := map[string]configuration.ConfigManager{serverName: configuration.NewNginxConfigurationManager(loader.NewLoader(), testConfiguration, "null", "", 1, 7, new(sync.RWMutex))}
 	metrics := NewMetrics(func() []WebServerInfo {
 		return []WebServerInfo{{
 			Name:    serverName,
@@ -979,14 +960,12 @@ func TestWebServerConfigService_ServerStatus(t *testing.T) {
 		logsDir       string
 		log           *ngLog.Log
 	}
-	l := loader.NewLoader()
-	ctx, loopPreventer, err := l.LoadFromFilePath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
+	logDir := "F:\\GO_Project\\src\\bifrost\\test\\nginx\\logs"
+	nginxLog := ngLog.NewLog()
+	testConfiguration, err := configuration.NewConfigurationFromPath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
 	if err != nil {
 		t.Fatal(err)
 	}
-	logDir := "F:\\GO_Project\\src\\bifrost\\test\\nginx\\logs"
-	nginxLog := ngLog.NewLog()
-	testConfiguration := configuration.NewConfiguration(ctx.(*parser.Config), loopPreventer, new(sync.RWMutex))
 	wantWebServerConfigService := NewWebServerConfigService(testConfiguration, "null", logDir, nginxLog)
 	want := wantWebServerConfigService.ServerStatus()
 
@@ -1028,14 +1007,12 @@ func TestWebServerConfigService_ServerVersion(t *testing.T) {
 		logsDir       string
 		log           *ngLog.Log
 	}
-	l := loader.NewLoader()
-	ctx, loopPreventer, err := l.LoadFromFilePath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
+	logDir := "F:\\GO_Project\\src\\bifrost\\test\\nginx\\logs"
+	nginxLog := ngLog.NewLog()
+	testConfiguration, err := configuration.NewConfigurationFromPath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
 	if err != nil {
 		t.Fatal(err)
 	}
-	logDir := "F:\\GO_Project\\src\\bifrost\\test\\nginx\\logs"
-	nginxLog := ngLog.NewLog()
-	testConfiguration := configuration.NewConfiguration(ctx.(*parser.Config), loopPreventer, new(sync.RWMutex))
 	wantWebServerConfigService := NewWebServerConfigService(testConfiguration, "null", logDir, nginxLog)
 	want := wantWebServerConfigService.ServerVersion()
 	tests := []struct {
@@ -1108,7 +1085,7 @@ func Test_metrics_Report(t *testing.T) {
 				Mem:               wantMetrics.(*metrics).Mem,
 				Disk:              wantMetrics.(*metrics).Disk,
 				StatusList:        make([]WebServerInfo, 0),
-				BifrostVersion:    utils.Version(),
+				BifrostVersion:    config.GetVersion(),
 				isStoped:          true,
 				monitorErrChan:    make(chan error),
 				webServerInfoFunc: wsiFunc,
@@ -1184,7 +1161,7 @@ func Test_metrics_Start(t *testing.T) {
 				Mem:               wantMetrics.(*metrics).Mem,
 				Disk:              wantMetrics.(*metrics).Disk,
 				StatusList:        make([]WebServerInfo, 0),
-				BifrostVersion:    utils.Version(),
+				BifrostVersion:    config.GetVersion(),
 				isStoped:          true,
 				monitorErrChan:    make(chan error),
 				webServerInfoFunc: wsiFunc,
@@ -1255,7 +1232,7 @@ func Test_metrics_Stop(t *testing.T) {
 				Mem:               wantMetrics.(*metrics).Mem,
 				Disk:              wantMetrics.(*metrics).Disk,
 				StatusList:        make([]WebServerInfo, 0),
-				BifrostVersion:    utils.Version(),
+				BifrostVersion:    config.GetVersion(),
 				isStoped:          true,
 				monitorErrChan:    make(chan error),
 				webServerInfoFunc: wsiFunc,

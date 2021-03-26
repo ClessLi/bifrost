@@ -1,7 +1,8 @@
-package bifrost
+package daemon
 
 import (
 	"fmt"
+	"github.com/ClessLi/bifrost/internal/pkg/bifrost/config"
 	"github.com/ClessLi/bifrost/internal/pkg/utils"
 	"github.com/apsdehal/go-logger"
 	"gopkg.in/yaml.v2"
@@ -12,7 +13,7 @@ import (
 )
 
 func TestNewDaemon(t *testing.T) {
-	singletonBifrostConf = new(Config)
+	singletonBifrostConf = new(config.Config)
 	configData, err := utils.ReadFile("F:\\GO_Project\\src\\bifrost\\test\\configs\\bifrost.yml")
 	if err != nil {
 		t.Fatal(err)
@@ -53,7 +54,7 @@ func TestNewDaemon(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	server := NewServer(newGRPCServer(getBifrostConfInstance().ServiceConfig.ChunckSize, service), ip, getBifrostConfInstance().ServiceConfig.Port, "", "", nil)
+	server := NewServer(newGRPCServer(getBifrostConfInstance().ServiceConfig.ChunkSize, service), ip, getBifrostConfInstance().ServiceConfig.Port, "", "", nil)
 
 	daemon := newSubDaemon(managers, server, pidFile, make(chan int), getBifrostConfInstance().IsDebugLvl())
 	err = daemon.Start()

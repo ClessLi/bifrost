@@ -103,7 +103,7 @@ type HealthResponse struct {
 }
 
 // MakeHealthCheckEndpoint 创建健康检查Endpoint
-func MakeHealthCheckEndpoint(svc service.Service) endpoint.Endpoint {
+func MakeHealthCheckEndpoint(_ service.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		return HealthResponse{true}, nil
 	}

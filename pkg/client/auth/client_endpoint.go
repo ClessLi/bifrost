@@ -13,31 +13,29 @@ var (
 	ErrResponseNull = errors.New("response is null")
 )
 
-func decodeRequest(ctx context.Context, r interface{}) (request interface{}, err error) {
+func decodeRequest(_ context.Context, r interface{}) (request interface{}, err error) {
 	return r, nil
 }
 
-func encodeResponse(ctx context.Context, r interface{}) (response interface{}, err error) {
+func encodeResponse(_ context.Context, r interface{}) (response interface{}, err error) {
 	return r, nil
 }
 
-// The service.Service method of AuthClientEndpoints is used for the endpoint of the client
-type AuthClientEndpoints struct {
-	LoginClientEndpoint       endpoint.Endpoint
-	VerifyClientEndpoint      endpoint.Endpoint
-	HealthCheckClientEndpoint endpoint.Endpoint
+// The service.Service method of authClientEndpoints is used for the endpoint of the client
+type authClientEndpoints struct {
+	loginClientEndpoint  endpoint.Endpoint
+	verifyClientEndpoint endpoint.Endpoint
 }
 
-func NewAuthClientEndpoints(loginClientEP, verifyClientEP, HealthCheckClientEP endpoint.Endpoint) AuthClientEndpoints {
-	return AuthClientEndpoints{
-		LoginClientEndpoint:       loginClientEP,
-		VerifyClientEndpoint:      verifyClientEP,
-		HealthCheckClientEndpoint: HealthCheckClientEP,
+func newAuthClientEndpoints(loginClientEP, verifyClientEP endpoint.Endpoint) *authClientEndpoints {
+	return &authClientEndpoints{
+		loginClientEndpoint:  loginClientEP,
+		verifyClientEndpoint: verifyClientEP,
 	}
 }
 
-func (ue AuthClientEndpoints) Login(ctx context.Context, username, password string, unexpired bool) (string, error) {
-	resp, err := ue.LoginClientEndpoint(ctx, &authpb.AuthRequest{
+func (ue authClientEndpoints) Login(ctx context.Context, username, password string, unexpired bool) (string, error) {
+	resp, err := ue.loginClientEndpoint(ctx, &authpb.AuthRequest{
 		Username:  username,
 		Password:  password,
 		Unexpired: unexpired,
@@ -52,8 +50,8 @@ func (ue AuthClientEndpoints) Login(ctx context.Context, username, password stri
 	}
 }
 
-func (ue AuthClientEndpoints) Verify(ctx context.Context, token string) (bool, error) {
-	resp, err := ue.VerifyClientEndpoint(ctx, &authpb.VerifyRequest{Token: token})
+func (ue authClientEndpoints) Verify(ctx context.Context, token string) (bool, error) {
+	resp, err := ue.verifyClientEndpoint(ctx, &authpb.VerifyRequest{Token: token})
 	if err != nil {
 		return false, err
 	}

@@ -8,7 +8,7 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/ClessLi/bifrost/internal/pkg/bifrost"
+	"github.com/ClessLi/bifrost/internal/pkg/bifrost/daemon"
 	"github.com/ClessLi/bifrost/internal/pkg/utils"
 	"os"
 )
@@ -19,16 +19,16 @@ func main() {
 	defer utils.Stdoutf.Close()
 
 	err := errors.New("unkown signal")
-	daemon := bifrost.NewDaemon()
-	switch *bifrost.Signal {
+	bifrostDaemon := daemon.NewDaemon()
+	switch *daemon.Signal {
 	case "":
-		err = daemon.Start()
+		err = bifrostDaemon.Start()
 	case "stop":
-		err = daemon.Stop()
+		err = bifrostDaemon.Stop()
 	case "restart":
-		err = daemon.Restart()
+		err = bifrostDaemon.Restart()
 	case "status":
-		err = daemon.Status()
+		err = bifrostDaemon.Status()
 	}
 	if err != nil {
 		fmt.Println(err.Error())

@@ -9,13 +9,11 @@ import (
 )
 
 func exampleNewConfigManager() (*configManager, error) {
-	l := loader.NewLoader()
-	ctx, loopPreventer, err := l.LoadFromFilePath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
+	c, err := NewConfigurationFromPath("F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\nginx.conf")
 	if err != nil {
 		return nil, err
 	}
-	c := NewConfiguration(ctx.(*parser.Config), loopPreventer, new(sync.RWMutex))
-	manager := NewNginxConfigurationManager(l, c, ".", "", 1, 7, new(sync.RWMutex))
+	manager := NewNginxConfigurationManager(loader.NewLoader(), c, ".", "", 1, 7, new(sync.RWMutex))
 	return manager.(*configManager), nil
 }
 
@@ -49,13 +47,18 @@ func TestConfigManager_Backup(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = manager.regularlyBackup(time.Second, make(chan int))
-	if err != nil {
-		t.Fatal(err)
-	}
-	time.Sleep(time.Second * 5)
-	err = manager.Stop()
-	if err != nil {
-		t.Fatal(err)
-	}
+	wg := new(sync.WaitGroup)
+	wg.Add(1)
+	go func() {
+		err = manager.regularlyBackup(time.Second, make(chan int))
+		if err != nil {
+			t.Fatal(err)
+		}
+		wg.Done()
+	}()
+	wg.Wait()
+	//err = manager.Stop()
+	//if err != nil {
+	//	t.Fatal(err)
+	//}
 }

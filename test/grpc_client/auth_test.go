@@ -8,7 +8,7 @@ import (
 
 func TestGRPCLoginAndVerify(t *testing.T) {
 	authSvcAddr := "192.168.220.11:12320"
-	client, err := auth.NewClientFromGRPCServerAddress(authSvcAddr)
+	client, err := auth.NewClient(authSvcAddr)
 	if err != nil {
 		t.Fatal(err)
 		return

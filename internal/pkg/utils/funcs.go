@@ -72,7 +72,3 @@ func PathExists(path string) (bool, error) {
 		return false, nil
 	}
 }
-
-func Version() string {
-	return VERSION
-}

@@ -155,12 +155,10 @@ func (c *configuration) ModifyByQueryer(modifyParser parser.Parser, queryer Quer
 //}
 
 func (c *configuration) UpdateFromJsonBytes(data []byte) error {
-	l := loader.NewLoader()
-	config, preventer, err := l.LoadFromJsonBytes(data)
+	newConfiguration, err := NewConfigurationFromJsonBytes(data)
 	if err != nil {
 		return err
 	}
-	newConfiguration := NewConfiguration(config.(*parser.Config), preventer, new(sync.RWMutex))
 	return c.renewConfiguration(newConfiguration)
 }
 
@@ -287,6 +285,25 @@ func (c *configuration) getConfigFingerprinter() utils.ConfigFingerprinter {
 	c.rwLocker.RLock()
 	defer c.rwLocker.RUnlock()
 	return c.ConfigFingerprinter
+}
+
+func NewConfigurationFromPath(filePath string) (Configuration, error) {
+	l := loader.NewLoader()
+	ctx, loopPreventer, err := l.LoadFromFilePath(filePath)
+	if err != nil {
+		return nil, err
+	}
+	return NewConfiguration(ctx.(*parser.Config), loopPreventer, new(sync.RWMutex)), nil
+
+}
+
+func NewConfigurationFromJsonBytes(data []byte) (Configuration, error) {
+	l := loader.NewLoader()
+	ctx, loopPreventer, err := l.LoadFromJsonBytes(data)
+	if err != nil {
+		return nil, err
+	}
+	return NewConfiguration(ctx.(*parser.Config), loopPreventer, new(sync.RWMutex)), nil
 }
 
 func NewConfiguration(config *parser.Config, preventer loop_preventer.LoopPreventer, rwLocker *sync.RWMutex) Configuration {
