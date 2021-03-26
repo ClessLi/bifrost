@@ -18,8 +18,17 @@ jobs:
       with:
         go-version: 1.15
 
-    - name: Build
-      run: go build -v ./...
+    - name: bifrost-auth Build Test
+      run: go build -v -race ./...
+      working-directory: ./cmd/bifrost-auth
+      
+    - name: bifrost Build Test
+      run: go build -v -race ./...
+      working-directory: ./cmd/biforst
+      
+    - name: ng_conf_format Build Test
+      run: go build -v -race ./...
+      working-directory: ./cmd/ng_conf_format
 
     # - name: Test
     #   run: go test -v ./...
