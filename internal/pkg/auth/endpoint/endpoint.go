@@ -2,54 +2,17 @@ package endpoint
 
 import (
 	"errors"
-	"github.com/ClessLi/bifrost/api/protobuf-spec/authpb"
 	"github.com/ClessLi/bifrost/internal/pkg/auth/service"
 	"github.com/go-kit/kit/endpoint"
 	"golang.org/x/net/context"
 	"strings"
 )
 
-// The service.Service method of AuthEndpoints is used for the endpoint of the client
-type AuthEndpoints struct {
-	LoginEndpoint       endpoint.Endpoint
-	VerifyEndpoint      endpoint.Endpoint
-	HealthCheckEndpoint endpoint.Endpoint
-}
-
-func (ue AuthEndpoints) Login(ctx context.Context, username, password string, unexpired bool) (string, error) {
-	resp, err := ue.LoginEndpoint(ctx, &authpb.AuthRequest{
-		Username:  username,
-		Password:  password,
-		Unexpired: unexpired,
-	})
-	if err != nil {
-		return "", err
-	}
-	if response, ok := resp.(*authpb.AuthResponse); ok {
-		return response.Token, nil
-	} else {
-		return "", ErrResponseNull
-	}
-}
-
-func (ue AuthEndpoints) Verify(ctx context.Context, token string) (bool, error) {
-	resp, err := ue.VerifyEndpoint(ctx, &authpb.VerifyRequest{Token: token})
-	if err != nil {
-		return false, err
-	}
-	if response, ok := resp.(*authpb.VerifyResponse); ok {
-		return response.Passed, nil
-	} else {
-		return false, ErrResponseNull
-	}
-}
-
 var (
 	ErrInvalidLoginReqType  = errors.New("RequestType has only one type: Login")
 	ErrInvalidVerifyReqType = errors.New("RequestType has only one type: Verify")
 	ErrInvalidLoginRequest  = errors.New("request has only one class: AuthRequest")
 	ErrInvalidVerifyRequest = errors.New("request has only one class: VerifyRequest")
-	ErrResponseNull         = errors.New("response is null")
 )
 
 type AuthRequest struct {

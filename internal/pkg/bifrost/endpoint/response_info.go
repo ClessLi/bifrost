@@ -95,7 +95,7 @@ func newWatchResponseInfo(svcResponseInfo service.WatchResponseInfo, signalChan 
 				}
 			case err := <-svcResponseInfo.TransferErrorChan():
 				bytesResponseInfoChan <- &bytesResponseInfo{
-					Result: bytes.NewBuffer([]byte("")),
+					Result: bytes.NewBuffer(nil),
 					Err:    err,
 				}
 			case sig := <-signalChan:

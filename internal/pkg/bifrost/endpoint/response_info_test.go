@@ -19,14 +19,22 @@ func Test_bytesResponseInfo_Error(t *testing.T) {
 		fields fields
 		want   string
 	}{
-		{name: "test normal response", fields: fields{
-			Result: bytes.NewBuffer([]byte("")),
-			Err:    nil,
-		}, want: ""},
-		{name: "test error response", fields: fields{
-			Result: bytes.NewBuffer([]byte("")),
-			Err:    errors.New("invalid response"),
-		}, want: "invalid response"},
+		{
+			name: "test normal response",
+			fields: fields{
+				Result: bytes.NewBuffer([]byte("")),
+				Err:    nil,
+			},
+			want: "",
+		},
+		{
+			name: "test error response",
+			fields: fields{
+				Result: bytes.NewBuffer([]byte("")),
+				Err:    errors.New("invalid response"),
+			},
+			want: "invalid response",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -51,14 +59,22 @@ func Test_bytesResponseInfo_Respond(t *testing.T) {
 		fields fields
 		want   []byte
 	}{
-		{name: "test normal response", fields: fields{
-			Result: bytes.NewBuffer([]byte("successful response")),
-			Err:    nil,
-		}, want: []byte("successful response")},
-		{name: "test error response", fields: fields{
-			Result: bytes.NewBuffer([]byte("")),
-			Err:    errors.New("invalid response"),
-		}, want: []byte("")},
+		{
+			name: "test normal response",
+			fields: fields{
+				Result: bytes.NewBuffer([]byte("successful response")),
+				Err:    nil,
+			},
+			want: []byte("successful response"),
+		},
+		{
+			name: "test error response",
+			fields: fields{
+				Result: bytes.NewBuffer([]byte("")),
+				Err:    errors.New("invalid response"),
+			},
+			want: []byte(""),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -82,8 +98,16 @@ func Test_errorResponseInfo_Error(t *testing.T) {
 		fields fields
 		want   string
 	}{
-		{name: "test null error", fields: fields{Err: nil}, want: ""},
-		{name: "test error", fields: fields{Err: errors.New("error response")}, want: "error response"},
+		{
+			name:   "test null error",
+			fields: fields{Err: nil},
+			want:   "",
+		},
+		{
+			name:   "test error",
+			fields: fields{Err: errors.New("error response")},
+			want:   "error response",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -106,8 +130,16 @@ func Test_newUpdateResponseInfo(t *testing.T) {
 		args args
 		want ErrorResponseInfo
 	}{
-		{name: "test update success response", args: args{svcResponseInfo: service.NewUpdateResponseInfo("test", nil)}, want: newUpdateResponseInfo(service.NewUpdateResponseInfo("test", nil))},
-		{name: "test update fail response", args: args{svcResponseInfo: service.NewUpdateResponseInfo("test", errors.New("update failed"))}, want: newUpdateResponseInfo(service.NewUpdateResponseInfo("test", errors.New("update failed")))},
+		{
+			name: "test update success response",
+			args: args{svcResponseInfo: service.NewUpdateResponseInfo("test", nil)},
+			want: newUpdateResponseInfo(service.NewUpdateResponseInfo("test", nil)),
+		},
+		{
+			name: "test update fail response",
+			args: args{svcResponseInfo: service.NewUpdateResponseInfo("test", errors.New("update failed"))},
+			want: newUpdateResponseInfo(service.NewUpdateResponseInfo("test", errors.New("update failed"))),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -127,8 +159,16 @@ func Test_newViewResponseInfo(t *testing.T) {
 		args args
 		want BytesResponseInfo
 	}{
-		{name: "test view success response", args: args{svcResponseInfo: service.NewViewResponseInfo("test", []byte("view test"), nil)}, want: newViewResponseInfo(service.NewViewResponseInfo("test", []byte("view test"), nil))},
-		{name: "test view fail response", args: args{svcResponseInfo: service.NewViewResponseInfo("test", nil, errors.New("view failed"))}, want: newViewResponseInfo(service.NewViewResponseInfo("test", nil, errors.New("view failed")))},
+		{
+			name: "test view success response",
+			args: args{svcResponseInfo: service.NewViewResponseInfo("test", []byte("view test"), nil)},
+			want: newViewResponseInfo(service.NewViewResponseInfo("test", []byte("view test"), nil)),
+		},
+		{
+			name: "test view fail response",
+			args: args{svcResponseInfo: service.NewViewResponseInfo("test", nil, errors.New("view failed"))},
+			want: newViewResponseInfo(service.NewViewResponseInfo("test", nil, errors.New("view failed"))),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -212,16 +252,24 @@ func Test_watchResponseInfo_Close(t *testing.T) {
 		fields  fields
 		wantErr bool
 	}{
-		{name: "test watch response info close success", fields: fields{
-			Result:           normalResult,
-			signalChan:       normalSignalChan,
-			serviceCloseFunc: func() error { return nil },
-		}, wantErr: false},
-		{name: "test watch response info close timeout", fields: fields{
-			Result:           abnormalResult,
-			signalChan:       abnormalSignalChan,
-			serviceCloseFunc: func() error { return nil },
-		}, wantErr: true},
+		{
+			name: "test watch response info close success",
+			fields: fields{
+				Result:           normalResult,
+				signalChan:       normalSignalChan,
+				serviceCloseFunc: func() error { return nil },
+			},
+			wantErr: false,
+		},
+		{
+			name: "test watch response info close timeout",
+			fields: fields{
+				Result:           abnormalResult,
+				signalChan:       abnormalSignalChan,
+				serviceCloseFunc: func() error { return nil },
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -250,29 +298,36 @@ func Test_watchResponseInfo_Respond(t *testing.T) {
 		fields fields
 		want   <-chan BytesResponseInfo
 	}{
-		{name: "test watch respond success", fields: fields{
-			Result:     normalResult,
-			signalChan: make(chan int),
-			serviceCloseFunc: func() error {
-				return nil
+		{
+			name: "test watch respond success",
+			fields: fields{
+				Result:     normalResult,
+				signalChan: make(chan int),
+				serviceCloseFunc: func() error {
+					return nil
+				},
 			},
-		}, want: normalResult},
-		{name: "test watch respond failed", fields: fields{
-			Result:     abnormalResult,
-			signalChan: make(chan int),
-			serviceCloseFunc: func() error {
-				select {
-				case <-time.After(time.Second * 10):
-					return ErrWatchResponseInfoCloseTimeout
-				}
+			want: normalResult,
+		},
+		{
+			name: "test watch respond failed",
+			fields: fields{
+				Result:     abnormalResult,
+				signalChan: make(chan int),
+				serviceCloseFunc: func() error {
+					select {
+					case <-time.After(time.Second * 10):
+						return ErrWatchResponseInfoCloseTimeout
+					}
+				},
 			},
-		}, want: abnormalResult},
+			want: abnormalResult,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			wr := watchResponseInfo{
 				Result: tt.fields.Result,
-				//closeFunc: tt.fields.closeFunc,
 			}
 			if got := wr.Respond(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Respond() = %v, want %v", got, tt.want)

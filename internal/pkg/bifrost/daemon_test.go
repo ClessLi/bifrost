@@ -12,12 +12,12 @@ import (
 )
 
 func TestNewDaemon(t *testing.T) {
-	config := new(Config)
+	singletonBifrostConf = new(Config)
 	configData, err := utils.ReadFile("F:\\GO_Project\\src\\bifrost\\test\\configs\\bifrost.yml")
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = yaml.Unmarshal(configData, config)
+	err = yaml.Unmarshal(configData, singletonBifrostConf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -33,7 +33,7 @@ func TestNewDaemon(t *testing.T) {
 		panic(err)
 	}
 
-	utils.InitLogger(utils.Logf, config.Level)
+	utils.InitLogger(utils.Logf, singletonBifrostConf.Level)
 
 	// 初始化应用运行日志输出
 	stdoutPath := filepath.Join(logDir, "bifrost.out")
@@ -48,14 +48,14 @@ func TestNewDaemon(t *testing.T) {
 	pidFile = filepath.Join(logDir, pidFilename)
 
 	errChan := make(chan error)
-	service, managers := newService(config, errChan)
+	service, managers := newService(errChan)
 	ip, err := externalIP()
 	if err != nil {
 		t.Fatal(err)
 	}
-	server := NewServer(newGRPCServer(config.ServiceConfig.ChunckSize, service), ip, config.ServiceConfig.Port, "", "", nil)
+	server := NewServer(newGRPCServer(getBifrostConfInstance().ServiceConfig.ChunckSize, service), ip, getBifrostConfInstance().ServiceConfig.Port, "", "", nil)
 
-	daemon := newSubDaemon(managers, server, pidFile, make(chan int), config.IsDebugLvl())
+	daemon := newSubDaemon(managers, server, pidFile, make(chan int), getBifrostConfInstance().IsDebugLvl())
 	err = daemon.Start()
 	if err != nil {
 		t.Fatal(err)

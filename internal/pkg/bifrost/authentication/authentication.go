@@ -101,13 +101,8 @@ func authenticationWatcherMiddleware(authSvcCli *auth.Client) service.WatcherMid
 	}
 }
 
-func AuthenticationMiddleware(authServerAddr string) service.ServiceMiddleware {
+func AuthenticationMiddleware(authSvcCli *auth.Client) service.ServiceMiddleware {
 	return func(next service.Service) service.Service {
-		authSvcCli, err := auth.NewClient(authServerAddr)
-		if err != nil {
-			// log
-			return nil
-		}
 		return authenticationMiddleware{
 			viewer:  authenticationViewerMiddleware(authSvcCli)(next.Viewer()),
 			updater: authenticationUpdaterMiddleware(authSvcCli)(next.Updater()),
@@ -125,7 +120,7 @@ func checkToken(ctx context.Context, token string, authSvcCli *auth.Client) erro
 		return err
 	}
 	if !pass {
-		return service.UnknownErrCheckToken
+		return service.ErrCheckTokenUnknownError
 	}
 	return nil
 }

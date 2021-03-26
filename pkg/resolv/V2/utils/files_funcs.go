@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -9,6 +10,11 @@ import (
 
 func RemoveFiles(files []string) error {
 	for _, path := range files {
+		// 判断是否为单元测试
+		if len(os.Args) > 3 && os.Args[1] == "-test.v" && os.Args[2] == "-test.run" {
+			fmt.Printf("remove: %s\n", path)
+			continue
+		}
 		err := os.Remove(path)
 		if err != nil {
 			return err

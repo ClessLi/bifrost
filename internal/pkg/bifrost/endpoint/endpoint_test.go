@@ -61,7 +61,11 @@ func TestMakeHealthCheckEndpoint(t *testing.T) {
 		args args
 		want result
 	}{
-		{name: "health check endpoint", args: args{in0: testService}, want: newResult(MakeHealthCheckEndpoint(testService), context.Background(), nil)},
+		{
+			name: "health check endpoint",
+			args: args{in0: testService},
+			want: newResult(MakeHealthCheckEndpoint(testService), context.Background(), nil),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -93,7 +97,11 @@ func TestMakeUpdaterEndpoint(t *testing.T) {
 		args args
 		want result
 	}{
-		{name: "updater endpoint", args: args{updater: testService.Updater()}, want: newResult(MakeUpdaterEndpoint(testService.Updater()), context.Background(), nil)},
+		{
+			name: "updater endpoint",
+			args: args{updater: testService.Updater()},
+			want: newResult(MakeUpdaterEndpoint(testService.Updater()), context.Background(), nil),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -125,7 +133,11 @@ func TestMakeViewerEndpoint(t *testing.T) {
 		args args
 		want result
 	}{
-		{name: "viewer endpoint", args: args{viewer: testService.Viewer()}, want: newResult(MakeViewerEndpoint(testService.Viewer()), context.Background(), nil)},
+		{
+			name: "viewer endpoint",
+			args: args{viewer: testService.Viewer()},
+			want: newResult(MakeViewerEndpoint(testService.Viewer()), context.Background(), nil),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -157,7 +169,11 @@ func TestMakeWatcherEndpoint(t *testing.T) {
 		args args
 		want result
 	}{
-		{name: "watcher endpoint", args: args{watcher: testService.Watcher()}, want: newResult(MakeWatcherEndpoint(testService.Watcher()), context.Background(), nil)},
+		{
+			name: "watcher endpoint",
+			args: args{watcher: testService.Watcher()},
+			want: newResult(MakeWatcherEndpoint(testService.Watcher()), context.Background(), nil),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -203,7 +219,11 @@ func TestNewBifrostEndpoints(t *testing.T) {
 		args args
 		want results
 	}{
-		{name: "new bifrost endpoints", args: args{svc: testService}, want: newResults(NewBifrostEndpoints(testService), context.Background(), nil, nil, nil, nil)},
+		{
+			name: "new bifrost endpoints",
+			args: args{svc: testService},
+			want: newResults(NewBifrostEndpoints(testService), context.Background(), nil, nil, nil, nil),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -2,10 +2,10 @@ package service
 
 import (
 	"github.com/ClessLi/bifrost/internal/pkg/utils"
-	ngLog "github.com/ClessLi/bifrost/pkg/log/nginx"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loader"
+	ngLog "github.com/ClessLi/bifrost/pkg/server_log/nginx"
 	"os"
 	"reflect"
 	"sync"

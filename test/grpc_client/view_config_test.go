@@ -31,13 +31,13 @@ func init() {
 	authSvrAddr := "192.168.220.11:12320"
 	username := "heimdall"
 	password := "Bultgang"
-	authClient, initErr = auth.NewClient(authSvrAddr)
+	authClient, initErr = auth.NewClientFromGRPCServerAddress(authSvrAddr)
 	if initErr != nil {
 		fmt.Println(initErr)
 		os.Exit(1)
 	}
 	defer authClient.Close()
-	bifrostClient, initErr = bifrost.NewClient(bifrostSvrAddr)
+	bifrostClient, initErr = bifrost.NewClientFromServerAddress(bifrostSvrAddr)
 	if initErr != nil {
 		fmt.Println(initErr)
 		os.Exit(2)

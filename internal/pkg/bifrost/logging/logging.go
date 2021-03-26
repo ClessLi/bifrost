@@ -19,16 +19,17 @@ func (v loggingViewer) View(requestInfo service.ViewRequestInfo) (responseInfo s
 	ip, err := getClientIP(requestInfo.Context())
 	defer func(begin time.Time) {
 		n := 100
+
 		if responseInfo != nil {
+
 			data := responseInfo.Bytes()
-			if data != nil {
-				if len(data) < n {
-					n = len(data)
-				}
-			} else {
+			if data == nil {
 				data = []byte("")
-				n = 0
 			}
+			if len(data) < n {
+				n = len(data)
+			}
+
 			v.logger.Log(
 				"functions", "View",
 				"requestType", requestInfo.GetRequestType(),
@@ -39,8 +40,10 @@ func (v loggingViewer) View(requestInfo service.ViewRequestInfo) (responseInfo s
 				"error", responseInfo.Error(),
 				"took", time.Since(begin),
 			)
+
 			return
 		}
+
 		v.logger.Log(
 			"functions", "View",
 			"requestType", requestInfo.GetRequestType(),

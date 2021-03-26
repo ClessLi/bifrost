@@ -200,7 +200,7 @@ func (s *gRPCHealthCheckHandler) Watch(req *grpc_health_v1.HealthCheckRequest, w
 	return nil
 }
 
-func NewGRPCHandlers(ctx context.Context, endpoints endpoint.BifrostEndpoints) *gRPCHandlers {
+func NewGRPCHandlers(endpoints endpoint.BifrostEndpoints) *gRPCHandlers {
 	return &gRPCHandlers{
 		viewService:   grpc.NewServer(endpoints.ViewerEndpoint, DecodeViewRequest, EncodeViewResponse),
 		updateService: grpc.NewServer(endpoints.UpdaterEndpoint, DecodeUpdateRequest, EncodeUpdateResponse),
@@ -208,7 +208,7 @@ func NewGRPCHandlers(ctx context.Context, endpoints endpoint.BifrostEndpoints) *
 	}
 }
 
-func NewHealthCheckHandler(ctx context.Context, endpoints endpoint.BifrostEndpoints) grpc_health_v1.HealthServer {
+func NewHealthCheckHandler(endpoints endpoint.BifrostEndpoints) grpc_health_v1.HealthServer {
 	return &gRPCHealthCheckHandler{
 		healthCheck: grpc.NewServer(endpoints.HealthCheckEndpoint, DecodeHealthCheckRequest, EncodeHealthCheckResponse),
 	}

@@ -71,11 +71,11 @@ func MakeWatcherEndpoint(watcher service.Watcher) endpoint.Endpoint {
 	}
 }
 
-// HealthRequest 健康检查请求结构
-type HealthRequest struct{}
+// HealthRequestInfo 健康检查请求结构
+type HealthRequestInfo struct{}
 
-// HealthResponse 健康检查响应结构
-type HealthResponse struct {
+// HealthResponseInfo 健康检查响应结构
+type HealthResponseInfo struct {
 	Status bool `json:"status"`
 }
 
@@ -83,8 +83,8 @@ type HealthResponse struct {
 func MakeHealthCheckEndpoint(svc service.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		if svc == nil {
-			return HealthResponse{false}, ErrInvalidService
+			return HealthResponseInfo{false}, ErrInvalidService
 		}
-		return HealthResponse{true}, nil
+		return HealthResponseInfo{true}, nil
 	}
 }

@@ -10,18 +10,90 @@ import (
 	"github.com/ClessLi/bifrost/internal/pkg/bifrost/service"
 	"github.com/ClessLi/bifrost/internal/pkg/bifrost/transport"
 	"github.com/ClessLi/bifrost/internal/pkg/utils"
-	"github.com/ClessLi/bifrost/pkg/log/nginx"
+	"github.com/ClessLi/bifrost/pkg/client/auth"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loader"
-	"golang.org/x/net/context"
+	"github.com/ClessLi/bifrost/pkg/server_log/nginx"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
+	"gopkg.in/yaml.v2"
 	"net"
 	"os"
 	"path/filepath"
 	"sync"
 )
+
+var (
+	onceForAuthSvcClient       sync.Once
+	singletonAuthServiceClient *auth.Client
+	onceForBifrostConf         sync.Once
+	singletonBifrostConf       *Config
+)
+
+func getBifrostConfInstance() *Config {
+	onceForBifrostConf.Do(func() {
+		if singletonBifrostConf != nil {
+			return
+		}
+		// 初始化bifrost配置
+		confData, err := utils.ReadFile(*confPath)
+		if err != nil {
+			panic(err)
+		}
+		singletonBifrostConf = new(Config)
+		// 加载bifrost配置
+		err = yaml.Unmarshal(confData, singletonBifrostConf)
+		if err != nil {
+			panic(err)
+		}
+
+		// 配置必填项检查
+		err = singletonBifrostConf.check()
+		if err != nil {
+			panic(err)
+		}
+
+		// 初始化日志
+		logDir, err := filepath.Abs(singletonBifrostConf.LogDir)
+		if err != nil {
+			panic(err)
+		}
+
+		logPath := filepath.Join(logDir, "bifrost.log")
+		utils.Logf, err = os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+		if err != nil {
+			panic(err)
+		}
+
+		utils.InitLogger(utils.Logf, singletonBifrostConf.LogConfig.Level)
+
+		// 初始化应用运行日志输出
+		stdoutPath := filepath.Join(logDir, "bifrost.out")
+		utils.Stdoutf, err = os.OpenFile(stdoutPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+		if err != nil {
+			panic(err)
+		}
+
+		os.Stdout = utils.Stdoutf
+		os.Stderr = utils.Stdoutf
+	})
+	return singletonBifrostConf
+}
+
+func getAuthServiceClientInstance() *auth.Client {
+	onceForAuthSvcClient.Do(func() {
+		if singletonAuthServiceClient != nil {
+			return
+		}
+		var err error
+		singletonAuthServiceClient, err = auth.NewClientFromGRPCServerAddress(getBifrostConfInstance().ServiceConfig.AuthServerAddr)
+		if err != nil {
+			panic(err)
+		}
+	})
+	return singletonAuthServiceClient
+}
 
 func getProc(path string) (*os.Process, error) {
 	pid, pidErr := utils.GetPid(path)
@@ -30,90 +102,6 @@ func getProc(path string) (*os.Process, error) {
 	}
 	return os.FindProcess(pid)
 }
-
-//func rmPidFile(path string) {
-//	rmPidFileErr := os.Remove(path)
-//	if rmPidFileErr != nil {
-//		utils.Logger.Error(rmPidFileErr.Error())
-//	}
-//	utils.Logger.Notice("bifrost.pid has been removed.")
-//}
-
-//// configCheck, 检查bifrost配置项是否完整
-//// 返回值:
-////     错误
-//func configCheck() error {
-//	if BifrostConf == nil {
-//		return fmt.Errorf("bifrost config load error")
-//	}
-//	if len(BifrostConf.ServiceConfig.WebServerConfigInfos) == 0 {
-//		return fmt.Errorf("bifrost services config load error")
-//	}
-//	if BifrostConf.LogDir == "" {
-//		return fmt.Errorf("bifrost log config load error")
-//	}
-//	// 初始化服务信息配置
-//	if BifrostConf.ServiceConfig.Port == 0 {
-//		BifrostConf.ServiceConfig.Port = 12321
-//	}
-//	if BifrostConf.ServiceConfig.ChunckSize == 0 {
-//		BifrostConf.ServiceConfig.ChunckSize = 4194304
-//	}
-//
-//	if BifrostConf.RAConfig != nil {
-//		if BifrostConf.RAConfig.Host == "" || BifrostConf.RAConfig.Port == 0 {
-//			BifrostConf.RAConfig = nil
-//		}
-//	}
-//	return nil
-//}
-
-//func registerToRA(errChan chan<- error) {
-//	if BifrostConf.RAConfig == nil {
-//		return
-//	}
-//
-//	var err error
-//	discoveryClient, err = discover.NewKitConsulRegistryClient(BifrostConf.RAConfig.Host, BifrostConf.RAConfig.Port)
-//	if err != nil {
-//		utils.Logger.WarningF("Get Consul Client failed. Cased by: %s", err)
-//		errChan <- err
-//		return
-//	}
-//
-//	svcName := "com.github.ClessLi.api.bifrost"
-//	//svcName := "bifrostpb.BifrostService"
-//	//svcName := "BifrostService"
-//	//svcName := "Health"
-//
-//	instanceId = svcName + "-" + uuid.NewV4().String()
-//
-//	instanceIP, err := externalIP()
-//	if err != nil {
-//		utils.Logger.WarningF("Failed to initialize service instance IP. Cased by: %s", err)
-//		errChan <- err
-//		return
-//	}
-//	instanceHost := instanceIP.String()
-//
-//	if !discoveryClient.Register(svcName, instanceId, instanceHost, BifrostConf.ServiceConfig.Port, nil, config.KitLogger) {
-//		err = fmt.Errorf("register service %s failed", svcName)
-//		utils.Logger.Warning(err.Error())
-//		errChan <- err
-//		instanceId = ""
-//		return
-//	}
-//}
-
-//func deregisterToRA() {
-//	if discoveryClient != nil && !strings.EqualFold(instanceId, "") {
-//		if discoveryClient.DeRegister(instanceId, config.KitLogger) {
-//			utils.Logger.InfoF("bifrost service (instance ID is '%s') has been unregistered from RA '%s:%d'", instanceId, BifrostConf.RAConfig.Host, BifrostConf.RAConfig.Port)
-//		} else {
-//			utils.Logger.WarningF("bifrost service (instance ID is '%s') failed to deregister from RA '%s:%d'", instanceId, BifrostConf.RAConfig.Host, BifrostConf.RAConfig.Port)
-//		}
-//	}
-//}
 
 func externalIP() (net.IP, error) {
 	ifaces, err := net.Interfaces()
@@ -161,10 +149,10 @@ func getIpFromAddr(addr net.Addr) net.IP {
 	return ip
 }
 
-func newService(bifrostConf *Config, errChan chan error) (service.Service, service.OffstageManager) {
+func newService(errChan chan error) (service.Service, service.OffstageManager) {
 	webServerConfigServices := make(map[string]service.WebServerConfigService)
 	configManagers := make(map[string]configuration.ConfigManager)
-	for _, info := range bifrostConf.ServiceConfig.WebServerConfigInfos {
+	for _, info := range getBifrostConfInstance().ServiceConfig.WebServerConfigInfos {
 		// 加载配置文件对象
 		l := loader.NewLoader()
 		ctx, loopPreventer, err := l.LoadFromFilePath(info.ConfPath)
@@ -199,21 +187,21 @@ func newService(bifrostConf *Config, errChan chan error) (service.Service, servi
 	// init service
 	svc := service.NewService(service.NewViewer(offstage), service.NewUpdater(offstage), service.NewWatcher(offstage))
 	// init auth svc
-	svc = authentication.AuthenticationMiddleware(bifrostConf.ServiceConfig.AuthServerAddr)(svc)
+	svc = authentication.AuthenticationMiddleware(getAuthServiceClientInstance())(svc)
 	// init kit logger
 	svc = logging.LoggingMiddleware(config.KitLogger(utils.Stdoutf))(svc)
 	return svc, offstage
 }
 
 func newGRPCServer(chunkSize int, svc service.Service) *grpc.Server {
-	ctx := context.Background()
+	//ctx := context.Background()
 	// init kit endpoint
 	endpoints := endpoint.NewBifrostEndpoints(svc)
 
 	// init kit transport
 	transport.ChunkSize = chunkSize
-	handlers := transport.NewGRPCHandlers(ctx, endpoints)
-	healthCheckHandler := transport.NewHealthCheckHandler(ctx, endpoints)
+	handlers := transport.NewGRPCHandlers(endpoints)
+	healthCheckHandler := transport.NewHealthCheckHandler(endpoints)
 
 	// init gRPC server
 	gRPCServer := grpc.NewServer(grpc.MaxSendMsgSize(transport.ChunkSize))

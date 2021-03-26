@@ -6,7 +6,6 @@ import (
 	"github.com/ClessLi/bifrost/internal/pkg/utils"
 	"github.com/ClessLi/skirnir/pkg/discover"
 	uuid "github.com/satori/go.uuid"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net/http"
 	_ "net/http/pprof"
@@ -133,28 +132,14 @@ func (s subDaemon) Start() error {
 		}()
 	}
 
-	// 关闭进程后清理pid文件
-	defer s.rmPidFile()
-	// 进程结束前操作
-	defer func() {
-		// 捕获panic
-		if r := recover(); r != nil {
-			err := fmt.Errorf("%s", r)
-			utils.Logger.FatalF("panic: %s", err.Error())
-
-		}
-	}()
+	// 结束前释放资源
+	defer s.release()
 
 	// 记录pid
-	pid := os.Getpid()
-	pidErr := ioutil.WriteFile(s.pidFile, []byte(fmt.Sprintf("%d", pid)), 644)
-	if pidErr != nil {
-		utils.Logger.ErrorF("failed to start bifrost, cased by '%s'", pidErr)
-		return pidErr
-	}
+	pid := s.recordAndReportPid()
+	utils.Logger.NoticeF("bifrost <PID %d> is running", pid)
 
 	// 启动bifrost服务进程
-	utils.Logger.NoticeF("bifrost <PID %d> is running", pid)
 	runErr := s.serverRun()
 	utils.Logger.NoticeF("bifrost <PID %d> is finished", pid)
 	return runErr
@@ -228,6 +213,34 @@ func (s subDaemon) serverRun() error {
 	return stopErr
 }
 
+func (s subDaemon) release() {
+	// 关闭进程后清理pid文件
+	defer s.rmPidFile()
+	// 进程结束前操作
+	// 捕获panic
+	if r := recover(); r != nil {
+		err := fmt.Errorf("%s", r)
+		utils.Logger.FatalF("panic: %s", err.Error())
+
+	}
+	// 关闭AuthService客户端
+	utils.Logger.Debug("stopping auth service client...")
+	err := getAuthServiceClientInstance().Close()
+	if err != nil {
+		utils.Logger.WarningF("close auth service client failed, cased by: %s", err)
+	}
+}
+
+func (s subDaemon) recordAndReportPid() int {
+	pid := os.Getpid()
+	pidErr := ioutil.WriteFile(s.pidFile, []byte(fmt.Sprintf("%d", pid)), 644)
+	if pidErr != nil {
+		utils.Logger.ErrorF("failed to start bifrost, cased by '%s'", pidErr)
+		panic(pidErr)
+	}
+	return pid
+}
+
 func newSubDaemon(manager service.OffstageManager, server Server, pidFile string, signalChan chan int, isDebugLvl bool) Daemon {
 	if manager == nil {
 		panic("offstage manager is nil")
@@ -251,55 +264,17 @@ func NewDaemon() Daemon {
 		}
 		return newMainDaemon(pid)
 	}
-	// 初始化bifrost配置
-	confData, err := utils.ReadFile(*confPath)
-	if err != nil {
-		panic(err)
-	}
-	bifrostConf := new(Config)
-	// 加载bifrost配置
-	err = yaml.Unmarshal(confData, bifrostConf)
-	if err != nil {
-		panic(err)
-	}
 
-	// 配置必填项检查
-	err = bifrostConf.check()
-	if err != nil {
-		panic(err)
-	}
-
-	// 初始化日志
-	logDir, err := filepath.Abs(bifrostConf.LogDir)
-	if err != nil {
-		panic(err)
-	}
-
-	logPath := filepath.Join(logDir, "bifrost.log")
-	utils.Logf, err = os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		panic(err)
-	}
-
-	utils.InitLogger(utils.Logf, bifrostConf.LogConfig.Level)
-
-	// 初始化应用运行日志输出
-	stdoutPath := filepath.Join(logDir, "bifrost.out")
-	utils.Stdoutf, err = os.OpenFile(stdoutPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		panic(err)
-	}
-
-	os.Stdout = utils.Stdoutf
-	os.Stderr = utils.Stdoutf
+	bifrostConf := getBifrostConfInstance()
 
 	// 初始化bifrost服务
 	errChan := make(chan error)
-	svc, managers := newService(bifrostConf, errChan)
+	svc, managers := newService(errChan)
 	gRPCServer := newGRPCServer(bifrostConf.ServiceConfig.ChunckSize, svc)
 	serviceName := "com.github.ClessLi.api.bifrost"
 	instanceId := serviceName + "-" + uuid.NewV4().String()
 	var registryClient discover.RegistryClient
+	var err error
 	if bifrostConf.RAConfig != nil {
 		registryClient, err = discover.NewKitConsulRegistryClient(bifrostConf.RAConfig.Host, bifrostConf.RAConfig.Port)
 		if err != nil {
