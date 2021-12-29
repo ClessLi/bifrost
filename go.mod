@@ -12,6 +12,8 @@ require (
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang/protobuf v1.4.1
 	github.com/hpcloud/tail v1.0.0
+	github.com/marmotedu/errors v1.0.2
+	github.com/novalagung/gubrak v1.0.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/shirou/gopsutil v2.20.5+incompatible
 	github.com/stretchr/testify v1.6.1 // indirect
