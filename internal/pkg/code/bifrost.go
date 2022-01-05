@@ -19,6 +19,9 @@ const (
 	// ErrConfigManagerIsNotRunning - 500: Config manager is not running.
 	ErrConfigManagerIsNotRunning
 
+	// ErrConfigurationNotFound - 400: Web server configuration not found.
+	ErrConfigurationNotFound
+
 	// ErrParserNotFound - 500: Parser not found.
 	ErrParserNotFound
 

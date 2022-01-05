@@ -23,6 +23,9 @@ const (
 
 	// ErrPageNotFound - 404: Page not found.
 	ErrPageNotFound
+
+	// ErrRequestTimeout - 408: Request timeout.
+	ErrRequestTimeout
 )
 
 // common: database errors.

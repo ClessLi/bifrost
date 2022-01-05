@@ -20,6 +20,7 @@ Bifrost 系统支持的错误码列表如下：
 | ErrValidation | 100004 | 400 | Validation failed |
 | ErrTokenInvalid | 100005 | 401 | Token invalid |
 | ErrPageNotFound | 100006 | 404 | Page not found |
+| ErrRequestTimeout | 100007 | 408 | Request timeout |
 | ErrDatabase | 100101 | 500 | Database error |
 | ErrDataRepository | 100201 | 500 | Data Repository error |
 | ErrEncrypt | 100301 | 401 | Error occurred while encrypting the user password |
@@ -45,10 +46,11 @@ Bifrost 系统支持的错误码列表如下：
 | ErrSameConfigFingerprints | 110003 | 500 | Same config fingerprint between files and configuration |
 | ErrConfigManagerIsRunning | 110004 | 500 | Config manager is running |
 | ErrConfigManagerIsNotRunning | 110005 | 500 | Config manager is not running |
-| ErrParserNotFound | 110006 | 500 | Parser not found |
-| ErrUnknownKeywordString | 110007 | 500 | Unknown keyword string |
-| ErrInvalidConfig | 110008 | 500 | Invalid parser.Config |
-| ErrParseFailed | 110009 | 500 | Config parse failed |
+| ErrConfigurationNotFound | 110006 | 400 | Web server configuration not found |
+| ErrParserNotFound | 110007 | 500 | Parser not found |
+| ErrUnknownKeywordString | 110008 | 500 | Unknown keyword string |
+| ErrInvalidConfig | 110009 | 500 | Invalid parser.Config |
+| ErrParseFailed | 110010 | 500 | Config parse failed |
 | ErrStopMonitoringTimeout | 110201 | 500 | Stop monitoring timeout |
 | ErrMonitoringServiceSuspension | 110202 | 500 | Monitoring service suspension |
 | ErrMonitoringStarted | 110203 | 500 | Monitoring is already started |
