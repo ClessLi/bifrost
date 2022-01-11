@@ -1,19 +1,18 @@
-package web_server_config
+package encoder
 
 import (
 	"context"
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
-	txpv1 "github.com/ClessLi/bifrost/internal/bifrost/transport/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/marmotedu/errors"
 )
 
-type encoder struct{}
+type webServerConfig struct{}
 
-var _ txpv1.Encoder = encoder{}
+var _ Encoder = webServerConfig{}
 
-func (e encoder) EncodeResponse(_ context.Context, r interface{}) (interface{}, error) {
+func (e webServerConfig) EncodeResponse(_ context.Context, r interface{}) (interface{}, error) {
 	switch r.(type) {
 	case *v1.WebServerConfig:
 		resp := r.(*v1.WebServerConfig)
@@ -29,6 +28,6 @@ func (e encoder) EncodeResponse(_ context.Context, r interface{}) (interface{}, 
 	}
 }
 
-func NewEncoder() txpv1.Encoder {
-	return &encoder{}
+func NewWebServerConfigEncoder() Encoder {
+	return &webServerConfig{}
 }

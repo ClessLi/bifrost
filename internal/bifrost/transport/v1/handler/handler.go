@@ -1,8 +1,9 @@
-package v1
+package handler
 
 import (
 	epv1 "github.com/ClessLi/bifrost/internal/bifrost/endpoint/v1"
-	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/web_server_config"
+	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/decoder"
+	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/encoder"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/transport/grpc"
 )
@@ -22,9 +23,9 @@ func NewHandlersFactory(eps epv1.EndpointsFactory) HandlersFactory {
 }
 
 func (h *handlersFactory) WebServerConfig() WebServerConfigHandler {
-	return web_server_config.NewWebServerConfigHandler(h.eps)
+	return NewWebServerConfigHandler(h.eps)
 }
 
-func NewHandler(ep endpoint.Endpoint, decoder Decoder, encoder Encoder) grpc.Handler {
+func NewHandler(ep endpoint.Endpoint, decoder decoder.Decoder, encoder encoder.Encoder) grpc.Handler {
 	return grpc.NewServer(ep, decoder.DecodeRequest, encoder.EncodeResponse)
 }

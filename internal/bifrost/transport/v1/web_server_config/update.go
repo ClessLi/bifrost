@@ -10,7 +10,7 @@ import (
 )
 
 func (w *webServerConfigServer) Update(stream pbv1.WebServerConfig_UpdateServer) error {
-	buffer := bytes.NewBuffer(make([]byte, 0, w.Options.ChunkSize))
+	buffer := bytes.NewBuffer(make([]byte, 0, w.options.ChunkSize))
 	defer buffer.Reset()
 	var (
 		in            *pbv1.ServerConfig
@@ -21,7 +21,7 @@ func (w *webServerConfigServer) Update(stream pbv1.WebServerConfig_UpdateServer)
 	)
 
 	for !isTimeout {
-		isTimeout = time.Since(recvStartTime) >= w.Options.RecvTimeout*time.Minute
+		isTimeout = time.Since(recvStartTime) >= w.options.RecvTimeoutMinutes*time.Minute
 		in, err = stream.Recv()
 		// 判断是否传入完毕
 		if err == io.EOF {
@@ -54,7 +54,7 @@ func (w *webServerConfigServer) Update(stream pbv1.WebServerConfig_UpdateServer)
 	}
 
 	req.JsonData = buffer.Bytes()
-	_, resp, err := w.handler.WebServerConfig().HandlerUpdate().ServeGRPC(stream.Context(), req)
+	_, resp, err := w.handler.HandlerUpdate().ServeGRPC(stream.Context(), req)
 	if err != nil {
 		return errors.Wrapf(err, "failed to handle the update operation of the web server config(json-data) - %s", string(req.GetJsonData()))
 	}

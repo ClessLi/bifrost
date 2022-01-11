@@ -9,7 +9,6 @@ type watcher struct {
 }
 
 func NewWatcher(offstage offstageWatcher) Watcher {
-
 	if offstage == nil {
 		panic("offstage is nil")
 	}

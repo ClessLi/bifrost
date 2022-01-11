@@ -2,13 +2,14 @@ package configuration
 
 import (
 	"encoding/json"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/dumper"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loader"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loop_preventer"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_type"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/utils"
+	"github.com/marmotedu/errors"
 	"sync"
 )
 
@@ -58,7 +59,7 @@ type configuration struct {
 	config        *parser.Config
 	rwLocker      *sync.RWMutex
 	loopPreventer loop_preventer.LoopPreventer
-	utils.ConfigFingerprinter
+	//utils.ConfigFingerprinter
 }
 
 func (c *configuration) InsertByKeyword(insertParser parser.Parser, keyword string) error {
@@ -171,7 +172,7 @@ func (c *configuration) Query(keyword string) (Querier, error) {
 	}
 	foundCtx, index := c.config.Query(parserKeyword)
 	if foundCtx == nil {
-		return nil, nginx.ErrNotFound
+		return nil, errors.WithCode(code.ErrParserNotFound, "query father context failed")
 	}
 	foundParser, err := foundCtx.GetChild(index)
 	if err != nil {
@@ -260,17 +261,17 @@ func (c *configuration) Dump() map[string][]byte {
 }
 
 func (c *configuration) renewConfiguration(conf Configuration) error {
-	if !c.ConfigFingerprinter.Diff(conf.getConfigFingerprinter()) {
-		return ErrSameConfigFingerprint
+	if !c.getConfigFingerprinter().Diff(conf.getConfigFingerprinter()) {
+		return errors.WithCode(code.ErrSameConfigFingerprint, "same config fingerprint")
 	}
 	newConf, ok := conf.(*configuration)
 	if !ok {
-		return ErrConfigurationTypeMismatch
+		return errors.WithCode(code.ErrConfigurationTypeMismatch, "configuration type mismatch")
 	}
 	c.rwLocker.Lock()
 	defer c.rwLocker.Unlock()
 	c.config = newConf.config
-	c.ConfigFingerprinter.Renew(newConf.ConfigFingerprinter)
+	//c.ConfigFingerprinter.Renew(newConf.ConfigFingerprinter)
 	c.loopPreventer = newConf.loopPreventer
 	return nil
 }
@@ -284,7 +285,8 @@ func (c *configuration) getMainConfigPath() string {
 func (c *configuration) getConfigFingerprinter() utils.ConfigFingerprinter {
 	c.rwLocker.RLock()
 	defer c.rwLocker.RUnlock()
-	return c.ConfigFingerprinter
+	//return c.ConfigFingerprinter
+	return utils.NewConfigFingerprinter(c.Dump())
 }
 
 func NewConfigurationFromPath(filePath string) (Configuration, error) {
@@ -312,6 +314,6 @@ func NewConfiguration(config *parser.Config, preventer loop_preventer.LoopPreven
 		loopPreventer: preventer,
 		config:        config,
 	}
-	conf.ConfigFingerprinter = utils.NewConfigFingerprinter(conf.Dump())
+	//conf.ConfigFingerprinter = utils.NewConfigFingerprinter(conf.Dump())
 	return conf
 }

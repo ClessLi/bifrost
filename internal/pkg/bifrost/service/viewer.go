@@ -9,7 +9,6 @@ type viewer struct {
 }
 
 func NewViewer(offstage offstageViewer) Viewer {
-
 	if offstage == nil {
 		panic("offstage is nil")
 	}

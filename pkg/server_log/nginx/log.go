@@ -1,11 +1,13 @@
-// logger.nginx 包，该包包含了bifrost.pkg.logger.nginx项目用于读取nginx日志的相关对象，及相关方法及函数
+// Package nginx 包含了bifrost.pkg.logger.nginx项目用于读取nginx日志的相关对象，及相关方法及函数
 // 创建者： ClessLi
 // 创建时间：2020-10-27 17:02:30
 package nginx
 
 import (
 	"bytes"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/hpcloud/tail"
+	"github.com/marmotedu/errors"
 	"os"
 	"path/filepath"
 	"sync"
@@ -35,11 +37,11 @@ func newLogBuffer(t *tail.Tail, buf *bytes.Buffer) *logBuffer {
 func (l Log) getLog(logName string) (*logBuffer, error) {
 	if isLocked, ok := l.locks[logName]; !ok || !isLocked {
 		//_ = l.StopWatch(logName)
-		return nil, ErrUnknownLockError
+		return nil, errors.WithCode(code.ErrUnknownLockError, "the log lock exception")
 	}
 	log, ok := l.logs[logName]
 	if !ok {
-		return nil, ErrLogBufferIsNotExist
+		return nil, errors.WithCode(code.ErrLogBufferIsNotExist, "get log buffer failed.")
 	}
 	return log, nil
 }
@@ -47,7 +49,7 @@ func (l Log) getLog(logName string) (*logBuffer, error) {
 func (l *Log) StartWatch(logName, workspace string) (err error) {
 	isLocked, ok := l.locks[logName]
 	if ok && isLocked {
-		return ErrLogIsLocked
+		return errors.WithCode(code.ErrLogIsLocked, "the log lock is locked")
 	}
 
 	defer func() {
@@ -60,12 +62,12 @@ func (l *Log) StartWatch(logName, workspace string) (err error) {
 		return err
 	}
 	if !dir.IsDir() {
-		return ErrLogsDirPath
+		return errors.WithCode(code.ErrLogsDirPath, "logs dir is not a directory")
 	}
 
 	log, _ := l.getLog(logName)
 	if log != nil {
-		return ErrLogBufferIsExist
+		return errors.WithCode(code.ErrLogBufferIsExist, "log buffer is already exist.")
 	}
 
 	logPath, err := filepath.Abs(filepath.Join(workspace, logName))
@@ -144,14 +146,14 @@ func (l *Log) Watch(logName string) (logData []byte, err error) {
 func (l *Log) StopWatch(logName string) error {
 	log, ok := l.logs[logName]
 	if !ok {
-		return ErrLogBufferIsNotExist
+		return errors.WithCode(code.ErrLogBufferIsNotExist, "get log buffer failed")
 	}
 	//fmt.Printf("stop tail %s\n", logName)
 	err := log.tail.Stop()
 	delete(l.logs, logName)
 	_, ok = l.locks[logName]
 	if !ok {
-		return ErrLogIsUnlocked
+		return errors.WithCode(code.ErrLogIsUnlocked, "the log lock is unlocked in advance")
 	}
 	delete(l.locks, logName)
 	//fmt.Printf("stop tail %s compelet\n", logName)

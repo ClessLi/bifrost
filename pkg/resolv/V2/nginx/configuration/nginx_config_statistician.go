@@ -1,8 +1,9 @@
 package configuration
 
 import (
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/utils"
+	"github.com/marmotedu/errors"
 	"regexp"
 	"strconv"
 )
@@ -124,7 +125,7 @@ func HttpServers(q Querier) (int, map[string][]int) {
 		serverCount++
 		serverNameKeyQueryer, err := serverQueryer.Query("key:sep: :reg: server_name .*")
 		if err != nil {
-			if err != nginx.ErrNotFound {
+			if errors.IsCode(err, code.ErrParserNotFound) {
 				return 0, nil
 			}
 			continue

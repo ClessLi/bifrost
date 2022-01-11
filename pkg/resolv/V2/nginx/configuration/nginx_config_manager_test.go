@@ -1,8 +1,10 @@
 package configuration
 
 import (
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loader"
+	"github.com/marmotedu/errors"
 	"sync"
 	"testing"
 	"time"
@@ -51,8 +53,8 @@ func TestConfigManager_Backup(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		err = manager.regularlyBackup(time.Second, make(chan int))
-		if err != nil {
-			t.Fatal(err)
+		if err != nil && !errors.IsCode(err, code.ErrSameConfigFingerprint) && !errors.IsCode(err, code.ErrSameConfigFingerprints) {
+			t.Error(err)
 		}
 		wg.Done()
 	}()

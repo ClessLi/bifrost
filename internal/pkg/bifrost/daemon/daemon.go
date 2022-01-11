@@ -273,9 +273,12 @@ func NewDaemon() Daemon {
 	svc, managers := newService(errChan)
 	gRPCServer := newGRPCServer(bifrostConf.ServiceConfig.ChunkSize, svc)
 	serviceName := "com.github.ClessLi.api.bifrost"
-	instanceId := serviceName + "-" + uuid.NewV4().String()
+	uuidIns, err := uuid.NewV4()
+	if err != nil {
+		panic(err)
+	}
+	instanceId := serviceName + "-" + uuidIns.String()
 	var registryClient discover.RegistryClient
-	var err error
 	if bifrostConf.RAConfig != nil {
 		registryClient, err = discover.NewKitConsulRegistryClient(bifrostConf.RAConfig.Host, bifrostConf.RAConfig.Port)
 		if err != nil {

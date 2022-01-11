@@ -9,7 +9,6 @@ type updater struct {
 }
 
 func NewUpdater(offstage offstageUpdater) Updater {
-
 	if offstage == nil {
 		panic("offstage is nil")
 	}

@@ -62,21 +62,19 @@ func (er errorResponseInfo) Error() string {
 }
 
 func encodeClientRequest(_ context.Context, r interface{}) (interface{}, error) {
-	switch r.(type) {
+	switch r := r.(type) {
 	case viewRequestInfo:
-		req := r.(viewRequestInfo)
 		return &bifrostpb.ViewRequest{
-			ViewType:   req.ViewType,
-			ServerName: req.ServerName,
-			Token:      req.Token,
+			ViewType:   r.ViewType,
+			ServerName: r.ServerName,
+			Token:      r.Token,
 		}, nil
 	case updateRequestInfo:
-		req := r.(updateRequestInfo)
 		return &bifrostpb.UpdateRequest{
-			UpdateType: req.UpdateType,
-			ServerName: req.ServerName,
-			Token:      req.Token,
-			Data:       req.Data,
+			UpdateType: r.UpdateType,
+			ServerName: r.ServerName,
+			Token:      r.Token,
+			Data:       r.Data,
 		}, nil
 	}
 
@@ -84,22 +82,20 @@ func encodeClientRequest(_ context.Context, r interface{}) (interface{}, error) 
 }
 
 func decodeClientResponse(_ context.Context, r interface{}) (interface{}, error) {
-	switch r.(type) {
+	switch r := r.(type) {
 	case *bifrostpb.BytesResponse:
-		resp := r.(*bifrostpb.BytesResponse)
 		var respErr error
-		if resp.Err != "" {
-			respErr = errors.New(resp.Err)
+		if r.Err != "" {
+			respErr = errors.New(r.Err)
 		}
 		return &bytesResponseInfo{
-			Result: bytes.NewBuffer(resp.Ret),
+			Result: bytes.NewBuffer(r.Ret),
 			Err:    respErr,
 		}, nil
 	case *bifrostpb.ErrorResponse:
-		resp := r.(*bifrostpb.ErrorResponse)
 		var respErr error
-		if resp.Err != "" {
-			respErr = errors.New(resp.Err)
+		if r.Err != "" {
+			respErr = errors.New(r.Err)
 		}
 		return &errorResponseInfo{Err: respErr}, nil
 	}

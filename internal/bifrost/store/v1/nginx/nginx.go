@@ -31,7 +31,7 @@ var (
 	once              sync.Once
 )
 
-func GetNginxStoreFactory(opts []*genericoptions.WebServerConfigOptions) (storev1.StoreFactory, error) {
+func GetNginxStoreFactory(opts *genericoptions.WebServerConfigsOptions) (storev1.StoreFactory, error) {
 	if opts == nil && nginxStoreFactory == nil {
 		return nil, errors.New("failed to get nginx store factory")
 	}
@@ -40,11 +40,7 @@ func GetNginxStoreFactory(opts []*genericoptions.WebServerConfigOptions) (storev
 	var cms nginx.ConfigsManager
 	once.Do(func() {
 		options := nginx.ConfigsManagerOptions{Options: make([]nginx.ConfigManagerOptions, 0)}
-		for _, itemOpts := range opts {
-			//if len(strings.TrimSpace(itemOpts.ServerName)) == 0 {
-			//	err := errors.Errorf("the server name of the %dth options in WebServerConfigsOptions is empty", i)
-			//	panic(err)
-			//}
+		for _, itemOpts := range opts.WebServerConfigs {
 			if itemOpts.ServerType == nginxServer {
 				options.Options = append(options.Options, nginx.ConfigManagerOptions{
 					MainConfigPath: itemOpts.ConfigPath,
