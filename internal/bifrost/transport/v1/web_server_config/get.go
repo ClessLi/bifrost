@@ -1,6 +1,18 @@
 package web_server_config
 
-import pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
+import (
+	"context"
+	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
+)
+
+func (w *webServerConfigServer) GetServerNames(ctx context.Context, null *pbv1.Null) (*pbv1.ServerNames, error) {
+	_, resp, err := w.handler.HandlerGetServerNames().ServeGRPC(ctx, null)
+	if err != nil {
+		return nil, err
+	}
+	response := resp.(*pbv1.ServerNames)
+	return response, nil
+}
 
 func (w *webServerConfigServer) Get(r *pbv1.ServerName, stream pbv1.WebServerConfig_GetServer) error {
 

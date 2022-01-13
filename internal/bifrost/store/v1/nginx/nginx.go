@@ -16,12 +16,16 @@ type webServerStore struct {
 	cms nginx.ConfigsManager
 }
 
-func (w *webServerStore) Close() error {
-	return w.cms.Stop()
-}
-
 func (w *webServerStore) WebServerConfig() storev1.WebServerConfigStore {
 	return newNginxConfigStore(w)
+}
+
+func (w *webServerStore) WebServerStatistics() storev1.WebServerStatisticsStore {
+	return newNginxStatisticsStore(w)
+}
+
+func (w *webServerStore) Close() error {
+	return w.cms.Stop()
 }
 
 var _ storev1.StoreFactory = &webServerStore{}

@@ -14,9 +14,11 @@ var _ Decoder = webServerConfig{}
 
 func (d webServerConfig) DecodeRequest(_ context.Context, r interface{}) (interface{}, error) {
 	switch r := r.(type) {
-	case *pbv1.ServerName:
+	case *pbv1.Null: // decode `GetServerNames` request
+		return r, nil
+	case *pbv1.ServerName: // decode `Get` request
 		return &v1.ServerName{Name: r.GetName()}, nil
-	case *pbv1.ServerConfig:
+	case *pbv1.ServerConfig: // decode `Update` request
 		return &v1.WebServerConfig{
 			ServerName: &v1.ServerName{Name: r.GetServerName()},
 			JsonData:   r.GetJsonData(),

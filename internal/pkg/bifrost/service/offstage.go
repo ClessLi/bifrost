@@ -214,7 +214,7 @@ func (o Offstage) GetConfig(serverName string) ([]byte, error) {
 func (o Offstage) ShowStatistics(serverName string) ([]byte, error) {
 	service, has := o.webServerConfigServices[serverName]
 	if has {
-		return service.configuration.StatisticsByJson(), nil
+		return json.Marshal(configuration.NewStatistician(service.configuration).Statistics())
 	}
 	return nil, ErrWebServerConfigServiceNotExist
 }

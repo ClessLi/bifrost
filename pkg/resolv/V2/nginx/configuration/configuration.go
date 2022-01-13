@@ -43,7 +43,6 @@ type Configuration interface {
 
 	// view
 	View() []byte
-	StatisticsByJson() []byte // TODO: 等待割出去
 	Json() []byte
 	Dump() map[string][]byte
 
@@ -234,18 +233,6 @@ func (c *configuration) Json() []byte {
 	c.rwLocker.RLock()
 	defer c.rwLocker.RUnlock()
 	data, err := json.Marshal(c.config)
-	if err != nil {
-		return nil
-	}
-	return data
-}
-
-func (c *configuration) StatisticsByJson() []byte {
-	c.rwLocker.RLock()
-	defer c.rwLocker.RUnlock()
-	statistician := NewStatistician(c)
-	statistics := statistician.Statistics()
-	data, err := json.Marshal(statistics)
 	if err != nil {
 		return nil
 	}

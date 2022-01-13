@@ -9,7 +9,8 @@ import (
 )
 
 type HandlersFactory interface {
-	WebServerConfig() WebServerConfigHandler
+	WebServerConfig() WebServerConfigHandlers
+	WebServerStatistics() WebServerStatisticsHandlers
 }
 
 type handlersFactory struct {
@@ -22,8 +23,12 @@ func NewHandlersFactory(eps epv1.EndpointsFactory) HandlersFactory {
 	return &handlersFactory{eps: eps}
 }
 
-func (h *handlersFactory) WebServerConfig() WebServerConfigHandler {
+func (h *handlersFactory) WebServerConfig() WebServerConfigHandlers {
 	return NewWebServerConfigHandler(h.eps)
+}
+
+func (h *handlersFactory) WebServerStatistics() WebServerStatisticsHandlers {
+	return NewWebServerStatisticsHandler(h.eps)
 }
 
 func NewHandler(ep endpoint.Endpoint, decoder decoder.Decoder, encoder encoder.Encoder) grpc.Handler {

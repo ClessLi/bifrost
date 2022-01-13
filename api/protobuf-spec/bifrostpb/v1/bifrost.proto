@@ -4,6 +4,7 @@ option go_package = "api/protobuf-spec/bifrostpb/v1";
 package bifrostpb;  // 服务名
 
 service WebServerConfig {
+  rpc GetServerNames(Null) returns (ServerNames) {}
   rpc Get(ServerName) returns (stream ServerConfig) {}
   rpc Update(stream ServerConfig) returns (Response) {}
 }
@@ -13,11 +14,17 @@ service WebServerStatistics {
 }
 
 service WebServerStatus {
-  rpc Get(ServerName) returns (stream Metrics) {}
+  rpc Get(Null) returns (stream Metrics) {}
 }
 
 service WebServerLogWatcher {
   rpc Watch(stream LogWatchRequest) returns (stream Response) {}
+}
+
+message Null {}
+
+message ServerNames {
+  repeated ServerName Names = 1;
 }
 
 message ServerName {

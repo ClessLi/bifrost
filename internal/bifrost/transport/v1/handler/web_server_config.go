@@ -4,60 +4,80 @@ import (
 	epv1 "github.com/ClessLi/bifrost/internal/bifrost/endpoint/v1"
 	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/decoder"
 	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/encoder"
+	log "github.com/ClessLi/bifrost/pkg/log/v1"
 	"github.com/go-kit/kit/transport/grpc"
 	"sync"
 )
 
-type WebServerConfigHandler interface {
+type WebServerConfigHandlers interface {
+	HandlerGetServerNames() grpc.Handler
 	HandlerGet() grpc.Handler
 	HandlerUpdate() grpc.Handler
 }
 
-var _ WebServerConfigHandler = &webServerConfigHandler{}
+var _ WebServerConfigHandlers = &webServerConfigHandlers{}
 
-var (
-	handlerGetOnce         = sync.Once{}
-	handlerUpdateOnce      = sync.Once{}
-	singletonHandlerGet    grpc.Handler
-	singletonHandlerUpdate grpc.Handler
-)
-
-type webServerConfigHandler struct {
-	eps     epv1.WebServerConfigEndpoints
-	decoder decoder.Decoder
-	encoder encoder.Encoder
+type webServerConfigHandlers struct {
+	onceGetServerNames             sync.Once
+	onceGet                        sync.Once
+	onceUpdate                     sync.Once
+	singletonHandlerGetServerNames grpc.Handler
+	singletonHandlerGet            grpc.Handler
+	singletonHandlerUpdate         grpc.Handler
+	eps                            epv1.WebServerConfigEndpoints
+	decoder                        decoder.Decoder
+	encoder                        encoder.Encoder
 }
 
-func (w *webServerConfigHandler) HandlerGet() grpc.Handler {
-	handlerGetOnce.Do(func() {
-		if singletonHandlerGet == nil {
-			singletonHandlerGet = NewHandler(w.eps.EndpointGet(), w.decoder, w.encoder)
+func (wsc *webServerConfigHandlers) HandlerGetServerNames() grpc.Handler {
+	wsc.onceGetServerNames.Do(func() {
+		if wsc.singletonHandlerGetServerNames == nil {
+			wsc.singletonHandlerGetServerNames = NewHandler(wsc.eps.EndpointGetServerNames(), wsc.decoder, wsc.encoder)
 		}
 	})
-	if singletonHandlerGet == nil {
-		// logs.Fatel
-		panic("web server config handler `Get` is nil")
+	if wsc.singletonHandlerGetServerNames == nil {
+		log.Fatal("web server config handler `GetServerNames` is nil")
+
+		return nil
 	}
-	return singletonHandlerGet
+	return wsc.singletonHandlerGetServerNames
 }
 
-func (w *webServerConfigHandler) HandlerUpdate() grpc.Handler {
-	handlerUpdateOnce.Do(func() {
-		if singletonHandlerUpdate == nil {
-			singletonHandlerUpdate = NewHandler(w.eps.EndpointUpdate(), w.decoder, w.encoder)
+func (wsc *webServerConfigHandlers) HandlerGet() grpc.Handler {
+	wsc.onceGet.Do(func() {
+		if wsc.singletonHandlerGet == nil {
+			wsc.singletonHandlerGet = NewHandler(wsc.eps.EndpointGet(), wsc.decoder, wsc.encoder)
 		}
 	})
-	if singletonHandlerUpdate == nil {
-		// logs.Fatel
-		panic("web server config handler `Update` is nil")
+	if wsc.singletonHandlerGet == nil {
+		log.Fatal("web server config handler `Get` is nil")
+
+		return nil
 	}
-	return singletonHandlerUpdate
+	return wsc.singletonHandlerGet
 }
 
-func NewWebServerConfigHandler(eps epv1.EndpointsFactory) WebServerConfigHandler {
-	return &webServerConfigHandler{
-		eps:     eps.WebServerConfig(),
-		decoder: decoder.NewWebServerConfigDecoder(),
-		encoder: encoder.NewWebServerConfigEncoder(),
+func (wsc *webServerConfigHandlers) HandlerUpdate() grpc.Handler {
+	wsc.onceUpdate.Do(func() {
+		if wsc.singletonHandlerUpdate == nil {
+			wsc.singletonHandlerUpdate = NewHandler(wsc.eps.EndpointUpdate(), wsc.decoder, wsc.encoder)
+		}
+	})
+	if wsc.singletonHandlerUpdate == nil {
+		log.Fatal("web server config handler `Update` is nil")
+
+		return nil
+	}
+	return wsc.singletonHandlerUpdate
+}
+
+func NewWebServerConfigHandler(eps epv1.EndpointsFactory) WebServerConfigHandlers {
+	return &webServerConfigHandlers{
+		onceGetServerNames: sync.Once{},
+		onceGet:            sync.Once{},
+		onceUpdate:         sync.Once{},
+		eps:                eps.WebServerConfig(),
+		decoder:            decoder.NewWebServerConfigDecoder(),
+		encoder:            encoder.NewWebServerConfigEncoder(),
 	}
 }

@@ -13,16 +13,20 @@ type webServerConfig struct{}
 var _ Encoder = webServerConfig{}
 
 func (e webServerConfig) EncodeResponse(_ context.Context, r interface{}) (interface{}, error) {
-	switch r.(type) {
-	case *v1.WebServerConfig:
-		resp := r.(*v1.WebServerConfig)
+	switch r := r.(type) {
+	case *v1.ServerNames: // encode `GetServerNames` response
+		encodeServerNames := &pbv1.ServerNames{Names: make([]*pbv1.ServerName, 0)}
+		for _, serverName := range *r {
+			encodeServerNames.Names = append(encodeServerNames.Names, &pbv1.ServerName{Name: serverName.Name})
+		}
+		return encodeServerNames, nil
+	case *v1.WebServerConfig: // encode `Get` response
 		return &pbv1.ServerConfig{
-			ServerName: resp.ServerName.Name,
-			JsonData:   resp.JsonData,
+			ServerName: r.ServerName.Name,
+			JsonData:   r.JsonData,
 		}, nil
-	case *v1.Response:
-		resp := r.(*v1.Response)
-		return &pbv1.Response{Msg: []byte(resp.Message)}, nil
+	case *v1.Response: // encode `Update` response
+		return &pbv1.Response{Msg: []byte(r.Message)}, nil
 	default:
 		return nil, errors.WithCode(code.ErrEncodingFailed, "invalid web server config response: %v", r)
 	}
