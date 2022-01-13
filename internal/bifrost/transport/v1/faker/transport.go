@@ -8,6 +8,10 @@ import (
 type transport struct {
 }
 
+func (t transport) WebServerStatistics() pbv1.WebServerStatisticsServer {
+	return webServerStatistics{}
+}
+
 func (t transport) WebServerConfig() pbv1.WebServerConfigServer {
 	return webServerConfig{}
 }

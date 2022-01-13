@@ -13,18 +13,26 @@ type webServerConfigStore struct {
 	configs map[string]configuration.Configuration
 }
 
-func (w *webServerConfigStore) Get(ctx context.Context, name *v1.ServerName) (*v1.WebServerConfig, error) {
-	if conf, has := w.configs[name.Name]; has {
+func (w *webServerConfigStore) GetServerNames(ctx context.Context) (*v1.ServerNames, error) {
+	serverNames := make(v1.ServerNames, 0)
+	for name := range w.configs {
+		serverNames = append(serverNames, v1.ServerName{Name: name})
+	}
+	return &serverNames, nil
+}
+
+func (w *webServerConfigStore) Get(ctx context.Context, servername *v1.ServerName) (*v1.WebServerConfig, error) {
+	if conf, has := w.configs[servername.Name]; has {
 		jdata := conf.Json()
 		if len(jdata) == 0 {
-			return nil, errors.WithCode(code.ErrInvalidConfig, "nginx server config '%s' is null", name.Name)
+			return nil, errors.WithCode(code.ErrInvalidConfig, "nginx server config '%s' is null", servername.Name)
 		}
 		return &v1.WebServerConfig{
-			ServerName: name,
+			ServerName: servername,
 			JsonData:   jdata,
 		}, nil
 	}
-	return nil, errors.WithCode(code.ErrConfigurationNotFound, "nginx server config '%s' not found", name.Name)
+	return nil, errors.WithCode(code.ErrConfigurationNotFound, "nginx server config '%s' not found", servername.Name)
 }
 
 func (w *webServerConfigStore) Update(ctx context.Context, config *v1.WebServerConfig) error {

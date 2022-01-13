@@ -9,11 +9,11 @@ import (
 var _ pbv1.WebServerConfigServer = &webServerConfigServer{}
 
 type webServerConfigServer struct {
-	handler handler.WebServerConfigHandler
+	handler handler.WebServerConfigHandlers
 	options *options.Options
 }
 
-func NewWebServerConfigServer(handler handler.WebServerConfigHandler, options *options.Options) pbv1.WebServerConfigServer {
+func NewWebServerConfigServer(handler handler.WebServerConfigHandlers, options *options.Options) pbv1.WebServerConfigServer {
 	return &webServerConfigServer{
 		handler: handler,
 		options: options,

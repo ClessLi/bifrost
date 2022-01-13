@@ -2,12 +2,16 @@ package v1
 
 import (
 	"github.com/ClessLi/bifrost/internal/bifrost/endpoint/v1/web_server_config"
+	"github.com/ClessLi/bifrost/internal/bifrost/endpoint/v1/web_server_statistics"
 	svcv1 "github.com/ClessLi/bifrost/internal/bifrost/service/v1"
 )
 
 type EndpointsFactory interface {
 	WebServerConfig() WebServerConfigEndpoints
+	WebServerStatistics() WebServerStatisticsEndpoints
 }
+
+var _ EndpointsFactory = &endpoints{}
 
 type endpoints struct {
 	svc svcv1.ServiceFactory
@@ -19,4 +23,7 @@ func NewEndpoints(svc svcv1.ServiceFactory) EndpointsFactory {
 
 func (e *endpoints) WebServerConfig() WebServerConfigEndpoints {
 	return web_server_config.NewWebServerConfigEndpoints(e.svc)
+}
+func (e *endpoints) WebServerStatistics() WebServerStatisticsEndpoints {
+	return web_server_statistics.NewWebServerStatisticsEndpoints(e.svc)
 }

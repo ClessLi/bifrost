@@ -5,6 +5,8 @@ type WebServerConfig struct {
 	JsonData   []byte      `json:"data"`
 }
 
+type ServerNames []ServerName
+
 type ServerName struct {
 	Name string `json:"name"`
 }

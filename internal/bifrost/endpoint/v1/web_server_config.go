@@ -5,6 +5,7 @@ import (
 )
 
 type WebServerConfigEndpoints interface {
+	EndpointGetServerNames() endpoint.Endpoint
 	EndpointGet() endpoint.Endpoint
 	EndpointUpdate() endpoint.Endpoint
 }

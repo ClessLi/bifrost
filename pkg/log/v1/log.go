@@ -312,7 +312,7 @@ func (l *zapLogger) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-// WithValues creates a child logger and adds adds Zap fields to it.
+// WithValues creates a child logger and adds Zap fields to it.
 func WithValues(keysAndValues ...interface{}) Logger { return std.WithValues(keysAndValues...) }
 
 func (l *zapLogger) WithValues(keysAndValues ...interface{}) Logger {

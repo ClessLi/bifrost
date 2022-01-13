@@ -22,6 +22,7 @@ import (
 func testGRPCServer() (*grpc.Server, *health.Server) {
 	server := grpc.NewServer()
 	pbv1.RegisterWebServerConfigServer(server, faker.New().WebServerConfig())
+	pbv1.RegisterWebServerStatisticsServer(server, faker.New().WebServerStatistics())
 	healthSvr := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(server, healthSvr)
 	return server, healthSvr
@@ -54,12 +55,21 @@ func TestNewClient(t *testing.T) {
 		wantState   clientv1.HealthStatus
 	}{
 		{
-			name: "normal test",
+			name: "test bifrost web server config",
 			args: args{
 				svrAddr: address,
 				opts:    []grpc.DialOption{grpc.WithInsecure()},
 			},
 			servicename: "bifrostpb.WebServerConfig",
+			wantState:   clientv1.SERVING,
+		},
+		{
+			name: "test bifrost web server statistics",
+			args: args{
+				svrAddr: address,
+				opts:    []grpc.DialOption{grpc.WithInsecure()},
+			},
+			servicename: "bifrostpb.WebServerStatistics",
 			wantState:   clientv1.SERVING,
 		},
 	}
@@ -75,10 +85,6 @@ func TestNewClient(t *testing.T) {
 				t.Fatalf("got state %s, want %s", clientv1.StatusString(state), clientv1.StatusString(tt.wantState))
 			}
 			t.Logf("service %s is %s", tt.servicename, clientv1.StatusString(state))
-			//if err != nil {
-			//	t.Fatalf(err.Error())
-			//}
-			//t.Logf("%d", state)
 		})
 	}
 }
