@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	localhostIP = "192.168.220.1"
+	localhostIP = "192.168.200.1"
 	testPort    = 12321
 )
 
@@ -23,7 +23,7 @@ func exampleServerRun() error {
 
 	opts.RAOptions = nil
 
-	//opts.GRPCServing.ChunkSize =
+	opts.GRPCServing.ChunkSize = 100
 
 	opts.WebServerConfigsOptions.WebServerConfigs = make([]*options.WebServerConfigOptions, 0)
 	opts.WebServerConfigsOptions.WebServerConfigs = append(opts.WebServerConfigsOptions.WebServerConfigs, &options.WebServerConfigOptions{
