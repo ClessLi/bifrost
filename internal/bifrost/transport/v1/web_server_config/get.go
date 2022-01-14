@@ -23,16 +23,14 @@ func (w *webServerConfigServer) Get(r *pbv1.ServerName, stream pbv1.WebServerCon
 
 	response := resp.(*pbv1.ServerConfig)
 	n := len(response.GetJsonData())
-	for i := 0; i < n; i += w.options.ChunkSize {
-		if n <= i+w.options.ChunkSize {
+	for i := 0; i < n; i += w.options.ChunkSize - 3 {
+		if n <= i+w.options.ChunkSize-3 {
 			err = stream.Send(&pbv1.ServerConfig{
-				ServerName: response.GetServerName(),
-				JsonData:   response.JsonData[i:],
+				JsonData: response.JsonData[i:],
 			})
 		} else {
 			err = stream.Send(&pbv1.ServerConfig{
-				ServerName: response.GetServerName(),
-				JsonData:   response.JsonData[i : i+w.options.ChunkSize],
+				JsonData: response.JsonData[i : i+w.options.ChunkSize-3],
 			})
 		}
 		if err != nil {
@@ -40,5 +38,6 @@ func (w *webServerConfigServer) Get(r *pbv1.ServerName, stream pbv1.WebServerCon
 		}
 	}
 
-	return nil
+	return stream.Send(&pbv1.ServerConfig{ServerName: response.GetServerName()})
+	//return nil
 }

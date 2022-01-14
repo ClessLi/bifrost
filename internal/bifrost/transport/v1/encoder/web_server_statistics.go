@@ -20,7 +20,7 @@ func (e webServerStatistics) EncodeResponse(_ context.Context, r interface{}) (i
 		if err != nil {
 			return nil, errors.WithCode(code.ErrEncodingFailed, err.Error())
 		}
-		return &pbv1.ServerConfig{
+		return &pbv1.Statistics{
 			JsonData: jdata,
 		}, nil
 	default:

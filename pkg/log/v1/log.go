@@ -3,6 +3,8 @@ package v1
 import (
 	"context"
 	"fmt"
+	kitlog "github.com/go-kit/kit/log"
+	kitzaplog "github.com/go-kit/kit/log/zap"
 	"log"
 	"sync"
 
@@ -22,6 +24,8 @@ type InfoLogger interface {
 	Info(msg string, fields ...Field)
 	Infof(format string, v ...interface{})
 	Infow(msg string, keysAndValues ...interface{})
+
+	KigLogger() kitlog.Logger
 
 	// Enabled tests whether this InfoLogger is enabled.  For example,
 	// commandline flags might be used to set the logging verbosity and disable
@@ -91,6 +95,7 @@ func (l *noopInfoLogger) Enabled() bool                    { return false }
 func (l *noopInfoLogger) Info(_ string, _ ...Field)        {}
 func (l *noopInfoLogger) Infof(_ string, _ ...interface{}) {}
 func (l *noopInfoLogger) Infow(_ string, _ ...interface{}) {}
+func (l *noopInfoLogger) KigLogger() kitlog.Logger         { return nil }
 
 var disabledInfoLogger = &noopInfoLogger{}
 
@@ -98,6 +103,8 @@ var disabledInfoLogger = &noopInfoLogger{}
 // This is necessary, since logr doesn't define non-suggared types,
 // and using zap-specific non-suggared types would make uses tied
 // directly to Zap.
+
+var _ InfoLogger = &infoLogger{}
 
 // infoLogger is a logr.InfoLogger that uses Zap to log at a particular
 // level.  The level has already been converted to a Zap level, which
@@ -124,6 +131,10 @@ func (l *infoLogger) Infow(msg string, keysAndValues ...interface{}) {
 	if checkedEntry := l.log.Check(l.level, msg); checkedEntry != nil {
 		checkedEntry.Write(handleFields(l.log, keysAndValues)...)
 	}
+}
+
+func (l *infoLogger) KigLogger() kitlog.Logger {
+	return kitzaplog.NewZapSugarLogger(l.log, l.level)
 }
 
 // zapLogger is a logr.Logger that uses Zap to log.
@@ -551,4 +562,8 @@ func (l *zapLogger) clone() *zapLogger {
 	copy := *l
 
 	return &copy
+}
+
+func K() kitlog.Logger {
+	return std.clone().KigLogger()
 }

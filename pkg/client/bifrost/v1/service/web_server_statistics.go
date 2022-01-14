@@ -6,15 +6,15 @@ import (
 )
 
 type WebServerStatisticsService interface {
-	Get(servername *v1.ServerName) (*v1.Statistics, error)
+	Get(servername string) (*v1.Statistics, error)
 }
 
 type webServerStatisticsService struct {
 	eps epv1.WebServerStatisticsEndpoints
 }
 
-func (w *webServerStatisticsService) Get(servername *v1.ServerName) (*v1.Statistics, error) {
-	resp, err := w.eps.EndpointGet()(GetContext(), servername)
+func (w *webServerStatisticsService) Get(servername string) (*v1.Statistics, error) {
+	resp, err := w.eps.EndpointGet()(GetContext(), &v1.ServerName{Name: servername})
 	if err != nil {
 		return nil, err
 	}

@@ -41,7 +41,7 @@ func newWebServerConfigTransport(transport *transport) WebServerConfigTransport 
 			"GetServerNames",
 			transport.encoderFactory.WebServerConfig().EncodeRequest,
 			transport.decoderFactory.WebServerConfig().DecodeResponse,
-			new(pbv1.Statistics),
+			new(pbv1.ServerNames),
 		),
 		getClient: grpctransport.NewClient(
 			transport.conn,
