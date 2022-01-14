@@ -16,15 +16,15 @@ type Client interface {
 var _ Client = &client{}
 
 type client struct {
-	epFunc func() endpoint.Endpoint
+	ep endpoint.Endpoint
 }
 
 func (c *client) Endpoint() endpoint.Endpoint {
-	return c.epFunc()
+	return c.ep
 }
 
-func newClient(epfunc func() endpoint.Endpoint) Client {
-	return &client{epFunc: epfunc}
+func newClient(ep endpoint.Endpoint) Client {
+	return &client{ep: ep}
 }
 
 type Factory interface {

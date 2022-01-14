@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
-	"github.com/go-kit/kit/endpoint"
 	grpctransport "github.com/go-kit/kit/transport/grpc"
 	"github.com/marmotedu/errors"
 	"google.golang.org/grpc"
@@ -41,39 +40,39 @@ func (w *webServerConfigTransport) Update() Client {
 
 func newWebServerConfigGetClient(conn *grpc.ClientConn, requestFunc grpctransport.EncodeRequestFunc, responseFunc grpctransport.DecodeResponseFunc) Client {
 	cli := pbv1.NewWebServerConfigClient(conn)
-	return newClient(func() endpoint.Endpoint {
+	return newClient(func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		req, err := requestFunc(ctx, request)
+		if err != nil {
+			return nil, err
+		}
 
-		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-			req, err := requestFunc(ctx, request)
-			if err != nil {
+		stream, err := cli.Get(ctx, req.(*pbv1.ServerName))
+		if err != nil {
+			return nil, err
+		}
+
+		buf := bytes.NewBuffer(nil)
+		for {
+			d, err := stream.Recv()
+			if err != nil && err != io.EOF {
 				return nil, err
 			}
-
-			stream, err := cli.Get(ctx, req.(*pbv1.ServerName))
-			if err != nil {
-				return nil, err
+			if err == io.EOF {
+				break
 			}
-
-			buf := bytes.NewBuffer(nil)
-			for {
-				d, err := stream.Recv()
-				if err != nil && err != io.EOF {
-					return nil, err
-				}
-				if err == io.EOF {
-					break
-				}
-				if d.GetServerName() != "" && d.GetServerName() != req.(*pbv1.ServerName).GetName() {
-					return nil, errors.Errorf("the web server config is incorrect: got config of `%s`, want config of `%s`", d.GetServerName(), req.(*pbv1.ServerName).GetName())
-				}
-				buf.Write(d.GetJsonData())
+			if d.GetServerName() != "" && d.GetServerName() != req.(*pbv1.ServerName).GetName() {
+				return nil, errors.Errorf("the web server config is incorrect: got config of `%s`, want config of `%s`", d.GetServerName(), req.(*pbv1.ServerName).GetName())
 			}
+			buf.Write(d.GetJsonData())
+		}
 
-			return responseFunc(ctx, &pbv1.ServerConfig{
+		return responseFunc(
+			ctx,
+			&pbv1.ServerConfig{
 				ServerName: req.(*pbv1.ServerName).GetName(),
 				JsonData:   buf.Bytes(),
-			})
-		}
+			},
+		)
 
 	})
 }
