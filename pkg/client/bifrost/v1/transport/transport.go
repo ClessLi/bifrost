@@ -4,9 +4,28 @@ import (
 	"github.com/ClessLi/bifrost/pkg/client/bifrost/v1/transport/decoder"
 	"github.com/ClessLi/bifrost/pkg/client/bifrost/v1/transport/encoder"
 	log "github.com/ClessLi/bifrost/pkg/log/v1"
+	"github.com/go-kit/kit/endpoint"
 	"google.golang.org/grpc"
 	"sync"
 )
+
+type Client interface {
+	Endpoint() endpoint.Endpoint
+}
+
+var _ Client = &client{}
+
+type client struct {
+	epFunc func() endpoint.Endpoint
+}
+
+func (c *client) Endpoint() endpoint.Endpoint {
+	return c.epFunc()
+}
+
+func newClient(epfunc func() endpoint.Endpoint) Client {
+	return &client{epFunc: epfunc}
+}
 
 type Factory interface {
 	WebServerConfig() WebServerConfigTransport

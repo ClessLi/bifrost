@@ -1,8 +1,13 @@
 package transport
 
 import (
+	"bytes"
+	"context"
 	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
+	"github.com/go-kit/kit/endpoint"
 	grpctransport "github.com/go-kit/kit/transport/grpc"
+	"google.golang.org/grpc"
+	"io"
 )
 
 const (
@@ -10,26 +15,64 @@ const (
 )
 
 type WebServerStatisticsTransport interface {
-	Get() *grpctransport.Client
+	Get() Client
 }
 
 type webServerStatisticsTransport struct {
-	getClient *grpctransport.Client
+	getClient Client
 }
 
-func (w *webServerStatisticsTransport) Get() *grpctransport.Client {
+func (w *webServerStatisticsTransport) Get() Client {
 	return w.getClient
 }
 
+func newWebServerStatisticsClient(conn *grpc.ClientConn, requestFunc grpctransport.EncodeRequestFunc, responseFunc grpctransport.DecodeResponseFunc) Client {
+	cli := pbv1.NewWebServerStatisticsClient(conn)
+	return newClient(func() endpoint.Endpoint {
+
+		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+			req, err := requestFunc(ctx, request)
+			if err != nil {
+				return nil, err
+			}
+
+			stream, err := cli.Get(ctx, req.(*pbv1.ServerName))
+			buf := bytes.NewBuffer(nil)
+			for {
+				d, err := stream.Recv()
+				if err != nil && err != io.EOF {
+					return nil, err
+				}
+				if err == io.EOF {
+					break
+				}
+
+				buf.Write(d.GetJsonData())
+			}
+
+			return responseFunc(ctx, &pbv1.Statistics{JsonData: buf.Bytes()})
+
+		}
+
+	})
+}
+
 func newWebServerStatisticsTransport(transport *transport) WebServerStatisticsTransport {
+	//return &webServerStatisticsTransport{
+	//	getClient: grpctransport.NewClient(
+	//		transport.conn,
+	//		webServerStatisticsService,
+	//		"Get",
+	//		transport.encoderFactory.WebServerStatistics().EncodeRequest,
+	//		transport.decoderFactory.WebServerStatistics().DecodeResponse,
+	//		new(pbv1.Statistics),
+	//	),
+	//}
 	return &webServerStatisticsTransport{
-		getClient: grpctransport.NewClient(
+		getClient: newWebServerStatisticsClient(
 			transport.conn,
-			webServerStatisticsService,
-			"Get",
 			transport.encoderFactory.WebServerStatistics().EncodeRequest,
 			transport.decoderFactory.WebServerStatistics().DecodeResponse,
-			new(pbv1.Statistics),
 		),
 	}
 }
