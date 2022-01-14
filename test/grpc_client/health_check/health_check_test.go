@@ -3,7 +3,7 @@ package health_check
 import (
 	"context"
 	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
-	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/faker"
+	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/fake"
 	clientv1 "github.com/ClessLi/bifrost/pkg/client/grpc_health_v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
@@ -21,8 +21,8 @@ import (
 //}
 func testGRPCServer() (*grpc.Server, *health.Server) {
 	server := grpc.NewServer()
-	pbv1.RegisterWebServerConfigServer(server, faker.New().WebServerConfig())
-	pbv1.RegisterWebServerStatisticsServer(server, faker.New().WebServerStatistics())
+	pbv1.RegisterWebServerConfigServer(server, fake.New().WebServerConfig())
+	pbv1.RegisterWebServerStatisticsServer(server, fake.New().WebServerStatistics())
 	healthSvr := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(server, healthSvr)
 	return server, healthSvr

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ClessLi/skirnir/pkg/discover"
-	kitzaplog "github.com/go-kit/kit/log/zap"
 	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -23,8 +22,6 @@ import (
 	//"github.com/ClessLi/bifrost/internal/pkg/middleware"
 	log "github.com/ClessLi/bifrost/pkg/log/v1"
 )
-
-var zapLogger = kitzaplog.NewZapSugarLogger(log.ZapLogger(), log.InfoLevel)
 
 // GenericGRPCServer contains state for a bifrost api server.
 type GenericGRPCServer struct {
@@ -167,7 +164,7 @@ func (s *GenericGRPCServer) RegisterServices(registers map[string]service_regist
 				bindHost,
 				bindPort,
 				nil,
-				zapLogger,
+				log.K(),
 			)
 		}
 	}
@@ -293,7 +290,7 @@ func (s *GenericGRPCServer) Close() {
 
 	if s.registryClient != nil {
 		for _, servicename := range s.registeredService {
-			s.registryClient.DeRegister(servicename+"-"+s.instanceSuffixID, zapLogger)
+			s.registryClient.DeRegister(servicename+"-"+s.instanceSuffixID, log.K())
 		}
 	}
 

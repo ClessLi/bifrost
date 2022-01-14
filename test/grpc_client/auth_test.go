@@ -14,7 +14,7 @@ func TestGRPCLoginAndVerify(t *testing.T) {
 		return
 	}
 	defer client.Close()
-	token, loginErr := client.Login(context.Background(), "heimdall", "Bultgang", false)
+	token, loginErr := client.Login(context.Background(), "heimdallr", "Bultgang", false)
 	if loginErr != nil {
 		t.Fatal(loginErr)
 		return

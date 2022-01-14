@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"github.com/ClessLi/bifrost/pkg/client/bifrost/v1/endpoint"
+	epclient "github.com/ClessLi/bifrost/pkg/client/bifrost/v1/endpoint"
 )
 
 var ctxIns context.Context
@@ -13,7 +13,7 @@ type Factory interface {
 }
 
 type factory struct {
-	eps endpoint.Factory
+	eps epclient.Factory
 }
 
 func (f *factory) WebServerConfig() WebServerConfigService {
@@ -24,7 +24,7 @@ func (f *factory) WebServerStatistics() WebServerStatisticsService {
 	return newWebServerStatisticsService(f)
 }
 
-func New(endpoint endpoint.Factory) Factory {
+func New(endpoint epclient.Factory) Factory {
 	return &factory{eps: endpoint}
 }
 

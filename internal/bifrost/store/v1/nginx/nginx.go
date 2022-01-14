@@ -47,6 +47,7 @@ func GetNginxStoreFactory(opts *genericoptions.WebServerConfigsOptions) (storev1
 		for _, itemOpts := range opts.WebServerConfigs {
 			if itemOpts.ServerType == nginxServer {
 				options.Options = append(options.Options, nginx.ConfigManagerOptions{
+					ServerName:     itemOpts.ServerName,
 					MainConfigPath: itemOpts.ConfigPath,
 					ServerBinPath:  itemOpts.VerifyExecPath,
 					BackupDir:      itemOpts.BackupDir,
