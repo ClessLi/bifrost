@@ -5,6 +5,7 @@ var client StoreFactory
 type StoreFactory interface {
 	WebServerConfig() WebServerConfigStore
 	WebServerStatistics() WebServerStatisticsStore
+	WebServerStatus() WebServerStatusStore
 	Close() error
 }
 
