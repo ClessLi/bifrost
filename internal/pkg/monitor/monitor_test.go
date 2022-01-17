@@ -2,6 +2,7 @@ package monitor
 
 import (
 	"context"
+	"github.com/marmotedu/errors"
 	"sync"
 	"testing"
 	"time"
@@ -51,40 +52,93 @@ func Test_monitor_infoSync(t *testing.T) {
 				time.Sleep(tt.fields.timewait)
 			}()
 			time.Sleep(time.Second)
-			m.infoSync()
+			m.infoSync(context.TODO())
 			t.Log(*m.cache)
 		})
 	}
 }
 
-func Test_gracefulClose(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.TODO())
-	defer cancel()
-	//cancelDelay := time.Second*5
-	type args struct {
-		ctx     context.Context
-		close   context.CancelFunc
-		timeout time.Duration
+func Test_monitor_Start(t *testing.T) {
+	type fields struct {
+		MonitoringSyncDuration      time.Duration
+		MonitoringCycle             time.Duration
+		MonitoringFrequencyPerCycle int
+		ctx                         context.Context
+		cancel                      context.CancelFunc
+		procLocker                  sync.Locker
+		procStarted                 bool
+		cache                       *SystemInfo
+		cachemu                     *sync.RWMutex
+		current                     *SystemInfo
+		watchLocker                 sync.Locker
+		cannotSync                  bool
 	}
 	tests := []struct {
-		name    string
-		args    args
+		name   string
+		fields fields
+		//multi   int
 		wantErr bool
 	}{
 		{
-			name: "graceful close test",
-			args: args{
-				ctx:     ctx,
-				close:   cancel,
-				timeout: time.Second * 4,
+			name: "test",
+			fields: fields{
+				MonitoringSyncDuration:      time.Second,
+				MonitoringCycle:             time.Second,
+				MonitoringFrequencyPerCycle: 30,
+				ctx:                         nil,
+				cancel:                      nil,
+				procLocker:                  new(sync.Mutex),
+				procStarted:                 false,
+				cache:                       new(SystemInfo),
+				cachemu:                     new(sync.RWMutex),
+				current:                     new(SystemInfo),
+				watchLocker:                 new(sync.Mutex),
+				cannotSync:                  false,
 			},
-			wantErr: false,
+			//multi:   10,
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := gracefulClose(tt.args.ctx, tt.args.close, tt.args.timeout); (err != nil) != tt.wantErr {
-				t.Errorf("gracefulClose() error = %v, wantErr %v", err, tt.wantErr)
+			m := &monitor{
+				MonitoringSyncInterval:      tt.fields.MonitoringSyncDuration,
+				MonitoringCycle:             tt.fields.MonitoringCycle,
+				MonitoringFrequencyPerCycle: tt.fields.MonitoringFrequencyPerCycle,
+				ctx:                         tt.fields.ctx,
+				cancel:                      tt.fields.cancel,
+				procLocker:                  tt.fields.procLocker,
+				procStarted:                 tt.fields.procStarted,
+				cache:                       tt.fields.cache,
+				cachemu:                     tt.fields.cachemu,
+				current:                     tt.fields.current,
+				watchLocker:                 tt.fields.watchLocker,
+				cannotSync:                  tt.fields.cannotSync,
+			}
+			errs := make([]error, 0)
+			wg := new(sync.WaitGroup)
+			//for i := 0; i < tt.multi; i++ {
+			wg.Add(2)
+			go func() {
+				defer wg.Done()
+				err := m.Start()
+				if err != nil {
+					errs = append(errs, err)
+				}
+			}()
+			go func() {
+				defer wg.Done()
+				time.Sleep(time.Minute * 2)
+				err := m.Stop()
+				if err != nil {
+					errs = append(errs, err)
+				}
+			}()
+			//}
+			wg.Wait()
+			if err := errors.NewAggregate(errs); (err != nil) != tt.wantErr {
+				//t.Errorf("%d times Start() error = %v, wantErr %v", tt.multi, err, tt.wantErr)
+				t.Errorf("Start() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

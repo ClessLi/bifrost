@@ -2,6 +2,7 @@ package nginx
 
 import (
 	storev1 "github.com/ClessLi/bifrost/internal/bifrost/store/v1"
+	"github.com/ClessLi/bifrost/internal/pkg/monitor"
 	genericoptions "github.com/ClessLi/bifrost/internal/pkg/options"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx"
 	"github.com/marmotedu/errors"
@@ -14,6 +15,11 @@ const (
 
 type webServerStore struct {
 	cms nginx.ConfigsManager
+	m   monitor.Monitor
+}
+
+func (w *webServerStore) WebServerStatus() storev1.WebServerStatusStore {
+	return newWebServerStatusStore(w)
 }
 
 func (w *webServerStore) WebServerConfig() storev1.WebServerConfigStore {
@@ -35,18 +41,19 @@ var (
 	once              sync.Once
 )
 
-func GetNginxStoreFactory(opts *genericoptions.WebServerConfigsOptions) (storev1.StoreFactory, error) {
-	if opts == nil && nginxStoreFactory == nil {
+func GetNginxStoreFactory(webSvrConfOpts *genericoptions.WebServerConfigsOptions, monitorOpts *genericoptions.MonitorOptions) (storev1.StoreFactory, error) {
+	if webSvrConfOpts == nil && nginxStoreFactory == nil {
 		return nil, errors.New("failed to get nginx store factory")
 	}
 
 	var err error
 	var cms nginx.ConfigsManager
+	var m monitor.Monitor
 	once.Do(func() {
-		options := nginx.ConfigsManagerOptions{Options: make([]nginx.ConfigManagerOptions, 0)}
-		for _, itemOpts := range opts.WebServerConfigs {
+		cmsOpts := nginx.ConfigsManagerOptions{Options: make([]nginx.ConfigManagerOptions, 0)}
+		for _, itemOpts := range webSvrConfOpts.WebServerConfigs {
 			if itemOpts.ServerType == nginxServer {
-				options.Options = append(options.Options, nginx.ConfigManagerOptions{
+				cmsOpts.Options = append(cmsOpts.Options, nginx.ConfigManagerOptions{
 					ServerName:     itemOpts.ServerName,
 					MainConfigPath: itemOpts.ConfigPath,
 					ServerBinPath:  itemOpts.VerifyExecPath,
@@ -56,7 +63,7 @@ func GetNginxStoreFactory(opts *genericoptions.WebServerConfigsOptions) (storev1
 				})
 			}
 		}
-		cms, err = nginx.New(options)
+		cms, err = nginx.New(cmsOpts)
 		if err != nil {
 			return
 		}
@@ -66,7 +73,20 @@ func GetNginxStoreFactory(opts *genericoptions.WebServerConfigsOptions) (storev1
 			return
 		}
 
-		nginxStoreFactory = &webServerStore{cms: cms}
+		mconf := &monitor.Config{
+			MonitoringSyncInterval:      monitorOpts.SyncInterval,
+			MonitoringCycle:             monitorOpts.CycleTime,
+			MonitoringFrequencyPerCycle: monitorOpts.FrequencyPerCycle,
+		}
+		m, err = mconf.Complete().NewMonitor()
+		if err != nil {
+			return
+		}
+
+		nginxStoreFactory = &webServerStore{
+			cms: cms,
+			m:   m,
+		}
 	})
 
 	if nginxStoreFactory == nil || err != nil {

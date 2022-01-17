@@ -16,6 +16,8 @@ const (
 	MaxFrequencyPerCycle = 100
 	MinCycle             = time.Minute
 	MaxCycle             = time.Hour
+	MinSyncInterval      = time.Second
+	MaxSyncInterval      = time.Minute * 10
 )
 
 type SystemInfo struct {
@@ -33,12 +35,14 @@ type Monitor interface {
 var _ Monitor = &monitor{}
 
 type monitor struct {
+	MonitoringSyncInterval      time.Duration
 	MonitoringCycle             time.Duration
 	MonitoringFrequencyPerCycle int
 
-	signal      chan struct{}
-	startLocker sync.Locker
-	isStart     bool
+	ctx         context.Context
+	cancel      context.CancelFunc
+	procLocker  sync.Locker
+	procStarted bool
 
 	cache       *SystemInfo
 	cachemu     *sync.RWMutex
@@ -48,16 +52,30 @@ type monitor struct {
 }
 
 func (m *monitor) Start() error {
-	m.startLocker.Lock()
-	defer m.startLocker.Unlock()
-
+	m.procLocker.Lock()
 	// check monitor is already start or not.
-	if m.isStart {
-		return errors.New("monitor is already start")
+	if m.ctx != nil {
+		if _, ok := <-m.ctx.Done(); !ok || m.procStarted {
+			return errors.New("monitor is already start")
+		}
 	}
+	m.procStarted = true
+	defer func() { m.procStarted = false }()
 
-	m.isStart = true
-	defer func() { m.isStart = false }()
+	// init process context
+	m.ctx, m.cancel = context.WithCancel(context.Background())
+	defer m.cancel()
+
+	m.procLocker.Unlock()
+
+	// ini sync duration
+	syncDuration := m.MonitoringSyncInterval
+	switch {
+	case syncDuration < MinSyncInterval:
+		syncDuration = MinSyncInterval
+	case syncDuration > MaxSyncInterval:
+		syncDuration = MaxSyncInterval
+	}
 
 	// init cycle and frequency interval
 	cycle := m.MonitoringCycle
@@ -78,43 +96,45 @@ func (m *monitor) Start() error {
 
 	interval := cycle / time.Duration(frequency)
 
-	todo, done := context.WithCancel(context.TODO())
-	defer done()
-	go m.watch(todo, cycle, interval)
+	// sync system information
+	go func() {
+		syncWork, syncCancel := context.WithCancel(m.ctx)
+		defer syncCancel()
+		log.Info("start to sync system information")
+		syncTicker := time.NewTicker(syncDuration)
+		for {
+			select {
+			case <-syncWork.Done():
+				log.Info("sync system information stopped")
+				return
+			case <-syncTicker.C:
+				m.infoSync(syncWork)
+			}
+		}
+	}()
 
-	<-m.signal
-	return gracefulClose(todo, done, time.Second*10)
+	return m.watch(cycle, interval)
 
-}
-
-func gracefulClose(ctx context.Context, close context.CancelFunc, timeout time.Duration) error {
-	//timeoutC, cancel := context.WithTimeout(ctx, timeout)
-	//defer cancel()
-	//
-	//go close()
-	//
-	//select {
-	//case <-ctx.Done():
-	//	log.Info("monitoring graceful closed")
-	//	return nil
-	//case <-timeoutC.Done():
-	//	log.Warn("monitoring graceful close timeout")
-	//	return errors.New("graceful close timeout")
-	//}
-	// TODO: graceful close function
-	panic("invalid function")
 }
 
 func (m *monitor) Stop() error {
-	timeoutC, cancel := context.WithTimeout(context.TODO(), time.Second*10)
+	if m.ctx == nil || m.cancel == nil {
+		return errors.New("monitor is not started or initialization.")
+	}
+	timeoutC, cancel := context.WithTimeout(m.ctx, time.Second*10)
 	defer cancel()
+	go func() {
+		log.Info("monitoring stopping...")
+		m.cancel()
+		log.Debugf("monitoring stop complete.")
+	}()
 	select {
-	case m.signal <- struct{}{}:
+	case <-m.ctx.Done():
 		log.Info("monitoring stopped")
-		return nil
+		return m.ctx.Err()
 	case <-timeoutC.Done():
 		log.Errorf("monitoring stop timeout")
-		return errors.New("monitoring stop timeout")
+		return timeoutC.Err()
 	}
 }
 
@@ -124,7 +144,7 @@ func (m *monitor) Report() SystemInfo {
 	return *m.cache
 }
 
-func (m *monitor) infoSync() {
+func (m *monitor) infoSync(ctx context.Context) {
 	if m.cannotSync {
 		log.Error("infoSync() call blocked!!")
 		return
@@ -136,9 +156,9 @@ func (m *monitor) infoSync() {
 	m.watchLocker.Lock()
 	sysinfo := *m.current
 	m.watchLocker.Unlock()
-	todo, done := context.WithCancel(context.TODO())
+	work, done := context.WithCancel(ctx)
 	defer done()
-	timeout, tc := context.WithTimeout(todo, time.Second*5)
+	timeout, tc := context.WithTimeout(work, time.Second*5)
 	defer tc()
 	go func() {
 		m.cachemu.Lock()
@@ -151,11 +171,11 @@ func (m *monitor) infoSync() {
 	case <-timeout.Done():
 		log.Warn("system info sync to cache timeout!")
 		return
-	case <-todo.Done():
+	case <-work.Done():
 	}
 }
 
-func (m *monitor) watch(ctx context.Context, cycle, interval time.Duration) {
+func (m *monitor) watch(cycle, interval time.Duration) error {
 	var err error
 	defer func() {
 		if err != nil {
@@ -173,9 +193,9 @@ func (m *monitor) watch(ctx context.Context, cycle, interval time.Duration) {
 	intervalTicker := time.NewTicker(interval)
 	for {
 		select {
-		case <-ctx.Done():
+		case <-m.ctx.Done():
 			log.Info("watching completed.")
-			return
+			return m.ctx.Err()
 		case <-intervalTicker.C:
 			var (
 				cpupct   []float64
@@ -185,17 +205,17 @@ func (m *monitor) watch(ctx context.Context, cycle, interval time.Duration) {
 
 			cpupct, err = cpu.Percent(0, false)
 			if err != nil {
-				return
+				return err
 			}
 			cpupcts = append(cpupcts, cpupct[0])
 			vmem, err = mem.VirtualMemory()
 			if err != nil {
-				return
+				return err
 			}
 			mempcts = append(mempcts, vmem.UsedPercent)
 			diskstat, err = disk.Usage("/")
 			if err != nil {
-				return
+				return err
 			}
 			diskpcts = append(diskpcts, diskstat.UsedPercent)
 

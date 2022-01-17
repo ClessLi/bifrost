@@ -16,6 +16,7 @@ type bifrostServer struct {
 	gs                *shutdown.GracefulShutdown
 	genericGRPCServer *genericgrpcserver.GenericGRPCServer
 	webSvrConfigsOpts *genericoptions.WebServerConfigsOptions
+	monitorOpts       *genericoptions.MonitorOptions
 }
 
 type preparedBifrostServer struct {
@@ -41,6 +42,7 @@ func createBifrostServer(cfg *config.Config) (*bifrostServer, error) {
 		gs:                gs,
 		genericGRPCServer: genericServer,
 		webSvrConfigsOpts: cfg.WebServerConfigsOptions,
+		monitorOpts:       cfg.MonitorOptions,
 	}
 
 	return server, nil
@@ -75,7 +77,7 @@ func (p preparedBifrostServer) Run() error {
 
 func (b *bifrostServer) initStore() {
 	log.Debug("bifrost server init store...")
-	storeIns, err := storev1nginx.GetNginxStoreFactory(b.webSvrConfigsOpts)
+	storeIns, err := storev1nginx.GetNginxStoreFactory(b.webSvrConfigsOpts, b.monitorOpts)
 	if err != nil {
 		log.Fatalf("init nginx store failed: %+v", err)
 	}
