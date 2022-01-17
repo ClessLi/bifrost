@@ -1,6 +1,7 @@
 package nginx
 
 import (
+	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	log "github.com/ClessLi/bifrost/pkg/log/v1"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loader"
@@ -42,6 +43,7 @@ type ConfigsManager interface {
 	Start() error
 	Stop() error
 	GetConfigs() map[string]configuration.Configuration
+	GetServerInfos() []*v1.WebServerInfo
 }
 
 type configsManager struct {
@@ -91,6 +93,18 @@ func (c *configsManager) GetConfigs() map[string]configuration.Configuration {
 		configs[name] = manager.GetConfiguration()
 	}
 	return configs
+}
+
+func (c *configsManager) GetServerInfos() []*v1.WebServerInfo {
+	var infos []*v1.WebServerInfo
+	for name, manager := range c.cms {
+		info := manager.GetServerInfo()
+		if info.Name == "unknown" {
+			info.Name = name
+		}
+		infos = append(infos, info)
+	}
+	return infos
 }
 
 func New(options ConfigsManagerOptions) (ConfigsManager, error) {
