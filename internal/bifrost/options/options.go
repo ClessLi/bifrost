@@ -15,6 +15,7 @@ type Options struct {
 	RAOptions               *genericoptions.RAOptions               `json:"ra" mapstructure:"ra"`
 	GRPCServing             *genericoptions.GRPCServerOptions       `json:"grpc" mapstructure:"grpc"`
 	WebServerConfigsOptions *genericoptions.WebServerConfigsOptions `json:"web-server-configs" mapstructure:"web-server-configs"`
+	MonitorOptions          *genericoptions.MonitorOptions          `json:"monitor" mapstructure:"monitor"`
 	Log                     *log.Options                            `json:"log" mapstructure:"log"`
 }
 
@@ -26,6 +27,7 @@ func NewOptions() *Options {
 		RAOptions:               genericoptions.NewRAOptions(),
 		GRPCServing:             genericoptions.NewGRPCServerOptions(),
 		WebServerConfigsOptions: genericoptions.NewWebServerConfigsOptions(),
+		MonitorOptions:          genericoptions.NewMonitorOptions(),
 		Log:                     log.NewOptions(),
 	}
 }
@@ -36,6 +38,7 @@ func (o *Options) Flags() (fss cliflag.NamedFlagSets) {
 	o.InsecureServing.AddFlags(fss.FlagSet("insecure serving"))
 	o.RAOptions.AddFlags(fss.FlagSet("RA options"))
 	o.GRPCServing.AddFlags(fss.FlagSet("gRPC serving"))
+	o.MonitorOptions.AddFlags(fss.FlagSet("monitor"))
 	o.Log.AddFlags(fss.FlagSet("log"))
 	return fss
 }
