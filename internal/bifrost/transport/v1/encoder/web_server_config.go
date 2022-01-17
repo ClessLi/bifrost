@@ -33,5 +33,5 @@ func (e webServerConfig) EncodeResponse(_ context.Context, r interface{}) (inter
 }
 
 func NewWebServerConfigEncoder() Encoder {
-	return &webServerConfig{}
+	return new(webServerConfig)
 }

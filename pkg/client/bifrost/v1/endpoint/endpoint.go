@@ -8,6 +8,7 @@ import (
 type Factory interface {
 	WebServerConfig() epv1.WebServerConfigEndpoints
 	WebServerStatistics() epv1.WebServerStatisticsEndpoints
+	WebServerStatus() epv1.WebServerStatusEndpoints
 }
 
 type factory struct {
@@ -20,6 +21,10 @@ func (f *factory) WebServerConfig() epv1.WebServerConfigEndpoints {
 
 func (f *factory) WebServerStatistics() epv1.WebServerStatisticsEndpoints {
 	return newWebServerStatisticsEndpoints(f)
+}
+
+func (f *factory) WebServerStatus() epv1.WebServerStatusEndpoints {
+	return newWebServerStatusEndpoints(f)
 }
 
 func New(transport txpclient.Factory) Factory {

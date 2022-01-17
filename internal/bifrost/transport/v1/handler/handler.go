@@ -11,6 +11,7 @@ import (
 type HandlersFactory interface {
 	WebServerConfig() WebServerConfigHandlers
 	WebServerStatistics() WebServerStatisticsHandlers
+	WebServerStatus() WebServerStatusHandlers
 }
 
 type handlersFactory struct {
@@ -29,6 +30,10 @@ func (h *handlersFactory) WebServerConfig() WebServerConfigHandlers {
 
 func (h *handlersFactory) WebServerStatistics() WebServerStatisticsHandlers {
 	return NewWebServerStatisticsHandler(h.eps)
+}
+
+func (h *handlersFactory) WebServerStatus() WebServerStatusHandlers {
+	return NewWebServerStatusHandlers(h.eps)
 }
 
 func NewHandler(ep endpoint.Endpoint, decoder decoder.Decoder, encoder encoder.Encoder) grpc.Handler {

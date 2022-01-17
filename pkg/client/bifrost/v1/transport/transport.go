@@ -30,6 +30,7 @@ func newClient(ep endpoint.Endpoint) Client {
 type Factory interface {
 	WebServerConfig() WebServerConfigTransport
 	WebServerStatistics() WebServerStatisticsTransport
+	WebServerStatus() WebServerStatusTransport
 }
 
 var _ Factory = &transport{}
@@ -37,8 +38,10 @@ var _ Factory = &transport{}
 var (
 	onceWebServerConfig     = sync.Once{}
 	onceWebServerStatistics = sync.Once{}
+	onceWebServerStatus     = sync.Once{}
 	singletonWSCTXP         WebServerConfigTransport
 	singletonWSSTXP         WebServerStatisticsTransport
+	singletonWSStatusTXP    WebServerStatusTransport
 )
 
 type transport struct {
@@ -73,6 +76,20 @@ func (t *transport) WebServerStatistics() WebServerStatisticsTransport {
 		return nil
 	}
 	return singletonWSSTXP
+}
+
+func (t *transport) WebServerStatus() WebServerStatusTransport {
+	onceWebServerStatus.Do(func() {
+		if singletonWSStatusTXP == nil {
+			singletonWSStatusTXP = newWebServerStatusTransport(t)
+		}
+	})
+	if singletonWSStatusTXP == nil {
+		log.Fatal("web server status transport client is nil")
+
+		return nil
+	}
+	return singletonWSStatusTXP
 }
 
 func New(conn *grpc.ClientConn) Factory {

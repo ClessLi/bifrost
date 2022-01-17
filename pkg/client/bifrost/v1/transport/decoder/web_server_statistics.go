@@ -13,7 +13,7 @@ type webServerStatistics struct{}
 func (w webServerStatistics) DecodeResponse(ctx context.Context, resp interface{}) (interface{}, error) {
 	switch resp := resp.(type) {
 	case *pbv1.Statistics:
-		statistics := &v1.Statistics{}
+		statistics := new(v1.Statistics)
 		err := json.Unmarshal(resp.GetJsonData(), statistics)
 		return statistics, err
 	default:

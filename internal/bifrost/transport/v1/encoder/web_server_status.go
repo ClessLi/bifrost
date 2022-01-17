@@ -9,25 +9,25 @@ import (
 	"github.com/marmotedu/errors"
 )
 
-type webServerStatistics struct{}
+type webServerStatus struct{}
 
-var _ Encoder = webServerStatistics{}
+var _ Encoder = &webServerStatus{}
 
-func (e webServerStatistics) EncodeResponse(_ context.Context, r interface{}) (interface{}, error) {
+func (w webServerStatus) EncodeResponse(ctx context.Context, r interface{}) (interface{}, error) {
 	switch r := r.(type) {
-	case *v1.Statistics:
+	case *v1.Metrics:
 		jdata, err := json.Marshal(r)
 		if err != nil {
 			return nil, errors.WithCode(code.ErrEncodingFailed, err.Error())
 		}
-		return &pbv1.Statistics{
+		return &pbv1.Metrics{
 			JsonData: jdata,
 		}, nil
 	default:
-		return nil, errors.WithCode(code.ErrEncodingFailed, "invalid web server statistics response: %v", r)
+		return nil, errors.WithCode(code.ErrEncodingFailed, "invalid web server status response: %v", r)
 	}
 }
 
-func NewWebServerStatisticsEncoder() Encoder {
-	return new(webServerStatistics)
+func NewWebServerStatusEncoder() Encoder {
+	return new(webServerStatus)
 }

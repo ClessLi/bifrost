@@ -32,6 +32,12 @@ func (b *bifrostServiceRegister) Generate() map[string]service_register.ServiceR
 			}
 			pbv1.RegisterWebServerStatisticsServer(server, b.factory.WebServerStatistics())
 		},
+		b.instancePrefixName + ".bifrostpb.WebServerStatus": func(server *grpc.Server, healthzSvr *health.Server) {
+			if healthzSvr != nil {
+				healthzSvr.SetServingStatus(b.instancePrefixName+".bifrostpb.WebServerStatus", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
+			}
+			pbv1.RegisterWebServerStatusServer(server, b.factory.WebServerStatus())
+		},
 	}
 }
 
