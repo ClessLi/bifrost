@@ -29,5 +29,5 @@ func (d webServerConfig) DecodeRequest(_ context.Context, r interface{}) (interf
 }
 
 func NewWebServerConfigDecoder() Decoder {
-	return &webServerConfig{}
+	return new(webServerConfig)
 }

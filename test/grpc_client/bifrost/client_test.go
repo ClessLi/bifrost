@@ -62,6 +62,13 @@ func TestBifrostClient(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 
+	time.Sleep(time.Minute)
+	metrics, err := client.WebServerStatus().Get()
+	if err != nil {
+		t.Fatalf("%++v", err)
+	}
+	t.Log(metrics)
+
 	// normal grpc client
 	/*cclient, err := grpc.Dial(serverAddress(), grpc.WithInsecure(), grpc.WithTimeout(time.Second))
 	if err != nil {

@@ -16,6 +16,10 @@ func (t transport) WebServerConfig() pbv1.WebServerConfigServer {
 	return webServerConfig{}
 }
 
+func (t transport) WebServerStatus() pbv1.WebServerStatusServer {
+	return webServerStatus{}
+}
+
 func New() txpv1.Factory {
 	return transport{}
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/ClessLi/bifrost/internal/bifrost/config"
 	bifrost_opts "github.com/ClessLi/bifrost/internal/bifrost/options"
 	"github.com/ClessLi/bifrost/internal/pkg/options"
+	"time"
 )
 
 const (
@@ -24,6 +25,10 @@ func exampleServerRun() error {
 	opts.RAOptions = nil
 
 	opts.GRPCServing.ChunkSize = 100
+
+	opts.MonitorOptions.SyncInterval = time.Second * 10
+	opts.MonitorOptions.CycleTime = time.Second * 30
+	opts.MonitorOptions.FrequencyPerCycle = 10
 
 	opts.WebServerConfigsOptions.WebServerConfigs = make([]*options.WebServerConfigOptions, 0)
 	opts.WebServerConfigsOptions.WebServerConfigs = append(opts.WebServerConfigsOptions.WebServerConfigs, &options.WebServerConfigOptions{

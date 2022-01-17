@@ -3,12 +3,14 @@ package v1
 import (
 	"github.com/ClessLi/bifrost/internal/bifrost/endpoint/v1/web_server_config"
 	"github.com/ClessLi/bifrost/internal/bifrost/endpoint/v1/web_server_statistics"
+	"github.com/ClessLi/bifrost/internal/bifrost/endpoint/v1/web_server_status"
 	svcv1 "github.com/ClessLi/bifrost/internal/bifrost/service/v1"
 )
 
 type EndpointsFactory interface {
 	WebServerConfig() WebServerConfigEndpoints
 	WebServerStatistics() WebServerStatisticsEndpoints
+	WebServerStatus() WebServerStatusEndpoints
 }
 
 var _ EndpointsFactory = &endpoints{}
@@ -26,4 +28,8 @@ func (e *endpoints) WebServerConfig() WebServerConfigEndpoints {
 }
 func (e *endpoints) WebServerStatistics() WebServerStatisticsEndpoints {
 	return web_server_statistics.NewWebServerStatisticsEndpoints(e.svc)
+}
+
+func (e *endpoints) WebServerStatus() WebServerStatusEndpoints {
+	return web_server_status.NewWebServerStatusEndpoints(e.svc)
 }

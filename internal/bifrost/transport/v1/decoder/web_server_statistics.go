@@ -22,5 +22,5 @@ func (d webServerStatistics) DecodeRequest(_ context.Context, r interface{}) (in
 }
 
 func NewWebServerStatisticsDecoder() Decoder {
-	return &webServerStatistics{}
+	return new(webServerStatistics)
 }

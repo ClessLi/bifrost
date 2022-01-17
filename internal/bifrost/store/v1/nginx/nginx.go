@@ -4,6 +4,7 @@ import (
 	storev1 "github.com/ClessLi/bifrost/internal/bifrost/store/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/monitor"
 	genericoptions "github.com/ClessLi/bifrost/internal/pkg/options"
+	log "github.com/ClessLi/bifrost/pkg/log/v1"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx"
 	"github.com/marmotedu/errors"
 	"sync"
@@ -31,7 +32,10 @@ func (w *webServerStore) WebServerStatistics() storev1.WebServerStatisticsStore 
 }
 
 func (w *webServerStore) Close() error {
-	return w.cms.Stop()
+	return errors.NewAggregate([]error{
+		w.cms.Stop(),
+		w.m.Stop(),
+	})
 }
 
 var _ storev1.StoreFactory = &webServerStore{}
@@ -50,6 +54,7 @@ func GetNginxStoreFactory(webSvrConfOpts *genericoptions.WebServerConfigsOptions
 	var cms nginx.ConfigsManager
 	var m monitor.Monitor
 	once.Do(func() {
+		// init and start config managers
 		cmsOpts := nginx.ConfigsManagerOptions{Options: make([]nginx.ConfigManagerOptions, 0)}
 		for _, itemOpts := range webSvrConfOpts.WebServerConfigs {
 			if itemOpts.ServerType == nginxServer {
@@ -73,6 +78,7 @@ func GetNginxStoreFactory(webSvrConfOpts *genericoptions.WebServerConfigsOptions
 			return
 		}
 
+		// init and start monitor
 		mconf := &monitor.Config{
 			MonitoringSyncInterval:      monitorOpts.SyncInterval,
 			MonitoringCycle:             monitorOpts.CycleTime,
@@ -83,6 +89,16 @@ func GetNginxStoreFactory(webSvrConfOpts *genericoptions.WebServerConfigsOptions
 			return
 		}
 
+		go func() {
+			err := m.Start()
+			if err != nil {
+				log.Fatal(err.Error())
+
+				return
+			}
+		}()
+
+		// build nginx store factory
 		nginxStoreFactory = &webServerStore{
 			cms: cms,
 			m:   m,

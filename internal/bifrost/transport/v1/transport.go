@@ -6,11 +6,13 @@ import (
 	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/options"
 	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/web_server_config"
 	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/web_server_statistics"
+	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/web_server_status"
 )
 
 type Factory interface {
 	WebServerConfig() pbv1.WebServerConfigServer
 	WebServerStatistics() pbv1.WebServerStatisticsServer
+	WebServerStatus() pbv1.WebServerStatusServer
 }
 
 type transport struct {
@@ -24,6 +26,10 @@ func (t *transport) WebServerConfig() pbv1.WebServerConfigServer {
 
 func (t *transport) WebServerStatistics() pbv1.WebServerStatisticsServer {
 	return web_server_statistics.NewWebServerStatisticsServer(t.handlers.WebServerStatistics(), t.opts)
+}
+
+func (t *transport) WebServerStatus() pbv1.WebServerStatusServer {
+	return web_server_status.NewWebServerStatusServer(t.handlers.WebServerStatus(), t.opts)
 }
 
 func New(handlers handler.HandlersFactory, opts *options.Options) Factory {
