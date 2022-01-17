@@ -1,7 +1,9 @@
 package configuration
 
 import (
+	"bytes"
 	"fmt"
+	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loader"
@@ -12,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 )
@@ -23,6 +26,7 @@ type ConfigManager interface {
 	regularlyBackup(duration time.Duration, signalChan chan int) error
 	regularlyReload(duration time.Duration, signalChan chan int) error
 	regularlySave(duration time.Duration, signalChan chan int) error
+	GetServerInfo() *v1.WebServerInfo
 }
 
 type configManager struct {
@@ -41,6 +45,72 @@ type configManager struct {
 	saveSignalChan         chan int
 	isRunning              bool
 	waitGroup              *sync.WaitGroup
+}
+
+// GetServerInfo with web server status and version, but no server name.
+func (c *configManager) GetServerInfo() *v1.WebServerInfo {
+	return &v1.WebServerInfo{
+		Name:    "unknown",
+		Status:  c.serverStatus(),
+		Version: c.serverVersion(),
+	}
+}
+
+func (c configManager) serverVersion() (version string) {
+	version = "unknown"
+	cmd := c.serverBinCMD("-v")
+	stdoutPipe, err := cmd.StderrPipe()
+	if err != nil {
+		return
+	}
+	err = cmd.Start()
+	if err != nil {
+		return
+	}
+	buf := bytes.NewBuffer([]byte{})
+	_, err = buf.ReadFrom(stdoutPipe)
+	if err != nil {
+		return
+	}
+
+	return strings.TrimRight(buf.String(), "\n")
+}
+
+func (c configManager) serverStatus() (status v1.State) {
+	status = v1.UnknownState
+	svrPidFilePath := "logs/nginx.pid"
+	svrPidQueryer, err := c.configuration.Query("key:sep: :reg:pid .*")
+	if err == nil {
+		svrPidFilePath = strings.Split(svrPidQueryer.Self().GetValue(), " ")[1]
+	}
+
+	svrPidFilePathAbs := svrPidFilePath
+	if !filepath.IsAbs(svrPidFilePath) {
+		svrBinAbs, absErr := filepath.Abs(c.serverBinPath)
+		if absErr != nil {
+			return
+		}
+		svrWS, wsErr := filepath.Abs(filepath.Join(filepath.Dir(svrBinAbs), ".."))
+		if wsErr != nil {
+			return
+		}
+		var pidErr error
+		svrPidFilePathAbs, pidErr = filepath.Abs(filepath.Join(svrWS, svrPidFilePath))
+		if pidErr != nil {
+			return
+		}
+	}
+
+	svrPid, gPidErr := utils.GetPid(svrPidFilePathAbs)
+	if gPidErr != nil {
+		return v1.Abnormal
+	}
+
+	_, procErr := os.FindProcess(svrPid)
+	if procErr != nil {
+		return v1.Abnormal
+	}
+	return v1.Normal
 }
 
 func (c *configManager) GetConfiguration() Configuration {
@@ -281,13 +351,19 @@ func (c configManager) Check() error {
 	if arrays.ContainsString(os.Args, "-test.v") >= 0 && arrays.ContainsString(os.Args, "-test.run") >= 0 {
 		return nil
 	}
-	cmd := exec.Command(c.serverBinPath, "-tc", c.mainConfigPath)
+	//cmd := exec.Command(c.serverBinPath, "-tc", c.mainConfigPath)
+	cmd := c.serverBinCMD("-t")
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 
 	/*// debug test
 	return nil
 	// debug test end*/
+}
+
+func (c configManager) serverBinCMD(arg ...string) *exec.Cmd {
+	arg = append(arg, "-c", c.mainConfigPath)
+	return exec.Command(c.serverBinPath, arg...)
 }
 
 func (c *configManager) Start() error {
