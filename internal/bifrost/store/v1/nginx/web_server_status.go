@@ -34,14 +34,18 @@ func (w *webServerStatusStore) Get(ctx context.Context) (*v1.Metrics, error) {
 
 func newWebServerStatusStore(store *webServerStore) *webServerStatusStore {
 	// get os release info
+	var os string
 	platform, _, release, err := host.PlatformInformation()
 	if err != nil {
-		log.Fatalf("Failed to initialize metrics, cased by '%s'", err.Error())
+		log.Warnf("Failed to get platform information. %s", err.Error())
+		os = "unknown"
+	} else {
+		os = platform + " " + release
 	}
 	return &webServerStatusStore{
 		m:                  store.m,
 		webServerInfosFunc: store.cms.GetServerInfos,
-		os:                 platform + " " + release,
+		os:                 os,
 		bifrostVersion:     version.GitVersion,
 	}
 }
