@@ -9,26 +9,28 @@ import (
 )
 
 type Options struct {
-	GenericServerRunOptions *genericoptions.ServerRunOptions        `json:"server" mapstructure:"server"`
-	SecureServing           *genericoptions.SecureServingOptions    `json:"secure" mapstructure:"secure"`
-	InsecureServing         *genericoptions.InsecureServingOptions  `json:"insecure" mapstructure:"insecure"`
-	RAOptions               *genericoptions.RAOptions               `json:"ra" mapstructure:"ra"`
-	GRPCServing             *genericoptions.GRPCServerOptions       `json:"grpc" mapstructure:"grpc"`
-	WebServerConfigsOptions *genericoptions.WebServerConfigsOptions `json:"web-server-configs" mapstructure:"web-server-configs"`
-	MonitorOptions          *genericoptions.MonitorOptions          `json:"monitor" mapstructure:"monitor"`
-	Log                     *log.Options                            `json:"log" mapstructure:"log"`
+	GenericServerRunOptions    *genericoptions.ServerRunOptions           `json:"server" mapstructure:"server"`
+	SecureServing              *genericoptions.SecureServingOptions       `json:"secure" mapstructure:"secure"`
+	InsecureServing            *genericoptions.InsecureServingOptions     `json:"insecure" mapstructure:"insecure"`
+	RAOptions                  *genericoptions.RAOptions                  `json:"ra" mapstructure:"ra"`
+	GRPCServing                *genericoptions.GRPCServerOptions          `json:"grpc" mapstructure:"grpc"`
+	WebServerConfigsOptions    *genericoptions.WebServerConfigsOptions    `json:"web-server-configs" mapstructure:"web-server-configs"`
+	MonitorOptions             *genericoptions.MonitorOptions             `json:"monitor" mapstructure:"monitor"`
+	WebServerLogWatcherOptions *genericoptions.WebServerLogWatcherOptions `json:"web-server-log-watcher" mapstructure:"web-server-log-watcher"`
+	Log                        *log.Options                               `json:"log" mapstructure:"log"`
 }
 
 func NewOptions() *Options {
 	return &Options{
-		GenericServerRunOptions: genericoptions.NewServerRunOptions(),
-		SecureServing:           genericoptions.NewSecureServingOptions(),
-		InsecureServing:         genericoptions.NewInsecureServingOptions(),
-		RAOptions:               genericoptions.NewRAOptions(),
-		GRPCServing:             genericoptions.NewGRPCServerOptions(),
-		WebServerConfigsOptions: genericoptions.NewWebServerConfigsOptions(),
-		MonitorOptions:          genericoptions.NewMonitorOptions(),
-		Log:                     log.NewOptions(),
+		GenericServerRunOptions:    genericoptions.NewServerRunOptions(),
+		SecureServing:              genericoptions.NewSecureServingOptions(),
+		InsecureServing:            genericoptions.NewInsecureServingOptions(),
+		RAOptions:                  genericoptions.NewRAOptions(),
+		GRPCServing:                genericoptions.NewGRPCServerOptions(),
+		WebServerConfigsOptions:    genericoptions.NewWebServerConfigsOptions(),
+		MonitorOptions:             genericoptions.NewMonitorOptions(),
+		WebServerLogWatcherOptions: genericoptions.NewWebServerLogWatcherOptions(),
+		Log:                        log.NewOptions(),
 	}
 }
 
@@ -39,6 +41,7 @@ func (o *Options) Flags() (fss cliflag.NamedFlagSets) {
 	o.RAOptions.AddFlags(fss.FlagSet("RA options"))
 	o.GRPCServing.AddFlags(fss.FlagSet("gRPC serving"))
 	o.MonitorOptions.AddFlags(fss.FlagSet("monitor"))
+	o.WebServerLogWatcherOptions.AddFlags(fss.FlagSet("log watcher"))
 	o.Log.AddFlags(fss.FlagSet("log"))
 	return fss
 }

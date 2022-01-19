@@ -13,10 +13,11 @@ import (
 )
 
 type bifrostServer struct {
-	gs                *shutdown.GracefulShutdown
-	genericGRPCServer *genericgrpcserver.GenericGRPCServer
-	webSvrConfigsOpts *genericoptions.WebServerConfigsOptions
-	monitorOpts       *genericoptions.MonitorOptions
+	gs                   *shutdown.GracefulShutdown
+	genericGRPCServer    *genericgrpcserver.GenericGRPCServer
+	webSvrConfigsOpts    *genericoptions.WebServerConfigsOptions
+	monitorOpts          *genericoptions.MonitorOptions
+	webSvrLogWatcherOpts *genericoptions.WebServerLogWatcherOptions
 }
 
 type preparedBifrostServer struct {
@@ -39,10 +40,11 @@ func createBifrostServer(cfg *config.Config) (*bifrostServer, error) {
 	}
 
 	server := &bifrostServer{
-		gs:                gs,
-		genericGRPCServer: genericServer,
-		webSvrConfigsOpts: cfg.WebServerConfigsOptions,
-		monitorOpts:       cfg.MonitorOptions,
+		gs:                   gs,
+		genericGRPCServer:    genericServer,
+		webSvrConfigsOpts:    cfg.WebServerConfigsOptions,
+		monitorOpts:          cfg.MonitorOptions,
+		webSvrLogWatcherOpts: cfg.WebServerLogWatcherOptions,
 	}
 
 	return server, nil
@@ -77,7 +79,7 @@ func (p preparedBifrostServer) Run() error {
 
 func (b *bifrostServer) initStore() {
 	log.Debug("bifrost server init store...")
-	storeIns, err := storev1nginx.GetNginxStoreFactory(b.webSvrConfigsOpts, b.monitorOpts)
+	storeIns, err := storev1nginx.GetNginxStoreFactory(b.webSvrConfigsOpts, b.monitorOpts, b.webSvrLogWatcherOpts)
 	if err != nil {
 		log.Fatalf("init nginx store failed: %+v", err)
 	}

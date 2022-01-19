@@ -18,7 +18,7 @@ service WebServerStatus {
 }
 
 service WebServerLogWatcher {
-  rpc Watch(stream LogWatchRequest) returns (stream Response) {}
+  rpc Watch(LogWatchRequest) returns (stream Response) {}
 }
 
 message Null {}
@@ -51,4 +51,5 @@ message Metrics {
 message LogWatchRequest {
   string ServerName = 1;
   string LogName = 2;
+  string FilterRule =3;
 }

@@ -5,6 +5,7 @@ import (
 	"github.com/marmotedu/errors"
 	"github.com/spf13/pflag"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -13,6 +14,7 @@ type WebServerConfigOptions struct {
 	ServerType     string `json:"server-type" mapstructure:"server-type"`
 	ConfigPath     string `json:"config-path" mapstructure:"config-path"`
 	VerifyExecPath string `json:"verify-exec-path" mapstructure:"verify-exec-path"`
+	LogsDirPath    string `json:"logs-dir-path" mapstructure:"logs-dir-path"`
 	BackupDir      string `json:"backup-dir" mapstructure:"backup-dir"`
 	BackupCycle    int    `json:"backup-cycle" mapstructure:"backup-cycle"`
 	BackupSaveTime int    `json:"backup-save-time" mapstructure:"backup-save-time"`
@@ -40,6 +42,9 @@ func (c *WebServerConfigOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.VerifyExecPath, "web-server-config.verify-exec-path", c.VerifyExecPath, ""+
 		"Set the path of the web server configuration verification binary file."+
 		" It cannot be empty and the file exists.")
+
+	fs.StringVar(&c.LogsDirPath, "web-server-config.logs-dir-path", filepath.Join(filepath.Dir(filepath.Dir(c.VerifyExecPath)), "logs"), ""+
+		"Set the path of the web server logs dir path.")
 
 	fs.StringVar(&c.BackupDir, "web-server-config.backup-dir", c.BackupDir, ""+
 		"Set the special path of the web server configuration file backup directory."+

@@ -55,7 +55,7 @@ func (m *monitor) Start() error {
 	m.procLocker.Lock()
 	// check monitor is already start or not.
 	if m.ctx != nil {
-		if _, ok := <-m.ctx.Done(); !ok || m.procStarted {
+		if m.ctx.Err() == nil || m.procStarted {
 			return errors.New("monitor is already start")
 		}
 	}
