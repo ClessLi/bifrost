@@ -9,6 +9,7 @@ func (o *Options) Validate() []error {
 	errors = append(errors, o.RAOptions.Validate()...)
 	errors = append(errors, o.WebServerConfigsOptions.Validate()...)
 	errors = append(errors, o.MonitorOptions.Validate()...)
+	errors = append(errors, o.WebServerLogWatcherOptions.Validate()...)
 	errors = append(errors, o.Log.Validate()...)
 
 	return errors

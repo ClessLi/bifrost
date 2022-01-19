@@ -6,6 +6,7 @@ type StoreFactory interface {
 	WebServerConfig() WebServerConfigStore
 	WebServerStatistics() WebServerStatisticsStore
 	WebServerStatus() WebServerStatusStore
+	WebServerLogWatcher() WebServerLogWatcher
 	Close() error
 }
 
