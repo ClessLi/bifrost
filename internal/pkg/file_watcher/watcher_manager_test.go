@@ -1,7 +1,6 @@
 package file_watcher
 
 import (
-	"context"
 	log "github.com/ClessLi/bifrost/pkg/log/v1"
 	"sync"
 	"testing"
@@ -9,33 +8,13 @@ import (
 )
 
 func TestWatcherManager_Watch(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	output1 := make(chan []byte)
-	wg := new(sync.WaitGroup)
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for {
-			select {
-			case data := <-output1:
-				if data == nil {
-					log.Infof("watch stopped")
-					return
-				}
-				t.Logf("%s", data)
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
 	type fields struct {
 		config   *Config
+		mu       sync.RWMutex
 		watchers map[string]*FileWatcher
 	}
 	type args struct {
-		file    string
-		outputC chan []byte
+		file string
 	}
 	tests := []struct {
 		name    string
@@ -50,11 +29,11 @@ func TestWatcherManager_Watch(t *testing.T) {
 					MaxConnections: 10,
 					OutputTimeout:  time.Second * 20,
 				},
+				mu:       sync.RWMutex{},
 				watchers: make(map[string]*FileWatcher),
 			},
 			args: args{
-				file:    "F:\\GO_Project\\src\\bifrost\\test\\nginx\\logs\\access.log",
-				outputC: output1,
+				file: "F:\\GO_Project\\src\\bifrost\\test\\nginx\\logs\\access.log",
 			},
 		},
 	}
@@ -62,12 +41,30 @@ func TestWatcherManager_Watch(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			wm := &WatcherManager{
 				config:   tt.fields.config,
+				mu:       tt.fields.mu,
 				watchers: tt.fields.watchers,
 			}
-			if err := wm.Watch(tt.args.file, tt.args.outputC); (err != nil) != tt.wantErr {
+			got, err := wm.Watch(tt.args.file)
+			if (err != nil) != tt.wantErr {
 				t.Errorf("Watch() error = %v, wantErr %v", err, tt.wantErr)
+				return
 			}
+			wg := new(sync.WaitGroup)
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				for {
+					select {
+					case data := <-got:
+						if data == nil {
+							log.Infof("watch stopped")
+							return
+						}
+						t.Logf("%s", data)
+					}
+				}
+			}()
+			wg.Wait()
 		})
-		wg.Wait()
 	}
 }

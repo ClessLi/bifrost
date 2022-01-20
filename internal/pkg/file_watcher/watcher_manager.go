@@ -6,27 +6,28 @@ import (
 )
 
 type WatcherManager struct {
-	config   *Config
+	config *Config
+	mu     sync.RWMutex
+
 	watchers map[string]*FileWatcher
-	mu       sync.RWMutex
 }
 
-func (wm *WatcherManager) Watch(file string, outputC chan []byte) error {
+func (wm *WatcherManager) Watch(file string) (<-chan []byte, error) {
 	wm.mu.RLock()
 	defer wm.mu.RUnlock()
 	cconf, err := wm.config.Complete(file)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if watcher, has := wm.watchers[cconf.filePath]; has && !watcher.isClosed {
-		return watcher.AddOutput(outputC)
+	if watcher, has := wm.watchers[cconf.filePath]; has && !watcher.IsClosed() {
+		return watcher.Output()
 	}
-	watcher, err := cconf.NewFileWatcher(outputC)
+	watcher, output, err := cconf.NewFileWatcher()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	wm.watchers[watcher.filePath] = watcher
-	return nil
+	return output, nil
 }
 
 func (wm *WatcherManager) StopAll() error {
@@ -47,7 +48,7 @@ func (wm *WatcherManager) StopAll() error {
 func NewWatcherManager(config *Config) *WatcherManager {
 	return &WatcherManager{
 		config:   config,
-		watchers: make(map[string]*FileWatcher),
 		mu:       sync.RWMutex{},
+		watchers: make(map[string]*FileWatcher),
 	}
 }

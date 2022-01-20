@@ -6,6 +6,6 @@ type WebServerLog struct {
 
 type WebServerLogWatchRequest struct {
 	ServerName          *ServerName `json:"server-name"`
-	LogPath             string      `json:"log-path"`
+	LogName             string      `json:"log-path"`
 	FilteringRegexpRule string      `json:"filtering-regexp-rule"`
 }

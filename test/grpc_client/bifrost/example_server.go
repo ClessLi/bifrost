@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	localhostIP = "192.168.200.1"
+	localhostIP = "192.168.220.1"
 	testPort    = 12321
 )
 
@@ -26,9 +26,9 @@ func exampleServerRun() error {
 
 	opts.GRPCServing.ChunkSize = 100
 
-	opts.MonitorOptions.SyncInterval = time.Second * 10
-	opts.MonitorOptions.CycleTime = time.Second * 30
-	opts.MonitorOptions.FrequencyPerCycle = 10
+	opts.MonitorOptions.SyncInterval = time.Second * 1
+	opts.MonitorOptions.CycleTime = time.Second * 5
+	opts.MonitorOptions.FrequencyPerCycle = 5
 
 	opts.WebServerConfigsOptions.WebServerConfigs = make([]*options.WebServerConfigOptions, 0)
 	opts.WebServerConfigsOptions.WebServerConfigs = append(opts.WebServerConfigsOptions.WebServerConfigs, &options.WebServerConfigOptions{
@@ -36,10 +36,14 @@ func exampleServerRun() error {
 		ServerType:     "nginx",
 		ConfigPath:     "../../nginx/conf/nginx.conf",
 		VerifyExecPath: "../../nginx/sbin/nginx.sh",
+		LogsDirPath:    "../../nginx/logs",
 		BackupDir:      "",
 		BackupCycle:    0,
 		BackupSaveTime: 0,
 	})
+
+	opts.WebServerLogWatcherOptions.WatchTimeout = time.Second * 5
+	opts.WebServerLogWatcherOptions.MaxConnections = 1024
 
 	return bifrost.Run(&config.Config{Options: opts})
 }

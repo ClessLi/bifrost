@@ -31,6 +31,7 @@ type Factory interface {
 	WebServerConfig() WebServerConfigTransport
 	WebServerStatistics() WebServerStatisticsTransport
 	WebServerStatus() WebServerStatusTransport
+	WebServerLogWatcher() WebServerLogWatcherTransport
 }
 
 var _ Factory = &transport{}
@@ -39,9 +40,11 @@ var (
 	onceWebServerConfig     = sync.Once{}
 	onceWebServerStatistics = sync.Once{}
 	onceWebServerStatus     = sync.Once{}
+	onceWebServerLogWatcher = sync.Once{}
 	singletonWSCTXP         WebServerConfigTransport
 	singletonWSSTXP         WebServerStatisticsTransport
 	singletonWSStatusTXP    WebServerStatusTransport
+	singletonWSLWTXP        WebServerLogWatcherTransport
 )
 
 type transport struct {
@@ -90,6 +93,20 @@ func (t *transport) WebServerStatus() WebServerStatusTransport {
 		return nil
 	}
 	return singletonWSStatusTXP
+}
+
+func (t *transport) WebServerLogWatcher() WebServerLogWatcherTransport {
+	onceWebServerLogWatcher.Do(func() {
+		if singletonWSLWTXP == nil {
+			singletonWSLWTXP = newWebServerLogWatcherTransport(t)
+		}
+	})
+	if singletonWSLWTXP == nil {
+		log.Fatal("web server log watcher transport client is nil")
+
+		return nil
+	}
+	return singletonWSLWTXP
 }
 
 func New(conn *grpc.ClientConn) Factory {

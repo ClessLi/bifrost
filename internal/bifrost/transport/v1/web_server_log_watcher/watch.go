@@ -24,6 +24,10 @@ func (w *webServerLogWatcherServer) Watch(request *pbv1.LogWatchRequest, stream 
 		case <-respCtx.Done():
 			return respCtx.Err()
 		case line := <-respWatcher.Lines:
+			if line == nil {
+				return nil
+			}
+			line = append(line, '\n')
 			err := sendWithChunk(stream, w.options.ChunkSize-2, line)
 			if err != nil && err != io.EOF {
 				return err
