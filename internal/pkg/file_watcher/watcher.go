@@ -6,21 +6,34 @@ import (
 	"github.com/hpcloud/tail"
 	"github.com/marmotedu/errors"
 	"os"
+	"sync"
 	"time"
 )
 
 type FileWatcher struct {
-	filePath string
-	isClosed bool
-	inputC   chan []byte
-	pipe     *ShuntPipe
+	filePath    string
+	ctx         context.Context
+	cancel      context.CancelFunc
+	startLocker sync.Locker
+
+	shuntPipe ShuntPipe
 }
 
-func (f *FileWatcher) start() error {
-	defer func() { f.isClosed = true }()
-	defer close(f.inputC)
+func (f *FileWatcher) Output() (<-chan []byte, error) {
+	return f.shuntPipe.Output()
+}
+
+func (f *FileWatcher) Start() error {
+	if f.shuntPipe.IsClosed() {
+		f.cancel()
+		return errors.Errorf("failed to start '%s' file watcher, shunt pipe is already closed", f.filePath)
+	}
+
+	f.startLocker.Lock()
+	defer f.startLocker.Unlock()
+	defer f.cancel()
 	go func() {
-		err := f.pipe.Start()
+		err := f.shuntPipe.Start()
 		if err != nil {
 			log.Warnf("file '%s' watching error. %s", f.filePath, err.Error())
 		}
@@ -48,44 +61,68 @@ func (f *FileWatcher) start() error {
 		}
 	}(t)
 
+	defer func() {
+		pInfo := recover()
+		if pInfo == nil {
+			return
+		}
+		if !f.shuntPipe.IsClosed() {
+			log.Warnf("panic transferring data to shunt pipe. %s", pInfo)
+			err := f.shuntPipe.Close()
+			if err != nil {
+				log.Warnf("failed to stop shunt pipe. %s", err.Error())
+			}
+		}
+	}()
 	for {
 		select {
-		case f.inputC <- []byte((<-t.Lines).Text):
-		case <-f.pipe.ctx.Done():
-			return f.pipe.ctx.Err()
+		case f.shuntPipe.Input() <- []byte((<-t.Lines).Text):
+		case <-f.ctx.Done():
+			return nil
 		}
 	}
 }
 
 func (f *FileWatcher) Stop() error {
-	go func() {
-		err := f.pipe.Close()
-		if err != nil {
-			log.Warnf("file '%s' stop watching error. %s", f.filePath, err.Error())
-		}
-	}()
+	defer f.cancel()
+	if f.shuntPipe.IsClosed() {
+		return errors.Errorf("failed to stop '%s' file watcher, shunt pipe is already closed", f.filePath)
+	}
+
+	err := f.closePipe()
+	if err != nil {
+		return errors.Errorf("failed to stop '%s' file watcher. %s", f.filePath, err.Error())
+	}
+	return nil
+}
+
+func (f *FileWatcher) IsClosed() bool {
+	return f.shuntPipe.IsClosed()
+}
+
+func (f *FileWatcher) closePipe() error {
+	errC := make(chan error)
 	select {
-	case <-f.pipe.ctx.Done():
-		return f.pipe.ctx.Err()
+	case errC <- f.shuntPipe.Close():
+		err := <-errC
+		return err
 	case <-time.After(time.Second * 30):
-		return errors.Errorf("stop watching file '%s' timeout(30s)", f.filePath)
+		return errors.New("close pipe timeout(30s)")
 	}
 }
 
-func (f *FileWatcher) AddOutput(outputC chan []byte) error {
-	return f.pipe.AddOutput(outputC)
-}
-
-func newFileWatcher(config *CompletedConfig) (*FileWatcher, error) {
-	inputC := make(chan []byte)
-	pipe, err := NewShuntPipe(config.MaxConnections, config.OutputTimeout, NewInputPipe(context.Background(), inputC))
+func newFileWatcher(ctx context.Context, config *CompletedConfig) (*FileWatcher, error) {
+	cctx, cancel := context.WithCancel(ctx)
+	sp, err := NewShuntPipe(config.MaxConnections, config.OutputTimeout)
 	if err != nil {
+		cancel()
 		return nil, err
 	}
 	return &FileWatcher{
-		filePath: config.filePath,
-		isClosed: false,
-		inputC:   inputC,
-		pipe:     pipe,
+		filePath:    config.filePath,
+		ctx:         cctx,
+		cancel:      cancel,
+		startLocker: new(sync.Mutex),
+		shuntPipe:   sp,
 	}, nil
 }

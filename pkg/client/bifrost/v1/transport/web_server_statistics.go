@@ -34,6 +34,9 @@ func newWebServerStatisticsClient(conn *grpc.ClientConn, requestFunc grpctranspo
 		}
 
 		stream, err := cli.Get(ctx, req.(*pbv1.ServerName))
+		if err != nil {
+			return nil, err
+		}
 		buf := bytes.NewBuffer(nil)
 		for {
 			d, err := stream.Recv()

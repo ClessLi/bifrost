@@ -2,7 +2,10 @@ package bifrost
 
 import (
 	"context"
+	"fmt"
+	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	healthzclient_v1 "github.com/ClessLi/bifrost/pkg/client/grpc_health_v1"
+	"sync"
 	"testing"
 	"time"
 
@@ -62,7 +65,7 @@ func TestBifrostClient(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 
-	time.Sleep(time.Minute)
+	time.Sleep(time.Second * 10)
 	metrics, err := client.WebServerStatus().Get()
 	if err != nil {
 		t.Fatalf("%++v", err)
@@ -77,6 +80,7 @@ func TestBifrostClient(t *testing.T) {
 
 	defer cclient.Close()
 	c := pbv1.NewWebServerConfigClient(cclient)*/
+	wg := new(sync.WaitGroup)
 	for _, servername := range servernames {
 		// normal grpc client
 		/*resp, err := c.Get(context.Background(), &pbv1.ServerName{Name: servername})
@@ -116,5 +120,32 @@ func TestBifrostClient(t *testing.T) {
 			t.Fatalf(err.Error())
 		}
 		t.Logf("statistics %s:\n\n%v", servername, statistics)
+
+		logC, lwCancel, err := client.WebServerLogWatcher().Watch(&v1.WebServerLogWatchRequest{
+			ServerName:          &v1.ServerName{Name: servername},
+			LogName:             "access.log",
+			FilteringRegexpRule: "^test.*$",
+		})
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			defer lwCancel()
+			for {
+				select {
+				//case <-time.After(time.Second * 10):
+				//	return
+				case line := <-logC:
+					if line == nil {
+						return
+					}
+					fmt.Print(string(line))
+				}
+			}
+		}()
 	}
+	wg.Wait()
 }

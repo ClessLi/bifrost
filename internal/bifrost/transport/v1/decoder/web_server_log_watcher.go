@@ -14,10 +14,10 @@ var _ Decoder = webServerLogWatcher{}
 
 func (w webServerLogWatcher) DecodeRequest(ctx context.Context, r interface{}) (interface{}, error) {
 	switch r := r.(type) {
-	case *pbv1.LogWatchRequest:
+	case *pbv1.LogWatchRequest: // decode `Watch` request
 		return &v1.WebServerLogWatchRequest{
 			ServerName:          &v1.ServerName{Name: r.ServerName},
-			LogPath:             r.LogName,
+			LogName:             r.LogName,
 			FilteringRegexpRule: r.FilterRule,
 		}, nil
 	default:

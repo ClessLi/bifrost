@@ -11,6 +11,7 @@ type Factory interface {
 	WebServerConfig() WebServerConfigService
 	WebServerStatistics() WebServerStatisticsService
 	WebServerStatus() WebServerStatusService
+	WebServerLogWatcher() WebServerLogWatcherService
 }
 
 type factory struct {
@@ -27,6 +28,10 @@ func (f *factory) WebServerStatistics() WebServerStatisticsService {
 
 func (f *factory) WebServerStatus() WebServerStatusService {
 	return newWebServerStatusService(f)
+}
+
+func (f *factory) WebServerLogWatcher() WebServerLogWatcherService {
+	return newWebServerLogWatcherService(f)
 }
 
 func New(endpoint epclient.Factory) Factory {

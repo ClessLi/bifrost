@@ -20,13 +20,11 @@ type webServerLogWatcherStore struct {
 func (w *webServerLogWatcherStore) Watch(ctx context.Context, request *v1.WebServerLogWatchRequest) (*v1.WebServerLog, error) {
 	var logPath string
 	if logDir, ok := w.webServerLogsDirs[request.ServerName.Name]; ok {
-		logPath = filepath.Join(logDir, request.LogPath)
+		logPath = filepath.Join(logDir, request.LogName)
 	} else {
 		return nil, errors.WithCode(code.ErrConfigurationNotFound, "web server %s is not exist", request.ServerName.Name)
 	}
-	outputC := make(chan []byte)
-	defer close(outputC)
-	err := w.watcherManager.Watch(logPath, outputC)
+	outputC, err := w.watcherManager.Watch(logPath)
 	if err != nil {
 		return nil, err
 	}

@@ -24,6 +24,7 @@ func testGRPCServer() (*grpc.Server, *health.Server) {
 	pbv1.RegisterWebServerConfigServer(server, fake.New().WebServerConfig())
 	pbv1.RegisterWebServerStatisticsServer(server, fake.New().WebServerStatistics())
 	pbv1.RegisterWebServerStatusServer(server, fake.New().WebServerStatus())
+	pbv1.RegisterWebServerLogWatcherServer(server, fake.New().WebServerLogWatcher())
 	healthSvr := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(server, healthSvr)
 	return server, healthSvr
@@ -80,6 +81,15 @@ func TestNewClient(t *testing.T) {
 				opts:    []grpc.DialOption{grpc.WithInsecure()},
 			},
 			servicename: "bifrostpb.WebServerStatus",
+			wantState:   clientv1.SERVING,
+		},
+		{
+			name: "test bifrost web server log watcher",
+			args: args{
+				svrAddr: address,
+				opts:    []grpc.DialOption{grpc.WithInsecure()},
+			},
+			servicename: "bifrostpb.WebServerLogWatcher",
 			wantState:   clientv1.SERVING,
 		},
 	}

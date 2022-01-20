@@ -1,6 +1,7 @@
 package file_watcher
 
 import (
+	"context"
 	log "github.com/ClessLi/bifrost/pkg/log/v1"
 	"github.com/marmotedu/errors"
 	"os"
@@ -47,20 +48,20 @@ type CompletedConfig struct {
 	*Config
 }
 
-func (cc *CompletedConfig) NewFileWatcher(outputC chan []byte) (*FileWatcher, error) {
-	watcher, err := newFileWatcher(cc)
+func (cc *CompletedConfig) NewFileWatcher() (*FileWatcher, <-chan []byte, error) {
+	watcher, err := newFileWatcher(context.Background(), cc)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	err = watcher.AddOutput(outputC)
+	output, err := watcher.Output()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	go func() {
-		err := watcher.start()
+		err := watcher.Start()
 		if err != nil {
 			log.Warnf(err.Error())
 		}
 	}()
-	return watcher, nil
+	return watcher, output, nil
 }

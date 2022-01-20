@@ -20,6 +20,10 @@ func (t transport) WebServerStatus() pbv1.WebServerStatusServer {
 	return webServerStatus{}
 }
 
+func (t transport) WebServerLogWatcher() pbv1.WebServerLogWatcherServer {
+	return webServerLogWatcher{}
+}
+
 func New() txpv1.Factory {
 	return transport{}
 }
