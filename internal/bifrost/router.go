@@ -2,28 +2,38 @@ package bifrost
 
 import (
 	epv1 "github.com/ClessLi/bifrost/internal/bifrost/endpoint/v1"
+	"github.com/ClessLi/bifrost/internal/bifrost/middleware"
 	svcv1 "github.com/ClessLi/bifrost/internal/bifrost/service/v1"
 	storev1 "github.com/ClessLi/bifrost/internal/bifrost/store/v1"
 	txpv1 "github.com/ClessLi/bifrost/internal/bifrost/transport/v1"
 	handlerv1 "github.com/ClessLi/bifrost/internal/bifrost/transport/v1/handler"
 	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/options"
 	genericgrpcserver "github.com/ClessLi/bifrost/internal/pkg/server"
+	log "github.com/ClessLi/bifrost/pkg/log/v1"
 	"time"
 )
 
 func initRouter(server *genericgrpcserver.GenericGRPCServer) {
-	initMiddleware(server)
-	initController(server)
+	svcIns := initService()
+	initMiddleware(&svcIns)
+	initController(svcIns, server)
 }
 
-func initMiddleware(server *genericgrpcserver.GenericGRPCServer) {
-
-}
-
-func initController(server *genericgrpcserver.GenericGRPCServer) {
-	// v1 transport
+func initService() svcv1.ServiceFactory {
 	storeIns := storev1.Client()
-	svc := svcv1.NewServiceFactory(storeIns)
+	return svcv1.NewServiceFactory(storeIns)
+}
+
+func initMiddleware(svc *svcv1.ServiceFactory) {
+	middlewaresIns := middleware.GetMiddlewares()
+	for name, m := range middlewaresIns {
+		log.Infof("Install middleware: %s", name)
+		*svc = m(*svc)
+	}
+}
+
+func initController(svc svcv1.ServiceFactory, server *genericgrpcserver.GenericGRPCServer) {
+	// v1 transport
 	eps := epv1.NewEndpoints(svc)
 	hs := handlerv1.NewHandlersFactory(eps)
 	opts := &options.Options{
