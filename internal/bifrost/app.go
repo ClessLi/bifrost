@@ -13,7 +13,7 @@ It supports the mutual conversion of JSON, string format and golang structure.
 The Bifrost services to do the api objects management with gRPC protocol.
 
 Find more Bifrost information at:
-    https://github.com/ClessLi/bifrost/blob/master/docs/guide/en-US/cmd/arm-apiserver.md`
+    https://github.com/ClessLi/bifrost/blob/master/docs/guide/en-US/cmd/bifrost.md`
 
 func NewApp(basename string) *app.App {
 	opts := options.NewOptions()

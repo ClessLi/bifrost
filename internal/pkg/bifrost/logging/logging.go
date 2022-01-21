@@ -3,11 +3,12 @@ package logging
 import (
 	"context"
 	"fmt"
+	"net"
+	"time"
+
 	"github.com/ClessLi/bifrost/internal/pkg/bifrost/service"
 	"github.com/go-kit/kit/log"
 	"google.golang.org/grpc/peer"
-	"net"
-	"time"
 )
 
 type loggingViewer struct {
@@ -21,7 +22,6 @@ func (v loggingViewer) View(requestInfo service.ViewRequestInfo) (responseInfo s
 		n := 100
 
 		if responseInfo != nil {
-
 			data := responseInfo.Bytes()
 			if data == nil {
 				data = []byte("")
@@ -54,7 +54,6 @@ func (v loggingViewer) View(requestInfo service.ViewRequestInfo) (responseInfo s
 			"error", err,
 			"took", time.Since(begin),
 		)
-
 	}(time.Now().Local())
 	if err != nil {
 		return service.NewViewResponseInfo(requestInfo.GetServerName(), nil, err)
@@ -102,7 +101,6 @@ func (u loggingUpdater) Update(requestInfo service.UpdateRequestInfo) (responseI
 			"error", err,
 			"took", time.Since(begin),
 		)
-
 	}(time.Now().Local())
 	if err != nil {
 		return service.NewUpdateResponseInfo(requestInfo.GetServerName(), err)
@@ -150,7 +148,6 @@ func (w loggingWatcher) Watch(requestInfo service.WatchRequestInfo) (responseInf
 			"error", err,
 			"took", time.Since(begin),
 		)
-
 	}(time.Now().Local())
 	if err != nil {
 		return service.NewWatchResponseInfo(requestInfo.GetServerName(), nil, nil, nil, err)
@@ -169,7 +166,7 @@ func loggingWatcherMiddleware(logger log.Logger) service.WatcherMiddleware {
 }
 
 // loggingMiddleware Make a new type
-// that contains BifrostService interface and logger instance
+// that contains BifrostService interface and logger instance.
 type loggingMiddleware struct {
 	viewer  service.Viewer
 	updater service.Updater
@@ -201,7 +198,7 @@ func (lmw loggingMiddleware) HealthCheck() (result bool) {
 	return
 }
 
-// LoggingMiddleware make logging middleware
+// LoggingMiddleware make logging middleware.
 func LoggingMiddleware(logger log.Logger) service.ServiceMiddleware {
 	return func(next service.Service) service.Service {
 		return loggingMiddleware{
@@ -214,11 +211,11 @@ func LoggingMiddleware(logger log.Logger) service.ServiceMiddleware {
 }
 
 func getClientIP(ctx context.Context) (ip string, err error) {
-	//md, ok := metadata.FromIncomingContext(ctx)
+	// md, ok := metadata.FromIncomingContext(ctx)
 	pr, ok := peer.FromContext(ctx)
 	if !ok {
 		err = fmt.Errorf("getClientIP, invoke FromContext() failed")
-		//err = fmt.Errorf("getClientIP, invoke FromIncomingContext() failed")
+		// err = fmt.Errorf("getClientIP, invoke FromIncomingContext() failed")
 		return
 	}
 	if pr.Addr == net.Addr(nil) {
