@@ -14,7 +14,8 @@ type loggingWebServerStatisticsService struct {
 
 func (l *loggingWebServerStatisticsService) Get(ctx context.Context, servername *v1.ServerName) (s *v1.Statistics, err error) {
 	defer func(begin time.Time) {
-		logF := newLogFormatter(ctx, l.svc, l.svc.Get, begin)
+		logF := newLogFormatter(ctx, l.svc.Get)
+		logF.SetBeginTime(begin)
 		defer logF.Result()
 		logF.AddInfos(
 			"request server name", servername.Name,

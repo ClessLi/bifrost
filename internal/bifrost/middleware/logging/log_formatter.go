@@ -20,6 +20,9 @@ func (l *logFormatter) AddInfos(infos ...interface{}) {
 }
 
 func (l *logFormatter) Log(infos ...interface{}) {
+	if !reflect.DeepEqual(l.begin, time.Time{}) {
+		infos = append(infos, "took", time.Since(l.begin))
+	}
 	logger.Log(append(l.initInfos, infos...)...)
 }
 
@@ -29,6 +32,10 @@ func (l *logFormatter) SetResult(result interface{}) {
 
 func (l *logFormatter) SetErr(err error) {
 	l.err = err
+}
+
+func (l *logFormatter) SetBeginTime(begin time.Time) {
+	l.begin = begin
 }
 
 func (l *logFormatter) Result() {
@@ -42,15 +49,13 @@ func (l *logFormatter) Result() {
 	l.Log(infos...)
 }
 
-func newLogFormatter(ctx context.Context, receiver, method interface{}, begin time.Time) *logFormatter {
+func newLogFormatter(ctx context.Context, method interface{}) *logFormatter {
 	return &logFormatter{
 		initInfos: []interface{}{
-			//"receiver", reflect.TypeOf(receiver).Kind().String(),
-			//"method", reflect.TypeOf(method),
 			"method", runtime.FuncForPC(reflect.ValueOf(method).Pointer()).Name(),
 			"clientIp", utils.GetClientIP(ctx),
 			"authn", utils.GetAuthnInfo(ctx),
 		},
-		begin: begin,
+		begin: time.Time{},
 	}
 }

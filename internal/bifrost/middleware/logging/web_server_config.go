@@ -14,7 +14,8 @@ type loggingWebServerConfigService struct {
 
 func (l loggingWebServerConfigService) GetServerNames(ctx context.Context) (servernames *v1.ServerNames, err error) {
 	defer func(begin time.Time) {
-		logF := newLogFormatter(ctx, l.svc, l.svc.GetServerNames, begin)
+		logF := newLogFormatter(ctx, l.svc.GetServerNames)
+		logF.SetBeginTime(begin)
 		defer logF.Result()
 		if servernames != nil {
 			var result []string
@@ -30,7 +31,8 @@ func (l loggingWebServerConfigService) GetServerNames(ctx context.Context) (serv
 
 func (l loggingWebServerConfigService) Get(ctx context.Context, servername *v1.ServerName) (wsc *v1.WebServerConfig, err error) {
 	defer func(begin time.Time) {
-		logF := newLogFormatter(ctx, l.svc, l.svc.Get, begin)
+		logF := newLogFormatter(ctx, l.svc.Get)
+		logF.SetBeginTime(begin)
 		defer logF.Result()
 		logF.AddInfos(
 			"request server name", servername.Name,
@@ -45,7 +47,8 @@ func (l loggingWebServerConfigService) Get(ctx context.Context, servername *v1.S
 
 func (l loggingWebServerConfigService) Update(ctx context.Context, config *v1.WebServerConfig) (err error) {
 	defer func(begin time.Time) {
-		logF := newLogFormatter(ctx, l.svc, l.svc.Update, begin)
+		logF := newLogFormatter(ctx, l.svc.Update)
+		logF.SetBeginTime(begin)
 		defer logF.Result()
 		logF.AddInfos(
 			"request server name", config.ServerName.Name,

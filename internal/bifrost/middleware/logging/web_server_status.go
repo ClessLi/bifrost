@@ -14,7 +14,8 @@ type loggingWebServerStatusService struct {
 
 func (l *loggingWebServerStatusService) Get(ctx context.Context) (metrics *v1.Metrics, err error) {
 	defer func(begin time.Time) {
-		logF := newLogFormatter(ctx, l.svc, l.svc.Get, begin)
+		logF := newLogFormatter(ctx, l.svc.Get)
+		logF.SetBeginTime(begin)
 		defer logF.Result()
 		if metrics != nil {
 			result, _ := json.Marshal(metrics)

@@ -13,7 +13,8 @@ type loggingWebServerLogWatcherService struct {
 
 func (l *loggingWebServerLogWatcherService) Watch(ctx context.Context, request *v1.WebServerLogWatchRequest) (wslog *v1.WebServerLog, err error) {
 	defer func(begin time.Time) {
-		logF := newLogFormatter(ctx, l.svc, l.svc.Watch, begin)
+		logF := newLogFormatter(ctx, l.svc.Watch)
+		logF.SetBeginTime(begin)
 		defer logF.Result()
 		if wslog != nil {
 			logF.SetResult("Watching web server log...")
