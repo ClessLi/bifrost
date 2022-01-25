@@ -14,23 +14,14 @@ import (
 	bifrost_cliv1 "github.com/ClessLi/bifrost/pkg/client/bifrost/v1"
 )
 
-//func TestRun(t *testing.T) {
-//	err := exampleServerRun()
-//	if err != nil {
-//		t.Fatal(err.Error())
-//	}
-//}
+func TestRun(t *testing.T) {
+	err := exampleServerRun()
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+}
 
 func TestBifrostClient(t *testing.T) {
-	go func() {
-		err := exampleServerRun()
-		if err != nil {
-			t.Error(err.Error())
-
-			return
-		}
-	}()
-
 	healthCli, err := healthzclient_v1.NewClient(serverAddress(), grpc.WithInsecure())
 	if err != nil {
 		t.Fatalf(err.Error())

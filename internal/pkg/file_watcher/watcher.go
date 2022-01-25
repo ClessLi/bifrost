@@ -39,6 +39,7 @@ func (f *FileWatcher) Start() error {
 		}
 	}()
 
+	log.Debugf("tail '%s' starting...", f.filePath)
 	t, err := tail.TailFile(f.filePath, tail.Config{
 		Logger: log.StdInfoLogger(),
 		Location: &tail.SeekInfo{
@@ -54,13 +55,16 @@ func (f *FileWatcher) Start() error {
 		return err
 	}
 
+	// defer to stop tail
 	defer func(t *tail.Tail) {
+		log.Debugf("tail '%s' stopping...", f.filePath)
 		err := t.Stop()
 		if err != nil {
 			log.Warnf("tail stop error. %s", err.Error())
 		}
 	}(t)
 
+	// recover panic for watching loop
 	defer func() {
 		pInfo := recover()
 		if pInfo == nil {
@@ -74,13 +78,24 @@ func (f *FileWatcher) Start() error {
 			}
 		}
 	}()
-	for {
+	// FileWatcher watching
+	for !f.shuntPipe.IsClosed() {
 		select {
-		case f.shuntPipe.Input() <- []byte((<-t.Lines).Text):
-		case <-f.ctx.Done():
+		case line := <-t.Lines: // receive tail line
+			select {
+			case f.shuntPipe.Input() <- []byte(line.Text): // send to shut pipe
+			case <-time.After(time.Second * 30): // send to shut pipe timeout(30s)
+				err = errors.Errorf("send data to shut pipe timeout(30s), file: %s", f.filePath)
+				return err
+			}
+		case <-f.ctx.Done(): // FileWatcher Close method has been called
+			log.Debugf("watching file '%s' completed")
 			return nil
+		default: // sleep 1ms and return to loop with shut pipe closed check
+			time.Sleep(time.Millisecond)
 		}
 	}
+	return nil
 }
 
 func (f *FileWatcher) Stop() error {
@@ -101,7 +116,7 @@ func (f *FileWatcher) IsClosed() bool {
 }
 
 func (f *FileWatcher) closePipe() error {
-	errC := make(chan error)
+	errC := make(chan error, 1)
 	select {
 	case errC <- f.shuntPipe.Close():
 		err := <-errC

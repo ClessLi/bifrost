@@ -33,7 +33,7 @@ func TestWatcherManager_Watch(t *testing.T) {
 				watchers: make(map[string]*FileWatcher),
 			},
 			args: args{
-				file: "F:\\GO_Project\\src\\bifrost\\test\\nginx\\logs\\access.log",
+				file: "../../../test/nginx/logs/access.log",
 			},
 		},
 	}

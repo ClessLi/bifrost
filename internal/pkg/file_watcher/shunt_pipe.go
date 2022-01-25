@@ -173,14 +173,7 @@ func (s *shuntPipe) cleanAll() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	defer func() { s.isClosed = true }() // set shunt pipe to be closed
-	defer s.cancel()                     // close shunt pipe's context
-	s.input.Close()                      // close input pipe
-
-	// close each output pipe
-	for _, output := range s.outputs {
-		output.Close()
-	}
-
+	s.cancel()                           // close shunt pipe's context
 }
 
 func NewShuntPipe(maxConns int, outputTimeout time.Duration) (*shuntPipe, error) {

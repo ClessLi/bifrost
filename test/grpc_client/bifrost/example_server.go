@@ -6,6 +6,7 @@ import (
 	"github.com/ClessLi/bifrost/internal/bifrost/config"
 	bifrost_opts "github.com/ClessLi/bifrost/internal/bifrost/options"
 	"github.com/ClessLi/bifrost/internal/pkg/options"
+	log "github.com/ClessLi/bifrost/pkg/log/v1"
 	"time"
 )
 
@@ -45,6 +46,8 @@ func exampleServerRun() error {
 	opts.WebServerLogWatcherOptions.WatchTimeout = time.Second * 5
 	opts.WebServerLogWatcherOptions.MaxConnections = 1024
 
+	opts.Log.Level = "debug"
+	log.Init(opts.Log)
 	return bifrost.Run(&config.Config{Options: opts})
 }
 

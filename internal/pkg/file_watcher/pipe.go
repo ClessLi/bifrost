@@ -21,8 +21,6 @@ type pipe struct {
 }
 
 func (p *pipe) Close() {
-	p.mu.Lock()
-	defer p.mu.Lock()
 	p.cancel()
 }
 
