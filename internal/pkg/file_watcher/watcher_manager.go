@@ -1,6 +1,7 @@
 package file_watcher
 
 import (
+	"context"
 	"github.com/marmotedu/errors"
 	"sync"
 )
@@ -12,7 +13,7 @@ type WatcherManager struct {
 	watchers map[string]*FileWatcher
 }
 
-func (wm *WatcherManager) Watch(file string) (<-chan []byte, error) {
+func (wm *WatcherManager) Watch(ctx context.Context, file string) (<-chan []byte, error) {
 	wm.mu.RLock()
 	defer wm.mu.RUnlock()
 	cconf, err := wm.config.Complete(file)
@@ -20,9 +21,9 @@ func (wm *WatcherManager) Watch(file string) (<-chan []byte, error) {
 		return nil, err
 	}
 	if watcher, has := wm.watchers[cconf.filePath]; has && !watcher.IsClosed() {
-		return watcher.Output()
+		return watcher.Output(ctx)
 	}
-	watcher, output, err := cconf.NewFileWatcher()
+	watcher, output, err := cconf.NewFileWatcher(ctx)
 	if err != nil {
 		return nil, err
 	}

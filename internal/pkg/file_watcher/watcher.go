@@ -19,8 +19,8 @@ type FileWatcher struct {
 	shuntPipe ShuntPipe
 }
 
-func (f *FileWatcher) Output() (<-chan []byte, error) {
-	return f.shuntPipe.Output()
+func (f *FileWatcher) Output(ctx context.Context) (<-chan []byte, error) {
+	return f.shuntPipe.Output(ctx)
 }
 
 func (f *FileWatcher) Start() error {

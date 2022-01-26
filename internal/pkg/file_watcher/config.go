@@ -48,12 +48,12 @@ type CompletedConfig struct {
 	*Config
 }
 
-func (cc *CompletedConfig) NewFileWatcher() (*FileWatcher, <-chan []byte, error) {
+func (cc *CompletedConfig) NewFileWatcher(firstOutputCtx context.Context) (*FileWatcher, <-chan []byte, error) {
 	watcher, err := newFileWatcher(context.Background(), cc)
 	if err != nil {
 		return nil, nil, err
 	}
-	output, err := watcher.Output()
+	output, err := watcher.Output(firstOutputCtx)
 	if err != nil {
 		return nil, nil, err
 	}

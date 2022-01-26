@@ -9,7 +9,7 @@ import (
 )
 
 type ShuntPipe interface {
-	Output() (<-chan []byte, error)
+	Output(ctx context.Context) (<-chan []byte, error)
 	Input() chan<- []byte
 	IsClosed() bool
 	Start() error
@@ -31,7 +31,7 @@ type shuntPipe struct {
 	outputs []Pipe
 }
 
-func (s *shuntPipe) Output() (<-chan []byte, error) {
+func (s *shuntPipe) Output(ctx context.Context) (<-chan []byte, error) {
 	err := s.checkState()
 	if err != nil {
 		return nil, err
@@ -46,7 +46,7 @@ func (s *shuntPipe) Output() (<-chan []byte, error) {
 		return nil, errors.Errorf("the number of connections has reached the maximum (%d/%d)", len(s.outputs), s.maxConnections)
 	}
 
-	outputPipe := TimeoutPipe(s.ctx, s.outputTimeout)
+	outputPipe := TimeoutPipe(ctx, s.outputTimeout)
 
 	s.outputs = append(s.outputs, outputPipe)
 	return outputPipe.Output(), nil
@@ -174,6 +174,9 @@ func (s *shuntPipe) cleanAll() {
 	defer s.mu.Unlock()
 	defer func() { s.isClosed = true }() // set shunt pipe to be closed
 	s.cancel()                           // close shunt pipe's context
+	for _, output := range s.outputs {   // close all output pipes
+		output.Close()
+	}
 }
 
 func NewShuntPipe(maxConns int, outputTimeout time.Duration) (*shuntPipe, error) {

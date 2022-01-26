@@ -43,7 +43,7 @@ func exampleServerRun() error {
 		BackupSaveTime: 0,
 	})
 
-	opts.WebServerLogWatcherOptions.WatchTimeout = time.Second * 5
+	opts.WebServerLogWatcherOptions.WatchTimeout = time.Second * 50
 	opts.WebServerLogWatcherOptions.MaxConnections = 1024
 
 	opts.Log.Level = "debug"

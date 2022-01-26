@@ -24,7 +24,7 @@ func (w *webServerLogWatcherStore) Watch(ctx context.Context, request *v1.WebSer
 	} else {
 		return nil, errors.WithCode(code.ErrConfigurationNotFound, "web server %s is not exist", request.ServerName.Name)
 	}
-	outputC, err := w.watcherManager.Watch(logPath)
+	outputC, err := w.watcherManager.Watch(ctx, logPath)
 	if err != nil {
 		return nil, err
 	}
@@ -32,15 +32,29 @@ func (w *webServerLogWatcherStore) Watch(ctx context.Context, request *v1.WebSer
 		fOutputC := make(chan []byte)
 		go func() {
 			defer close(fOutputC)
-			needClose := false
 			for {
 				select {
-				case fOutputC <- filterOutput(outputC, request.FilteringRegexpRule, &needClose):
-					if needClose {
+				//case fOutputC <- filterOutput(outputC, request.FilteringRegexpRule, &needClose):
+				//	if needClose {
+				//		return
+				//	}
+				case data := <-outputC:
+					err, ok := filterOutput(data, request.FilteringRegexpRule)
+					if err != nil {
+						data = []byte(err.Error())
+					}
+					if ok {
+						select {
+						case fOutputC <- data:
+						case <-time.After(time.Second * 30):
+							log.Warnf("send filtered data timeout(30s)")
+							return
+						}
+					}
+					if err != nil {
 						return
 					}
 				case <-ctx.Done():
-					needClose = true
 					return
 				}
 			}
@@ -50,26 +64,20 @@ func (w *webServerLogWatcherStore) Watch(ctx context.Context, request *v1.WebSer
 	return &v1.WebServerLog{Lines: outputC}, nil
 }
 
-func filterOutput(output <-chan []byte, pattern string, needClose *bool) []byte {
-	for !*needClose {
-		data := <-output
-		if data == nil {
-			*needClose = true
-			return nil
-		}
-		match, err := regexp.Match(pattern, data)
-		if err != nil {
-			*needClose = true
-			log.Warnf("web server log watch error. %s", err.Error())
-			return []byte(err.Error())
-		}
-		if match {
-			return data
-		}
-
-		time.Sleep(time.Second)
+func filterOutput(data []byte, pattern string) (error, bool) {
+	if data == nil {
+		return nil, true
 	}
-	return nil
+	match, err := regexp.Match(pattern, data)
+	if err != nil {
+		log.Warnf("web server log watch error. %s", err.Error())
+		return err, true
+	}
+	if match {
+		return nil, true
+	}
+
+	return nil, false
 }
 
 func newWebServerLogWatcherStore(store *webServerStore) *webServerLogWatcherStore {

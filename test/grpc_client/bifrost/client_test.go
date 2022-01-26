@@ -127,8 +127,8 @@ func TestBifrostClient(t *testing.T) {
 			defer lwCancel()
 			for {
 				select {
-				//case <-time.After(time.Second * 10):
-				//	return
+				case <-time.After(time.Second * 10):
+					return
 				case line := <-logC:
 					if line == nil {
 						return
