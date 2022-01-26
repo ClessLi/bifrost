@@ -2,13 +2,12 @@ package loader
 
 import (
 	"encoding/json"
-	"github.com/ClessLi/bifrost/internal/pkg/code"
+	"fmt"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loop_preventer"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_indention"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_position"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_type"
-	"github.com/marmotedu/errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -355,5 +354,5 @@ func parseErrLine(path string, configData *[]byte, index int) error {
 			line++
 		}
 	}
-	return errors.WithCode(code.ErrParseFailed, "parse failed at line %d of %s", line, path)
+	return fmt.Errorf("%s at line %d of %s", ConfigParseError, line, path)
 }

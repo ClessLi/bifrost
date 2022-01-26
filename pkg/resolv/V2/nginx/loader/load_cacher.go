@@ -1,9 +1,7 @@
 package loader
 
 import (
-	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
-	"github.com/marmotedu/errors"
 	"strings"
 	"sync"
 )
@@ -56,7 +54,7 @@ func (l loadCache) GetConfig(configName string) *parser.Config {
 func (l *loadCache) SetConfig(config *parser.Config) error {
 	configName := config.GetValue()
 	if strings.EqualFold(configName, "") {
-		return errors.WithCode(code.ErrInvalidConfig, "get config name failed or null config name")
+		return ErrInvalidConfig
 	}
 	l.rwLocker.Lock()
 	defer l.rwLocker.Unlock()

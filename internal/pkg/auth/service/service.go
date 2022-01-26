@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
-	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/net/context"
 	"time"
 )
@@ -60,11 +59,11 @@ func (s *AuthService) Login(ctx context.Context, username, password string, unex
 		FullName:    username,
 		Permissions: []string{},
 	}
-	claims.IssuedAt = &jwt.NumericDate{Time: time.Now().In(nginx.TZ)}
+	claims.IssuedAt = time.Now().In(nginx.TZ).Unix()
 	if unexpired {
-		claims.ExpiresAt = &jwt.NumericDate{Time: time.Time{}}
+		claims.ExpiresAt = 0
 	} else {
-		claims.ExpiresAt = &jwt.NumericDate{Time: time.Now().In(nginx.TZ).Add(time.Second * time.Duration(ExpireTime))}
+		claims.ExpiresAt = time.Now().In(nginx.TZ).Add(time.Second * time.Duration(ExpireTime)).Unix()
 	}
 
 	// 认证用户信息

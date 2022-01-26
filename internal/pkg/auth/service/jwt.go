@@ -5,13 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ClessLi/bifrost/internal/pkg/password"
+	"github.com/dgrijalva/jwt-go"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/golang-jwt/jwt/v4"
 )
 
 // JWTClaims, jwt断言对象，定义认证接口校验的用户信息
 type JWTClaims struct { // token里面添加用户信息，验证token后可能会用到用户信息
-	jwt.RegisteredClaims
+	jwt.StandardClaims
 	UserID      int      `json:"user_id"`
 	Password    string   `json:"password"`
 	Username    string   `json:"username"`

@@ -1,20 +1,15 @@
 package configuration
 
 import (
-	"bytes"
+	"errors"
 	"fmt"
-	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
-	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loader"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/utils"
-	"github.com/marmotedu/errors"
-	"github.com/wxnacy/wgo/arrays"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 )
@@ -22,11 +17,9 @@ import (
 type ConfigManager interface {
 	Start() error
 	Stop() error
-	GetConfiguration() Configuration
 	regularlyBackup(duration time.Duration, signalChan chan int) error
 	regularlyReload(duration time.Duration, signalChan chan int) error
 	regularlySave(duration time.Duration, signalChan chan int) error
-	GetServerInfo() *v1.WebServerInfo
 }
 
 type configManager struct {
@@ -47,82 +40,7 @@ type configManager struct {
 	waitGroup              *sync.WaitGroup
 }
 
-// GetServerInfo with web server status and version, but no server name.
-func (c *configManager) GetServerInfo() *v1.WebServerInfo {
-	return &v1.WebServerInfo{
-		Name:    "unknown",
-		Status:  c.serverStatus(),
-		Version: c.serverVersion(),
-	}
-}
-
-func (c configManager) serverVersion() (version string) {
-	version = "unknown"
-	cmd := c.serverBinCMD("-v")
-	stdoutPipe, err := cmd.StderrPipe()
-	if err != nil {
-		return
-	}
-	err = cmd.Start()
-	if err != nil {
-		return
-	}
-	buf := bytes.NewBuffer([]byte{})
-	_, err = buf.ReadFrom(stdoutPipe)
-	if err != nil {
-		return
-	}
-
-	return strings.TrimRight(buf.String(), "\n")
-}
-
-func (c configManager) serverStatus() (status v1.State) {
-	status = v1.UnknownState
-	svrPidFilePath := "logs/nginx.pid"
-	svrPidQueryer, err := c.configuration.Query("key:sep: :reg:pid .*")
-	if err == nil {
-		svrPidFilePath = strings.Split(svrPidQueryer.Self().GetValue(), " ")[1]
-	}
-
-	svrPidFilePathAbs := svrPidFilePath
-	if !filepath.IsAbs(svrPidFilePath) {
-		svrBinAbs, absErr := filepath.Abs(c.serverBinPath)
-		if absErr != nil {
-			return
-		}
-		svrWS, wsErr := filepath.Abs(filepath.Join(filepath.Dir(svrBinAbs), ".."))
-		if wsErr != nil {
-			return
-		}
-		var pidErr error
-		svrPidFilePathAbs, pidErr = filepath.Abs(filepath.Join(svrWS, svrPidFilePath))
-		if pidErr != nil {
-			return
-		}
-	}
-
-	svrPid, gPidErr := utils.GetPid(svrPidFilePathAbs)
-	if gPidErr != nil {
-		return v1.Abnormal
-	}
-
-	_, procErr := os.FindProcess(svrPid)
-	if procErr != nil {
-		return v1.Abnormal
-	}
-	return v1.Normal
-}
-
-func (c *configManager) GetConfiguration() Configuration {
-	return c.configuration
-}
-
-func (c *configManager) regularlyBackup(duration time.Duration, signalChan chan int) error {
-	// regularly backup is disabled, when c.backupCycle or c.backupSaveTime is less equal zero.
-	if c.backupCycle <= 0 || c.backupSaveTime <= 0 {
-		return nil
-	}
-
+func (c configManager) regularlyBackup(duration time.Duration, signalChan chan int) error {
 	ticker := time.NewTicker(duration)
 	var backupErr error
 	for backupErr == nil {
@@ -138,7 +56,7 @@ func (c *configManager) regularlyBackup(duration time.Duration, signalChan chan 
 		// 1) save with check
 		err := c.SaveWithCheck()
 		// 非指纹相同的报错则退出备份
-		if err != nil && (errors.IsCode(err, code.ErrSameConfigFingerprint) || errors.IsCode(err, code.ErrSameConfigFingerprints)) {
+		if err != nil && err != ErrSameConfigFingerprint && err != ErrSameConfigFingerprintBetweenFilesAndConfiguration {
 			backupErr = err
 			continue
 		}
@@ -150,10 +68,6 @@ func (c *configManager) regularlyBackup(duration time.Duration, signalChan chan 
 		dt := now.Format("20060102")
 		backupName := fmt.Sprintf("nginx.conf.%s.tgz", dt)
 		archiveDir, err := filepath.Abs(filepath.Dir(c.configuration.Self().GetValue()))
-		if err != nil {
-			backupErr = errors.Wrap(err, "failed to format archive directory")
-			continue
-		}
 		archivePath := filepath.Join(archiveDir, backupName)
 
 		// 确认是否为指定归档路径
@@ -227,7 +141,7 @@ func (c *configManager) regularlyReload(duration time.Duration, signalChan chan 
 		// 2) 不一致则重载文件配置
 		err = c.configuration.renewConfiguration(config)
 		if err != nil {
-			if errors.IsCode(err, code.ErrSameConfigFingerprint) {
+			if err != ErrSameConfigFingerprint {
 				reloadErr = err
 			}
 			continue
@@ -286,7 +200,7 @@ func (c *configManager) SaveWithCheck() error {
 
 	// 2) 比较内存配置指纹与old配置指纹是否一致
 	if !c.configuration.getConfigFingerprinter().Diff(oldConfig.getConfigFingerprinter()) {
-		return errors.WithCode(code.ErrSameConfigFingerprints, "same config fingerprint between files and configuration")
+		return ErrSameConfigFingerprintBetweenFilesAndConfiguration
 	}
 
 	// 2) 不一致则save内存配置
@@ -348,11 +262,10 @@ func (c configManager) save() ([]string, error) {
 
 func (c configManager) Check() error {
 	// 判断是否为单元测试
-	if arrays.ContainsString(os.Args, "-test.v") >= 0 && arrays.ContainsString(os.Args, "-test.run") >= 0 {
+	if len(os.Args) > 3 && os.Args[1] == "-test.v" && os.Args[2] == "-test.run" {
 		return nil
 	}
-	//cmd := exec.Command(c.serverBinPath, "-tc", c.mainConfigPath)
-	cmd := c.serverBinCMD("-t")
+	cmd := exec.Command(c.serverBinPath, "-tc", c.mainConfigPath)
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 
@@ -361,14 +274,9 @@ func (c configManager) Check() error {
 	// debug test end*/
 }
 
-func (c configManager) serverBinCMD(arg ...string) *exec.Cmd {
-	arg = append(arg, "-c", c.mainConfigPath)
-	return exec.Command(c.serverBinPath, arg...)
-}
-
 func (c *configManager) Start() error {
 	if c.isRunning {
-		return errors.WithCode(code.ErrConfigManagerIsRunning, "config manager is already running")
+		return ErrConfigManagerIsRunning
 	}
 	c.waitGroup.Add(3)
 	go func() {
@@ -395,30 +303,29 @@ func (c *configManager) Start() error {
 
 func (c *configManager) Stop() error {
 	if !c.isRunning {
-		return errors.WithCode(code.ErrConfigManagerIsNotRunning, "config manager is not running")
+		return ErrConfigManagerIsNotRunning
 	}
 	errorStr := ""
-	waittime := time.Second * 2
 	stopGoroutineFunc := func(goroutineName string, signalChan chan int, timeout <-chan time.Time) {
 		select {
 		case <-timeout:
 			if errorStr != "" {
 				errorStr += ", "
 			}
-			errorStr += fmt.Sprintf("stop goroutine %s timed out for more than %d", goroutineName, int(waittime/time.Second))
+			errorStr += "stop goroutine " + goroutineName + " timeout"
 			break
 		case signalChan <- 9:
 			break
 		}
 		c.waitGroup.Done()
 	}
-	go stopGoroutineFunc("backup", c.backupSignalChan, time.After(waittime))
-	go stopGoroutineFunc("reload", c.reloadSignalChan, time.After(waittime))
-	go stopGoroutineFunc("save", c.saveSignalChan, time.After(waittime))
+	go stopGoroutineFunc("backup", c.backupSignalChan, time.After(time.Second*2))
+	go stopGoroutineFunc("reload", c.reloadSignalChan, time.After(time.Second*2))
+	go stopGoroutineFunc("save", c.saveSignalChan, time.After(time.Second*2))
+	//c.backupSignalChan <- 9
+	//c.reloadSignalChan <- 9
+	//c.saveSignalChan <- 9
 	c.waitGroup.Wait()
-	if len(errorStr) > 0 {
-		return errors.New(errorStr)
-	}
 	c.isRunning = false
 	return nil
 }
