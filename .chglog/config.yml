@@ -1,0 +1,51 @@
+style: github
+template: CHANGELOG.tpl.md
+info:
+  title: CHANGELOG
+  repository_url: https://github.com/ClessLi/bifrost
+options:
+  commits:
+    filters:
+      Type:
+        - feat
+        - fix
+        - perf
+#        - style
+        - refactor
+#        - test
+#        - ci
+#        - docs
+#        - chore
+    sort_by: Scope
+  commit_groups:
+    group_by: Type
+    sort_by: Title
+    title_order:
+      - feat
+      - fix
+      - perf
+#      - style
+      - refactor
+#      - test
+#      - ci
+#      - docs
+#      - chore
+    title_maps:
+      feat: Features
+      fix: Bug Fixes
+      perf: Performance Improvements
+#      style: Code Formatting
+      refactor: Code Refactoring
+#      test: Test Code Changes
+#      ci: Deployment Related Changes
+#      docs: Documents Changes
+#      chore: Other Changes
+  header:
+    pattern: "^(\\w*)(?:\\(([\\w\\$\\.\\-\\*\\s]*)\\))?\\:\\s(.*)$"
+    pattern_maps:
+      - Type
+      - Scope
+      - Subject
+  notes:
+    keywords:
+      - BREAKING CHANGE

@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+option go_package = "api/protobuf-spec/bifrostpb/v1";
+package bifrostpb;  // 服务名
+
+service WebServerConfig {
+  rpc GetServerNames(Null) returns (ServerNames) {}
+  rpc Get(ServerName) returns (stream ServerConfig) {}
+  rpc Update(stream ServerConfig) returns (Response) {}
+}
+
+service WebServerStatistics {
+  rpc Get(ServerName) returns (stream Statistics) {}
+}
+
+service WebServerStatus {
+  rpc Get(Null) returns (stream Metrics) {}
+}
+
+service WebServerLogWatcher {
+  rpc Watch(LogWatchRequest) returns (stream Response) {}
+}
+
+message Null {}
+
+message ServerNames {
+  repeated ServerName Names = 1;
+}
+
+message ServerName {
+  string Name = 1;
+}
+
+message ServerConfig {
+  string ServerName = 1;
+  bytes JsonData = 2;
+}
+
+message Response {
+  bytes Msg = 1;
+}
+
+message Statistics {
+  bytes JsonData = 1;
+}
+
+message Metrics {
+  bytes JsonData = 1;
+}
+
+message LogWatchRequest {
+  string ServerName = 1;
+  string LogName = 2;
+  string FilterRule =3;
+}

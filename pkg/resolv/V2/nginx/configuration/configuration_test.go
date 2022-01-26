@@ -1,6 +1,7 @@
 package configuration
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_type"
@@ -20,7 +21,11 @@ func TestNewConfiguration(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println(string(config.StatisticsByJson()))
+	data, err := json.Marshal(NewStatistician(config).Statistics())
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(string(data))
 	//fmt.Println(string(config.View()))
 	//for path, bytes := range config.Dump() {
 	//	fmt.Printf("%s:\n%s\n", path, bytes)

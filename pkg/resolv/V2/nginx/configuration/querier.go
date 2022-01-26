@@ -1,9 +1,10 @@
 package configuration
 
 import (
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_type"
+	"github.com/marmotedu/errors"
 	"strings"
 )
 
@@ -53,7 +54,7 @@ func (q querier) Query(keyword string) (Querier, error) {
 	}
 	foundCtx, index := ctx.Query(parserKeyword)
 	if foundCtx == nil {
-		return nil, nginx.ErrNotFound
+		return nil, errors.WithCode(code.ErrParserNotFound, "query father context failed")
 	}
 	foundParser, err := foundCtx.GetChild(index)
 	if err != nil {
@@ -144,7 +145,7 @@ func parseKeyword(keyword string) (parser.KeyWords, error) {
 	} else if len(kw) == 1 {
 		parserType = parser_type.ParserType(kw[0])
 	} else {
-		return nil, nginx.KeywordStringError
+		return nil, errors.WithCode(code.ErrUnknownKeywordString, "invalid keyword string")
 	}
 
 	return parser.NewKeyWords(parserType, isReg, keyValue)
