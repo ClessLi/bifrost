@@ -46,7 +46,8 @@ type GeneratableKeyCert struct {
 func NewSecureServingOptions() *SecureServingOptions {
 	return &SecureServingOptions{
 		BindAddress: "0.0.0.0",
-		BindPort:    12421,
+		//BindPort:    12421,
+		BindPort: 0, // default disable secure serving
 		ServerCert: GeneratableKeyCert{
 			PairName:      "bifrost",
 			CertDirectory: "/var/run/bifrost",

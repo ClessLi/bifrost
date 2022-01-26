@@ -6,7 +6,7 @@
 
 # 项目介绍
 
-**Bifrost** 是基于golang语言开发的项目，它目前还处于测试阶段，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用测试版本为[v1.0.2-alpha.2](https://github.com/ClessLi/bifrost/tree/v1.0.2-alpha.2) （从v1.0.1-alpha开始取消http协议接口，改用gRPC协议接口。该版本仍在开发、测试中）。
+**Bifrost** 是基于golang语言开发的项目，它目前还处于测试阶段，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用测试版本为[v1.0.2-alpha.3](https://github.com/ClessLi/bifrost/tree/v1.0.2-alpha.3)
 
 # 项目特点
 
@@ -32,19 +32,22 @@ nginx后管平台
 
 # 使用方法
 
-## 下载地址
+## 编译
 
-bifrost-auth-v1.0.2-alpha.1
+如果你需要重新编译Bifrost项目，可以执行以下 2 步：
 
-> Windows: [bifrost-auth.v1_0_2.alpha_1.win_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.2-alpha.1/bifrost-auth.v1_0_2.alpha_1.win_x64.zip)
-> 
-> Linux: [bifrost-auth.v1_0_2.alpha_1.linux_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.2-alpha.1/bifrost-auth.v1_0_2.alpha_1.linux_x64.zip)
+1. 克隆源码
 
-bifrost-v1.0.2-alpha.2
+```bash
+$ git clone https://github.com/ClessLi/bifrost $GOPATH/src/github.com/clessli/bifrost
+```
 
-> Windows: [bifrost.v1_0_2.alpha_2.win_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.2-alpha.2/bifrost.v1_0_2.alpha_2.win_x64.zip)
-> 
-> Linux: [bifrost.v1_0_2.alpha_2.linux_x64](https://github.com/ClessLi/bifrost/releases/download/v1.0.2-alpha.2/bifrost.v1_0_2.alpha_2.linux_x64.zip)
+2. 编译
+
+```bash
+$ cd $GOPATH/src/github.com/clessli/bifrost
+$ go build cmd/bifrost
+```
 
 ## 应用配置
 
@@ -52,90 +55,147 @@ bifrost-v1.0.2-alpha.2
 
 `bifrost: configs/bifrost.yml`
 
-`bifrost-auth: configs/auth.yml`
-
 配置示例
-
-`bifrost-auth`
-```yaml
-AuthService:
-  Port: 12320
-  AuthDBConfig: # 可选，未指定时将考虑AuthConfig
-    DBName: "bifrost"
-    host: "127.0.0.1"
-    port: 3306
-    protocol: "tcp"
-    user: "heimdall"
-    password: "Bultgang"
-  AuthConfig: # 可选，未指定AuthDBConfig和AuthConfig时，将以"heimdall/Bultgang"作为默认认证信息
-    username: "heimdall"
-    password: "Bultgang"
-LogConfig:
-  logDir: "./logs"
-  level: 2
-```
 
 `bifrost`
 ```yaml
-ServiceConfig:
-  Port: 12321
-  ChunkSize: 4194304
-  AuthServerAddr: "127.0.0.1:12320"
-  Infos:
-    -
-      name: "bifrost-test"
-      type: nginx
-      backupCycle: 1
-      backupSaveTime: 7
-      backupDir: # 可选，空或未选用时默认以web应用主配置文件所在目录为准
-      confPath: "/usr/local/openresty/nginx/conf/nginx.conf"
-      verifyExecPath: "/usr/local/openresty/nginx/sbin/nginx"
-    -
-      name: "bifrost-test2"
-      type: nginx
-      backupCycle: 1
-      backupSaveTime: 7
-      confPath: "/GO_Project/src/bifrost/test/config_test/nginx.conf"
-      verifyExecPath: "xxxxxxxxxxxx/nginx"
-LogConfig:
-  logDir: "./logs"
-  level: 2
+server:
+  healthz: true  # 是否开启健康检查，如果开启会安装 healthz gRPC服务，默认 true
+
+# 服务配置
+# secure:  # gRPC 安全模式配置，目前暂默认不启用
+insecure:
+  bind-address: 0.0.0.0  # 绑定的不安全 IP 地址，设置为 0.0.0.0 表示使用全部网络接口，默认为 127.0.0.1，建议设置为提供服务网卡ip或域名，在注册服务到注册中心时会用到，避免服务发现异常
+
+# gRPC服务参数配置
+grpc:
+  chunksize: 2048  # 传输带宽配置，单位（Byte），范围（100~65535）
+  receiv-timeout-minutes: 3
+
+# Web Server Config 相关配置
+web-server-configs:
+  items:
+    - server-name: "bifrost-test"  # WebServer 名称
+      server-type: "nginx"  # WebServer 类型，目前暂仅支持 nginx
+      config-path: "/usr/local/nginx/conf/nginx.conf"  # WebServer 配置文件路径
+      verify-exec-path: "/usr/local/nginx/sbin/nginx"  # WebServer 配置文件校验用可执行文件路径，目前仅支持 nginx 的应用运行二进制文件路径
+      logs-dir-path: "/usr/local/nginx/logs"  # WebServer 日志存放路径
+      backup-dir: ""  # WebServer 配置文件自动备份路径，为空时不启用自动备份
+      backup-cycle: 1  # WebServer 配置文件自动备份周期时长，单位（天），为0时不启用自动备份
+      backup-save-time: 7  # WebServer 配置文件自动备份归档保存时长，单位（天），为0时不启用自动备份
+
+# 注册中心配置
+# RA:  # 注册中心地址配置
+#   Host: "192.168.0.11"
+#   Port: 8500
+
+# 日志配置
+log:
+  output-paths: "logs/bifrost.log"
 ```
 
 ## 命令帮助
 
-`bifrost-auth`
-```
-> ./bifrost-auth -h
-  bifrost-auth version: v1.0.2-alpha.1
-  Usage: ./bifrost-auth [-hv] [-f filename] [-s signal]
-  
-  Options:
-    -f config
-      	the bifrost-auth configuration file path. (default "./configs/auth.yml")
-    -h help
-      	this help
-    -s signal
-      	send signal to a master process: stop, restart, status
-    -v version
-      	this version
-```
-
 `bifrost`
-```
-> ./bifrost -h
-  bifrost version: v1.0.2-alpha.2
-  Usage: ./bifrost [-hv] [-f filename] [-s signal]
-  
-  Options:
-    -f config
-      	the bifrost configuration file path. (default "./configs/bifrost.yml")
-    -h help
-      	this help
-    -s signal
-      	send signal to a master process: stop, restart, status
-    -v version
-      	this version 
+```bash
+$ ./bifrost -h
+The Bifrost is used to parse the nginx configuration file 
+and provide an interface for displaying and modifying the configuration file.
+It supports the mutual conversion of JSON, string format and golang structure.
+The Bifrost services to do the api objects management with gRPC protocol.
+
+Find more Bifrost information at:
+    https://github.com/ClessLi/bifrost/blob/master/docs/guide/en-US/cmd/bifrost.md
+
+Usage:
+  bifrost [flags]
+
+Generic flags:
+
+      --server.healthz
+                Add self readiness check and install health check service. (default true)
+      --server.middlewares strings
+                List of allowed middlewares for server, comma separated. If this is empty default middlewares will be used.
+
+Secure serving flags:
+
+      --secure.bind-address string
+                The IP address on which to listen for the --secure.bind-port port. The associated interface(s) must be reachable by the rest of the engine, and by CLI/web clients. If blank, all interfaces will be used (0.0.0.0 for all IPv4
+                interfaces and :: for all IPv6 interfaces). (default "0.0.0.0")
+      --secure.bind-port int
+                The port on which to serve 12421 with authentication and authorization. Set to zero to disable.
+      --secure.tls.cert-dir string
+                The directory where the TLS certs are located. If --secure.tls.cert-key.cert-file and --secure.tls.cert-key.private-key-file are provided, this flag will be ignored. (default "/var/run/bifrost")
+      --secure.tls.cert-key.cert-file string
+                File containing the default x509 Certificate for TLS. (CA cert, if any, concatenated after server cert).
+      --secure.tls.cert-key.private-key-file string
+                File containing the default x509 private key matching --secure.tls.cert-key.cert-file.
+      --secure.tls.pair-name string
+                The name which will be used with --secure.tls.cert-dir to make a cert and key filenames. It becomes <cert-dir>/<pair-name>.crt and <cert-dir>/<pair-name>.key (default "bifrost")
+
+Insecure serving flags:
+
+      --insecure.bind-address string
+                The IP address on which to serve the --insecure.bind-port (set to 0.0.0.0 for all IPv4 interfaces and :: for all IPv6 interfaces). (default "0.0.0.0")
+      --insecure.bind-port int
+                The port on which to serve unsecured, unauthenticated access. It is assumed that firewall rules are set up such that this port is not reachable from outside of the deployed machine and that port 12321 on the bifrost public
+                address is proxied to this port. Set to zero to disable. (default 12321)
+
+RA options flags:
+
+      --ra.host string
+                Specifies the bind address of the Registration Authority server. Set empty to disable.
+      --ra.port int
+                Specifies the bind port of the Registration Authority server.
+
+GRPC serving flags:
+
+      --grpc.chunksize int
+                Set the max message size in bytes the server can send. Can not less than 100 bytes. (default 1024)
+      --grpc.receive-timeout int
+                Set the timeout for receiving data. The unit is per minute. (default 1)
+
+Monitor flags:
+
+      --monitor.cycle-time duration
+                 (default 2m0s)
+      --monitor.frequency-per-cycle int
+                 (default 10)
+      --monitor.sync-interval duration
+                 (default 1m0s)
+
+Log watcher flags:
+
+      --web-server-log-watcher.max-connections int
+                 (default 1000)
+      --web-server-log-watcher.watch-timeout duration
+                 (default 5m0s)
+
+Log flags:
+
+      --log.development
+                Development puts the logger in development mode, which changes the behavior of DPanicLevel and takes stacktraces more liberally.
+      --log.disable-caller
+                Disable output of caller information in the log.
+      --log.disable-stacktrace
+                Disable the log to record a stack trace for all messages at or above panic level.
+      --log.enable-color
+                Enable output ansi colors in plain format logs.
+      --log.error-output-paths strings
+                Error output paths of log. (default [stderr])
+                Log output FORMAT, support plain or json format. (default "console")
+                Minimum log output LEVEL. (default "info")
+                The name of the logger.
+                Output paths of log. (default [stdout])
+
+Global flags:
+
+  -c, --config FILE
+                Read configuration from specified FILE, support JSON, TOML, YAML, HCL, or Java properties formats.
+  -h, --help
+                help for bifrost
+      --version version[=true]
+                Print version information and quit.
 ```
 
 ## 配置解析库
@@ -165,29 +225,17 @@ nginxConfFromJsonBytes, err := configuration.NewConfigurationFromJsonBytes(confi
 
 详见
 
-[bifrost_gRPC接口定义](api/protobuf-spec/bifrostpb/bifrost.proto)
-
-注：gRPC服务端口侦听为bifrost配置中Service.Port值。
-
-[auth_gRPC接口定义](api/protobuf-spec/authpb/auth.proto)
-
-注：gRPC服务端口侦听为auth配置中AuthService.Port值。
+[bifrost_gRPC接口定义](api/protobuf-spec/bifrostpb/v1/bifrost.proto)
 
 ## 客户端
 
 结合go-kit框架编写的客户端对象
 
-### 认证客户端
-
-通过"pkg/client/auth/client.NewClient"函数可生成认证服务客户端
-
-详见[认证客户端](pkg/client/auth/client.go)
-
 ### bifrost客户端
 
 通过"pkg/client/bifrost/client.NewClient"函数可生成bifrost服务客户端
 
-详见[bifrost客户端](pkg/client/bifrost/client.go)
+详见[bifrost客户端](pkg/client/bifrost/v1/client.go)
 
 <h3 id="test">客户端使用示例</h3>
 
