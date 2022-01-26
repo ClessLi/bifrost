@@ -1,0 +1,33 @@
+server:
+  healthz: true  # 是否开启健康检查，如果开启会安装 healthz gRPC服务，默认 true
+
+# 服务配置
+# secure:  # gRPC 安全模式配置，目前暂默认不启用
+insecure:
+  bind-address: 0.0.0.0  # 绑定的不安全 IP 地址，设置为 0.0.0.0 表示使用全部网络接口，默认为 127.0.0.1，建议设置为提供服务网卡ip或域名，在注册服务到注册中心时会用到，避免服务发现异常
+
+# gRPC服务参数配置
+grpc:
+  chunksize: 2048  # 传输带宽配置，单位（Byte），范围（100~65535）
+  receiv-timeout-minutes: 3
+
+# Web Server Config 相关配置
+web-server-configs:
+  items:
+    - server-name: "bifrost-test"  # WebServer 名称
+      server-type: "nginx"  # WebServer 类型，目前暂仅支持 nginx
+      config-path: "/usr/local/nginx/conf/nginx.conf"  # WebServer 配置文件路径
+      verify-exec-path: "/usr/local/nginx/sbin/nginx"  # WebServer 配置文件校验用可执行文件路径，目前仅支持 nginx 的应用运行二进制文件路径
+      logs-dir-path: "/usr/local/nginx/logs"  # WebServer 日志存放路径
+      backup-dir: ""  # WebServer 配置文件自动备份路径，为空时不启用自动备份
+      backup-cycle: 1  # WebServer 配置文件自动备份周期时长，单位（天），为0时不启用自动备份
+      backup-save-time: 7  # WebServer 配置文件自动备份归档保存时长，单位（天），为0时不启用自动备份
+
+# 注册中心配置
+# RA:  # 注册中心地址配置
+#   Host: "192.168.0.11"
+#   Port: 8500
+
+# 日志配置
+log:
+  output-paths: "logs/bifrost.log"

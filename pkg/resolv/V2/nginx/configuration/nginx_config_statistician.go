@@ -1,8 +1,10 @@
 package configuration
 
 import (
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx"
+	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/utils"
+	"github.com/marmotedu/errors"
 	"regexp"
 	"strconv"
 )
@@ -23,19 +25,17 @@ type StreamInfo struct {
 	PortCount   []int
 }
 
-type Statistics struct {
-	HttpSvrsNum   int              `json:"http_svrs_num"`
-	HttpSvrs      map[string][]int `json:"http_svrs"`
-	HttpPorts     []int            `json:"http_ports"`
-	StreamSvrsNum int              `json:"stream_svrs_num"`
-	StreamPorts   []int            `json:"stream_ports"`
+type Statistician interface {
+	HttpInfo() HttpInfo
+	StreamInfo() StreamInfo
+	Statistics() *v1.Statistics
 }
 
-type Statistician struct {
-	configuration *configuration
+type statistician struct {
+	configuration Configuration
 }
 
-func (s Statistician) HttpInfo() HttpInfo {
+func (s *statistician) HttpInfo() HttpInfo {
 	serverCount, serverPortCount := HttpServers(s.configuration)
 	return HttpInfo{
 		ServerCount:     serverCount,
@@ -44,7 +44,7 @@ func (s Statistician) HttpInfo() HttpInfo {
 	}
 }
 
-func (s Statistician) StreamInfo() StreamInfo {
+func (s *statistician) StreamInfo() StreamInfo {
 	serverCount, portCount := StreamServers(s.configuration)
 	return StreamInfo{
 		ServerCount: serverCount,
@@ -52,10 +52,10 @@ func (s Statistician) StreamInfo() StreamInfo {
 	}
 }
 
-func (s Statistician) Statistics() Statistics {
+func (s *statistician) Statistics() *v1.Statistics {
 	httpInfo := s.HttpInfo()
 	streamInfo := s.StreamInfo()
-	return Statistics{
+	return &v1.Statistics{
 		HttpSvrsNum:   httpInfo.ServerCount,
 		HttpSvrs:      httpInfo.ServerPortCount,
 		HttpPorts:     httpInfo.PortCount,
@@ -64,8 +64,8 @@ func (s Statistician) Statistics() Statistics {
 	}
 }
 
-func NewStatistician(c *configuration) *Statistician {
-	return &Statistician{configuration: c}
+func NewStatistician(c Configuration) Statistician {
+	return &statistician{configuration: c}
 }
 
 func Port(q Querier) int {
@@ -124,7 +124,7 @@ func HttpServers(q Querier) (int, map[string][]int) {
 		serverCount++
 		serverNameKeyQueryer, err := serverQueryer.Query("key:sep: :reg: server_name .*")
 		if err != nil {
-			if err != nginx.ErrNotFound {
+			if errors.IsCode(err, code.ErrParserNotFound) {
 				return 0, nil
 			}
 			continue
