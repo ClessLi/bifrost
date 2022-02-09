@@ -36,83 +36,85 @@ type Factory interface {
 
 var _ Factory = &transport{}
 
-var (
-	onceWebServerConfig     = sync.Once{}
-	onceWebServerStatistics = sync.Once{}
-	onceWebServerStatus     = sync.Once{}
-	onceWebServerLogWatcher = sync.Once{}
-	singletonWSCTXP         WebServerConfigTransport
-	singletonWSSTXP         WebServerStatisticsTransport
-	singletonWSStatusTXP    WebServerStatusTransport
-	singletonWSLWTXP        WebServerLogWatcherTransport
-)
-
 type transport struct {
 	conn           *grpc.ClientConn
 	decoderFactory decoder.Factory
 	encoderFactory encoder.Factory
+
+	onceWebServerConfig     sync.Once
+	onceWebServerStatistics sync.Once
+	onceWebServerStatus     sync.Once
+	onceWebServerLogWatcher sync.Once
+	singletonWSCTXP         WebServerConfigTransport
+	singletonWSSTXP         WebServerStatisticsTransport
+	singletonWSStatusTXP    WebServerStatusTransport
+	singletonWSLWTXP        WebServerLogWatcherTransport
 }
 
 func (t *transport) WebServerConfig() WebServerConfigTransport {
-	onceWebServerConfig.Do(func() {
-		if singletonWSCTXP == nil {
-			singletonWSCTXP = newWebServerConfigTransport(t)
+	t.onceWebServerConfig.Do(func() {
+		if t.singletonWSCTXP == nil {
+			t.singletonWSCTXP = newWebServerConfigTransport(t)
 		}
 	})
-	if singletonWSCTXP == nil {
+	if t.singletonWSCTXP == nil {
 		log.Fatal("web server config transport client is nil")
 
 		return nil
 	}
-	return singletonWSCTXP
+	return t.singletonWSCTXP
 }
 
 func (t *transport) WebServerStatistics() WebServerStatisticsTransport {
-	onceWebServerStatistics.Do(func() {
-		if singletonWSSTXP == nil {
-			singletonWSSTXP = newWebServerStatisticsTransport(t)
+	t.onceWebServerStatistics.Do(func() {
+		if t.singletonWSSTXP == nil {
+			t.singletonWSSTXP = newWebServerStatisticsTransport(t)
 		}
 	})
-	if singletonWSSTXP == nil {
+	if t.singletonWSSTXP == nil {
 		log.Fatal("web server statistics transport client is nil")
 
 		return nil
 	}
-	return singletonWSSTXP
+	return t.singletonWSSTXP
 }
 
 func (t *transport) WebServerStatus() WebServerStatusTransport {
-	onceWebServerStatus.Do(func() {
-		if singletonWSStatusTXP == nil {
-			singletonWSStatusTXP = newWebServerStatusTransport(t)
+	t.onceWebServerStatus.Do(func() {
+		if t.singletonWSStatusTXP == nil {
+			t.singletonWSStatusTXP = newWebServerStatusTransport(t)
 		}
 	})
-	if singletonWSStatusTXP == nil {
+	if t.singletonWSStatusTXP == nil {
 		log.Fatal("web server status transport client is nil")
 
 		return nil
 	}
-	return singletonWSStatusTXP
+	return t.singletonWSStatusTXP
 }
 
 func (t *transport) WebServerLogWatcher() WebServerLogWatcherTransport {
-	onceWebServerLogWatcher.Do(func() {
-		if singletonWSLWTXP == nil {
-			singletonWSLWTXP = newWebServerLogWatcherTransport(t)
+	t.onceWebServerLogWatcher.Do(func() {
+		if t.singletonWSLWTXP == nil {
+			t.singletonWSLWTXP = newWebServerLogWatcherTransport(t)
 		}
 	})
-	if singletonWSLWTXP == nil {
+	if t.singletonWSLWTXP == nil {
 		log.Fatal("web server log watcher transport client is nil")
 
 		return nil
 	}
-	return singletonWSLWTXP
+	return t.singletonWSLWTXP
 }
 
 func New(conn *grpc.ClientConn) Factory {
 	return &transport{
-		conn:           conn,
-		decoderFactory: decoder.New(),
-		encoderFactory: encoder.New(),
+		conn:                    conn,
+		decoderFactory:          decoder.New(),
+		encoderFactory:          encoder.New(),
+		onceWebServerConfig:     sync.Once{},
+		onceWebServerStatistics: sync.Once{},
+		onceWebServerStatus:     sync.Once{},
+		onceWebServerLogWatcher: sync.Once{},
 	}
 }
