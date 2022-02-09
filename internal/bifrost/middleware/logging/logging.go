@@ -40,8 +40,11 @@ func New(svc svcv1.ServiceFactory) svcv1.ServiceFactory {
 }
 
 func getLimitResult(result []byte) string {
+	var formattedRet []byte
 	if len(result)-1 > limit+3 {
-		result = append(result[:limit], '.', '.', '.')
+		formattedRet = result[:limit]
+	} else {
+		formattedRet = result
 	}
-	return string(result)
+	return string(formattedRet) + "..."
 }
