@@ -5,6 +5,7 @@ import (
 	"fmt"
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
+	log "github.com/ClessLi/bifrost/pkg/log/v1"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loader"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/utils"
@@ -63,7 +64,7 @@ func (c configManager) serverVersion() (version string) {
 	if err != nil {
 		return
 	}
-	err = cmd.Start()
+	err = cmd.Run()
 	if err != nil {
 		return
 	}
@@ -138,7 +139,7 @@ func (c *configManager) regularlyBackup(duration time.Duration, signalChan chan 
 		// 1) save with check
 		err := c.SaveWithCheck()
 		// 非指纹相同的报错则退出备份
-		if err != nil && (errors.IsCode(err, code.ErrSameConfigFingerprint) || errors.IsCode(err, code.ErrSameConfigFingerprints)) {
+		if err != nil && !errors.IsCode(err, code.ErrSameConfigFingerprint) && !errors.IsCode(err, code.ErrSameConfigFingerprints) {
 			backupErr = err
 			continue
 		}
@@ -227,7 +228,7 @@ func (c *configManager) regularlyReload(duration time.Duration, signalChan chan 
 		// 2) 不一致则重载文件配置
 		err = c.configuration.renewConfiguration(config)
 		if err != nil {
-			if errors.IsCode(err, code.ErrSameConfigFingerprint) {
+			if !errors.IsCode(err, code.ErrSameConfigFingerprint) {
 				reloadErr = err
 			}
 			continue
@@ -374,19 +375,19 @@ func (c *configManager) Start() error {
 	go func() {
 		err := c.regularlyBackup(time.Minute*5, c.backupSignalChan)
 		if err != nil {
-			fmt.Println(err)
+			log.Errorf("regularly backup error. %+v", err)
 		}
 	}()
 	go func() {
 		err := c.regularlyReload(time.Second*30, c.reloadSignalChan)
 		if err != nil {
-			fmt.Println(err)
+			log.Errorf("regularly reload error. %+v", err)
 		}
 	}()
 	go func() {
 		err := c.regularlySave(time.Second*10, c.saveSignalChan)
 		if err != nil {
-			fmt.Println(err)
+			log.Errorf("regularly save error. %+v", err)
 		}
 	}()
 	c.isRunning = true

@@ -39,8 +39,8 @@ func exampleServerRun() error {
 		VerifyExecPath: "../../nginx/sbin/nginx.sh",
 		LogsDirPath:    "../../nginx/logs",
 		BackupDir:      "",
-		BackupCycle:    0,
-		BackupSaveTime: 0,
+		BackupCycle:    1,
+		BackupSaveTime: 1,
 	})
 
 	opts.WebServerLogWatcherOptions.WatchTimeout = time.Second * 50
