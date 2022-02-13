@@ -22,8 +22,8 @@ var (
 	RegContextEnd      = regexp.MustCompile(`^\s*}`)
 	RegCommentHead     = regexp.MustCompile(`^(\s*)#+[ \r\t\f]*(.*?)\n`)
 	RegKeyValue        = regexp.MustCompile(S)
-	RegKey             = regexp.MustCompile(`^\s*(\S+);`)
-	RegBlankLine       = regexp.MustCompile(`^\n\s*` + LineBreak)
+	RegKey             = regexp.MustCompile(`^\s*(` + Normal + `)\s*;`)
+	RegBlankLine       = regexp.MustCompile(`^\n\s*` + LineBreak + `$`)
 	RegErrorHeed       = regexp.MustCompile(Abnormal)
 	//RegLine            = regexp.MustCompile(LineBreak)
 

@@ -7,5 +7,5 @@ const (
 	Abnormal     = `^[\t\f ]*;.*`
 	LineBreak    = `\n`
 	S1           = DoubleQuotes + `|` + SingleQuotes + `|` + Normal
-	S            = `^\s*(` + S1 + `)\s*((?:` + S1 + `)+);`
+	S            = `^\s*(` + S1 + `)\s+((?:` + S1 + `)+)\s*;`
 )

@@ -1,6 +1,7 @@
 package file_watcher
 
 import (
+	"context"
 	log "github.com/ClessLi/bifrost/pkg/log/v1"
 	"sync"
 	"testing"
@@ -10,10 +11,10 @@ import (
 func TestWatcherManager_Watch(t *testing.T) {
 	type fields struct {
 		config   *Config
-		mu       sync.RWMutex
 		watchers map[string]*FileWatcher
 	}
 	type args struct {
+		ctx  context.Context
 		file string
 	}
 	tests := []struct {
@@ -29,10 +30,10 @@ func TestWatcherManager_Watch(t *testing.T) {
 					MaxConnections: 10,
 					OutputTimeout:  time.Second * 20,
 				},
-				mu:       sync.RWMutex{},
 				watchers: make(map[string]*FileWatcher),
 			},
 			args: args{
+				ctx:  context.Background(),
 				file: "../../../test/nginx/logs/access.log",
 			},
 		},
@@ -41,10 +42,10 @@ func TestWatcherManager_Watch(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			wm := &WatcherManager{
 				config:   tt.fields.config,
-				mu:       tt.fields.mu,
+				mu:       sync.RWMutex{},
 				watchers: tt.fields.watchers,
 			}
-			got, err := wm.Watch(tt.args.file)
+			got, err := wm.Watch(tt.args.ctx, tt.args.file)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Watch() error = %v, wantErr %v", err, tt.wantErr)
 				return

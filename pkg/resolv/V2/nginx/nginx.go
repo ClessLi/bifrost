@@ -28,6 +28,7 @@ func newConfigManager(options ConfigManagerOptions) (configuration.ConfigManager
 	if err != nil {
 		return nil, err
 	}
+	log.Debugf("init nginx config(Size: %d): \n\n%s", len(conf.View()), conf.View())
 	return configuration.NewNginxConfigurationManager(
 		loader.NewLoader(),
 		conf,

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	healthzclient_v1 "github.com/ClessLi/bifrost/pkg/client/grpc_health_v1"
+	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration"
 	"sync"
 	"testing"
 	"time"
@@ -100,11 +101,17 @@ func TestBifrostClient(t *testing.T) {
 		t.Logf("config:\n\n%s", buf.String())*/
 
 		// go-kit grpc client
-		conf, err := client.WebServerConfig().Get(servername)
+		jsondata, err := client.WebServerConfig().Get(servername)
 		if err != nil {
 			t.Fatalf(err.Error())
 		}
-		t.Logf("config %s:\n\n%s", servername, conf)
+		conf, err := configuration.NewConfigurationFromJsonBytes(jsondata)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+		t.Logf("get config len: %d", len(conf.View()))
+		//fmt.Printf("config %s:\n\n%s", servername, conf.View())
+		t.Logf("before jsondata len: %d, after jasondata len: %d", len(jsondata), len(conf.Json()))
 
 		statistics, err := client.WebServerStatistics().Get(servername)
 		if err != nil {
