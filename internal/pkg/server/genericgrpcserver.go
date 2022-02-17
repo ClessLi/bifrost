@@ -78,7 +78,9 @@ func (s *GenericGRPCServer) Setup() {
 	}
 
 	if s.InsecureServingInfo != nil {
-		s.insecureServer = grpc.NewServer(grpc.MaxSendMsgSize(s.ChunkSize))
+		// TODO: Checking mechanism of gRPC server max send msg size
+		//s.insecureServer = grpc.NewServer(grpc.MaxSendMsgSize(s.ChunkSize))
+		s.insecureServer = grpc.NewServer()
 		log.Infof("Insecure server initialization succeeded. Chunk size: %d.", s.ChunkSize)
 		if s.healthz {
 			s.insecureSvrHealthz = health.NewServer()
