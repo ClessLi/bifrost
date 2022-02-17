@@ -148,8 +148,8 @@ func (c *configManager) regularlyBackup(duration time.Duration, signalChan chan 
 		TZ := time.Local
 		// 归档日期初始化
 		now := time.Now().In(TZ)
-		dt := now.Format("20060102")
-		backupName := fmt.Sprintf("nginx.conf.%s.tgz", dt)
+		backupPrefix := "nginx.conf"
+		backupName := utils.GetBackupFileName(backupPrefix, now)
 		archiveDir, err := filepath.Abs(filepath.Dir(c.configuration.Self().GetValue()))
 		if err != nil {
 			backupErr = errors.Wrap(err, "failed to format archive directory")
@@ -173,8 +173,9 @@ func (c *configManager) regularlyBackup(duration time.Duration, signalChan chan 
 		// 初始化时，完成该操作↑
 
 		// 判断是否需要备份
-		needBackup, err := utils.CheckBackups(backupName, c.backupDir, c.backupSaveTime, c.backupCycle, now)
+		needBackup, err := utils.CheckAndCleanBackups(backupPrefix, c.backupDir, c.backupSaveTime, c.backupCycle, now)
 		if err != nil {
+			log.Warn("failed to check and clean backups, " + err.Error())
 			backupErr = err
 			continue
 		}
@@ -185,9 +186,11 @@ func (c *configManager) regularlyBackup(duration time.Duration, signalChan chan 
 
 		// 压缩归档
 		c.rwLocker.RLock()
+		log.Info("start backup configs")
 		err = utils.TarGZ(archivePath, c.configPaths)
 		c.rwLocker.RUnlock()
 		if err != nil {
+			log.Warn("failed to backup configs, " + err.Error())
 			backupErr = err
 			continue
 		}
@@ -197,6 +200,7 @@ func (c *configManager) regularlyBackup(duration time.Duration, signalChan chan 
 			backupPath := filepath.Join(c.backupDir, backupName)
 			backupErr = os.Rename(archivePath, backupPath)
 		}
+		log.Info("complete configs backup")
 	}
 	return backupErr
 }
