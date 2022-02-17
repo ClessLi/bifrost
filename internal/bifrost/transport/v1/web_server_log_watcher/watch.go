@@ -4,6 +4,7 @@ import (
 	"context"
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
+	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/utils"
 	"io"
 )
 
@@ -28,7 +29,9 @@ func (w *webServerLogWatcherServer) Watch(request *pbv1.LogWatchRequest, stream 
 				return nil
 			}
 			line = append(line, '\n')
-			err := sendWithChunk(stream, w.options.ChunkSize-2, line)
+			err = utils.StreamSendMsg(stream, line, w.options.ChunkSize, func(msg []byte) interface{} {
+				return &pbv1.Response{Msg: msg}
+			})
 			if err != nil && err != io.EOF {
 				return err
 			}
@@ -37,20 +40,4 @@ func (w *webServerLogWatcherServer) Watch(request *pbv1.LogWatchRequest, stream 
 			}
 		}
 	}
-}
-
-func sendWithChunk(stream pbv1.WebServerLogWatcher_WatchServer, chunksize int, response []byte) error {
-	var err error
-	n := len(response)
-	for i := 0; i < n; i += chunksize {
-		if n <= i+chunksize {
-			err = stream.Send(&pbv1.Response{Msg: response[i:]})
-		} else {
-			err = stream.Send(&pbv1.Response{Msg: response[i : i+chunksize]})
-		}
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }

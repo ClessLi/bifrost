@@ -1,6 +1,9 @@
 package web_server_status
 
-import pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
+import (
+	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
+	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/utils"
+)
 
 func (w *webServerStatusServer) Get(r *pbv1.Null, stream pbv1.WebServerStatus_GetServer) error {
 
@@ -10,17 +13,7 @@ func (w *webServerStatusServer) Get(r *pbv1.Null, stream pbv1.WebServerStatus_Ge
 	}
 
 	response := resp.(*pbv1.Metrics)
-	n := len(response.GetJsonData())
-	for i := 0; i < n; i += w.options.ChunkSize - 2 {
-		if n <= i+w.options.ChunkSize-2 {
-			err = stream.Send(&pbv1.Metrics{JsonData: response.JsonData[i:]})
-		} else {
-			err = stream.Send(&pbv1.Metrics{JsonData: response.JsonData[i : i+w.options.ChunkSize-2]})
-		}
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return utils.StreamSendMsg(stream, response.GetJsonData(), w.options.ChunkSize, func(msg []byte) interface{} {
+		return &pbv1.Metrics{JsonData: msg}
+	})
 }
