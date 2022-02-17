@@ -3,6 +3,7 @@ package web_server_config
 import (
 	"context"
 	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
+	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/utils"
 )
 
 func (w *webServerConfigServer) GetServerNames(ctx context.Context, null *pbv1.Null) (*pbv1.ServerNames, error) {
@@ -22,20 +23,11 @@ func (w *webServerConfigServer) Get(r *pbv1.ServerName, stream pbv1.WebServerCon
 	}
 
 	response := resp.(*pbv1.ServerConfig)
-	n := len(response.GetJsonData())
-	for i := 0; i < n; i += w.options.ChunkSize - 3 {
-		if n <= i+w.options.ChunkSize-3 {
-			err = stream.Send(&pbv1.ServerConfig{
-				JsonData: response.JsonData[i:],
-			})
-		} else {
-			err = stream.Send(&pbv1.ServerConfig{
-				JsonData: response.JsonData[i : i+w.options.ChunkSize-3],
-			})
-		}
-		if err != nil {
-			return err
-		}
+	err = utils.StreamSendMsg(stream, response.GetJsonData(), w.options.ChunkSize, func(msg []byte) interface{} {
+		return &pbv1.ServerConfig{JsonData: msg}
+	})
+	if err != nil {
+		return err
 	}
 
 	return stream.Send(&pbv1.ServerConfig{ServerName: response.GetServerName()})
