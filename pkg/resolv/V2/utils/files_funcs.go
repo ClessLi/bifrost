@@ -3,14 +3,18 @@ package utils
 import (
 	"bytes"
 	"fmt"
+	log "github.com/ClessLi/bifrost/pkg/log/v1"
 	"github.com/marmotedu/errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 )
+
+const backupDateLayout = `20060102`
 
 func RemoveFiles(files []string) error {
 	for _, path := range files {
@@ -30,27 +34,39 @@ func RemoveFiles(files []string) error {
 	return nil
 }
 
-// CheckBackups, 检查归档目录下归档文件是否需要清理及是否可以进行归档操作的函数
+func getBackupFileRegexp(backupPrefix string) *regexp.Regexp {
+	bakFilePattern := `^` + backupPrefix + `\.(\d{8})\.tgz$`
+	return regexp.MustCompile(bakFilePattern)
+}
+
+func GetBackupFileName(backupPrefix string, now time.Time) string {
+	dt := now.Format(backupDateLayout)
+	return backupPrefix + "." + dt + ".tgz"
+}
+
+// CheckAndCleanBackups 检查归档目录下归档文件是否需要清理及是否可以进行归档操作的函数
 //
 // 参数:
-//     name: 归档文件前缀名
-//     dir: 归档文件目录路径
-//     saveTime: 归档文件保存时间，单位天
-//     cycle: 归档操作周期，单位天
+//     backupPrefix: 归档文件前缀名
+//     backupDir: 归档文件目录路径
+//     retentionTime: 归档文件保存时间，单位天
+//     backupCycleTime: 归档操作周期，单位天
 //     now: 当前检查时间
 // 返回值:
 //     true: 需要归档操作; false: 不需要归档
 //     错误
-func CheckBackups(name, backupDir string, retentionTime, backupCycleTime int, now time.Time) (bool, error) {
+func CheckAndCleanBackups(backupPrefix, backupDir string, retentionTime, backupCycleTime int, now time.Time) (bool, error) {
 	needBackup := true
 	saveDate := now.Add(-24 * time.Hour * time.Duration(retentionTime))
 	cycleDate := now.Add(-24 * time.Hour * time.Duration(backupCycleTime))
-	//bakFilePattern := fmt.Sprintf(`^%s\.(\d{8})\.tgz$`, name)
-	bakFilePattern := `^nginx\.(\d{8})\.tgz$`
-	bakFileReg := regexp.MustCompile(bakFilePattern)
+	if len(strings.TrimSpace(backupPrefix)) == 0 {
+		backupPrefix = "nginx.conf"
+	} else {
+		backupPrefix = strings.TrimSpace(backupPrefix)
+	}
+	bakFileReg := getBackupFileRegexp(backupPrefix)
 
-	//baks, gErr := filepath.Glob(filepath.Join(backupDir, fmt.Sprintf("%s.*.tgz", name)))
-	baks, gErr := filepath.Glob(filepath.Join(backupDir, "nginx.*.tgz"))
+	baks, gErr := filepath.Glob(filepath.Join(backupDir, backupPrefix+".*.tgz"))
 	if gErr != nil {
 		return false, gErr
 	}
@@ -58,19 +74,23 @@ func CheckBackups(name, backupDir string, retentionTime, backupCycleTime int, no
 	for i := 0; i < len(baks) && needBackup; i++ {
 		bakName := filepath.Base(baks[i])
 		if isBak := bakFileReg.MatchString(bakName); isBak {
-			bakDate, tpErr := time.ParseInLocation("20060102", bakFileReg.FindStringSubmatch(bakName)[1], now.Location())
+			bakDate, tpErr := time.ParseInLocation(backupDateLayout, bakFileReg.FindStringSubmatch(bakName)[1], now.Location())
 			if tpErr != nil {
-				return false, tpErr
+				return false, errors.Wrapf(tpErr, "failed to resolve archive name '%s'", baks[i])
 			}
 
+			// 判断是否需要清理，并清理过期归档
 			if bakDate.Unix() < saveDate.Unix() {
+				log.Infof("cleaning up expired archive '%s'", baks[i])
 				rmErr := os.Remove(baks[i])
 				if rmErr != nil {
-					return false, rmErr
+					return false, errors.Wrapf(rmErr, "failed to clean up expired archive '%s'", baks[i])
 				}
+				log.Infof("successfully cleaned up expired archive '%s'", baks[i])
 			}
 
-			if bakDate.Unix() > cycleDate.Unix() || bakDate.Format("20060102") == now.Format("20060102") {
+			// 判断该归档是否是最新归档，是反馈不需归档，并退出循环
+			if bakDate.Unix() > cycleDate.Unix() || bakDate.Format(backupDateLayout) == now.Format(backupDateLayout) {
 				needBackup = false
 			}
 
