@@ -7,7 +7,7 @@
 # 项目介绍
 
 **Bifrost**
-是基于golang语言开发的项目，它目前还处于测试阶段，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用版本为[v1.0.4](https://github.com/ClessLi/bifrost/tree/v1.0.4)
+是基于golang语言开发的项目，它目前还处于测试阶段，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用版本为[v1.0.5](https://github.com/ClessLi/bifrost/tree/v1.0.5)
 
 # 项目特点
 
@@ -81,7 +81,7 @@ web-server-configs:
       config-path: "/usr/local/nginx/conf/nginx.conf"  # WebServer 配置文件路径
       verify-exec-path: "/usr/local/nginx/sbin/nginx"  # WebServer 配置文件校验用可执行文件路径，目前仅支持 nginx 的应用运行二进制文件路径
       logs-dir-path: "/usr/local/nginx/logs"  # WebServer 日志存放路径
-      backup-dir: ""  # WebServer 配置文件自动备份路径，为空时将使用`config-path`文件的目录昨晚做的备份目录路径
+      backup-dir: ""  # .WebServer 配置文件自动备份路径，为空时将使用`config-path`文件的目录路径作为备份目录路径
       backup-cycle: 1  # WebServer 配置文件自动备份周期时长，单位（天），为0时不启用自动备份
       backup-save-time: 7  # WebServer 配置文件自动备份归档保存时长，单位（天），为0时不启用自动备份
 
