@@ -136,7 +136,7 @@ func parseKeyword(keyword string) (parser.KeyWords, error) {
 		parserType = parser_type.ParserType(kw[0])
 
 		kv := strings.TrimSpace(kw[1])
-		if kv[:5] == ":reg:" {
+		if len(kv) > 5 && kv[:5] == ":reg:" {
 			isReg = true
 			keyValue = strings.TrimSpace(kv[5:])
 		} else {
