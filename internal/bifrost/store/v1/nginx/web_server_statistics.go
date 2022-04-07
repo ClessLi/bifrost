@@ -2,11 +2,13 @@ package nginx
 
 import (
 	"context"
+
+	"github.com/marmotedu/errors"
+
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	storev1 "github.com/ClessLi/bifrost/internal/bifrost/store/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration"
-	"github.com/marmotedu/errors"
 )
 
 type webServerStatisticsStore struct {
@@ -17,6 +19,7 @@ func (w *webServerStatisticsStore) Get(ctx context.Context, servername *v1.Serve
 	if statistician, has := w.statisticians[servername.Name]; has {
 		return statistician.Statistics(), nil
 	}
+
 	return nil, errors.WithCode(code.ErrConfigurationNotFound, "nginx server config '%s' not found", servername.Name)
 }
 

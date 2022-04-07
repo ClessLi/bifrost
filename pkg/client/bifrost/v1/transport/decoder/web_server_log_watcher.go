@@ -2,8 +2,10 @@ package decoder
 
 import (
 	"context"
-	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
+
 	"github.com/marmotedu/errors"
+
+	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 )
 
 type webServerLogWatcher struct{}

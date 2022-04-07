@@ -2,11 +2,12 @@ package test
 
 import (
 	"fmt"
-	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
 	"path/filepath"
 	"regexp"
 	"testing"
 	"time"
+
+	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
 )
 
 func TestRel(t *testing.T) {

@@ -2,12 +2,13 @@ package options
 
 import (
 	"fmt"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
 	"net"
 	"path"
 
-	"github.com/ClessLi/bifrost/internal/pkg/server"
 	"github.com/spf13/pflag"
+
+	"github.com/ClessLi/bifrost/internal/pkg/server"
+	log "github.com/ClessLi/bifrost/pkg/log/v1"
 )
 
 // SecureServingOptions contains configuration items related to TLS server startup.
@@ -46,7 +47,7 @@ type GeneratableKeyCert struct {
 func NewSecureServingOptions() *SecureServingOptions {
 	return &SecureServingOptions{
 		BindAddress: "0.0.0.0",
-		//BindPort:    12421,
+		// BindPort:    12421,
 		BindPort: 0, // default disable secure serving
 		ServerCert: GeneratableKeyCert{
 			PairName:      "bifrost",
@@ -60,6 +61,7 @@ func (s *SecureServingOptions) ApplyTo(c *server.Config) error {
 	if s == nil || s.BindPort == 0 {
 		log.Debug("secure serving is disabled.")
 		c.SecureServing = nil
+
 		return nil
 	}
 	// SecureServing is required to serve https

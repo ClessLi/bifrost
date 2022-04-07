@@ -2,10 +2,11 @@ package logging
 
 import (
 	"context"
-	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
-	svcv1 "github.com/ClessLi/bifrost/internal/bifrost/service/v1"
 	"strings"
 	"time"
+
+	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
+	svcv1 "github.com/ClessLi/bifrost/internal/bifrost/service/v1"
 )
 
 type loggingWebServerConfigService struct {
@@ -26,10 +27,14 @@ func (l loggingWebServerConfigService) GetServerNames(ctx context.Context) (serv
 		}
 		logF.SetErr(err)
 	}(time.Now().Local())
+
 	return l.svc.GetServerNames(ctx)
 }
 
-func (l loggingWebServerConfigService) Get(ctx context.Context, servername *v1.ServerName) (wsc *v1.WebServerConfig, err error) {
+func (l loggingWebServerConfigService) Get(
+	ctx context.Context,
+	servername *v1.ServerName,
+) (wsc *v1.WebServerConfig, err error) {
 	defer func(begin time.Time) {
 		logF := newLogFormatter(ctx, l.svc.Get)
 		logF.SetBeginTime(begin)
@@ -42,6 +47,7 @@ func (l loggingWebServerConfigService) Get(ctx context.Context, servername *v1.S
 		}
 		logF.SetErr(err)
 	}(time.Now().Local())
+
 	return l.svc.Get(ctx, servername)
 }
 
@@ -58,6 +64,7 @@ func (l loggingWebServerConfigService) Update(ctx context.Context, config *v1.We
 		}
 		logF.SetErr(err)
 	}(time.Now().Local())
+
 	return l.svc.Update(ctx, config)
 }
 

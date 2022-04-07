@@ -3,9 +3,10 @@ package logging
 import (
 	"context"
 	"encoding/json"
+	"time"
+
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	svcv1 "github.com/ClessLi/bifrost/internal/bifrost/service/v1"
-	"time"
 )
 
 type loggingWebServerStatusService struct {
@@ -23,6 +24,7 @@ func (l *loggingWebServerStatusService) Get(ctx context.Context) (metrics *v1.Me
 		}
 		logF.SetErr(err)
 	}(time.Now().Local())
+
 	return l.svc.Get(ctx)
 }
 

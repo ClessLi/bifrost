@@ -7,49 +7,51 @@ package daemon
 import (
 	"flag"
 	"fmt"
-	"github.com/ClessLi/bifrost/internal/pkg/auth/config"
-	"github.com/ClessLi/bifrost/internal/pkg/auth/service"
-	"github.com/apsdehal/go-logger"
-	"gopkg.in/yaml.v2"
 	"os"
 	"path/filepath"
+
+	"github.com/apsdehal/go-logger"
+	"gopkg.in/yaml.v2"
+
+	"github.com/ClessLi/bifrost/internal/pkg/auth/config"
+	"github.com/ClessLi/bifrost/internal/pkg/auth/service"
 )
 
 var (
-	// 传入参数
+	// 传入参数.
 	confPath = flag.String("f", "./configs/auth.yml", "the bifrost-auth `config`uration file path.")
 	Signal   = flag.String("s", "", "send `signal` to a master process: stop, restart, status")
 	help     = flag.Bool("h", false, "this `help`")
 	version  = flag.Bool("v", false, "this `version`")
-	//confBackupDelay = flag.Duration("b", 10, "how many minutes `delay` for backup nginx config")
+	// confBackupDelay = flag.Duration("b", 10, "how many minutes `delay` for backup nginx config").
 
-	// bifrost配置
+	// bifrost配置.
 	AuthConf = &Config{}
-	//authDBConfig *AuthDBConfig
-	//authConfig   *AuthConfig
+	// authDBConfig *AuthDBConfig
+	// authConfig   *AuthConfig.
 
-	// 日志变量
+	// 日志变量.
 	myLogger *logger.Logger
-	// 日志文件
+	// 日志文件.
 	Logf    *os.File
 	Stdoutf *os.File
 
-	// 程序工作目录
+	// 程序工作目录.
 	workspace string
 
-	// 进程文件
+	// 进程文件.
 	pidFilename = "bifrost-auth.pid"
 	pidFile     string
 
-	// 错误变量
+	// 错误变量.
 	procStatusNotRunning = fmt.Errorf("process is not running")
 
-	// 初始化信号量
+	// 初始化信号量.
 	signalChan = make(chan int)
 )
 
 const (
-	// 日志级别
+	// 日志级别.
 	CRITICAL = logger.CriticalLevel
 	ERROR    = logger.ErrorLevel
 	WARN     = logger.WarningLevel
@@ -58,13 +60,13 @@ const (
 	DEBUG    = logger.DebugLevel
 )
 
-// Config, bifrost配置文件结构体，定义bifrost配置信息
+// Config, bifrost配置文件结构体，定义bifrost配置信息.
 type Config struct {
 	AuthService *service.AuthService `yaml:"AuthService"`
 	LogConfig   `yaml:"LogConfig"`
 }
 
-// LogConfig, bifrost日志信息结构体，定义日志目录、日志级别
+// LogConfig, bifrost日志信息结构体，定义日志目录、日志级别.
 type LogConfig struct {
 	LogDir string          `yaml:"logDir"`
 	Level  logger.LogLevel `yaml:"level"`
@@ -74,7 +76,7 @@ func (l LogConfig) IsDebugLvl() bool {
 	return l.Level >= DEBUG
 }
 
-// usage, 重新定义flag.Usage 函数，为bifrost帮助信息提供版本信息及命令行工具传参信息
+// usage, 重新定义flag.Usage 函数，为bifrost帮助信息提供版本信息及命令行工具传参信息.
 func usage() {
 	_, _ = fmt.Fprintf(os.Stdout, `bifrost-auth version: %s
 Usage: %s [-hv] [-f filename] [-s signal]
@@ -84,7 +86,7 @@ Options:
 	flag.PrintDefaults()
 }
 
-// init, auth.daemon包初始化函数
+// init, auth.daemon包初始化函数.
 func init() {
 	// DONE: nginx配置文件后台更新后自动热加载功能
 	// 初始化工作目录
@@ -125,7 +127,7 @@ func init() {
 		if pathErr != nil {
 			fmt.Println("The bifrost-auth config file", "'"+*confPath+"'", "is not found.")
 		} else {
-			fmt.Println("Unkown error of the bifrost-auth config file.")
+			fmt.Println("Unknown error of the bifrost-auth config file.")
 		}
 		flag.Usage()
 		os.Exit(1)

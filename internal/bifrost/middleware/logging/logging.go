@@ -1,15 +1,19 @@
 package logging
 
 import (
+	"sync"
+
+	kitlog "github.com/go-kit/kit/log"
+
 	svcv1 "github.com/ClessLi/bifrost/internal/bifrost/service/v1"
 	log "github.com/ClessLi/bifrost/pkg/log/v1"
-	kitlog "github.com/go-kit/kit/log"
-	"sync"
 )
 
-var logger kitlog.Logger
-var limit int
-var once = sync.Once{}
+var (
+	logger kitlog.Logger
+	limit  int
+	once   = sync.Once{}
+)
 
 type loggingService struct {
 	svc svcv1.ServiceFactory
@@ -36,6 +40,7 @@ func New(svc svcv1.ServiceFactory) svcv1.ServiceFactory {
 		logger = log.K()
 		limit = 100
 	})
+
 	return &loggingService{svc: svc}
 }
 
@@ -46,5 +51,6 @@ func getLimitResult(result []byte) string {
 	} else {
 		formattedRet = result
 	}
+
 	return string(formattedRet) + "..."
 }

@@ -3,11 +3,13 @@ package transport
 import (
 	"bytes"
 	"context"
-	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
+	"io"
+
 	grpctransport "github.com/go-kit/kit/transport/grpc"
 	"github.com/marmotedu/errors"
 	"google.golang.org/grpc"
-	"io"
+
+	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
 )
 
 const (
@@ -38,8 +40,13 @@ func (w *webServerConfigTransport) Update() Client {
 	return w.updateClient
 }
 
-func newWebServerConfigGetClient(conn *grpc.ClientConn, requestFunc grpctransport.EncodeRequestFunc, responseFunc grpctransport.DecodeResponseFunc) Client {
+func newWebServerConfigGetClient(
+	conn *grpc.ClientConn,
+	requestFunc grpctransport.EncodeRequestFunc,
+	responseFunc grpctransport.DecodeResponseFunc,
+) Client {
 	cli := pbv1.NewWebServerConfigClient(conn)
+
 	return newClient(func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req, err := requestFunc(ctx, request)
 		if err != nil {
@@ -54,14 +61,18 @@ func newWebServerConfigGetClient(conn *grpc.ClientConn, requestFunc grpctranspor
 		buf := bytes.NewBuffer(nil)
 		for {
 			d, err := stream.Recv()
-			if err != nil && err != io.EOF {
+			if err != nil && !errors.Is(err, io.EOF) {
 				return nil, err
 			}
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				break
 			}
 			if d.GetServerName() != "" && d.GetServerName() != req.(*pbv1.ServerName).GetName() {
-				return nil, errors.Errorf("the web server config is incorrect: got config of `%s`, want config of `%s`", d.GetServerName(), req.(*pbv1.ServerName).GetName())
+				return nil, errors.Errorf(
+					"the web server config is incorrect: got config of `%s`, want config of `%s`",
+					d.GetServerName(),
+					req.(*pbv1.ServerName).GetName(),
+				)
 			}
 			buf.Write(d.GetJsonData())
 		}
@@ -73,7 +84,6 @@ func newWebServerConfigGetClient(conn *grpc.ClientConn, requestFunc grpctranspor
 				JsonData:   buf.Bytes(),
 			},
 		)
-
 	})
 }
 

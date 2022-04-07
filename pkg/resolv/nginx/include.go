@@ -109,7 +109,6 @@ func (i *Include) Add(pType parserType, values ...string) error {
 		}
 		i.AddByParser(parser)
 		return nil
-
 	}
 	return ParserControlNoParamError
 }
@@ -131,7 +130,6 @@ func (i *Include) RemoveByParser(contents ...Parser) {
 
 func (i *Include) Modify(indexParser Parser, pType parserType, values ...string) error {
 	if values != nil {
-
 		ctx, err := newParser(pType, values...)
 		if err != nil {
 			return err
@@ -183,12 +181,12 @@ func (i Include) String() []string {
 func (i *Include) string(caches *Caches, deep int) []string {
 	var strs []string
 	// 暂取消include对象自身信息
-	//strs = append(strs, i.Comment.string()[0])
+	// strs = append(strs, i.Comment.string()[0])
 	for _, child := range i.Children {
 		strs = append(strs, child.string(caches, deep)...)
 	}
 	// 暂取消include对象自身信息
-	//strs = append(strs, "#End"+i.Comment.string()[0])
+	// strs = append(strs, "#End"+i.Comment.string()[0])
 
 	return strs
 }
@@ -200,7 +198,6 @@ func (i *Include) initLoad(caches *Caches) error {
 	}
 
 	for _, path := range paths {
-
 		relPath, relErr := filepath.Rel(i.ConfPWD, path)
 		if relErr != nil {
 			return relErr
@@ -219,7 +216,6 @@ func (i *Include) initLoad(caches *Caches) error {
 		if addConfErr != nil {
 			return addConfErr
 		}
-
 	}
 
 	return nil
@@ -231,7 +227,7 @@ func (i *Include) dump(configPath string, caches *Caches, deep int) (map[string]
 		conf, ok := child.(*Config)
 		if ok {
 			newDumps, err := conf.dump(configPath, caches, deep)
-			//err := Save(child.(*Config))
+			// err := Save(child.(*Config))
 			if err != nil && err != IsInCaches {
 				return nil, err
 			} else if err == IsInCaches {
@@ -244,7 +240,6 @@ func (i *Include) dump(configPath string, caches *Caches, deep int) (map[string]
 				}
 				dumps[dmpPath] = data
 			}
-
 		}
 	}
 

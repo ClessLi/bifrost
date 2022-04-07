@@ -13,7 +13,10 @@ type webServerConfigServer struct {
 	options *options.Options
 }
 
-func NewWebServerConfigServer(handler handler.WebServerConfigHandlers, options *options.Options) pbv1.WebServerConfigServer {
+func NewWebServerConfigServer(
+	handler handler.WebServerConfigHandlers,
+	options *options.Options,
+) pbv1.WebServerConfigServer {
 	return &webServerConfigServer{
 		handler: handler,
 		options: options,

@@ -57,7 +57,7 @@ func TestTopo_CircleVertexIndex(t *testing.T) {
 	//	t.Fatal(err)
 	//}
 	err = graph.AddEdge("nginx.test.conf", "./conf.d/test1.conf")
-	//err := graph.topoLogicalSortByKahn()
+	//err := graph.topologicalSortByKahn()
 	if err != nil {
 		t.Fatal(err)
 	}

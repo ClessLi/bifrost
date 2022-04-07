@@ -2,7 +2,8 @@ package web_server_config
 
 import (
 	"context"
-	"github.com/ClessLi/bifrost/api/bifrost/v1"
+
+	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 )
 
 func (w *webServerConfigService) Update(ctx context.Context, config *v1.WebServerConfig) error {

@@ -25,6 +25,7 @@ func (c Comment) Dump(dumper dumper.Dumper) error {
 		}
 	}
 	dumper.Write(c.position.Id(), []byte(c.string()))
+
 	return nil
 }
 
@@ -46,6 +47,7 @@ func (c *Comment) GetPosition() string {
 
 func (c *Comment) setPosition(p string) error {
 	c.position = parser_position.NewPosition(p)
+
 	return nil
 }
 
@@ -65,6 +67,7 @@ func (c Comment) string() string {
 	if c.Inline {
 		return "  # " + c.Comments + "\n"
 	}
+
 	return c.indention.GlobalIndents() + "# " + c.Comments + "\n"
 }
 

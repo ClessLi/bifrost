@@ -1,12 +1,14 @@
 package nginx
 
 import (
+	"sync"
+
+	"github.com/marmotedu/errors"
+
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	log "github.com/ClessLi/bifrost/pkg/log/v1"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loader"
-	"github.com/marmotedu/errors"
-	"sync"
 )
 
 // ConfigManagerOptions defines options for nginx configuration and manager.
@@ -29,6 +31,7 @@ func newConfigManager(options ConfigManagerOptions) (configuration.ConfigManager
 		return nil, err
 	}
 	log.Debugf("init nginx config(Size: %d): \n\n%s", len(conf.View()), conf.View())
+
 	return configuration.NewNginxConfigurationManager(
 		loader.NewLoader(),
 		conf,
@@ -57,8 +60,7 @@ func (c *configsManager) Start() error {
 	defer func() {
 		if err != nil {
 			for _, servername := range isStarted {
-				err := c.cms[servername].Stop()
-				if err != nil {
+				if err = c.cms[servername].Stop(); err != nil {
 					log.Warnf("failed to stop %s nginx config manager, err: %w", servername, err)
 				}
 			}
@@ -71,6 +73,7 @@ func (c *configsManager) Start() error {
 		}
 		isStarted = append(isStarted, servername)
 	}
+
 	return nil
 }
 
@@ -85,19 +88,21 @@ func (c *configsManager) Stop() error {
 	if len(errs) > 0 {
 		return errors.NewAggregate(errs)
 	}
+
 	return nil
 }
 
 func (c *configsManager) GetConfigs() map[string]configuration.Configuration {
-	var configs = make(map[string]configuration.Configuration)
+	configs := make(map[string]configuration.Configuration)
 	for name, manager := range c.cms {
 		configs[name] = manager.GetConfiguration()
 	}
+
 	return configs
 }
 
 func (c *configsManager) GetServerInfos() []*v1.WebServerInfo {
-	var infos []*v1.WebServerInfo
+	infos := make([]*v1.WebServerInfo, 0)
 	for name, manager := range c.cms {
 		info := manager.GetServerInfo()
 		if info.Name == "unknown" {
@@ -105,6 +110,7 @@ func (c *configsManager) GetServerInfos() []*v1.WebServerInfo {
 		}
 		infos = append(infos, info)
 	}
+
 	return infos
 }
 
@@ -117,5 +123,6 @@ func New(options ConfigsManagerOptions) (ConfigsManager, error) {
 		}
 		cms[opts.ServerName] = cm
 	}
+
 	return &configsManager{cms: cms}, nil
 }

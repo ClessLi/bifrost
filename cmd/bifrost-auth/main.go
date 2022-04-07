@@ -8,16 +8,16 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/ClessLi/bifrost/internal/pkg/auth/daemon"
 	"os"
+
+	"github.com/ClessLi/bifrost/internal/pkg/auth/daemon"
 )
 
 func main() {
-
 	defer daemon.Logf.Close()
 	defer daemon.Stdoutf.Close()
 
-	err := errors.New("unkown signal")
+	err := errors.New("unknown signal")
 	switch *daemon.Signal {
 	case "":
 		err = daemon.Start()

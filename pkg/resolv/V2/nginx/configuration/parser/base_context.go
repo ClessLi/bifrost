@@ -2,6 +2,7 @@ package parser
 
 import (
 	"bytes"
+
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/dumper"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_indention"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_position"
@@ -26,6 +27,7 @@ func (b BasicContext) Bytes() []byte {
 		buff.Write(child.Bytes())
 	}
 	buff.WriteString(b.indention.GlobalIndents() + b.tailString())
+
 	return buff.Bytes()
 }
 
@@ -41,6 +43,7 @@ func (b BasicContext) Dump(dumper dumper.Dumper) error {
 		}
 	}
 	dumper.Write(b.Position.Id(), []byte(b.indention.ConfigIndents()+b.tailString()))
+
 	return nil
 }
 
@@ -64,6 +67,7 @@ func (b *BasicContext) setPosition(p string) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -96,6 +100,7 @@ func (b *BasicContext) Insert(parser Parser, index int) error {
 	}
 	b.Children[index] = parser
 	//(*parsers)[index] = parser
+
 	return nil
 }
 
@@ -104,6 +109,7 @@ func (b *BasicContext) Remove(index int) error {
 		return ErrIndexOutOfRange
 	}
 	b.Children = append(b.Children[:index], b.Children[index+1:]...)
+
 	return nil
 }
 
@@ -111,10 +117,10 @@ func (b *BasicContext) Modify(parser Parser, index int) error {
 	if index > len(b.Children)-1 {
 		return ErrIndexOutOfRange
 	}
-	err := b.Remove(index)
-	if err != nil {
+	if err := b.Remove(index); err != nil {
 		return err
 	}
+
 	return b.Insert(parser, index)
 }
 
@@ -134,6 +140,7 @@ func (b *BasicContext) Query(words KeyWords) (Context, int) {
 			}
 		}
 	}
+
 	return nil, 0
 }
 
@@ -150,6 +157,7 @@ func (b *BasicContext) QueryAll(words KeyWords) map[Context][]int {
 			}
 		}
 	}
+
 	return result
 }
 
@@ -157,6 +165,7 @@ func (b BasicContext) GetChild(index int) (Parser, error) {
 	if index < 0 || index >= b.Len() {
 		return nil, ErrIndexOutOfRange
 	}
+
 	return b.Children[index], nil
 }
 
@@ -173,6 +182,7 @@ func (b BasicContext) headString() string {
 	}
 
 	contextTitle += " {\n"
+
 	return contextTitle
 }
 

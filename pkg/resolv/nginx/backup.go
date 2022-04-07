@@ -99,8 +99,8 @@ func checkBackups(name, dir string, saveTime, cycle int, now time.Time) (bool, e
 	needBackup := true
 	saveDate := now.Add(-24 * time.Hour * time.Duration(saveTime))
 	cycleDate := now.Add(-24 * time.Hour * time.Duration(cycle))
-	//fmt.Printf("save date now is %s, time is '%s'\n", saveDate.Format("20060102"), saveDate)
-	//fmt.Printf("cycle date now is %s, time is '%s'\n", cycleDate.Format("20060102"), cycleDate)
+	// fmt.Printf("save date now is %s, time is '%s'\n", saveDate.Format("20060102"), saveDate)
+	// fmt.Printf("cycle date now is %s, time is '%s'\n", cycleDate.Format("20060102"), cycleDate)
 	bakFilePattern := fmt.Sprintf(`^%s\.(\d{8})\.tgz$`, name)
 	bakFileReg := regexp.MustCompile(bakFilePattern)
 
@@ -109,7 +109,7 @@ func checkBackups(name, dir string, saveTime, cycle int, now time.Time) (bool, e
 		return false, gErr
 	}
 
-	//fmt.Printf("date now is %s, time is '%s'\n\n", now.Format("20060102"), now)
+	// fmt.Printf("date now is %s, time is '%s'\n\n", now.Format("20060102"), now)
 	for i := 0; i < len(baks) && needBackup; i++ {
 		bakName := filepath.Base(baks[i])
 		if isBak := bakFileReg.MatchString(bakName); isBak {
@@ -129,7 +129,7 @@ func checkBackups(name, dir string, saveTime, cycle int, now time.Time) (bool, e
 				needBackup = false
 			}
 
-			//fmt.Printf("bakDate is %s, time is '%s'\n", bakDate.Format("20060102"), bakDate)
+			// fmt.Printf("bakDate is %s, time is '%s'\n", bakDate.Format("20060102"), bakDate)
 		}
 	}
 
@@ -158,7 +158,6 @@ func tgz(dest string, caches Caches) (err error) {
 
 	// 开始归档
 	for f := range caches {
-
 		// 初始化被归档文件信息
 		relDir, relErr := filepath.Rel(destDir, filepath.Dir(f))
 		if relErr != nil {
@@ -174,7 +173,6 @@ func tgz(dest string, caches Caches) (err error) {
 		if compErr != nil {
 			return compErr
 		}
-
 	}
 	return
 }

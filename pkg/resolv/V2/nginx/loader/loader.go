@@ -2,19 +2,21 @@ package loader
 
 import (
 	"encoding/json"
-	"github.com/ClessLi/bifrost/internal/pkg/code"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loop_preventer"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_indention"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_position"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_type"
-	"github.com/marmotedu/errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
+
+	"github.com/marmotedu/errors"
+
+	"github.com/ClessLi/bifrost/internal/pkg/code"
+	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
+	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loop_preventer"
+	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_indention"
+	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_position"
+	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_type"
 )
 
 type Loader interface {
@@ -40,13 +42,14 @@ func (l *loader) LoadFromFilePath(path string) (parser.Context, loop_preventer.L
 	l.workDir = filepath.Dir(configAbsPath)
 	l.cacher = NewLoadCacher(configAbsPath)
 	l.LoopPreventer = loop_preventer.NewLoopPreverter(configAbsPath)
-	//config := parser.NewContext(configAbsPath, parser_type.TypeConfig, parser_indention.NewIndention())
+	// config := parser.NewContext(configAbsPath, parser_type.TypeConfig, parser_indention.NewIndention())
 	ctx, err := l.loadFromConfigPosition(configAbsPath)
+
 	return ctx, l.LoopPreventer, err
 }
 
+//nolint:funlen,gocognit,gocyclo
 func (l *loader) loadFromConfigPosition(configAbsPath string) (parser.Context, error) {
-
 	if config := l.cacher.GetConfig(configAbsPath); config != nil {
 		return config, nil
 	}
@@ -66,8 +69,8 @@ func (l *loader) loadFromConfigPosition(configAbsPath string) (parser.Context, e
 	index := 0
 	parsers := make([]parser.Parser, 0)
 	configDeep := 0
-	//positions := make([]parser_position.ParserPosition, 0)
-	//positions = append(positions, configPos)
+	// positions := make([]parser_position.ParserPosition, 0)
+	// positions = append(positions, configPos)
 	indentions := make([]parser_indention.Indention, 0)
 	indentions = append(indentions, parser_indention.NewIndention())
 
@@ -76,16 +79,20 @@ func (l *loader) loadFromConfigPosition(configAbsPath string) (parser.Context, e
 	parseBlankLine := func() bool {
 		if matchIndexes := RegBlankLine.FindIndex(configData[index:]); matchIndexes != nil {
 			index += matchIndexes[len(matchIndexes)-1]
+
 			return true
 		}
+
 		return false
 	}
 
 	parseErrorHead := func() bool {
 		if matchIndexes := RegErrorHeed.FindIndex(configData[index:]); matchIndexes != nil {
 			index += matchIndexes[0]
+
 			return true
 		}
+
 		return false
 	}
 
@@ -128,20 +135,23 @@ func (l *loader) loadFromConfigPosition(configAbsPath string) (parser.Context, e
 				contextType = parser_type.TypeTypes
 			default:
 				configDeep--
+
 				return false
 			}
 			ctx := parser.NewContext(contextValue, contextType, indention)
 			if ctx != nil {
 				parsers = append([]parser.Parser{ctx}, parsers...)
 				index += matchIndexes[len(matchIndexes)-1]
+
 				return true
 			}
 		}
+
 		return false
 	}
 
 	parseContextEnd := func() bool {
-		if matchIndexes := RegContextEnd.FindIndex(configData[index:]); matchIndexes != nil {
+		if matchIndexes := RegContextEnd.FindIndex(configData[index:]); matchIndexes != nil { //nolint:nestif
 			index += matchIndexes[len(matchIndexes)-1]
 			if lowerContext, ok := checkContext(parsers); ok {
 				parsers = append(parsers[:0], parsers[1:]...)
@@ -150,7 +160,6 @@ func (l *loader) loadFromConfigPosition(configAbsPath string) (parser.Context, e
 					if parseErr != nil {
 						return false
 					}
-
 				} else {
 					parseErr = config.Insert(lowerContext, config.Len())
 					if parseErr != nil {
@@ -159,17 +168,23 @@ func (l *loader) loadFromConfigPosition(configAbsPath string) (parser.Context, e
 				}
 			}
 			configDeep--
+
 			return true
 		}
+
 		return false
 	}
 
 	parseComment := func(indention parser_indention.Indention) bool {
-		if subMatch := RegCommentHead.FindSubmatch(configData[index:]); len(subMatch) == 3 {
+		if subMatch := RegCommentHead.FindSubmatch(configData[index:]); len(subMatch) == 3 { //nolint:nestif
 			matchIndexes := RegCommentHead.FindIndex(configData[index:])
-			//matchStr := string(configData[index:index+matchIndexes[len(matchIndexes)-1]])
-			//fmt.Println(matchStr)
-			cmt := parser.NewComment(string(subMatch[2]), !strings.Contains(string(subMatch[1]), "\n") && index != 0, indention)
+			// matchStr := string(configData[index:index+matchIndexes[len(matchIndexes)-1]])
+			// fmt.Println(matchStr)
+			cmt := parser.NewComment(
+				string(subMatch[2]),
+				!strings.Contains(string(subMatch[1]), "\n") && index != 0,
+				indention,
+			)
 			if ctx, ok := checkContext(parsers); ok {
 				parseErr = ctx.Insert(cmt, ctx.Len())
 				if parseErr != nil {
@@ -182,8 +197,10 @@ func (l *loader) loadFromConfigPosition(configAbsPath string) (parser.Context, e
 				}
 			}
 			index += matchIndexes[len(matchIndexes)-1] - 1
+
 			return true
 		}
+
 		return false
 	}
 
@@ -194,10 +211,10 @@ func (l *loader) loadFromConfigPosition(configAbsPath string) (parser.Context, e
 			p     parser.Parser
 		)
 
-		if matchIndexes := reg.FindIndex(configData[index:]); matchIndexes != nil {
+		if matchIndexes := reg.FindIndex(configData[index:]); matchIndexes != nil { //nolint:nestif
 			subMatch := reg.FindSubmatch(configData[index:])
-			//matchStr := string(configData[index:index+matchIndexes[len(matchIndexes)-1]])
-			//fmt.Println(matchStr)
+			// matchStr := string(configData[index:index+matchIndexes[len(matchIndexes)-1]])
+			// fmt.Println(matchStr)
 			index += matchIndexes[len(matchIndexes)-1]
 			switch reg {
 			case RegKey:
@@ -211,7 +228,6 @@ func (l *loader) loadFromConfigPosition(configAbsPath string) (parser.Context, e
 
 			if strings.EqualFold(string(subMatch[1]), parser_type.TypeInclude.String()) {
 				p = parser.NewContext(value, parser_type.TypeInclude, indention)
-
 			} else {
 				p = parser.NewKey(key, value, indention)
 			}
@@ -238,6 +254,7 @@ func (l *loader) loadFromConfigPosition(configAbsPath string) (parser.Context, e
 
 			return true
 		}
+
 		return false
 	}
 
@@ -271,16 +288,18 @@ func (l *loader) loadFromConfigPosition(configAbsPath string) (parser.Context, e
 			if parseErr != nil {
 				return nil, parseErr
 			}
+
 			continue
 		}
+
 		break
 	}
 	err = l.cacher.SetConfig(config.(*parser.Config))
 	if err != nil {
 		return nil, err
 	}
-	return config, parseErr
 
+	return config, parseErr
 }
 
 func (l *loader) LoadFromJsonBytes(data []byte) (parser.Context, loop_preventer.LoopPreventer, error) {
@@ -294,12 +313,14 @@ func (l *loader) LoadFromJsonBytes(data []byte) (parser.Context, loop_preventer.
 	l.workDir = filepath.Dir(unmarshaler.position.Id())
 	l.cacher = unmarshaler.LoadCacher
 	l.LoopPreventer = unmarshaler.LoopPreventer
+
 	return unmarshaler.context, l.LoopPreventer, nil
 }
 
 func (l loader) GetConfigPaths() []string {
 	l.locker.RLock()
 	defer l.locker.RUnlock()
+
 	return l.cacher.Keys()
 }
 
@@ -310,7 +331,6 @@ func (l *loader) loadIncludeConfigs(include *parser.Include) error {
 	}
 
 	for _, path := range configAbsPaths {
-
 		// 校验引入的Config是否形成环路
 		err := l.LoopPreventer.CheckLoopPrevent(include.GetPosition(), path)
 		if err != nil {
@@ -328,8 +348,8 @@ func (l *loader) loadIncludeConfigs(include *parser.Include) error {
 		if err != nil {
 			return err
 		}
-
 	}
+
 	return nil
 }
 
@@ -340,12 +360,13 @@ func NewLoader() Loader {
 }
 
 func checkContext(parsers []parser.Parser) (parser.Context, bool) {
-	if parsers != nil && len(parsers) > 0 {
+	if len(parsers) > 0 {
 		ctx, isContext := parsers[0].(parser.Context)
+
 		return ctx, isContext
-	} else {
-		return nil, false
 	}
+
+	return nil, false
 }
 
 func parseErrLine(path string, configData *[]byte, index int) error {
@@ -355,5 +376,6 @@ func parseErrLine(path string, configData *[]byte, index int) error {
 			line++
 		}
 	}
+
 	return errors.WithCode(code.ErrParseFailed, "parse failed at line %d of %s", line, path)
 }

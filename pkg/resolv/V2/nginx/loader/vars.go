@@ -7,7 +7,7 @@ import (
 var (
 
 	// regexp
-	//RegEndWithCR       = regexp.MustCompile("}\n+$")
+	// RegEndWithCR       = regexp.MustCompile("}\n+$").
 	RegEventsHead      = regexp.MustCompile(`^\s*events\s*{`)
 	RegHttpHead        = regexp.MustCompile(`^\s*http\s*{`)
 	RegStreamHead      = regexp.MustCompile(`^\s*stream\s*{`)
@@ -25,9 +25,9 @@ var (
 	RegKey             = regexp.MustCompile(`^\s*(` + Normal + `)\s*;`)
 	RegBlankLine       = regexp.MustCompile(`^\n\s*` + LineBreak + `$`)
 	RegErrorHeed       = regexp.MustCompile(Abnormal)
-	//RegLine            = regexp.MustCompile(LineBreak)
+	// RegLine            = regexp.MustCompile(LineBreak).
 
-	// json unmarshal
+	// json unmarshal.
 
 	JsonUnmarshalRegEventsHead      = regexp.MustCompile(`^\s*{\s*"events"\s*:\s*{`)
 	JsonUnmarshalRegHttpHead        = regexp.MustCompile(`^\s*{\s*"http"\s*:\s*{`)
@@ -43,9 +43,9 @@ var (
 	JsonUnmarshalRegIncludeHead     = regexp.MustCompile(`^\s*{\s*"include"\s*:\s*{`)
 	JsonUnmarshalRegConfigHead      = regexp.MustCompile(`^\s*{\s*"config"\s*:\s*{`)
 	JsonUnmarshalRegCommentHead     = regexp.MustCompile(`^\s*{\s*"comments"\s*:\s*"`)
-	//KeywordHTTP    = NewKeyWords(TypeHttp, "", "", false, true)
-	//KeywordStream  = NewKeyWords(TypeStream, "", "", false, true)
-	//KeywordSvrName = NewKeyWords(TypeKey, `server_name`, `*`, false, true)
-	//KeywordPort    = NewKeyWords(TypeKey, `^listen$`, `.*`, true, true)
-	//KeywordLocations = NewKeyWords(TypeLocation, "", `.*`, true, true)
+	// KeywordHTTP    = NewKeyWords(TypeHttp, "", "", false, true)
+	// KeywordStream  = NewKeyWords(TypeStream, "", "", false, true)
+	// KeywordSvrName = NewKeyWords(TypeKey, `server_name`, `*`, false, true)
+	// KeywordPort    = NewKeyWords(TypeKey, `^listen$`, `.*`, true, true)
+	// KeywordLocations = NewKeyWords(TypeLocation, "", `.*`, true, true).
 )

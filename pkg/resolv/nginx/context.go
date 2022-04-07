@@ -11,7 +11,7 @@ import (
 
 var INDENT = "    "
 
-// Context, 上下文接口对象，定义了上下文接口需实现的增、删、改等方法
+// Context, 上下文接口对象，定义了上下文接口需实现的增、删、改等方法.
 type Context interface {
 	Parser
 	Insert(indexParser Parser, pType parserType, values ...string) error
@@ -25,15 +25,15 @@ type Context interface {
 	Servers() []Parser
 	Server() *Server
 	Params() []Parser
-	//getReg() string
-	//Dict() map[string]interface{}
-	//UnmarshalToJSON(b []byte) error
-	//BumpChildDepth(int)
-	dump(string, *Caches, int) (map[string][]string, error) //TODO: 优化将dumps数据string切片换为byte切片，用于将数据直接解析给缓存
+	// getReg() string
+	// Dict() map[string]interface{}
+	// UnmarshalToJSON(b []byte) error
+	// BumpChildDepth(int)
+	dump(string, *Caches, int) (map[string][]string, error) // TODO: 优化将dumps数据string切片换为byte切片，用于将数据直接解析给缓存
 	List() (Caches, error)
 }
 
-// BasicContext, 上下文基础对象，定义了上下文类型的基本属性及基础方法
+// BasicContext, 上下文基础对象，定义了上下文类型的基本属性及基础方法.
 type BasicContext struct {
 	Name     parserType `json:"-"`
 	Value    string     `json:"value,omitempty"`
@@ -90,11 +90,11 @@ func (c *BasicContext) InsertByParser(indexParser Parser, contents ...Parser) er
 			}
 		} else {
 			// 时间、空间复杂度O(m+n)
-			//tmp := append(c.Children[:i], contents...)
-			//c.Children = append(tmp, c.Children[i:]...)
+			// tmp := append(c.Children[:i], contents...)
+			// c.Children = append(tmp, c.Children[i:]...)
 			return c.childInsert(i, contents...)
-			//c.Children = append(append(c.Children[0:i], contents...), c.Children[i:]...)
-			//return nil
+			// c.Children = append(append(c.Children[0:i], contents...), c.Children[i:]...)
+			// return nil
 		}
 	}
 	return ParserControlIndexNotFoundError
@@ -108,12 +108,11 @@ func (c *BasicContext) Add(pType parserType, values ...string) error {
 		}
 		c.AddByParser(parser)
 		return nil
-
 	}
 	return ParserControlNoParamError
 }
 
-// AddByParser, BasicContext 类新增子对象的方法， Context.AddByParser(...Parser) 的实现
+// AddByParser, BasicContext 类新增子对象的方法， Context.AddByParser(...Parser) 的实现.
 func (c *BasicContext) AddByParser(contents ...Parser) {
 	c.Children = append(c.Children, contents...)
 }
@@ -123,7 +122,7 @@ func (c *BasicContext) Remove(pType parserType, values ...string) error {
 	return nil
 }
 
-// RemoveByParser, BasicContext 类删除子对象的方法， Context.RemoveByParser(...Parser) 的实现
+// RemoveByParser, BasicContext 类删除子对象的方法， Context.RemoveByParser(...Parser) 的实现.
 func (c *BasicContext) RemoveByParser(contents ...Parser) {
 	for _, content := range contents {
 		for i, child := range c.Children {
@@ -141,7 +140,6 @@ func (c *BasicContext) RemoveByParser(contents ...Parser) {
 
 func (c *BasicContext) Modify(indexParser Parser, pType parserType, values ...string) error {
 	if values != nil {
-
 		ctx, err := newParser(pType, values...)
 		if err != nil {
 			return err
@@ -152,7 +150,7 @@ func (c *BasicContext) Modify(indexParser Parser, pType parserType, values ...st
 	return ParserControlNoParamError
 }
 
-// ModifyByParser, BasicContext 类修改子对象的方法， Context.ModifyByParser(int, Parser) error 的实现
+// ModifyByParser, BasicContext 类修改子对象的方法， Context.ModifyByParser(int, Parser) error 的实现.
 func (c *BasicContext) ModifyByParser(indexParser, content Parser) error {
 	for i, child := range c.Children {
 		if child != indexParser {
@@ -177,7 +175,6 @@ func (c *BasicContext) ModifyByParser(indexParser, content Parser) error {
 func (c *BasicContext) Servers() []Parser {
 	svrs := make([]Parser, 0)
 	for _, child := range c.Children {
-
 		switch child.(type) {
 		case Context:
 			switch child.(type) {
@@ -187,14 +184,12 @@ func (c *BasicContext) Servers() []Parser {
 				svrs = append(svrs, child.(Context).Servers()...)
 			}
 		}
-
 	}
 	return svrs
 }
 
 func (c *BasicContext) Server() *Server {
 	for _, child := range c.Children {
-
 		switch child.(type) {
 		case Context:
 			switch child.(type) {
@@ -206,7 +201,6 @@ func (c *BasicContext) Server() *Server {
 				}
 			}
 		}
-
 	}
 	return nil
 }
@@ -222,14 +216,12 @@ func (c *BasicContext) Params() (parsers []Parser) {
 		default:
 			n := len(parsers)
 			for n > 0 {
-
 				if comment, ok := parsers[n-1].(*Comment); ok && !comment.Inline {
 					parsers = parsers[:n-1]
 					n--
 				} else {
 					break
 				}
-
 			}
 		}
 	}
@@ -260,7 +252,6 @@ func (c *BasicContext) filter(kw Keywords) bool {
 		}
 
 		if selfMatch {
-
 			for _, childKW := range kw.ChildKWs {
 				subMatch = false
 				for _, child := range c.Children {
@@ -274,9 +265,7 @@ func (c *BasicContext) filter(kw Keywords) bool {
 					return selfMatch && subMatch
 				}
 			}
-
 		}
-
 	}
 
 	return selfMatch && subMatch
@@ -401,20 +390,15 @@ func (c *BasicContext) List() (caches Caches, err error) {
 			subCaches, err := child.(Context).List()
 			if err != nil {
 				return nil, err
-
 			} else if subCaches != nil {
-
 				for _, cache := range subCaches {
 					err = caches.SetCache(cache.config, hashForGetList)
 
 					if err != nil && err != IsInCaches {
 						return nil, err
 					}
-
 				}
-
 			}
-
 		}
 	}
 	return
@@ -443,7 +427,6 @@ func (c *BasicContext) childInsert(i int, contents ...Parser) error {
 	if contents != nil {
 		max := len(c.Children)
 		if max > 0 && max > i {
-
 			//cLen := len(contents)
 			//mvLen := max-i
 			//// 扩容切片
@@ -474,7 +457,6 @@ func (c *BasicContext) childInsert(i int, contents ...Parser) error {
 func newParser(pType parserType, values ...string) (Parser, error) {
 	var parser Parser
 	if values != nil {
-
 		isMatch := false
 		switch pType {
 		case TypeComment:
@@ -520,7 +502,7 @@ func newParser(pType parserType, values ...string) (Parser, error) {
 		case TypeTypes:
 			parser = NewTypes()
 		default:
-			return nil, fmt.Errorf("unkown nginx context type: %s", pType)
+			return nil, fmt.Errorf("unknown nginx context type: %s", pType)
 		}
 
 		if isMatch {
@@ -530,7 +512,6 @@ func newParser(pType parserType, values ...string) (Parser, error) {
 				values = nil
 			}
 		}
-
 	} else {
 		switch pType {
 		case TypeEvents:
@@ -544,7 +525,7 @@ func newParser(pType parserType, values ...string) (Parser, error) {
 		case TypeTypes:
 			parser = NewTypes()
 		default:
-			return nil, fmt.Errorf("unkown nginx context type: %s", pType)
+			return nil, fmt.Errorf("unknown nginx context type: %s", pType)
 		}
 	}
 

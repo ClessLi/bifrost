@@ -146,7 +146,6 @@ func load(ngDir, relativePath string, caches *Caches) (configAbsPath string, err
 	}
 
 	for {
-
 		switch {
 		case parseContext(RegEventsHead),
 			parseContext(RegHttpHead),
@@ -179,7 +178,7 @@ func load(ngDir, relativePath string, caches *Caches) (configAbsPath string, err
 
 func checkInclude(k *Key, dir string, cs *Caches) (Parser, error) {
 	if k.Name == fmt.Sprintf("%s", TypeInclude) {
-		//return NewInclude(dir, k.Value, allConfigs, configCaches)
+		// return NewInclude(dir, k.Value, allConfigs, configCaches)
 		return NewInclude(dir, k.Value, cs)
 	}
 	return k, nil

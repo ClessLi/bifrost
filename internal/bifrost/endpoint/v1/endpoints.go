@@ -28,6 +28,7 @@ func NewEndpoints(svc svcv1.ServiceFactory) EndpointsFactory {
 func (e *endpoints) WebServerConfig() WebServerConfigEndpoints {
 	return web_server_config.NewWebServerConfigEndpoints(e.svc)
 }
+
 func (e *endpoints) WebServerStatistics() WebServerStatisticsEndpoints {
 	return web_server_statistics.NewWebServerStatisticsEndpoints(e.svc)
 }

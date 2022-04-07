@@ -1,9 +1,10 @@
 package options
 
 import (
-	"github.com/ClessLi/bifrost/internal/pkg/server"
 	"github.com/marmotedu/errors"
 	"github.com/spf13/pflag"
+
+	"github.com/ClessLi/bifrost/internal/pkg/server"
 )
 
 // RAOptions contains the options used to connect to the RA server.
@@ -43,6 +44,7 @@ func (ra *RAOptions) Validate() []error {
 func (ra *RAOptions) ApplyTo(c *server.Config) error {
 	if ra == nil || ra.Port == 0 {
 		c.RA = nil
+
 		return nil
 	}
 
@@ -52,5 +54,6 @@ func (ra *RAOptions) ApplyTo(c *server.Config) error {
 
 	c.RA.Host = ra.Host
 	c.RA.Port = ra.Port
+
 	return nil
 }

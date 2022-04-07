@@ -2,8 +2,9 @@ package test
 
 import (
 	"fmt"
-	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
 	"testing"
+
+	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
 )
 
 func TestFilter(t *testing.T) {

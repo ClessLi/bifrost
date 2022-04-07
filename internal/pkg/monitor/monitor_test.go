@@ -2,10 +2,11 @@ package monitor
 
 import (
 	"context"
-	"github.com/marmotedu/errors"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/marmotedu/errors"
 )
 
 func Test_monitor_infoSync(t *testing.T) {

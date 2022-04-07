@@ -9,5 +9,6 @@ type webServerLogWatcher struct{}
 
 func (w webServerLogWatcher) Watch(request *pbv1.LogWatchRequest, stream pbv1.WebServerLogWatcher_WatchServer) error {
 	log.Infof("watch web server log '%s'", request.ServerName)
+
 	return nil
 }

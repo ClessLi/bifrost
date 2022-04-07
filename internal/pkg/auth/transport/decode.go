@@ -2,9 +2,11 @@ package transport
 
 import (
 	"errors"
+
+	"golang.org/x/net/context"
+
 	"github.com/ClessLi/bifrost/api/protobuf-spec/authpb"
 	"github.com/ClessLi/bifrost/internal/pkg/auth/endpoint"
-	"golang.org/x/net/context"
 )
 
 func DecodeAuthRequest(ctx context.Context, r interface{}) (interface{}, error) {

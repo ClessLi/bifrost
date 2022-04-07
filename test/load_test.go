@@ -2,10 +2,11 @@ package test
 
 import (
 	"encoding/json"
-	ngJson "github.com/ClessLi/bifrost/pkg/json/nginx"
-	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
 	"io/ioutil"
 	"testing"
+
+	ngJson "github.com/ClessLi/bifrost/pkg/json/nginx"
+	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
 )
 
 func TestLoad(t *testing.T) {

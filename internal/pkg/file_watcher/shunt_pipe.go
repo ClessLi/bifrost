@@ -2,10 +2,12 @@ package file_watcher
 
 import (
 	"context"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
-	"github.com/marmotedu/errors"
 	"sync"
 	"time"
+
+	"github.com/marmotedu/errors"
+
+	log "github.com/ClessLi/bifrost/pkg/log/v1"
 )
 
 type ShuntPipe interface {
@@ -43,14 +45,18 @@ func (s *shuntPipe) Output(ctx context.Context) (<-chan []byte, error) {
 		return nil, errors.Wrap(s.ctx.Err(), "shunt pipe is closed. %s")
 	}
 	if s.maxConnections <= len(s.outputs) {
-		return nil, errors.Errorf("the number of connections has reached the maximum (%d/%d)", len(s.outputs), s.maxConnections)
+		return nil, errors.Errorf(
+			"the number of connections has reached the maximum (%d/%d)",
+			len(s.outputs),
+			s.maxConnections,
+		)
 	}
 
 	outputPipe := TimeoutPipe(ctx, s.outputTimeout)
 
 	s.outputs = append(s.outputs, outputPipe)
-	return outputPipe.Output(), nil
 
+	return outputPipe.Output(), nil
 }
 
 func (s *shuntPipe) Input() chan<- []byte {
@@ -61,9 +67,9 @@ func (s *shuntPipe) IsClosed() bool {
 	return s.checkState() != nil
 }
 
+//nolint:gocognit
 func (s *shuntPipe) Start() error {
-	err := s.checkState()
-	if err != nil {
+	if err := s.checkState(); err != nil {
 		return err
 	}
 
@@ -83,6 +89,7 @@ func (s *shuntPipe) Start() error {
 				if s.outputs[idx].IsClosed() { // is done
 					s.outputs = append(s.outputs[:idx], s.outputs[idx+1:]...) // remove output pipe from shunt pipe
 					rmCount++
+
 					continue
 				}
 			}
@@ -90,6 +97,7 @@ func (s *shuntPipe) Start() error {
 			if len(s.outputs) == 0 {
 				s.mu.Unlock()
 				s.cleanAll()
+
 				return
 			}
 
@@ -126,10 +134,10 @@ func (s *shuntPipe) Start() error {
 						return
 					case <-time.After(time.Second * 30):
 						outputPipe.Close()
+
 						return
 					}
 				}(output)
-
 			}
 
 			if len(s.outputs) == 0 {
@@ -142,8 +150,7 @@ func (s *shuntPipe) Start() error {
 }
 
 func (s *shuntPipe) Close() error {
-	err := s.checkState()
-	if err != nil {
+	if err := s.checkState(); err != nil {
 		return err
 	}
 
@@ -162,6 +169,7 @@ func (s *shuntPipe) checkState() error {
 	if s.isClosed {
 		return errors.New("shunt pipe is closed")
 	}
+
 	return nil
 }
 
@@ -181,6 +189,7 @@ func (s *shuntPipe) cleanAll() {
 
 func NewShuntPipe(maxConns int, outputTimeout time.Duration) (*shuntPipe, error) {
 	cctx, cancel := context.WithCancel(context.Background())
+
 	return &shuntPipe{
 		startLocker:    new(sync.Mutex),
 		mu:             sync.RWMutex{},

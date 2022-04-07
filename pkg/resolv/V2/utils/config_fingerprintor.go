@@ -18,7 +18,8 @@ type configFingerprinter struct {
 func (f *configFingerprinter) Diff(fingerprinter ConfigFingerprinter) bool {
 	if fp, is := fingerprinter.(*configFingerprinter); is && len(fp.fingerprints) == len(f.fingerprints) {
 		for filename, fingerprint := range fp.fingerprints {
-			if localFingerprint, ok := f.fingerprints[filename]; ok && strings.EqualFold(localFingerprint, fingerprint) {
+			if localFingerprint, ok := f.fingerprints[filename]; ok &&
+				strings.EqualFold(localFingerprint, fingerprint) {
 				continue
 			}
 			return true

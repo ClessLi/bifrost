@@ -48,7 +48,6 @@ func createBifrostServer(cfg *config.Config) (*bifrostServer, error) {
 	}
 
 	return server, nil
-
 }
 
 func (b *bifrostServer) PrepareRun() preparedBifrostServer {
@@ -62,6 +61,7 @@ func (b *bifrostServer) PrepareRun() preparedBifrostServer {
 			err = storeIns.Close()
 		}
 		b.genericGRPCServer.Close()
+
 		return err
 	}))
 
@@ -74,6 +74,7 @@ func (p preparedBifrostServer) Run() error {
 		log.Fatalf("start shutdown manager failed: %s", err.Error())
 	}
 	log.Infof("the generic gRPC server is going to run...")
+
 	return p.genericGRPCServer.Run()
 }
 

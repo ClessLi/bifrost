@@ -5,10 +5,10 @@ import (
 	log "github.com/ClessLi/bifrost/pkg/log/v1"
 )
 
-type webServerStatistics struct {
-}
+type webServerStatistics struct{}
 
 func (w webServerStatistics) Get(servername *pbv1.ServerName, stream pbv1.WebServerStatistics_GetServer) error {
 	log.Infof("get %s web server statistics", servername.Name)
+
 	return nil
 }

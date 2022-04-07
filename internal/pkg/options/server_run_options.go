@@ -1,13 +1,14 @@
 package options
 
 import (
-	"github.com/ClessLi/bifrost/internal/pkg/server"
 	"github.com/spf13/pflag"
+
+	"github.com/ClessLi/bifrost/internal/pkg/server"
 )
 
-// ServerRunOptions contains the options while running a generic api server
+// ServerRunOptions contains the options while running a generic api server.
 type ServerRunOptions struct {
-	Healthz     bool     `json:"healthz" mapstructure:"healthz"`
+	Healthz     bool     `json:"healthz"     mapstructure:"healthz"`
 	Middlewares []string `json:"middlewares" mapstructure:"middlewares"`
 }
 
@@ -39,5 +40,6 @@ func (s *ServerRunOptions) Validate() []error {
 func (s *ServerRunOptions) ApplyTo(c *server.Config) error {
 	c.Healthz = s.Healthz
 	c.Middlewares = s.Middlewares
+
 	return nil
 }

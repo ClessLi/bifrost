@@ -61,7 +61,11 @@ func compress(fd *os.File, prefix string, tgzw *tar.Writer) error {
 func TestTGZ(t *testing.T) {
 	fmt.Println(os.Getwd())
 	dest := `F:/Code_Path/src/bifrost/test/tgz_test/test.tgz`
-	list := []string{`F:/Code_Path/src/bifrost/test/tgz_test/1/1.txt`, `F:/Code_Path/src/bifrost/test/tgz_test/2/2.txt`, `F:/Code_Path/src/bifrost/test/tgz_test/test.txt`}
+	list := []string{
+		`F:/Code_Path/src/bifrost/test/tgz_test/1/1.txt`,
+		`F:/Code_Path/src/bifrost/test/tgz_test/2/2.txt`,
+		`F:/Code_Path/src/bifrost/test/tgz_test/test.txt`,
+	}
 	err := tgz(dest, list)
 	fmt.Println(os.Getwd())
 	if err != nil {

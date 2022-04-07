@@ -4,12 +4,14 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/ClessLi/bifrost/internal/pkg/password"
+
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/golang-jwt/jwt/v4"
+
+	"github.com/ClessLi/bifrost/internal/pkg/password"
 )
 
-// JWTClaims, jwt断言对象，定义认证接口校验的用户信息
+// JWTClaims, jwt断言对象，定义认证接口校验的用户信息.
 type JWTClaims struct { // token里面添加用户信息，验证token后可能会用到用户信息
 	jwt.RegisteredClaims
 	UserID      int      `json:"user_id"`
@@ -19,9 +21,7 @@ type JWTClaims struct { // token里面添加用户信息，验证token后可能�
 	Permissions []string `json:"permissions"`
 }
 
-var (
-	ExpireTime = 3600 // token有效期
-)
+var ExpireTime = 3600 // token有效期
 
 // getToken, token生成函数，根据jwt断言对象编码为token
 // 参数:
@@ -33,7 +33,7 @@ func (c *JWTClaims) getToken() (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, c)
 	signedToken, err := token.SignedString([]byte(password.Secret))
 	if err != nil {
-		//Log(WARN, err.Error())
+		// Log(WARN, err.Error())
 		return "", ErrorReasonServerBusy
 	}
 	return signedToken, nil
@@ -51,7 +51,7 @@ func (s *AuthService) verifyAction(strToken string) (*JWTClaims, error) {
 		return []byte(password.Secret), nil
 	})
 	if err != nil {
-		//Log(WARN, err.Error())
+		// Log(WARN, err.Error())
 		return nil, ErrorReasonRelogin
 	}
 
@@ -60,18 +60,18 @@ func (s *AuthService) verifyAction(strToken string) (*JWTClaims, error) {
 	if !ok {
 		return nil, ErrorReasonRelogin
 	}
-	//Log(INFO, "Verify user '%s'...", claims.Username)
+	// Log(INFO, "Verify user '%s'...", claims.Username)
 
 	// 认证用户信息
 	if !s.validUser(claims) {
-		//Log(WARN, "Invalid user '%s' or password '%s'.", claims.Username, claims.Password)
+		// Log(WARN, "Invalid user '%s' or password '%s'.", claims.Username, claims.Password)
 		return nil, ErrorReasonWrongPassword
 	}
 
 	if err := token.Claims.Valid(); err != nil {
 		return nil, ErrorReasonRelogin
 	}
-	//Log(INFO, "Username '%s' passed verification", claims.Username)
+	// Log(INFO, "Username '%s' passed verification", claims.Username)
 
 	// 通过返回有效用户jwt断言对象
 	return claims, nil
@@ -85,21 +85,24 @@ func (s *AuthService) verifyAction(strToken string) (*JWTClaims, error) {
 func (s *AuthService) validUser(claims *JWTClaims) bool {
 	if s.AuthDBConfig == nil {
 		if s.AuthConfig != nil {
-
 			return claims.Username == s.AuthConfig.Username && claims.Password == s.AuthConfig.Password
 		} else {
 			fmt.Println("auth server init error!!!")
 			return false
 		}
 	}
-	sqlStr := fmt.Sprintf("SELECT `password` FROM `%s`.`user` WHERE `user_name` = \"%s\" LIMIT 1;", s.AuthDBConfig.DBName, claims.Username)
+	sqlStr := fmt.Sprintf(
+		"SELECT `password` FROM `%s`.`user` WHERE `user_name` = \"%s\" LIMIT 1;",
+		s.AuthDBConfig.DBName,
+		claims.Username,
+	)
 	checkPasswd, err := s.getPasswd(sqlStr)
 	if err != nil && err != sql.ErrNoRows {
-		//Log(ERROR, err.Error())
+		// Log(ERROR, err.Error())
 		fmt.Println(err.Error())
 		return false
 	} else if err == sql.ErrNoRows {
-		//Log(NOTICE, "user '%s' is not exist in bifrost", c.Username)
+		// Log(NOTICE, "user '%s' is not exist in bifrost", c.Username)
 		return false
 	}
 
@@ -113,11 +116,19 @@ func (s *AuthService) validUser(claims *JWTClaims) bool {
 //     用户加密密码
 //     错误
 func (s *AuthService) getPasswd(sqlStr string) (string, error) {
-	mysqlUrl := fmt.Sprintf("%s:%s@%s(%s:%d)/%s?charset=utf8", s.AuthDBConfig.User, s.AuthDBConfig.Password, s.AuthDBConfig.Protocol, s.AuthDBConfig.Host, s.AuthDBConfig.Port, s.AuthDBConfig.DBName)
-	//fmt.Println(mysqlUrl)
+	mysqlUrl := fmt.Sprintf(
+		"%s:%s@%s(%s:%d)/%s?charset=utf8",
+		s.AuthDBConfig.User,
+		s.AuthDBConfig.Password,
+		s.AuthDBConfig.Protocol,
+		s.AuthDBConfig.Host,
+		s.AuthDBConfig.Port,
+		s.AuthDBConfig.DBName,
+	)
+	// fmt.Println(mysqlUrl)
 	db, dbConnErr := sql.Open("mysql", mysqlUrl)
 	if dbConnErr != nil {
-		//Log(ERROR, dbConnErr.Error())
+		// Log(ERROR, dbConnErr.Error())
 		return "", dbConnErr
 	}
 
@@ -126,7 +137,7 @@ func (s *AuthService) getPasswd(sqlStr string) (string, error) {
 
 	rows, queryErr := db.Query(sqlStr)
 	if queryErr != nil {
-		//Log(WARN, queryErr.Error())
+		// Log(WARN, queryErr.Error())
 		return "", queryErr
 	}
 	defer rows.Close()
@@ -140,7 +151,7 @@ func (s *AuthService) getPasswd(sqlStr string) (string, error) {
 		var passwd string
 		scanErr := rows.Scan(&passwd)
 		if scanErr != nil {
-			//Log(WARN, scanErr.Error())
+			// Log(WARN, scanErr.Error())
 			return "", scanErr
 		}
 

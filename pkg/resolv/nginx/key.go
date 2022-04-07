@@ -57,7 +57,6 @@ func (k *Key) QueryByKeywords(kw Keywords) (parser Parser) {
 			parser = nil
 		}
 	} else {
-
 		if kw.Type == TypeKey && regexp.MustCompile(kw.Name).MatchString(k.Name) && regexp.MustCompile(kw.Value).MatchString(k.Value) {
 			parser = k
 		} else {

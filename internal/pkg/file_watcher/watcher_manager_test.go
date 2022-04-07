@@ -2,10 +2,11 @@ package file_watcher
 
 import (
 	"context"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
 	"sync"
 	"testing"
 	"time"
+
+	log "github.com/ClessLi/bifrost/pkg/log/v1"
 )
 
 func TestWatcherManager_Watch(t *testing.T) {

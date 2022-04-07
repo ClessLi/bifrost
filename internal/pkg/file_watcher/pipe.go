@@ -27,6 +27,7 @@ func (p *pipe) Close() {
 func (p *pipe) IsClosed() bool {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
+
 	return p.isClosed
 }
 
@@ -53,15 +54,18 @@ func newPipe(ctx context.Context, cancel context.CancelFunc) Pipe {
 		p.isClosed = true
 		close(channel)
 	}()
+
 	return p
 }
 
 func NewPipe(ctx context.Context) Pipe {
 	cctx, cancel := context.WithCancel(ctx)
+
 	return newPipe(cctx, cancel)
 }
 
 func TimeoutPipe(ctx context.Context, timeout time.Duration) Pipe {
 	cctx, cancel := context.WithTimeout(ctx, timeout)
+
 	return newPipe(cctx, cancel)
 }

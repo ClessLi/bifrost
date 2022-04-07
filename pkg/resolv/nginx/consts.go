@@ -35,12 +35,12 @@ const (
 	hashForDumpTemp = "ForDumpTemp"
 )
 
-// 整型order
+// 整型order.
 const (
 	ServerPort Order = iota
 )
 
-// 字符串型order
+// 字符串型order.
 const (
 	ServerName Order = 1000 + iota
 )

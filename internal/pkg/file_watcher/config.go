@@ -2,11 +2,13 @@ package file_watcher
 
 import (
 	"context"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
-	"github.com/marmotedu/errors"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/marmotedu/errors"
+
+	log "github.com/ClessLi/bifrost/pkg/log/v1"
 )
 
 type Config struct {
@@ -26,6 +28,7 @@ func (c *Config) Complete(path string) (*CompletedConfig, error) {
 	if err != nil {
 		return &CompletedConfig{}, err
 	}
+
 	return &CompletedConfig{
 		filePath: abspath,
 		Config:   c,
@@ -40,6 +43,7 @@ func absFilePath(path string) (string, error) {
 	if info.IsDir() {
 		return "", errors.Errorf("%s is a directory", path)
 	}
+
 	return filepath.Abs(path)
 }
 
@@ -63,5 +67,6 @@ func (cc *CompletedConfig) NewFileWatcher(firstOutputCtx context.Context) (*File
 			log.Warnf(err.Error())
 		}
 	}()
+
 	return watcher, output, nil
 }

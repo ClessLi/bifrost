@@ -38,7 +38,7 @@ func (s *Server) BitSize(order Order, bit int) byte {
 			return 0
 		}
 		sn := []byte(StripSpace(serverName.(*Key).Value))
-		//sn := []byte(serverName.(*Key).Value)
+		// sn := []byte(serverName.(*Key).Value)
 
 		if len(sn) <= bit {
 			return 0
@@ -58,7 +58,7 @@ func (s *Server) BitLen(order Order) int {
 			return 0
 		}
 		sn := StripSpace(serverName.(*Key).Value)
-		//sn := serverName.(*Key).Value
+		// sn := serverName.(*Key).Value
 		return len([]byte(sn))
 	default:
 		return 0

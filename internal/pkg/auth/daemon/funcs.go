@@ -3,11 +3,13 @@ package daemon
 import (
 	"bytes"
 	"fmt"
-	"github.com/ClessLi/bifrost/internal/pkg/auth/service"
-	"github.com/apsdehal/go-logger"
 	"io/ioutil"
 	"os"
 	"strconv"
+
+	"github.com/apsdehal/go-logger"
+
+	"github.com/ClessLi/bifrost/internal/pkg/auth/service"
 )
 
 // readFile, 读取文件函数

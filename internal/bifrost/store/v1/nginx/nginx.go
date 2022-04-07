@@ -1,14 +1,16 @@
 package nginx
 
 import (
+	"sync"
+
+	"github.com/marmotedu/errors"
+
 	storev1 "github.com/ClessLi/bifrost/internal/bifrost/store/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/file_watcher"
 	"github.com/ClessLi/bifrost/internal/pkg/monitor"
 	genericoptions "github.com/ClessLi/bifrost/internal/pkg/options"
 	log "github.com/ClessLi/bifrost/pkg/log/v1"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx"
-	"github.com/marmotedu/errors"
-	"sync"
 )
 
 const (
@@ -53,7 +55,11 @@ var (
 	once              sync.Once
 )
 
-func GetNginxStoreFactory(webSvrConfOpts *genericoptions.WebServerConfigsOptions, monitorOpts *genericoptions.MonitorOptions, webSvrLogWatcherOpts *genericoptions.WebServerLogWatcherOptions) (storev1.StoreFactory, error) {
+func GetNginxStoreFactory(
+	webSvrConfOpts *genericoptions.WebServerConfigsOptions,
+	monitorOpts *genericoptions.MonitorOptions,
+	webSvrLogWatcherOpts *genericoptions.WebServerLogWatcherOptions,
+) (storev1.StoreFactory, error) {
 	if webSvrConfOpts == nil && nginxStoreFactory == nil {
 		return nil, errors.New("failed to get nginx store factory")
 	}
@@ -107,8 +113,7 @@ func GetNginxStoreFactory(webSvrConfOpts *genericoptions.WebServerConfigsOptions
 		}
 
 		go func() {
-			err := m.Start()
-			if err != nil {
+			if err := m.Start(); err != nil { //nolint:govet
 				log.Fatal(err.Error())
 
 				return
@@ -125,7 +130,11 @@ func GetNginxStoreFactory(webSvrConfOpts *genericoptions.WebServerConfigsOptions
 	})
 
 	if nginxStoreFactory == nil || err != nil {
-		return nil, errors.Errorf("failed to get nginx store factory, nginx store factory: %+v, err: %w", nginxStoreFactory, err)
+		return nil, errors.Errorf( //nolint:govet
+			"failed to get nginx store factory, nginx store factory: %+v, err: %w",
+			nginxStoreFactory,
+			err,
+		)
 	}
 
 	return nginxStoreFactory, nil

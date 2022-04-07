@@ -2,12 +2,13 @@ package loader
 
 import (
 	"encoding/json"
+	"regexp"
+
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loop_preventer"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_indention"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_position"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_type"
-	"regexp"
 )
 
 type UnmarshalContext interface {
@@ -16,7 +17,7 @@ type UnmarshalContext interface {
 }
 
 type unmarshalContext struct {
-	//Name     string             `json:"-"`
+	// Name     string             `json:"-"`
 	Value    string             `json:"value,omitempty"`
 	Children []*json.RawMessage `json:"param,omitempty"`
 }
@@ -91,13 +92,14 @@ type unmarshaler struct {
 	loop_preventer.LoopPreventer
 }
 
+//nolint:funlen,gocognit,gocyclo
 func (u *unmarshaler) UnmarshalJSON(bytes []byte) error {
-	//fmt.Println(string(bytes))
+	// fmt.Println(string(bytes))
 	err := json.Unmarshal(bytes, u.unmarshalContext)
 	if err != nil {
 		return err
 	}
-	if u.contextType == parser_type.TypeConfig {
+	if u.contextType == parser_type.TypeConfig { //nolint:nestif
 		u.indention = parser_indention.NewIndention()
 		if u.LoopPreventer == nil {
 			u.LoopPreventer = loop_preventer.NewLoopPreverter(u.unmarshalContext.GetValue())
@@ -114,6 +116,7 @@ func (u *unmarshaler) UnmarshalJSON(bytes []byte) error {
 		}
 		if config := u.LoadCacher.GetConfig(u.unmarshalContext.GetValue()); config != nil {
 			u.context = config
+
 			return nil
 		}
 		u.context = parser.NewContext(u.unmarshalContext.GetValue(), u.contextType, u.indention)
@@ -124,16 +127,13 @@ func (u *unmarshaler) UnmarshalJSON(bytes []byte) error {
 	} else {
 		// 根据context类型创建反序列器context对象
 		u.context = parser.NewContext(u.unmarshalContext.GetValue(), u.contextType, u.indention)
-
 	}
 
 	// parseContext, 用于解析json串归属于哪类需反序列化对象的匿名函数
 	parseContext := func(b []byte, reg *regexp.Regexp) bool {
-		if m := reg.Find(b); m != nil {
-			return true
-		} else {
-			return false
-		}
+		m := reg.Find(b)
+
+		return m != nil
 	}
 
 	for _, child := range u.unmarshalContext.GetChildren() {
@@ -206,6 +206,7 @@ func (u *unmarshaler) UnmarshalJSON(bytes []byte) error {
 			if err != nil {
 				return err
 			}
+
 			continue
 		}
 
@@ -228,6 +229,7 @@ func (u *unmarshaler) UnmarshalJSON(bytes []byte) error {
 			}
 		}
 	}
+
 	return nil
 }
 

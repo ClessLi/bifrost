@@ -17,6 +17,6 @@ var (
 	RegIncludeHead     = regexp.MustCompile(`^\s*{\s*"include"\s*:\s*{`)
 	RegConfigHead      = regexp.MustCompile(`^\s*{\s*"config"\s*:\s*{`)
 	RegCommentHead     = regexp.MustCompile(`^\s*{\s*"comments"\s*:\s*"`)
-	//RegKeyValue        = regexp.MustCompile(S)
-	//RegKey             = regexp.MustCompile(`^\s*(\S+);`)
+	// RegKeyValue        = regexp.MustCompile(S)
+	// RegKey             = regexp.MustCompile(`^\s*(\S+);`).
 )
