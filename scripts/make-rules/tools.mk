@@ -68,7 +68,7 @@ install.protoc-gen-go:
 
 .PHONY: install.cfssl
 install.cfssl:
-	@$(ROOT_DIR)/scripts/install/install.sh iam::install::install_cfssl
+	@$(ROOT_DIR)/scripts/install/install.sh bifrost::install::install_cfssl
 
 #.PHONY: install.addlicense
 #install.addlicense:

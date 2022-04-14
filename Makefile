@@ -17,7 +17,7 @@ VERSION_PACKAGE=github.com/marmotedu/component-base/pkg/version
 include scripts/make-rules/common.mk # make sure include common.mk at the first include line
 include scripts/make-rules/golang.mk
 include scripts/make-rules/gen.mk
-#include scripts/make-rules/release.mk
+include scripts/make-rules/release.mk
 #include scripts/make-rules/dependencies.mk
 include scripts/make-rules/tools.mk
 # ==============================================================================
