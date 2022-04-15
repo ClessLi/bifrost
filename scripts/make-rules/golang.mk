@@ -48,9 +48,7 @@ go.build.%:
 	$(eval COMMAND := $(word 2,$(subst ., ,$*)))
 	$(eval PLATFORM := $(word 1,$(subst ., ,$*)))
 	$(eval OS := $(word 1,$(subst _, ,$(PLATFORM))))
-ifeq ($(OS),windows)
-		GO_OUT_EXT := .exe
-endif
+	$(eval GO_OUT_EXT := $(shell [ "$(OS)" == "windows" ] && echo '.exe'))
 	$(eval ARCH := $(word 2,$(subst _, ,$(PLATFORM))))
 	@echo "===========> Building binary $(COMMAND) $(VERSION) for $(OS) $(ARCH)"
 	@mkdir -p $(OUTPUT_DIR)/platforms/$(OS)/$(ARCH)

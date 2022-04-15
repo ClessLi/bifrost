@@ -154,3 +154,14 @@ function bifrost::util::ensure-cfssl {
   fi
   popd > /dev/null || return 1
 }
+
+# Wait for background jobs to finish. Return with
+# an error status if any of the jobs failed.
+bifrost::util::wait-for-jobs() {
+  local fail=0
+  local job
+  for job in $(jobs -p); do
+    wait "${job}" || fail=$((fail + 1))
+  done
+  return ${fail}
+}

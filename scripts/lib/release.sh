@@ -13,6 +13,9 @@
 readonly RELEASE_STAGE="${LOCAL_OUTPUT_ROOT}/release-stage"
 readonly RELEASE_TARS="${LOCAL_OUTPUT_ROOT}/release-tars"
 
+# Bifrost git branch info
+readonly BIFROST_CURRENT_BRANCH="$(git branch --show-current)"
+
 # BIFROST github account info
 readonly BIFROST_GITHUB_ORG=ClessLi
 readonly BIFROST_GITHUB_REPO=bifrost
@@ -80,7 +83,6 @@ function bifrost::release::package_tarballs() {
   rm -rf "${RELEASE_STAGE}" "${RELEASE_TARS}" "${RELEASE_IMAGES}"
   mkdir -p "${RELEASE_TARS}"
   bifrost::release::package_src_tarball &
-  bifrost::release::package_bifrost_manifests_tarball &
   bifrost::release::package_server_tarballs &
   bifrost::util::wait-for-jobs || { bifrost::log::error "previous tarball phase failed"; return 1; }
 
@@ -170,25 +172,6 @@ function bifrost::release::sha1() {
   fi
 }
 
-# This will pack bifrost-system manifests files for distros such as COS.
-function bifrost::release::package_bifrost_manifests_tarball() {
-  bifrost::log::status "Building tarball: manifests"
-
-  local src_dir="${BIFROST_ROOT}/deployments"
-
-  local release_stage="${RELEASE_STAGE}/manifests/bifrost"
-  rm -rf "${release_stage}"
-
-  local dst_dir="${release_stage}"
-  mkdir -p "${dst_dir}"
-  cp -r ${src_dir}/* "${dst_dir}"
-
-  bifrost::release::clean_cruft
-
-  local package_name="${RELEASE_TARS}/bifrost-manifests.tar.gz"
-  bifrost::release::create_tarball "${package_name}" "${release_stage}/.."
-}
-
 # This is all the platform-independent stuff you need to run/install bifrost.
 # Arch-specific binaries will need to be downloaded separately (possibly by
 # using the bundled cluster/get-bifrost-binaries.sh script).
@@ -211,7 +194,6 @@ function bifrost::release::package_final_tarball() {
   cp -R "${BIFROST_ROOT}/scripts/release" "${release_stage}/"
 
   mkdir -p "${release_stage}/server"
-  cp "${RELEASE_TARS}/bifrost-manifests.tar.gz" "${release_stage}/server/"
   cat <<EOF > "${release_stage}/server/README"
 Server binary tarballs are no longer included in the Bifrost final tarball.
 EOF
@@ -220,7 +202,7 @@ EOF
   #mkdir -p "${release_stage}/hack"
   #cp -R "${BIFROST_ROOT}/hack/lib" "${release_stage}/hack/"
 
-  cp -R ${BIFROST_ROOT}/{docs,configs,scripts,deployments,init,README.md,LICENSE} "${release_stage}/"
+  cp -R ${BIFROST_ROOT}/{docs,configs,scripts,init,README.md,LICENSE} "${release_stage}/"
 
   echo "${BIFROST_GIT_VERSION}" > "${release_stage}/version"
 
@@ -286,14 +268,16 @@ function bifrost::release::verify_prereqs(){
 # https://github.com/github-release/github-release
 function bifrost::release::github_release() {
   # create a github release
+  set -x
   bifrost::log::info "create a new github release with tag ${BIFROST_GIT_VERSION}"
   github-release release \
+    --pre-release \
     --user ${BIFROST_GITHUB_ORG} \
     --repo ${BIFROST_GITHUB_REPO} \
     --tag ${BIFROST_GIT_VERSION} \
-    --description "" \
-    --pre-release
+    --description "${BIFROST_CHANGELOG}"
 
+  set +x
   # update bifrost tarballs
   bifrost::log::info "upload ${ARTIFACT} to release ${BIFROST_GIT_VERSION}"
   github-release upload \
@@ -315,10 +299,20 @@ function bifrost::release::github_release() {
 function bifrost::release::generate_changelog() {
   bifrost::log::info "generate CHANGELOG-${BIFROST_GIT_VERSION#v}.md and commit it"
 
-  git-chglog ${BIFROST_GIT_VERSION} > ${BIFROST_ROOT}/CHANGELOG/CHANGELOG-${BIFROST_GIT_VERSION#v}.md
+  local CHANGELOG_COMMIT_MSG="docs(changelog): add \`CHANGELOG-${BIFROST_GIT_VERSION#v}.md\`"
 
-  (set +o errexit git add ${BIFROST_ROOT}/CHANGELOG/CHANGELOG-${BIFROST_GIT_VERSION#v}.md)
-  git commit -a -m "docs(changelog): add \`CHANGELOG-${BIFROST_GIT_VERSION#v}.md\`"
-  git push -f origin master # 最后将 CHANGELOG 也 push 上去
+  if [[ "$(git log origin/${BIFROST_CURRENT_BRANCH} | grep -F "${CHANGELOG_COMMIT_MSG}" | wc -l)" -ne 0 ]]
+    then
+      bifrost::log::info "CHANGELOG-${BIFROST_GIT_VERSION#v}.md is committed and pushed"
+      return
+  fi
+
+  readonly BIFROST_CHANGELOG="$(git-chglog ${BIFROST_GIT_VERSION})"
+  echo "${BIFROST_CHANGELOG}" > ${BIFROST_ROOT}/CHANGELOG/CHANGELOG-${BIFROST_GIT_VERSION#v}.md
+
+  current_commit_id=$(git log HEAD -n 1 --pretty=format:%H)
+  git add ${ROOT_DIR}/CHANGELOG/CHANGELOG-${BIFROST_GIT_VERSION#v}.md
+  git commit -a -m "${CHANGELOG_COMMIT_MSG}"
+  git push origin HEAD || git reset --soft "${current_commit_id}"
 }
 

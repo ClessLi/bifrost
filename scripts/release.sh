@@ -7,7 +7,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-set -x
+#set -x
 BIFROST_ROOT=$(dirname "${BASH_SOURCE[0]}")/..
 source "${BIFROST_ROOT}/scripts/common.sh"
 source "${BIFROST_ROOT}/scripts/lib/release.sh"
@@ -20,5 +20,5 @@ bifrost::release::verify_prereqs
 #bifrost::build::build_image
 bifrost::build::build_command
 bifrost::release::package_tarballs
-bifrost::release::github_release
 bifrost::release::generate_changelog
+bifrost::release::github_release

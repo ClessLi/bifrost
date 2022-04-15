@@ -23,7 +23,7 @@ bifrost::version::get_version_vars() {
     return
   fi
 
-  # If the bifrostrnetes source was exported through git archive, then
+  # If the bifrost source was exported through git archive, then
   # we likely don't have a git tree, but these magic values may be filled in.
   # shellcheck disable=SC2016,SC2050
   # Disabled as we're not expanding these at runtime, but rather expecting
@@ -39,7 +39,7 @@ bifrost::version::get_version_vars() {
     fi
   fi
 
-  local git=(git --work-tree "${BIFROST_ROOT}")
+  local git=(git --work-tree "${ROOT_DIR}")
 
   if [[ -n ${BIFROST_GIT_COMMIT-} ]] || BIFROST_GIT_COMMIT=$("${git[@]}" rev-parse "HEAD^{commit}" 2>/dev/null); then
     if [[ -z ${BIFROST_GIT_TREE_STATE-} ]]; then
