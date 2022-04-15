@@ -20,5 +20,5 @@ bifrost::release::verify_prereqs
 #bifrost::build::build_image
 bifrost::build::build_command
 bifrost::release::package_tarballs
-bifrost::release::generate_changelog
 bifrost::release::github_release
+bifrost::release::generate_changelog
