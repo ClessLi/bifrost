@@ -2,10 +2,12 @@ package utils
 
 import (
 	"context"
-	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
-	"google.golang.org/grpc/peer"
 	"net"
 	"strings"
+
+	"google.golang.org/grpc/peer"
+
+	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 )
 
 func GetClientIP(ctx context.Context) string {
@@ -16,6 +18,7 @@ func GetClientIP(ctx context.Context) string {
 	if pr.Addr == net.Addr(nil) {
 		return "unknown"
 	}
+
 	return pr.Addr.String()
 }
 
@@ -28,7 +31,6 @@ func GetAuthnInfo(ctx context.Context) string {
 		if len(pair) == 2 {
 			info = append(info, "Basic Authn: username:"+pair[0]+", password:"+pair[1])
 		}
-
 	}
 
 	token, ok := ctx.Value(v1.BearerAuthnTokenKey).(string)

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+
 	epclient "github.com/ClessLi/bifrost/pkg/client/bifrost/v1/endpoint"
 )
 
@@ -46,5 +47,6 @@ func GetContext() context.Context {
 	if ctxIns == nil {
 		return context.Background()
 	}
+
 	return ctxIns
 }

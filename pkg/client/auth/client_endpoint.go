@@ -2,16 +2,16 @@ package auth
 
 import (
 	"errors"
-	"github.com/ClessLi/bifrost/api/protobuf-spec/authpb"
+
 	"github.com/go-kit/kit/endpoint"
 	grpctransport "github.com/go-kit/kit/transport/grpc"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+
+	"github.com/ClessLi/bifrost/api/protobuf-spec/authpb"
 )
 
-var (
-	ErrResponseNull = errors.New("response is null")
-)
+var ErrResponseNull = errors.New("response is null")
 
 func decodeRequest(_ context.Context, r interface{}) (request interface{}, err error) {
 	return r, nil
@@ -21,7 +21,7 @@ func encodeResponse(_ context.Context, r interface{}) (response interface{}, err
 	return r, nil
 }
 
-// The service.Service method of authClientEndpoints is used for the endpoint of the client
+// The service.Service method of authClientEndpoints is used for the endpoint of the client.
 type authClientEndpoints struct {
 	loginClientEndpoint  endpoint.Endpoint
 	verifyClientEndpoint endpoint.Endpoint
@@ -43,11 +43,12 @@ func (ue authClientEndpoints) Login(ctx context.Context, username, password stri
 	if err != nil {
 		return "", err
 	}
+
 	if response, ok := resp.(*authpb.AuthResponse); ok {
 		return response.Token, nil
-	} else {
-		return "", ErrResponseNull
 	}
+
+	return "", ErrResponseNull
 }
 
 func (ue authClientEndpoints) Verify(ctx context.Context, token string) (bool, error) {
@@ -55,11 +56,12 @@ func (ue authClientEndpoints) Verify(ctx context.Context, token string) (bool, e
 	if err != nil {
 		return false, err
 	}
+
 	if response, ok := resp.(*authpb.VerifyResponse); ok {
 		return response.Passed, nil
-	} else {
-		return false, ErrResponseNull
 	}
+
+	return false, ErrResponseNull
 }
 
 func makeLoginClientEndpoint(conn *grpc.ClientConn) endpoint.Endpoint {

@@ -9,5 +9,6 @@ type webServerStatus struct{}
 
 func (w webServerStatus) Get(null *pbv1.Null, stream pbv1.WebServerStatus_GetServer) error {
 	log.Infof("get web server status")
+
 	return nil
 }

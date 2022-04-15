@@ -16,6 +16,7 @@ func (v Vertex) GetEdgeByIndex(idx int) Edge {
 	if idx > int(v.degree) {
 		return Edge{}
 	}
+
 	return v.edges[idx]
 }
 
@@ -25,13 +26,15 @@ func (v *Vertex) AddEdge(id string) error {
 	}
 	for i := 0; i < int(v.degree); i++ {
 		if strings.EqualFold(v.edges[i].tid, id) {
-			//return ErrEdgeRepeat
+			// return ErrEdgeRepeat
 			v.edges[i].repeats++
+
 			return nil
 		}
 	}
 	v.edges = append(v.edges, newEdge(v.id, id))
 	v.degree++
+
 	return nil
 }
 
@@ -43,10 +46,12 @@ func (v *Vertex) DelEdge(id string) {
 		if strings.EqualFold(v.edges[i].tid, id) {
 			if v.edges[i].repeats > 1 {
 				v.edges[i].repeats--
+
 				return
 			}
 			v.edges = append(v.edges[:i], v.edges[i+1:]...)
 			v.degree--
+
 			return
 		}
 	}

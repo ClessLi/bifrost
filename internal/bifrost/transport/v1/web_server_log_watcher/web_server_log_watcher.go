@@ -10,7 +10,10 @@ type webServerLogWatcherServer struct {
 	options *options.Options
 }
 
-func NewWebServerLogWatcherServer(handler handler.WebServerLogWatcherHandlers, opts *options.Options) *webServerLogWatcherServer {
+func NewWebServerLogWatcherServer(
+	handler handler.WebServerLogWatcherHandlers,
+	opts *options.Options,
+) *webServerLogWatcherServer {
 	return &webServerLogWatcherServer{
 		handler: handler,
 		options: opts,

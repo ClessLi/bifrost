@@ -3,13 +3,15 @@ package monitor
 import (
 	"context"
 	"fmt"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
+	"sync"
+	"time"
+
 	"github.com/marmotedu/errors"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/disk"
 	"github.com/shirou/gopsutil/mem"
-	"sync"
-	"time"
+
+	log "github.com/ClessLi/bifrost/pkg/log/v1"
 )
 
 const (
@@ -106,6 +108,7 @@ func (m *monitor) Start() error {
 			select {
 			case <-syncWork.Done():
 				log.Info("sync system information stopped")
+
 				return
 			case <-syncTicker.C:
 				m.infoSync(syncWork)
@@ -114,7 +117,6 @@ func (m *monitor) Start() error {
 	}()
 
 	return m.watch(cycle, interval)
-
 }
 
 func (m *monitor) Stop() error {
@@ -131,9 +133,11 @@ func (m *monitor) Stop() error {
 	select {
 	case <-m.ctx.Done():
 		log.Info("monitoring stopped")
+
 		return m.ctx.Err()
 	case <-timeoutC.Done():
 		log.Errorf("monitoring stop timeout")
+
 		return timeoutC.Err()
 	}
 }
@@ -141,12 +145,14 @@ func (m *monitor) Stop() error {
 func (m *monitor) Report() SystemInfo {
 	m.cachemu.RLock()
 	defer m.cachemu.RUnlock()
+
 	return *m.cache
 }
 
 func (m *monitor) infoSync(ctx context.Context) {
 	if m.cannotSync {
 		log.Error("infoSync() call blocked!!")
+
 		return
 	}
 	m.cannotSync = true
@@ -170,6 +176,7 @@ func (m *monitor) infoSync(ctx context.Context) {
 	select {
 	case <-timeout.Done():
 		log.Warn("system info sync to cache timeout!")
+
 		return
 	case <-work.Done():
 	}
@@ -195,6 +202,7 @@ func (m *monitor) watch(cycle, interval time.Duration) error {
 		select {
 		case <-m.ctx.Done():
 			log.Info("watching completed.")
+
 			return m.ctx.Err()
 		case <-intervalTicker.C:
 			var (
@@ -244,5 +252,4 @@ func average(items ...float64) float64 {
 	}
 
 	return sum / float64(n+1)
-
 }

@@ -2,6 +2,10 @@ package configuration
 
 import (
 	"encoding/json"
+	"sync"
+
+	"github.com/marmotedu/errors"
+
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/dumper"
@@ -9,8 +13,6 @@ import (
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loop_preventer"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_type"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/utils"
-	"github.com/marmotedu/errors"
-	"sync"
 )
 
 //type Updater interface {
@@ -29,15 +31,15 @@ type Configuration interface {
 	// insert
 	InsertByKeyword(insertParser parser.Parser, keyword string) error
 	InsertByQueryer(insertParser parser.Parser, queryer Querier) error
-	//InsertByIndex(insertParser parser.Parser, targetContext parser.Context, index int) error
+	// InsertByIndex(insertParser parser.Parser, targetContext parser.Context, index int) error
 	// remove
 	RemoveByKeyword(keyword string) error
 	RemoveByQueryer(queryer Querier) error
-	//RemoveByIndex(targetContext parser.Context, index int) error
+	// RemoveByIndex(targetContext parser.Context, index int) error
 	// modify
 	ModifyByKeyword(modifyParser parser.Parser, keyword string) error
 	ModifyByQueryer(modifyParser parser.Parser, queryer Querier) error
-	//ModifyByIndex(modifyParser parser.Parser, targetContext parser.Context, index int) error
+	// ModifyByIndex(modifyParser parser.Parser, targetContext parser.Context, index int) error
 	// update all
 	UpdateFromJsonBytes(data []byte) error
 
@@ -47,9 +49,9 @@ type Configuration interface {
 	Dump() map[string][]byte
 
 	// private method
-	//setConfig(config *parser.Config)
+	// setConfig(config *parser.Config)
 	renewConfiguration(Configuration) error
-	//diff(Configuration) bool
+	// diff(Configuration) bool
 	getMainConfigPath() string
 	getConfigFingerprinter() utils.ConfigFingerprinter
 }
@@ -58,7 +60,7 @@ type configuration struct {
 	config        *parser.Config
 	rwLocker      *sync.RWMutex
 	loopPreventer loop_preventer.LoopPreventer
-	//utils.ConfigFingerprinter
+	// utils.ConfigFingerprinter
 }
 
 func (c *configuration) InsertByKeyword(insertParser parser.Parser, keyword string) error {
@@ -69,12 +71,14 @@ func (c *configuration) InsertByKeyword(insertParser parser.Parser, keyword stri
 		return err
 	}
 	target, idx := c.config.Query(parserKeyword)
+
 	return c.insertByIndex(insertParser, target, idx)
 }
 
 func (c *configuration) InsertByQueryer(insertParser parser.Parser, queryer Querier) error {
 	c.rwLocker.Lock()
 	defer c.rwLocker.Unlock()
+
 	return c.insertByIndex(insertParser, queryer.fatherContext(), queryer.index())
 }
 
@@ -85,6 +89,7 @@ func (c *configuration) insertByIndex(insertParser parser.Parser, targetContext 
 			return err
 		}
 	}
+
 	return targetContext.Insert(insertParser, index)
 }
 
@@ -102,28 +107,31 @@ func (c *configuration) RemoveByKeyword(keyword string) error {
 		return err
 	}
 	target, idx := c.config.Query(parserKeyword)
+
 	return target.Remove(idx)
 }
 
 func (c *configuration) RemoveByQueryer(queryer Querier) error {
 	c.rwLocker.Lock()
 	defer c.rwLocker.Unlock()
+
 	return queryer.fatherContext().Remove(queryer.index())
 }
 
-func (c *configuration) removeByIndex(targetContext parser.Context, index int) error {
-	if targetContext.GetType() == parser_type.TypeInclude {
-		removeParser, err := targetContext.GetChild(index)
-		if err != nil {
-			return err
-		}
-		err = c.loopPreventer.RemoveRoute(targetContext.GetPosition(), removeParser.GetPosition())
-		if err != nil {
-			return err
-		}
-	}
-	return targetContext.Remove(index)
-}
+// func (c *configuration) removeByIndex(targetContext parser.Context, index int) error {
+// 	if targetContext.GetType() == parser_type.TypeInclude {
+// 		removeParser, err := targetContext.GetChild(index)
+// 		if err != nil {
+// 			return err
+// 		}
+// 		err = c.loopPreventer.RemoveRoute(targetContext.GetPosition(), removeParser.GetPosition())
+// 		if err != nil {
+// 			return err
+// 		}
+// 	}
+//
+// 	return targetContext.Remove(index)
+// }
 
 //func (c *configuration) RemoveByIndex(targetContext parser.Context, index int) error {
 //	c.rwLocker.Lock()
@@ -139,12 +147,14 @@ func (c *configuration) ModifyByKeyword(modifyParser parser.Parser, keyword stri
 		return err
 	}
 	target, idx := c.config.Query(parserKeyword)
+
 	return target.Modify(modifyParser, idx)
 }
 
 func (c *configuration) ModifyByQueryer(modifyParser parser.Parser, queryer Querier) error {
 	c.rwLocker.Lock()
 	defer c.rwLocker.Unlock()
+
 	return queryer.fatherContext().Modify(modifyParser, queryer.index())
 }
 
@@ -159,6 +169,7 @@ func (c *configuration) UpdateFromJsonBytes(data []byte) error {
 	if err != nil {
 		return err
 	}
+
 	return c.renewConfiguration(newConfiguration)
 }
 
@@ -177,6 +188,7 @@ func (c *configuration) Query(keyword string) (Querier, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return &querier{
 		Parser:    foundParser,
 		fatherCtx: foundCtx,
@@ -208,6 +220,7 @@ func (c *configuration) QueryAll(keyword string) ([]Querier, error) {
 			})
 		}
 	}
+
 	return queryers, nil
 }
 
@@ -226,6 +239,7 @@ func (c configuration) index() int {
 func (c *configuration) View() []byte {
 	c.rwLocker.RLock()
 	defer c.rwLocker.RUnlock()
+
 	return c.config.Bytes()
 }
 
@@ -236,6 +250,7 @@ func (c *configuration) Json() []byte {
 	if err != nil {
 		return nil
 	}
+
 	return data
 }
 
@@ -244,6 +259,7 @@ func (c *configuration) Dump() map[string][]byte {
 	defer c.rwLocker.RUnlock()
 	d := dumper.NewDumper(c.config.GetValue())
 	_ = c.config.Dump(d)
+
 	return d.ReadAll()
 }
 
@@ -258,21 +274,24 @@ func (c *configuration) renewConfiguration(conf Configuration) error {
 	c.rwLocker.Lock()
 	defer c.rwLocker.Unlock()
 	c.config = newConf.config
-	//c.ConfigFingerprinter.Renew(newConf.ConfigFingerprinter)
+	// c.ConfigFingerprinter.Renew(newConf.ConfigFingerprinter)
 	c.loopPreventer = newConf.loopPreventer
+
 	return nil
 }
 
 func (c *configuration) getMainConfigPath() string {
 	c.rwLocker.RLock()
 	defer c.rwLocker.RUnlock()
+
 	return c.config.GetValue()
 }
 
 func (c *configuration) getConfigFingerprinter() utils.ConfigFingerprinter {
 	c.rwLocker.RLock()
 	defer c.rwLocker.RUnlock()
-	//return c.ConfigFingerprinter
+	// return c.ConfigFingerprinter
+
 	return utils.NewConfigFingerprinter(c.Dump())
 }
 
@@ -282,8 +301,8 @@ func NewConfigurationFromPath(filePath string) (Configuration, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewConfiguration(ctx.(*parser.Config), loopPreventer, new(sync.RWMutex)), nil
 
+	return NewConfiguration(ctx.(*parser.Config), loopPreventer, new(sync.RWMutex)), nil
 }
 
 func NewConfigurationFromJsonBytes(data []byte) (Configuration, error) {
@@ -292,15 +311,21 @@ func NewConfigurationFromJsonBytes(data []byte) (Configuration, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return NewConfiguration(ctx.(*parser.Config), loopPreventer, new(sync.RWMutex)), nil
 }
 
-func NewConfiguration(config *parser.Config, preventer loop_preventer.LoopPreventer, rwLocker *sync.RWMutex) Configuration {
+func NewConfiguration(
+	config *parser.Config,
+	preventer loop_preventer.LoopPreventer,
+	rwLocker *sync.RWMutex,
+) Configuration {
 	conf := &configuration{
 		rwLocker:      rwLocker,
 		loopPreventer: preventer,
 		config:        config,
 	}
-	//conf.ConfigFingerprinter = utils.NewConfigFingerprinter(conf.Dump())
+	// conf.ConfigFingerprinter = utils.NewConfigFingerprinter(conf.Dump())
+
 	return conf
 }

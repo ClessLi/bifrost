@@ -26,7 +26,7 @@ func radixSort(slice *[]Parser, order Order) {
 	}
 }
 
-// radixSortC, insertion sort function
+// radixSortC, insertion sort function.
 func radixSortC(slice *[]Parser, order Order, bit int) {
 	n := len(*slice)
 	if n <= 1 {
@@ -53,7 +53,6 @@ func radixSortC(slice *[]Parser, order Order, bit int) {
 			} else {
 				break
 			}
-
 		}
 		(*slice)[j+1] = tmp
 	}
@@ -85,7 +84,6 @@ func insertionSort(slice *[]Parser, order Order) {
 			} else {
 				break
 			}
-
 		}
 		(*slice)[j+1] = tmp
 	}

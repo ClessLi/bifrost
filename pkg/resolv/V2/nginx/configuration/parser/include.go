@@ -2,6 +2,7 @@ package parser
 
 import (
 	"bytes"
+
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/dumper"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_position"
 )
@@ -19,6 +20,7 @@ func (i Include) Bytes() []byte {
 		child.SetGlobalDeep(i.indention.GlobalDeep())
 		buff.Write(child.Bytes())
 	}
+
 	return buff.Bytes()
 }
 
@@ -37,6 +39,7 @@ func (i Include) Dump(dumper dumper.Dumper) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -44,6 +47,7 @@ func (i *Include) Insert(parser Parser, index int) error {
 	if _, ok := parser.(*Config); !ok {
 		return ErrInsertParserTypeError
 	}
+
 	return i.BasicContext.Insert(parser, index)
 
 	//if index > len(i.Children) {
@@ -62,10 +66,12 @@ func (i *Include) Modify(parser Parser, index int) error {
 	if _, ok := parser.(*Config); !ok {
 		return ErrInsertParserTypeError
 	}
+
 	return i.BasicContext.Modify(parser, index)
 }
 
 func (i *Include) setPosition(p string) error {
 	i.Position = parser_position.NewPosition(p)
+
 	return nil
 }

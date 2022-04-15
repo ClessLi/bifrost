@@ -2,12 +2,14 @@ package nginx
 
 import (
 	"context"
+	"time"
+
+	"github.com/marmotedu/component-base/pkg/version"
+	"github.com/shirou/gopsutil/host"
+
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/monitor"
 	log "github.com/ClessLi/bifrost/pkg/log/v1"
-	"github.com/marmotedu/component-base/pkg/version"
-	"github.com/shirou/gopsutil/host"
-	"time"
 )
 
 const webServerStatusTimeFormatLayout = "2006/01/02 15:04:05"
@@ -21,6 +23,7 @@ type webServerStatusStore struct {
 
 func (w *webServerStatusStore) Get(ctx context.Context) (*v1.Metrics, error) {
 	sysInfo := w.m.Report()
+
 	return &v1.Metrics{
 		OS:             w.os,
 		Time:           time.Now().In(time.Local).Format(webServerStatusTimeFormatLayout),
@@ -42,6 +45,7 @@ func newWebServerStatusStore(store *webServerStore) *webServerStatusStore {
 	} else {
 		os = platform + " " + release
 	}
+
 	return &webServerStatusStore{
 		m:                  store.m,
 		webServerInfosFunc: store.cms.GetServerInfos,

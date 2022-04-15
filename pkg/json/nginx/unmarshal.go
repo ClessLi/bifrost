@@ -6,18 +6,19 @@ package nginx
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
 	"regexp"
+
+	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
 )
 
-// unmarshaler, json反序列化内部接口对象，定义了用于nginx配置对象json反序列化所需实现的方法
+// unmarshaler, json反序列化内部接口对象，定义了用于nginx配置对象json反序列化所需实现的方法.
 type unmarshaler interface {
 	UnmarshalToJSON(b []byte, caches *nginx.Caches) (nginx.Parser, error) // json反序列化方法
 	getChildren() []*json.RawMessage                                      // 统一输出对象子对象json串内部方法
 	toParser(children []nginx.Parser) (nginx.Parser, error)               // 统一解析并返回nginx配置对象的内部方法
 }
 
-// BasicContext, 用于json反序列化的上下文基础对象，定义了上下文类型的基本属性及基础方法
+// BasicContext, 用于json反序列化的上下文基础对象，定义了上下文类型的基本属性及基础方法.
 type BasicContext struct {
 	Name     string             `json:"-"`
 	Value    string             `json:"value,omitempty"`
@@ -34,7 +35,7 @@ type Config struct {
 
 func (conf *Config) UnmarshalToJSON(b []byte, caches *nginx.Caches) (nginx.Parser, error) {
 	return unmarshal(b, conf, caches)
-	//return unmarshal(b)
+	// return unmarshal(b)
 }
 
 func (conf *Config) toParser(children []nginx.Parser) (nginx.Parser, error) {
@@ -50,7 +51,7 @@ type Include struct {
 
 func (i *Include) UnmarshalToJSON(b []byte, caches *nginx.Caches) (nginx.Parser, error) {
 	return unmarshal(b, i, caches)
-	//return unmarshal(b)
+	// return unmarshal(b)
 }
 
 func (i *Include) toParser(children []nginx.Parser) (nginx.Parser, error) {
@@ -78,12 +79,13 @@ type Types struct {
 
 func (t *Types) UnmarshalToJSON(b []byte, caches *nginx.Caches) (nginx.Parser, error) {
 	return unmarshal(b, t, caches)
-	//return unmarshal(b)
+	// return unmarshal(b)
 }
 
 func (t *Types) toParser(children []nginx.Parser) (nginx.Parser, error) {
 	T := nginx.NewTypes()
 	T.Children = children
+
 	return T, nil
 }
 
@@ -93,12 +95,13 @@ type Map struct {
 
 func (m *Map) UnmarshalToJSON(b []byte, caches *nginx.Caches) (nginx.Parser, error) {
 	return unmarshal(b, m, caches)
-	//return unmarshal(b)
+	// return unmarshal(b)
 }
 
 func (m *Map) toParser(children []nginx.Parser) (nginx.Parser, error) {
 	M := nginx.NewMap(m.Value)
 	M.Children = children
+
 	return M, nil
 }
 
@@ -108,12 +111,13 @@ type LimitExcept struct {
 
 func (le *LimitExcept) UnmarshalToJSON(b []byte, caches *nginx.Caches) (nginx.Parser, error) {
 	return unmarshal(b, le, caches)
-	//return unmarshal(b)
+	// return unmarshal(b)
 }
 
 func (le *LimitExcept) toParser(children []nginx.Parser) (nginx.Parser, error) {
 	Le := nginx.NewLimitExcept(le.Value)
 	Le.Children = children
+
 	return Le, nil
 }
 
@@ -123,12 +127,13 @@ type Events struct {
 
 func (e *Events) UnmarshalToJSON(b []byte, caches *nginx.Caches) (nginx.Parser, error) {
 	return unmarshal(b, e, caches)
-	//return unmarshal(b)
+	// return unmarshal(b)
 }
 
 func (e *Events) toParser(children []nginx.Parser) (nginx.Parser, error) {
 	E := nginx.NewEvents()
 	E.Children = children
+
 	return E, nil
 }
 
@@ -138,12 +143,13 @@ type Geo struct {
 
 func (g *Geo) UnmarshalToJSON(b []byte, caches *nginx.Caches) (nginx.Parser, error) {
 	return unmarshal(b, g, caches)
-	//return unmarshal(b)
+	// return unmarshal(b)
 }
 
 func (g *Geo) toParser(children []nginx.Parser) (nginx.Parser, error) {
 	G := nginx.NewGeo(g.Value)
 	G.Children = children
+
 	return G, nil
 }
 
@@ -153,12 +159,13 @@ type Http struct {
 
 func (h *Http) UnmarshalToJSON(b []byte, caches *nginx.Caches) (nginx.Parser, error) {
 	return unmarshal(b, h, caches)
-	//return unmarshal(b)
+	// return unmarshal(b)
 }
 
 func (h *Http) toParser(children []nginx.Parser) (nginx.Parser, error) {
 	H := nginx.NewHttp()
 	H.Children = children
+
 	return H, nil
 }
 
@@ -168,12 +175,13 @@ type Stream struct {
 
 func (st *Stream) UnmarshalToJSON(b []byte, caches *nginx.Caches) (nginx.Parser, error) {
 	return unmarshal(b, st, caches)
-	//return unmarshal(b)
+	// return unmarshal(b)
 }
 
 func (st *Stream) toParser(children []nginx.Parser) (nginx.Parser, error) {
 	St := nginx.NewStream()
 	St.Children = children
+
 	return St, nil
 }
 
@@ -183,12 +191,13 @@ type Upstream struct {
 
 func (u *Upstream) UnmarshalToJSON(b []byte, caches *nginx.Caches) (nginx.Parser, error) {
 	return unmarshal(b, u, caches)
-	//return unmarshal(b)
+	// return unmarshal(b)
 }
 
 func (u *Upstream) toParser(children []nginx.Parser) (nginx.Parser, error) {
 	U := nginx.NewUpstream(u.Value)
 	U.Children = children
+
 	return U, nil
 }
 
@@ -198,12 +207,13 @@ type Server struct {
 
 func (s *Server) UnmarshalToJSON(b []byte, caches *nginx.Caches) (nginx.Parser, error) {
 	return unmarshal(b, s, caches)
-	//return unmarshal(b)
+	// return unmarshal(b)
 }
 
 func (s *Server) toParser(children []nginx.Parser) (nginx.Parser, error) {
 	S := nginx.NewServer()
 	S.Children = children
+
 	return S, nil
 }
 
@@ -213,12 +223,13 @@ type Location struct {
 
 func (l *Location) UnmarshalToJSON(b []byte, caches *nginx.Caches) (nginx.Parser, error) {
 	return unmarshal(b, l, caches)
-	//return unmarshal(b)
+	// return unmarshal(b)
 }
 
 func (l *Location) toParser(children []nginx.Parser) (nginx.Parser, error) {
 	L := nginx.NewLocation(l.Value)
 	L.Children = children
+
 	return L, nil
 }
 
@@ -228,12 +239,13 @@ type If struct {
 
 func (i *If) UnmarshalToJSON(b []byte, caches *nginx.Caches) (nginx.Parser, error) {
 	return unmarshal(b, i, caches)
-	//return unmarshal(b)
+	// return unmarshal(b)
 }
 
 func (i *If) toParser(children []nginx.Parser) (nginx.Parser, error) {
 	I := nginx.NewIf(i.Value)
 	I.Children = children
+
 	return I, nil
 }
 
@@ -243,6 +255,7 @@ type Key struct {
 
 func (k *Key) UnmarshalToJSON(b []byte, _ *nginx.Caches) (nginx.Parser, error) {
 	err := json.Unmarshal(b, k)
+
 	return &k.Key, err
 }
 
@@ -260,6 +273,7 @@ type Comment struct {
 
 func (c *Comment) UnmarshalToJSON(b []byte, _ *nginx.Caches) (nginx.Parser, error) {
 	err := json.Unmarshal(b, c)
+
 	return &c.Comment, err
 }
 
@@ -271,10 +285,10 @@ func (c *Comment) toParser(_ []nginx.Parser) (nginx.Parser, error) {
 	return &c.Comment, nil
 }
 
-// Unmarshal, json反序列化并返回nginx配置对象的函数
+// Unmarshal, json反序列化并返回nginx配置对象的函数.
 func Unmarshal(b []byte) (*nginx.Config, error) {
 	caches := nginx.NewCaches()
-	//allConfigs := make(map[string]*nginx.Config, 0)
+	// allConfigs := make(map[string]*nginx.Config, 0)
 	parser, err := unmarshal(b, &Config{}, &caches)
 	if err != nil {
 		return nil, err
@@ -283,6 +297,7 @@ func Unmarshal(b []byte) (*nginx.Config, error) {
 	if !ok {
 		return nil, fmt.Errorf("unmarshal error")
 	}
+
 	return conf, nil
 	/* 测试解析器Config对象指针映射
 	conf, err := unmarshal(b, &Config{}, &[]string{}, &allConfigs)
@@ -290,7 +305,7 @@ func Unmarshal(b []byte) (*nginx.Config, error) {
 	return conf, err */
 }
 
-// unmarshal, json反序列化并返回nginx配置对象的内部函数
+// unmarshal, json反序列化并返回nginx配置对象的内部函数.
 func unmarshal(b []byte, p unmarshaler, caches *nginx.Caches) (nginx.Parser, error) {
 	switch p.(type) {
 	case *Key, *Comment:
@@ -300,57 +315,59 @@ func unmarshal(b []byte, p unmarshaler, caches *nginx.Caches) (nginx.Parser, err
 		if err != nil {
 			return nil, err
 		}
-		if conf, ok := p.(*Config); ok {
-			if caches.IsCached(conf.Value) {
-				conf, _ := caches.GetConfig(conf.Value)
-				return conf, nil
-			}
-
-			setErr := caches.SetCache(&nginx.Config{BasicContext: nginx.BasicContext{
-				Name:     nginx.TypeConfig,
-				Value:    conf.Value,
-				Children: nil,
-			}}, hashForJsonUnmarshalTemp)
-			if setErr != nil {
-				return nil, setErr
-			}
-
+		conf, ok := p.(*Config)
+		if !ok {
 			children, cerr := unmarshalChildren(p.getChildren(), caches)
 			if cerr != nil {
 				return nil, cerr
 			}
 
-			// 获取解析器Config对象，并添加到解析器Config对象指针映射中
-			config, tpErr := p.toParser(children)
-			if tpErr != nil {
-				return nil, tpErr
-			}
-
-			setErr = caches.SetCache(config.(*nginx.Config), hashForJsonUnmarshal)
-			if setErr != nil {
-				return nil, setErr
-			}
-
-			return config, nil
-		} else {
-			children, cerr := unmarshalChildren(p.getChildren(), caches)
-			if cerr != nil {
-				return nil, cerr
-			}
 			return p.toParser(children)
 		}
+
+		if caches.IsCached(conf.Value) {
+			conf, _ := caches.GetConfig(conf.Value)
+
+			return conf, nil
+		}
+
+		setErr := caches.SetCache(&nginx.Config{BasicContext: nginx.BasicContext{
+			Name:     nginx.TypeConfig,
+			Value:    conf.Value,
+			Children: nil,
+		}}, hashForJsonUnmarshalTemp)
+		if setErr != nil {
+			return nil, setErr
+		}
+
+		children, cerr := unmarshalChildren(p.getChildren(), caches)
+		if cerr != nil {
+			return nil, cerr
+		}
+
+		// 获取解析器Config对象，并添加到解析器Config对象指针映射中
+		config, tpErr := p.toParser(children)
+		if tpErr != nil {
+			return nil, tpErr
+		}
+
+		setErr = caches.SetCache(config.(*nginx.Config), hashForJsonUnmarshal)
+		if setErr != nil {
+			return nil, setErr
+		}
+
+		return config, nil
 	}
 }
 
-// unmarshalChildren, 解析并反序列化子json串切片对象的内部函数
+// unmarshalChildren, 解析并反序列化子json串切片对象的内部函数.
+//nolint:funlen,gocognit,gocyclo
 func unmarshalChildren(bytes []*json.RawMessage, caches *nginx.Caches) (children []nginx.Parser, err error) {
 	// parseContext, 用于解析json串归属于哪类需反序列化对象的匿名函数
 	parseContext := func(b []byte, reg *regexp.Regexp) bool {
-		if m := reg.Find(b); m != nil {
-			return true
-		} else {
-			return false
-		}
+		m := reg.Find(b)
+
+		return m != nil
 	}
 
 	for _, b := range bytes {
@@ -389,75 +406,74 @@ func unmarshalChildren(bytes []*json.RawMessage, caches *nginx.Caches) (children
 			http, err := unmarshal(*b, &Http{}, caches)
 			if err != nil {
 				return nil, err
-				//return
+				// return
 			}
 			children = append(children, http)
 		case parseContext(*b, RegIfHead):
 			i, err := unmarshal(*b, &If{}, caches)
 			if err != nil {
 				return nil, err
-				//return
+				// return
 			}
 			children = append(children, i)
 		case parseContext(*b, RegLimitExceptHead):
 			le, err := unmarshal(*b, &LimitExcept{}, caches)
 			if err != nil {
 				return nil, err
-				//return
+				// return
 			}
 			children = append(children, le)
 		case parseContext(*b, RegLocationHead):
 			l, err := unmarshal(*b, &Location{}, caches)
 			if err != nil {
 				return nil, err
-				//return
+				// return
 			}
 			children = append(children, l)
 		case parseContext(*b, RegMapHead):
 			m, err := unmarshal(*b, &Map{}, caches)
 			if err != nil {
 				return nil, err
-				//return
+				// return
 			}
 			children = append(children, m)
 		case parseContext(*b, RegServerHead):
 			svr, err := unmarshal(*b, &Server{}, caches)
 			if err != nil {
 				return nil, err
-				//return
+				// return
 			}
 			children = append(children, svr)
 		case parseContext(*b, RegStreamHead):
 			st, err := unmarshal(*b, &Stream{}, caches)
 			if err != nil {
 				return nil, err
-				//return
+				// return
 			}
 			children = append(children, st)
 		case parseContext(*b, RegTypesHead):
 			t, err := unmarshal(*b, &Types{}, caches)
 			if err != nil {
 				return nil, err
-				//return
+				// return
 			}
 			children = append(children, t)
 		case parseContext(*b, RegUpstreamHead):
 			u, err := unmarshal(*b, &Upstream{}, caches)
 			if err != nil {
 				return nil, err
-				//return
+				// return
 			}
 			children = append(children, u)
 		default:
 			k, err := unmarshal(*b, &Key{}, caches)
 			if err != nil {
 				return nil, err
-				//return
+				// return
 			}
 			children = append(children, k)
 		}
 	}
 
 	return children, nil
-
 }

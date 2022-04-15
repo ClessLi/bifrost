@@ -3,14 +3,15 @@ package v1
 import (
 	"context"
 	"fmt"
-	kitlog "github.com/go-kit/kit/log"
-	kitzaplog "github.com/go-kit/kit/log/zap"
 	"log"
 	"sync"
 
-	"github.com/ClessLi/bifrost/pkg/log/v1/klog"
+	kitlog "github.com/go-kit/kit/log"
+	kitzaplog "github.com/go-kit/kit/log/zap"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+
+	"github.com/ClessLi/bifrost/pkg/log/v1/klog"
 )
 
 // InfoLogger represents the ability to log non-error messages, at a particular verbosity.

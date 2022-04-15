@@ -103,7 +103,6 @@ func SortInsertInt(slice []int, ints ...int) []int {
 
 		slice[i] = num
 		n++
-
 	}
 
 	return slice
@@ -146,7 +145,6 @@ func SortInsertUniqInt(slice []int, ints ...int) []int {
 		slice[i] = num
 		slice = append(slice, tmp)
 		n++
-
 	}
 
 	return slice

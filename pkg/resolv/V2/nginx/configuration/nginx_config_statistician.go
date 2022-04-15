@@ -1,12 +1,14 @@
 package configuration
 
 import (
+	"regexp"
+	"strconv"
+
+	"github.com/marmotedu/errors"
+
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/utils"
-	"github.com/marmotedu/errors"
-	"regexp"
-	"strconv"
 )
 
 var (
@@ -37,6 +39,7 @@ type statistician struct {
 
 func (s *statistician) HttpInfo() HttpInfo {
 	serverCount, serverPortCount := HttpServers(s.configuration)
+
 	return HttpInfo{
 		ServerCount:     serverCount,
 		ServerPortCount: serverPortCount,
@@ -46,6 +49,7 @@ func (s *statistician) HttpInfo() HttpInfo {
 
 func (s *statistician) StreamInfo() StreamInfo {
 	serverCount, portCount := StreamServers(s.configuration)
+
 	return StreamInfo{
 		ServerCount: serverCount,
 		PortCount:   portCount,
@@ -55,6 +59,7 @@ func (s *statistician) StreamInfo() StreamInfo {
 func (s *statistician) Statistics() *v1.Statistics {
 	httpInfo := s.HttpInfo()
 	streamInfo := s.StreamInfo()
+
 	return &v1.Statistics{
 		HttpSvrsNum:   httpInfo.ServerCount,
 		HttpSvrs:      httpInfo.ServerPortCount,
@@ -80,8 +85,10 @@ func Port(q Querier) int {
 		if err != nil {
 			return -1
 		}
+
 		return port
 	}
+
 	return -1
 }
 
@@ -93,6 +100,7 @@ func Ports(qs []Querier) []int {
 			ports = utils.SortInsertUniqInt(ports, port)
 		}
 	}
+
 	return ports
 }
 
@@ -105,6 +113,7 @@ func HttpPorts(q Querier) []int {
 	if err != nil {
 		return nil
 	}
+
 	return Ports(serverQueryers)
 }
 
@@ -127,6 +136,7 @@ func HttpServers(q Querier) (int, map[string][]int) {
 			if errors.IsCode(err, code.ErrParserNotFound) {
 				return 0, nil
 			}
+
 			continue
 		}
 		serverNameValue := serverNameKeyQueryer.Self().GetValue()
@@ -139,6 +149,7 @@ func HttpServers(q Querier) (int, map[string][]int) {
 			}
 		}
 	}
+
 	return serverCount, serverPortCount
 }
 
@@ -149,6 +160,10 @@ func StreamServers(q Querier) (int, []int) {
 		return serverCount, nil
 	}
 	serverQueryers, err := streamQueryer.QueryAll("server")
+	if err != nil {
+		return 0, nil
+	}
 	ports := Ports(serverQueryers)
+
 	return serverCount, ports
 }

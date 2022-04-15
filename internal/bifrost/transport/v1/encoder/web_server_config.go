@@ -2,10 +2,12 @@ package encoder
 
 import (
 	"context"
+
+	"github.com/marmotedu/errors"
+
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
-	"github.com/marmotedu/errors"
 )
 
 type webServerConfig struct{}
@@ -19,6 +21,7 @@ func (e webServerConfig) EncodeResponse(_ context.Context, r interface{}) (inter
 		for _, serverName := range *r {
 			encodeServerNames.Names = append(encodeServerNames.Names, &pbv1.ServerName{Name: serverName.Name})
 		}
+
 		return encodeServerNames, nil
 	case *v1.WebServerConfig: // encode `Get` response
 		return &pbv1.ServerConfig{

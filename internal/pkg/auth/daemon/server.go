@@ -4,20 +4,20 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
+
+	"google.golang.org/grpc"
+
 	"github.com/ClessLi/bifrost/api/protobuf-spec/authpb"
 	"github.com/ClessLi/bifrost/internal/pkg/auth/config"
 	"github.com/ClessLi/bifrost/internal/pkg/auth/endpoint"
 	"github.com/ClessLi/bifrost/internal/pkg/auth/logging"
 	"github.com/ClessLi/bifrost/internal/pkg/auth/service"
 	"github.com/ClessLi/bifrost/internal/pkg/auth/transport"
-	"google.golang.org/grpc"
-	"net"
 )
 
-var (
-	//authSvc service.AuthService
-	isInit bool
-)
+// authSvc service.AuthService.
+var isInit bool
 
 func ServerRun() error {
 	if !isInit {
@@ -57,7 +57,7 @@ func ServerRun() error {
 	select {
 	case s := <-signalChan:
 		if s == 9 {
-			//fmt.Println("stopping...")
+			// fmt.Println("stopping...")
 			Log(DEBUG, "stopping...")
 			break
 		}
@@ -65,7 +65,7 @@ func ServerRun() error {
 	case stopErr = <-svrErrChan:
 		break
 	}
-	//fmt.Println("gRPC Server stopping...")
+	// fmt.Println("gRPC Server stopping...")
 	gRPCServer.Stop()
 	return stopErr
 }

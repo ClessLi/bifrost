@@ -2,14 +2,16 @@ package nginx
 
 import (
 	"context"
-	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
-	"github.com/ClessLi/bifrost/internal/pkg/code"
-	"github.com/ClessLi/bifrost/internal/pkg/file_watcher"
-	"github.com/marmotedu/errors"
-	"github.com/marmotedu/iam/pkg/log"
 	"path/filepath"
 	"regexp"
 	"time"
+
+	"github.com/marmotedu/errors"
+	"github.com/marmotedu/iam/pkg/log"
+
+	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
+	"github.com/ClessLi/bifrost/internal/pkg/file_watcher"
 )
 
 type webServerLogWatcherStore struct {
@@ -17,7 +19,11 @@ type webServerLogWatcherStore struct {
 	webServerLogsDirs map[string]string
 }
 
-func (w *webServerLogWatcherStore) Watch(ctx context.Context, request *v1.WebServerLogWatchRequest) (*v1.WebServerLog, error) {
+//nolint:gocognit
+func (w *webServerLogWatcherStore) Watch(
+	ctx context.Context,
+	request *v1.WebServerLogWatchRequest,
+) (*v1.WebServerLog, error) {
 	var logPath string
 	if logDir, ok := w.webServerLogsDirs[request.ServerName.Name]; ok {
 		logPath = filepath.Join(logDir, request.LogName)
@@ -34,12 +40,12 @@ func (w *webServerLogWatcherStore) Watch(ctx context.Context, request *v1.WebSer
 			defer close(fOutputC)
 			for {
 				select {
-				//case fOutputC <- filterOutput(outputC, request.FilteringRegexpRule, &needClose):
+				// case fOutputC <- filterOutput(outputC, request.FilteringRegexpRule, &needClose):
 				//	if needClose {
 				//		return
 				//	}
 				case data := <-outputC:
-					err, ok := filterOutput(data, request.FilteringRegexpRule)
+					ok, err := filterOutput(data, request.FilteringRegexpRule)
 					if err != nil {
 						data = []byte(err.Error())
 					}
@@ -48,6 +54,7 @@ func (w *webServerLogWatcherStore) Watch(ctx context.Context, request *v1.WebSer
 						case fOutputC <- data:
 						case <-time.After(time.Second * 30):
 							log.Warnf("send filtered data timeout(30s)")
+
 							return
 						}
 					}
@@ -59,25 +66,28 @@ func (w *webServerLogWatcherStore) Watch(ctx context.Context, request *v1.WebSer
 				}
 			}
 		}()
+
 		return &v1.WebServerLog{Lines: fOutputC}, nil
 	}
+
 	return &v1.WebServerLog{Lines: outputC}, nil
 }
 
-func filterOutput(data []byte, pattern string) (error, bool) {
+func filterOutput(data []byte, pattern string) (bool, error) {
 	if data == nil {
-		return nil, true
+		return true, nil
 	}
 	match, err := regexp.Match(pattern, data)
 	if err != nil {
 		log.Warnf("web server log watch error. %s", err.Error())
-		return err, true
+
+		return true, err
 	}
 	if match {
-		return nil, true
+		return true, nil
 	}
 
-	return nil, false
+	return false, nil
 }
 
 func newWebServerLogWatcherStore(store *webServerStore) *webServerLogWatcherStore {

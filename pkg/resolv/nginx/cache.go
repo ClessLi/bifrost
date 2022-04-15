@@ -69,20 +69,20 @@ func newCache(config *Config, file ...interface{}) (cache, error) {
 //     错误
 func getHash(path string, file ...interface{}) (hash string, err error) {
 	hash256 := sha256.New()
-	//fmt.Println("------------getHash func------------")
+	// fmt.Println("------------getHash func------------")
 	// 结束操作前捕捉panic
 	defer func() {
 		// 捕获panic
 		if r := recover(); r != nil {
-			//err = fmt.Errorf("%s", r)
+			// err = fmt.Errorf("%s", r)
 			fmt.Println(r)
 		}
-		//fmt.Println("----------getHash func end----------")
+		// fmt.Println("----------getHash func end----------")
 	}()
 	var f *os.File
 	if file == nil {
 		// 测试
-		//fmt.Println("no param, path:", path)
+		// fmt.Println("no param, path:", path)
 		// 读取文件
 		f, err = os.Open(path)
 		if err != nil {
@@ -94,16 +94,16 @@ func getHash(path string, file ...interface{}) (hash string, err error) {
 		switch data.(type) {
 		case string:
 			// 测试
-			//fmt.Println("hash:", data.(string), "path:", path)
+			// fmt.Println("hash:", data.(string), "path:", path)
 			return data.(string), nil
 		case *os.File:
-			//测试
-			//fmt.Println("fd, path:", path)
+			// 测试
+			// fmt.Println("fd, path:", path)
 			f = data.(*os.File)
 			_, _ = f.Seek(0, 0)
 		case []byte:
 			// 测试
-			//fmt.Println("bytes, path:", path)
+			// fmt.Println("bytes, path:", path)
 			r := bytes.NewReader(data.([]byte))
 			_, hashCPErr := io.Copy(hash256, r)
 			if hashCPErr != nil {

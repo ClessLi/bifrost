@@ -3,8 +3,9 @@ package options
 import (
 	"fmt"
 
-	"github.com/ClessLi/bifrost/internal/pkg/server"
 	"github.com/spf13/pflag"
+
+	"github.com/ClessLi/bifrost/internal/pkg/server"
 )
 
 // InsecureServingOptions are for creating an unauthenticated, unauthorized, insecure port.
@@ -28,6 +29,7 @@ func (s *InsecureServingOptions) ApplyTo(c *server.Config) error {
 	// BindPort set to zero to disable
 	if s == nil || s.BindPort == 0 {
 		c.InsecureServing = nil
+
 		return nil
 	}
 

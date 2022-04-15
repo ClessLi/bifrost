@@ -1,0 +1,15 @@
+[Unit]
+Description=BIFROST
+Documentation=https://github.com/ClessLi/bifrost/blob/master/init/README.md
+
+[Service]
+WorkingDirectory=${BIFROST_DATA_DIR}/bifrost
+ExecStartPre=/usr/bin/mkdir -p ${BIFROST_DATA_DIR}/bifrost
+ExecStartPre=/usr/bin/mkdir -p ${BIFROST_LOG_DIR}
+ExecStart=${BIFROST_INSTALL_DIR}/bin/bifrost --config=${BIFROST_CONFIG_DIR}/bifrost.yaml
+Restart=always
+RestartSec=5
+StartLimitInterval=0
+
+[Install]
+WantedBy=multi-user.target

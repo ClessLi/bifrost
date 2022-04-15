@@ -13,7 +13,10 @@ type webServerStatisticsServer struct {
 	options *options.Options
 }
 
-func NewWebServerStatisticsServer(handler handler.WebServerStatisticsHandlers, options *options.Options) pbv1.WebServerStatisticsServer {
+func NewWebServerStatisticsServer(
+	handler handler.WebServerStatisticsHandlers,
+	options *options.Options,
+) pbv1.WebServerStatisticsServer {
 	return &webServerStatisticsServer{
 		handler: handler,
 		options: options,

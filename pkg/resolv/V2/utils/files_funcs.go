@@ -3,8 +3,6 @@ package utils
 import (
 	"bytes"
 	"fmt"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
-	"github.com/marmotedu/errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -12,6 +10,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/marmotedu/errors"
+
+	log "github.com/ClessLi/bifrost/pkg/log/v1"
 )
 
 const backupDateLayout = `20060102`
@@ -55,7 +57,11 @@ func GetBackupFileName(backupPrefix string, now time.Time) string {
 // 返回值:
 //     true: 需要归档操作; false: 不需要归档
 //     错误
-func CheckAndCleanBackups(backupPrefix, backupDir string, retentionTime, backupCycleTime int, now time.Time) (bool, error) {
+func CheckAndCleanBackups(
+	backupPrefix, backupDir string,
+	retentionTime, backupCycleTime int,
+	now time.Time,
+) (bool, error) {
 	needBackup := true
 	saveDate := now.Add(-24 * time.Hour * time.Duration(retentionTime))
 	cycleDate := now.Add(-24 * time.Hour * time.Duration(backupCycleTime))
@@ -74,7 +80,11 @@ func CheckAndCleanBackups(backupPrefix, backupDir string, retentionTime, backupC
 	for i := 0; i < len(baks) && needBackup; i++ {
 		bakName := filepath.Base(baks[i])
 		if isBak := bakFileReg.MatchString(bakName); isBak {
-			bakDate, tpErr := time.ParseInLocation(backupDateLayout, bakFileReg.FindStringSubmatch(bakName)[1], now.Location())
+			bakDate, tpErr := time.ParseInLocation(
+				backupDateLayout,
+				bakFileReg.FindStringSubmatch(bakName)[1],
+				now.Location(),
+			)
 			if tpErr != nil {
 				return false, errors.Wrapf(tpErr, "failed to resolve archive name '%s'", baks[i])
 			}
@@ -93,7 +103,6 @@ func CheckAndCleanBackups(backupPrefix, backupDir string, retentionTime, backupC
 			if bakDate.Unix() > cycleDate.Unix() || bakDate.Format(backupDateLayout) == now.Format(backupDateLayout) {
 				needBackup = false
 			}
-
 		}
 	}
 
@@ -110,7 +119,7 @@ func GetPid(path string) (int, error) {
 		// 读取pid文件
 		pidBytes, readPidErr := ReadFile(path)
 		if readPidErr != nil {
-			//Log(ERROR, readPidErr.Error())
+			// Log(ERROR, readPidErr.Error())
 			return -1, readPidErr
 		}
 
@@ -120,7 +129,7 @@ func GetPid(path string) (int, error) {
 		// 转码pid
 		pid, toIntErr := strconv.Atoi(string(pidBytes))
 		if toIntErr != nil {
-			//Log(ERROR, toIntErr.Error())
+			// Log(ERROR, toIntErr.Error())
 			return -1, toIntErr
 		}
 

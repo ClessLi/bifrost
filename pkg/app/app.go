@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
 	"github.com/fatih/color"
 	cliflag "github.com/marmotedu/component-base/pkg/cli/flag"
 	"github.com/marmotedu/component-base/pkg/cli/globalflag"
@@ -14,6 +13,8 @@ import (
 	"github.com/marmotedu/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	log "github.com/ClessLi/bifrost/pkg/log/v1"
 )
 
 var (
@@ -291,7 +292,7 @@ func (a *App) applyOptionRules() error {
 	return nil
 }
 
-// printWorkingDir a function that prints the working directory to the log
+// printWorkingDir a function that prints the working directory to the log.
 func printWorkingDir() {
 	wd, _ := os.Getwd()
 	log.Infof("%v WorkingDir: %s", progressMessage, wd)

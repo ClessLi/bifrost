@@ -2,22 +2,24 @@ package options
 
 import (
 	"encoding/json"
+
+	cliflag "github.com/marmotedu/component-base/pkg/cli/flag"
+
 	genericoptions "github.com/ClessLi/bifrost/internal/pkg/options"
 	"github.com/ClessLi/bifrost/internal/pkg/server"
 	log "github.com/ClessLi/bifrost/pkg/log/v1"
-	cliflag "github.com/marmotedu/component-base/pkg/cli/flag"
 )
 
 type Options struct {
-	GenericServerRunOptions    *genericoptions.ServerRunOptions           `json:"server" mapstructure:"server"`
-	SecureServing              *genericoptions.SecureServingOptions       `json:"secure" mapstructure:"secure"`
-	InsecureServing            *genericoptions.InsecureServingOptions     `json:"insecure" mapstructure:"insecure"`
-	RAOptions                  *genericoptions.RAOptions                  `json:"ra" mapstructure:"ra"`
-	GRPCServing                *genericoptions.GRPCServerOptions          `json:"grpc" mapstructure:"grpc"`
-	WebServerConfigsOptions    *genericoptions.WebServerConfigsOptions    `json:"web-server-configs" mapstructure:"web-server-configs"`
-	MonitorOptions             *genericoptions.MonitorOptions             `json:"monitor" mapstructure:"monitor"`
+	GenericServerRunOptions    *genericoptions.ServerRunOptions           `json:"server"                 mapstructure:"server"`
+	SecureServing              *genericoptions.SecureServingOptions       `json:"secure"                 mapstructure:"secure"`
+	InsecureServing            *genericoptions.InsecureServingOptions     `json:"insecure"               mapstructure:"insecure"`
+	RAOptions                  *genericoptions.RAOptions                  `json:"ra"                     mapstructure:"ra"`
+	GRPCServing                *genericoptions.GRPCServerOptions          `json:"grpc"                   mapstructure:"grpc"`
+	WebServerConfigsOptions    *genericoptions.WebServerConfigsOptions    `json:"web-server-configs"     mapstructure:"web-server-configs"`
+	MonitorOptions             *genericoptions.MonitorOptions             `json:"monitor"                mapstructure:"monitor"`
 	WebServerLogWatcherOptions *genericoptions.WebServerLogWatcherOptions `json:"web-server-log-watcher" mapstructure:"web-server-log-watcher"`
-	Log                        *log.Options                               `json:"log" mapstructure:"log"`
+	Log                        *log.Options                               `json:"log"                    mapstructure:"log"`
 }
 
 func NewOptions() *Options {
@@ -43,6 +45,7 @@ func (o *Options) Flags() (fss cliflag.NamedFlagSets) {
 	o.MonitorOptions.AddFlags(fss.FlagSet("monitor"))
 	o.WebServerLogWatcherOptions.AddFlags(fss.FlagSet("log watcher"))
 	o.Log.AddFlags(fss.FlagSet("log"))
+
 	return fss
 }
 
@@ -52,6 +55,7 @@ func (o *Options) ApplyTo(c *server.Config) error {
 
 func (o *Options) Strings() string {
 	data, _ := json.Marshal(o)
+
 	return string(data)
 }
 

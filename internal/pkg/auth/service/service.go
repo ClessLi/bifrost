@@ -3,27 +3,29 @@ package service
 import (
 	"errors"
 	"fmt"
-	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
+	"time"
+
 	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/net/context"
-	"time"
+
+	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
 )
 
 var (
-	// 认证接口错误返回
+	// 认证接口错误返回.
 	ErrorReasonServerBusy    = errors.New("服务器繁忙")
 	ErrorReasonRelogin       = errors.New("请重新登陆")
 	ErrorReasonWrongPassword = errors.New("用户或密码错误")
-	//ErrorReasonNoneToken     = "请通过认证"
+	// ErrorReasonNoneToken     = "请通过认证".
 )
 
 type Service interface {
 	Login(ctx context.Context, username, password string, unexpired bool) (string, error)
 	Verify(ctx context.Context, token string) (bool, error)
-	//GetPort() int
+	// GetPort() int
 }
 
-// AuthDBConfig, mysql数据库信息结构体，该库用于存放用户认证信息（可选）
+// AuthDBConfig, mysql数据库信息结构体，该库用于存放用户认证信息（可选）.
 type AuthDBConfig struct {
 	DBName   string `yaml:"DBName"`
 	Host     string `yaml:"host"`
@@ -33,13 +35,13 @@ type AuthDBConfig struct {
 	Password string `yaml:"password"`
 }
 
-// AuthConfig, 认证信息结构体，记录用户认证信息（可选）
+// AuthConfig, 认证信息结构体，记录用户认证信息（可选）.
 type AuthConfig struct {
 	Username string `yaml:"username"`
 	Password string `yaml:"password"`
 }
 
-// AuthService, bifrost认证服务结构体，用于用户认证
+// AuthService, bifrost认证服务结构体，用于用户认证.
 type AuthService struct {
 	Port          int `yaml:"Port"`
 	*AuthDBConfig `yaml:"AuthDBConfig,omitempty"`
@@ -69,17 +71,17 @@ func (s *AuthService) Login(ctx context.Context, username, password string, unex
 
 	// 认证用户信息
 	if !s.validUser(claims) {
-		//Log(WARN, "[%s] Invalid user '%s' or password '%s'.", ip, claims.Username, claims.Password)
+		// Log(WARN, "[%s] Invalid user '%s' or password '%s'.", ip, claims.Username, claims.Password)
 		return "", ErrorReasonWrongPassword
 	}
 
 	// 生成用户token
 	signedToken, err := claims.getToken()
 	if err != nil {
-		//Log(NOTICE, "[%s] user '%s' login failed, message is: '%s'", ip, username, err.Error())
+		// Log(NOTICE, "[%s] user '%s' login failed, message is: '%s'", ip, username, err.Error())
 		return "", err
 	}
-	//Log(NOTICE, "[%s] user '%s' is login, token is: %s", ip, username, signedToken)
+	// Log(NOTICE, "[%s] user '%s' is login, token is: %s", ip, username, signedToken)
 
 	return signedToken, err
 }
@@ -91,12 +93,12 @@ func (s *AuthService) Verify(ctx context.Context, token string) (bool, error) {
 	//}
 	_, err := s.verifyAction(token)
 	if err != nil {
-		//err = fmt.Errorf("[%s] Verified failed: %s", ip, err)
+		// err = fmt.Errorf("[%s] Verified failed: %s", ip, err)
 		err = fmt.Errorf("verified failed: %s", err)
 		return false, err
 	}
 	return true, nil
 }
 
-// ServiceMiddleware define service middleware
+// ServiceMiddleware define service middleware.
 type ServiceMiddleware func(Service) Service

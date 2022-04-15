@@ -1,14 +1,16 @@
 package server
 
 import (
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
-	"github.com/marmotedu/component-base/pkg/util/homedir"
-	"github.com/spf13/viper"
 	"net"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/marmotedu/component-base/pkg/util/homedir"
+	"github.com/spf13/viper"
+
+	log "github.com/ClessLi/bifrost/pkg/log/v1"
 )
 
 const (

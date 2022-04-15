@@ -1,10 +1,11 @@
 package v1
 
 import (
+	"google.golang.org/grpc"
+
 	epclient "github.com/ClessLi/bifrost/pkg/client/bifrost/v1/endpoint"
 	svcclient "github.com/ClessLi/bifrost/pkg/client/bifrost/v1/service"
 	txpclient "github.com/ClessLi/bifrost/pkg/client/bifrost/v1/transport"
-	"google.golang.org/grpc"
 )
 
 type Client struct {
@@ -28,6 +29,7 @@ func New(svraddr string, opts ...grpc.DialOption) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return newClient(conn), nil
 }
 

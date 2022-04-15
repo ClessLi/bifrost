@@ -2,9 +2,11 @@ package decoder
 
 import (
 	"context"
+
+	"github.com/marmotedu/errors"
+
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
-	"github.com/marmotedu/errors"
 )
 
 type webConfigServer struct{}
@@ -16,6 +18,7 @@ func (w webConfigServer) DecodeResponse(ctx context.Context, resp interface{}) (
 		for _, serverName := range resp.Names {
 			servernames = append(servernames, v1.ServerName{Name: serverName.GetName()})
 		}
+
 		return &servernames, nil
 	case *pbv1.ServerConfig: // decode `Get` response
 		return &v1.WebServerConfig{
