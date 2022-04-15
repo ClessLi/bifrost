@@ -18,7 +18,12 @@ type Service interface {
 	Watch(ctx context.Context, service string) (<-chan HealthStatus, error)
 }
 
-var statusStrings = map[HealthStatus]string{UNKNOWN: "unknown", SERVING: "serving", NOT_SERVING: "not serving", SERVICE_UNKNOWN: "service unknown"}
+var statusStrings = map[HealthStatus]string{
+	UNKNOWN:         "unknown",
+	SERVING:         "serving",
+	NOT_SERVING:     "not serving",
+	SERVICE_UNKNOWN: "service unknown",
+}
 
 func StatusString(status HealthStatus) string {
 	return statusStrings[status]

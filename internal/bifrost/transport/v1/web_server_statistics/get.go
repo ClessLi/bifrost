@@ -6,13 +6,13 @@ import (
 )
 
 func (w *webServerStatisticsServer) Get(r *pbv1.ServerName, stream pbv1.WebServerStatistics_GetServer) error {
-
 	_, resp, err := w.handler.HandlerGet().ServeGRPC(stream.Context(), r)
 	if err != nil {
 		return err
 	}
 
 	response := resp.(*pbv1.Statistics)
+
 	return utils.StreamSendMsg(stream, response.GetJsonData(), w.options.ChunkSize, func(msg []byte) interface{} {
 		return &pbv1.Statistics{JsonData: msg}
 	})

@@ -19,6 +19,7 @@ func (k Key) Dump(dumper dumper.Dumper) error {
 	fmt.Println(k.Position.ConfigIndents()+string(k.GetType()))
 	// debug config Position end*/
 	dumper.Write(k.position.Id(), []byte(k.indention.ConfigIndents()+k.string()))
+
 	return nil
 }
 
@@ -36,6 +37,7 @@ func (k Key) GetValue() string {
 
 func (k *Key) setPosition(p string) error {
 	k.position = parser_position.NewPosition(p)
+
 	return nil
 }
 

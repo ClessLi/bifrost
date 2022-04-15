@@ -1,11 +1,13 @@
 package configuration
 
 import (
+	"strings"
+
+	"github.com/marmotedu/errors"
+
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_type"
-	"github.com/marmotedu/errors"
-	"strings"
 )
 
 // keyword string: <parser type>[':sep: <value string>', ':sep: :reg: <value regexp>']
@@ -94,6 +96,7 @@ func (q querier) QueryAll(keyword string) ([]Querier, error) {
 			})
 		}
 	}
+
 	return queryers, nil
 }
 
@@ -114,6 +117,7 @@ func NewQuerier(fatherContext parser.Context, selfIndex int) (Querier, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return &querier{
 		Parser:    p,
 		fatherCtx: fatherContext,

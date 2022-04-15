@@ -1,8 +1,9 @@
 package test
 
 import (
-	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
 	"testing"
+
+	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
 )
 
 func TestSave(t *testing.T) {

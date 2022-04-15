@@ -1,10 +1,11 @@
 package service
 
 import (
+	"github.com/marmotedu/errors"
+
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	epv1 "github.com/ClessLi/bifrost/internal/bifrost/endpoint/v1"
 	log "github.com/ClessLi/bifrost/pkg/log/v1"
-	"github.com/marmotedu/errors"
 )
 
 type WebServerConfigService interface {
@@ -26,6 +27,7 @@ func (w *webServerConfigService) GetServerNames() (servernames []string, err err
 	for _, servername := range *resp.(*v1.ServerNames) {
 		servernames = append(servernames, servername.Name)
 	}
+
 	return
 }
 
@@ -36,7 +38,11 @@ func (w *webServerConfigService) Get(servername string) ([]byte, error) {
 	}
 	response := resp.(*v1.WebServerConfig)
 	if response.ServerName.Name != servername {
-		return nil, errors.Errorf("get incorrect web server config: get `%s`, want `%s`", response.ServerName.Name, servername)
+		return nil, errors.Errorf(
+			"get incorrect web server config: get `%s`, want `%s`",
+			response.ServerName.Name,
+			servername,
+		)
 	}
 
 	return response.JsonData, nil
@@ -51,6 +57,7 @@ func (w *webServerConfigService) Update(servername string, config []byte) error 
 		return err
 	}
 	log.Infof("Update result: %s", resp.(*v1.Response).Message)
+
 	return nil
 }
 

@@ -15,9 +15,7 @@ type Dumper interface {
 	ReadAll() map[string][]byte
 }
 
-var (
-	ErrCacheNotExist = errors.New("cache not exist")
-)
+var ErrCacheNotExist = errors.New("cache not exist")
 
 type dumper struct {
 	cache   map[string]*bytes.Buffer
@@ -32,8 +30,10 @@ func (d *dumper) Truncate(k string, n int) (err error) {
 	}()
 	if buff, ok := d.cache[k]; ok {
 		buff.Truncate(n)
+
 		return nil
 	}
+
 	return ErrCacheNotExist
 }
 
@@ -41,6 +41,7 @@ func (d dumper) Len(k string) int {
 	if buff, ok := d.cache[k]; ok {
 		return buff.Len()
 	}
+
 	return 0
 }
 
@@ -63,6 +64,7 @@ func (d *dumper) Done(k string) error {
 	if !d.isDone(k) {
 		d.doneMap[k] = true
 	}
+
 	return nil
 }
 
@@ -72,6 +74,7 @@ func (d *dumper) isDone(k string) bool {
 		return isDone
 	}
 	d.doneMap[k] = false
+
 	return false
 }
 
@@ -80,6 +83,7 @@ func (d dumper) Read(k string) ([]byte, error) {
 	if !ok {
 		return nil, ErrCacheNotExist
 	}
+
 	return buff.Bytes(), nil
 }
 
@@ -88,14 +92,16 @@ func (d dumper) ReadAll() map[string][]byte {
 	for k := range d.cache {
 		dumps[k] = d.cache[k].Bytes()
 	}
+
 	return dumps
 }
 
 func NewDumper(k string) Dumper {
-	dumper := &dumper{
+	d := &dumper{
 		cache:   make(map[string]*bytes.Buffer),
 		doneMap: make(map[string]bool),
 	}
-	dumper.Write(k, []byte(""))
-	return dumper
+	d.Write(k, []byte(""))
+
+	return d
 }

@@ -1,18 +1,20 @@
 package options
 
 import (
-	"github.com/ClessLi/bifrost/internal/pkg/server"
 	"github.com/marmotedu/errors"
 	"github.com/spf13/pflag"
+
+	"github.com/ClessLi/bifrost/internal/pkg/server"
 )
 
 type GRPCServerOptions struct {
-	ChunkSize             int `json:"chunksize" mapstructure:"chunksize"`
-	ReceiveTimeoutMinutes int `json:"receive-timeout-minutes" mapstructrue:"receive-timeout-minutes"`
+	ChunkSize             int `json:"chunksize"               mapstructure:"chunksize"`
+	ReceiveTimeoutMinutes int `json:"receive-timeout-minutes"                          mapstructrue:"receive-timeout-minutes"`
 }
 
 func NewGRPCServerOptions() *GRPCServerOptions {
 	defaults := server.NewGRPCSeringInfo()
+
 	return &GRPCServerOptions{
 		ChunkSize:             defaults.ChunkSize,
 		ReceiveTimeoutMinutes: defaults.RecvTimeoutM,
@@ -26,7 +28,6 @@ func (g *GRPCServerOptions) AddFlags(fs *pflag.FlagSet) {
 
 	fs.IntVar(&g.ReceiveTimeoutMinutes, "grpc.receive-timeout", g.ReceiveTimeoutMinutes, ""+
 		"Set the timeout for receiving data. The unit is per minute.")
-
 }
 
 // Validate checks validation of GRPCServerOptions.
@@ -51,5 +52,6 @@ func (g *GRPCServerOptions) ApplyTo(c *server.Config) error {
 		ChunkSize:    g.ChunkSize,
 		RecvTimeoutM: g.ReceiveTimeoutMinutes,
 	}
+
 	return nil
 }

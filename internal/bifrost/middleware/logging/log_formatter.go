@@ -2,10 +2,11 @@ package logging
 
 import (
 	"context"
-	"github.com/ClessLi/bifrost/internal/bifrost/middleware/utils"
 	"reflect"
 	"runtime"
 	"time"
+
+	"github.com/ClessLi/bifrost/internal/bifrost/middleware/utils"
 )
 
 type logFormatter struct {
@@ -23,7 +24,7 @@ func (l *logFormatter) Log(infos ...interface{}) {
 	if !reflect.DeepEqual(l.begin, time.Time{}) {
 		infos = append(infos, "took", time.Since(l.begin))
 	}
-	logger.Log(append(l.initInfos, infos...)...)
+	logger.Log(append(l.initInfos, infos...)...) //nolint:errcheck
 }
 
 func (l *logFormatter) SetResult(result interface{}) {

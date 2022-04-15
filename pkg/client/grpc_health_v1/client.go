@@ -1,11 +1,12 @@
 package grpc_health_v1
 
 import (
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
 	"github.com/ClessLi/skirnir/pkg/discover"
 	kitzaplog "github.com/go-kit/kit/log/zap"
 	"github.com/marmotedu/errors"
 	"google.golang.org/grpc"
+
+	log "github.com/ClessLi/bifrost/pkg/log/v1"
 )
 
 type Client struct {
@@ -21,13 +22,18 @@ func NewClientFromConsul(consulHost string, consulPort uint16, opts ...grpc.Dial
 	factory := func(instance string) (interface{}, error) {
 		return NewClient(instance, opts...)
 	}
-	relay, err := discoveryClient.DiscoverServicesClient("com.github.ClessLi.api.bifrost", kitzaplog.NewZapSugarLogger(log.ZapLogger(), log.InfoLevel), factory)
+	relay, err := discoveryClient.DiscoverServicesClient(
+		"com.github.ClessLi.api.bifrost",
+		kitzaplog.NewZapSugarLogger(log.ZapLogger(), log.InfoLevel),
+		factory,
+	)
 	if err != nil {
 		return nil, err
 	}
 	if client, ok := relay.(*Client); ok {
 		return client, nil
 	}
+
 	return nil, errors.New("failed to initialize Health Check service client")
 }
 
@@ -37,6 +43,7 @@ func NewClient(svrAddr string, opts ...grpc.DialOption) (*Client, error) {
 		return nil, err
 	}
 	eps := makeEndpoints(conn)
+
 	return newClient(conn, eps), nil
 }
 

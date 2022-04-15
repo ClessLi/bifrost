@@ -34,7 +34,7 @@ func run(opts *options.Options) app.RunFunc {
 		defer log.Flush()
 
 		// init auth api client
-		//auth.Init(opts.AuthAPIClient)
+		// auth.Init(opts.AuthAPIClient)
 
 		cfg, err := config.CreateConfigFromOptions(opts)
 		if err != nil {

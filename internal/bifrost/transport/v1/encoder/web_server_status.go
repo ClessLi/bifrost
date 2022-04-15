@@ -3,10 +3,12 @@ package encoder
 import (
 	"context"
 	"encoding/json"
+
+	"github.com/marmotedu/errors"
+
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
-	"github.com/marmotedu/errors"
 )
 
 type webServerStatus struct{}
@@ -20,6 +22,7 @@ func (w webServerStatus) EncodeResponse(ctx context.Context, r interface{}) (int
 		if err != nil {
 			return nil, errors.WithCode(code.ErrEncodingFailed, err.Error())
 		}
+
 		return &pbv1.Metrics{
 			JsonData: jdata,
 		}, nil

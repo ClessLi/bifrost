@@ -1,12 +1,14 @@
 package transport
 
 import (
+	"sync"
+
+	"github.com/go-kit/kit/endpoint"
+	"google.golang.org/grpc"
+
 	"github.com/ClessLi/bifrost/pkg/client/bifrost/v1/transport/decoder"
 	"github.com/ClessLi/bifrost/pkg/client/bifrost/v1/transport/encoder"
 	log "github.com/ClessLi/bifrost/pkg/log/v1"
-	"github.com/go-kit/kit/endpoint"
-	"google.golang.org/grpc"
-	"sync"
 )
 
 type Client interface {
@@ -62,6 +64,7 @@ func (t *transport) WebServerConfig() WebServerConfigTransport {
 
 		return nil
 	}
+
 	return t.singletonWSCTXP
 }
 
@@ -76,6 +79,7 @@ func (t *transport) WebServerStatistics() WebServerStatisticsTransport {
 
 		return nil
 	}
+
 	return t.singletonWSSTXP
 }
 
@@ -90,6 +94,7 @@ func (t *transport) WebServerStatus() WebServerStatusTransport {
 
 		return nil
 	}
+
 	return t.singletonWSStatusTXP
 }
 
@@ -104,6 +109,7 @@ func (t *transport) WebServerLogWatcher() WebServerLogWatcherTransport {
 
 		return nil
 	}
+
 	return t.singletonWSLWTXP
 }
 

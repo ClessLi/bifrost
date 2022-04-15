@@ -1,11 +1,12 @@
 package configuration
 
 import (
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loader"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
+	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loader"
 )
 
 func exampleNewConfigManager() (*configManager, error) {

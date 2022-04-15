@@ -2,11 +2,13 @@ package nginx
 
 import (
 	"context"
+
+	"github.com/marmotedu/errors"
+
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	storev1 "github.com/ClessLi/bifrost/internal/bifrost/store/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration"
-	"github.com/marmotedu/errors"
 )
 
 type webServerConfigStore struct {
@@ -18,6 +20,7 @@ func (w *webServerConfigStore) GetServerNames(ctx context.Context) (*v1.ServerNa
 	for name := range w.configs {
 		serverNames = append(serverNames, v1.ServerName{Name: name})
 	}
+
 	return &serverNames, nil
 }
 
@@ -27,11 +30,13 @@ func (w *webServerConfigStore) Get(ctx context.Context, servername *v1.ServerNam
 		if len(jdata) == 0 {
 			return nil, errors.WithCode(code.ErrInvalidConfig, "nginx server config '%s' is null", servername.Name)
 		}
+
 		return &v1.WebServerConfig{
 			ServerName: servername,
 			JsonData:   jdata,
 		}, nil
 	}
+
 	return nil, errors.WithCode(code.ErrConfigurationNotFound, "nginx server config '%s' not found", servername.Name)
 }
 
@@ -39,6 +44,7 @@ func (w *webServerConfigStore) Update(ctx context.Context, config *v1.WebServerC
 	if conf, has := w.configs[config.ServerName.Name]; has {
 		return conf.UpdateFromJsonBytes(config.JsonData)
 	}
+
 	return errors.WithCode(code.ErrConfigurationNotFound, "nginx server config '%s' not found", config.ServerName.Name)
 }
 

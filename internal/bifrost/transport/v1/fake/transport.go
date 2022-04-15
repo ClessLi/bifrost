@@ -5,8 +5,7 @@ import (
 	txpv1 "github.com/ClessLi/bifrost/internal/bifrost/transport/v1"
 )
 
-type transport struct {
-}
+type transport struct{}
 
 func (t transport) WebServerStatistics() pbv1.WebServerStatisticsServer {
 	return webServerStatistics{}

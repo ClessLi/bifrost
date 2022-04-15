@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
 	"os"
 	"path/filepath"
+
+	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
 )
 
 func init() {
@@ -12,7 +13,6 @@ func init() {
 		usage()
 		os.Exit(1)
 	}
-
 }
 
 func usage() {

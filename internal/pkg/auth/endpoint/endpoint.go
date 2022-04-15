@@ -2,10 +2,12 @@ package endpoint
 
 import (
 	"errors"
-	"github.com/ClessLi/bifrost/internal/pkg/auth/service"
+	"strings"
+
 	"github.com/go-kit/kit/endpoint"
 	"golang.org/x/net/context"
-	"strings"
+
+	"github.com/ClessLi/bifrost/internal/pkg/auth/service"
 )
 
 var (
@@ -71,7 +73,6 @@ func MakeLoginEndpoint(svc service.Service) endpoint.Endpoint {
 		} else {
 			return nil, ErrInvalidLoginRequest
 		}
-
 	}
 }
 
@@ -94,15 +95,15 @@ func MakeVerifyEndpoint(svc service.Service) endpoint.Endpoint {
 	}
 }
 
-// HealthRequest 健康检查请求结构
+// HealthRequest 健康检查请求结构.
 type HealthRequest struct{}
 
-// HealthResponse 健康检查响应结构
+// HealthResponse 健康检查响应结构.
 type HealthResponse struct {
 	Status bool `json:"status"`
 }
 
-// MakeHealthCheckEndpoint 创建健康检查Endpoint
+// MakeHealthCheckEndpoint 创建健康检查Endpoint.
 func MakeHealthCheckEndpoint(_ service.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		return HealthResponse{true}, nil

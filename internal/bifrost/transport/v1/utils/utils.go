@@ -1,12 +1,13 @@
 package utils
 
 import (
+	"regexp"
+	"strconv"
+
 	"github.com/marmotedu/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"regexp"
-	"strconv"
 )
 
 var sizeMatcher = regexp.MustCompile(`.*\((\d+)\s*vs\.\s*(\d+)\)`)
@@ -14,7 +15,7 @@ var sizeMatcher = regexp.MustCompile(`.*\((\d+)\s*vs\.\s*(\d+)\)`)
 type MsgAssembler func(msg []byte) interface{}
 
 func StreamSendMsg(stream grpc.ServerStream, data []byte, chunksize int, assembler MsgAssembler) error {
-	var i = 0
+	i := 0
 	for i < len(data) {
 		var msg []byte
 		if i+chunksize < len(data) {

@@ -2,8 +2,9 @@ package file_watcher
 
 import (
 	"context"
-	"github.com/marmotedu/errors"
 	"sync"
+
+	"github.com/marmotedu/errors"
 )
 
 type WatcherManager struct {
@@ -28,6 +29,7 @@ func (wm *WatcherManager) Watch(ctx context.Context, file string) (<-chan []byte
 		return nil, err
 	}
 	wm.watchers[watcher.filePath] = watcher
+
 	return output, nil
 }
 
@@ -43,6 +45,7 @@ func (wm *WatcherManager) StopAll() error {
 			delete(wm.watchers, filePath)
 		}
 	}
+
 	return errors.NewAggregate(errs)
 }
 

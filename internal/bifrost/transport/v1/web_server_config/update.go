@@ -2,11 +2,13 @@ package web_server_config
 
 import (
 	"bytes"
-	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
-	"github.com/ClessLi/bifrost/internal/pkg/code"
-	"github.com/marmotedu/errors"
 	"io"
 	"time"
+
+	"github.com/marmotedu/errors"
+
+	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 )
 
 func (w *webServerConfigServer) Update(stream pbv1.WebServerConfig_UpdateServer) error {
@@ -21,11 +23,12 @@ func (w *webServerConfigServer) Update(stream pbv1.WebServerConfig_UpdateServer)
 	)
 
 	for !isTimeout {
-		isTimeout = time.Since(recvStartTime) >= w.options.RecvTimeoutMinutes*time.Minute
+		isTimeout = time.Since(recvStartTime) >= w.options.RecvTimeoutMinutes*time.Minute //nolint:durationcheck
 		in, err = stream.Recv()
 		// 判断是否传入完毕
-		if err == io.EOF {
-			err = nil
+		if errors.Is(err, io.EOF) {
+			err = nil //nolint:wastedassign,ineffassign
+
 			break
 		}
 		if err != nil {
@@ -56,7 +59,12 @@ func (w *webServerConfigServer) Update(stream pbv1.WebServerConfig_UpdateServer)
 	req.JsonData = buffer.Bytes()
 	_, resp, err := w.handler.HandlerUpdate().ServeGRPC(stream.Context(), req)
 	if err != nil {
-		return errors.Wrapf(err, "failed to handle the update operation of the web server config(json-data) - %s", string(req.GetJsonData()))
+		return errors.Wrapf(
+			err,
+			"failed to handle the update operation of the web server config(json-data) - %s",
+			string(req.GetJsonData()),
+		)
 	}
+
 	return stream.SendAndClose(resp.(*pbv1.Response))
 }

@@ -25,7 +25,6 @@ func Start() (err error) {
 
 		// 判断是否已存在子进程
 		if pid, pidErr := getPid(pidFile); pidErr == nil {
-
 			process, procErr := os.FindProcess(pid)
 			if procErr != nil {
 				return procErr
@@ -50,7 +49,6 @@ func Start() (err error) {
 			Files: []*os.File{os.Stdin, os.Stdout, os.Stderr},
 		})
 		return procErr
-
 	} else { // 子进程时
 		Log(DEBUG, "Running Sub Process")
 		if AuthConf.IsDebugLvl() {
@@ -68,9 +66,8 @@ func Start() (err error) {
 			if r := recover(); r != nil {
 				err = fmt.Errorf("%s", r)
 				Log(CRITICAL, err.Error())
-
 			}
-			//Log(NOTICE, "bifrost is finished")
+			// Log(NOTICE, "bifrost is finished")
 		}()
 
 		// 执行bifrost进程
@@ -85,7 +82,7 @@ func Start() (err error) {
 
 		// 启动bifrost进程
 		Log(NOTICE, "bifrost <PID %d> is running", pid)
-		//Run()
+		// Run()
 		runErr := ServerRun()
 		Log(NOTICE, "bifrost <PID %d> is finished", pid)
 		return runErr
@@ -96,7 +93,6 @@ func Start() (err error) {
 // 返回值:
 //     错误
 func Stop() error {
-
 	// 判断bifrost进程是否存在
 	process, procErr := getProc(pidFile)
 	if procErr != nil {

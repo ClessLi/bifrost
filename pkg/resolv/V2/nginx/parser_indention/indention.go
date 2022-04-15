@@ -31,12 +31,14 @@ func (i *indention) SetGlobalDeep(deep int) {
 func (i indention) GlobalDeep() int {
 	i.locker.RLock()
 	defer i.locker.RUnlock()
+
 	return i.globalDeep
 }
 
 func (i indention) GlobalIndents() string {
 	i.locker.RLock()
 	defer i.locker.RUnlock()
+
 	return strings.Repeat(i.indent, i.globalDeep)
 }
 
@@ -47,6 +49,7 @@ func (i indention) ConfigIndents() string {
 func (i indention) NextIndention() Indention {
 	i.locker.RLock()
 	defer i.locker.RUnlock()
+
 	return &indention{
 		configDeep: i.configDeep + 1,
 		globalDeep: i.globalDeep + 1,

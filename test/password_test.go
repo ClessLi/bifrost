@@ -1,8 +1,9 @@
 package test
 
 import (
-	"github.com/ClessLi/bifrost/internal/pkg/password"
 	"testing"
+
+	"github.com/ClessLi/bifrost/internal/pkg/password"
 )
 
 func TestPassword(t *testing.T) {

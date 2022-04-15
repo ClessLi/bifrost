@@ -1,11 +1,13 @@
 package main
 
 import (
-	"github.com/ClessLi/bifrost/internal/bifrost"
-	"github.com/marmotedu/component-base/pkg/time"
 	"math/rand"
 	"os"
 	"runtime"
+
+	"github.com/marmotedu/component-base/pkg/time"
+
+	"github.com/ClessLi/bifrost/internal/bifrost"
 )
 
 func main() {

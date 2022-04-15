@@ -8,7 +8,7 @@ type Topo struct {
 }
 
 func (t Topo) CircleVertexIndex() *Vertex {
-	//if len(t.topoGraph.graph) < t.topoVertexCount {
+	// if len(t.topoGraph.graph) < t.topoVertexCount {
 	for i, inDegree := range t.inDegrees {
 		if inDegree > 0 {
 			return t.graph.GetVertex(i)

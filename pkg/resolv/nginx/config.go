@@ -48,7 +48,6 @@ func (c *Config) Save() (Caches, error) {
 	}
 
 	return caches, nil
-
 }
 
 func (c Config) getCaches() (Caches, error) {
@@ -197,7 +196,6 @@ func (c *Config) QueryAllByKeywords(kw Keywords) (parsers []Parser) {
 		parsers = append(parsers, c)
 	}
 	return c.subQueryAll(parsers, kw)
-
 }
 
 func (c *Config) QueryByKeywords(kw Keywords) (parser Parser) {

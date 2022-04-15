@@ -3,14 +3,6 @@ package configuration
 import (
 	"bytes"
 	"fmt"
-	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
-	"github.com/ClessLi/bifrost/internal/pkg/code"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loader"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/utils"
-	"github.com/marmotedu/errors"
-	"github.com/wxnacy/wgo/arrays"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -18,6 +10,16 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/marmotedu/errors"
+	"github.com/wxnacy/wgo/arrays"
+
+	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
+	log "github.com/ClessLi/bifrost/pkg/log/v1"
+	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
+	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loader"
+	"github.com/ClessLi/bifrost/pkg/resolv/V2/utils"
 )
 
 type ConfigManager interface {
@@ -111,6 +113,7 @@ func (c configManager) serverStatus() (status v1.State) {
 	if procErr != nil {
 		return v1.Abnormal
 	}
+
 	return v1.Normal
 }
 
@@ -139,12 +142,14 @@ func (c *configManager) regularlyBackup(duration time.Duration, signalChan chan 
 		// 1) save with check
 		err := c.SaveWithCheck()
 		// 非指纹相同的报错则退出备份
-		if err != nil && !errors.IsCode(err, code.ErrSameConfigFingerprint) && !errors.IsCode(err, code.ErrSameConfigFingerprints) {
+		if err != nil && !errors.IsCode(err, code.ErrSameConfigFingerprint) &&
+			!errors.IsCode(err, code.ErrSameConfigFingerprints) {
 			backupErr = err
+
 			continue
 		}
 		// 2) 开始备份
-		//system time
+		// system time
 		TZ := time.Local
 		// 归档日期初始化
 		now := time.Now().In(TZ)
@@ -153,6 +158,7 @@ func (c *configManager) regularlyBackup(duration time.Duration, signalChan chan 
 		archiveDir, err := filepath.Abs(filepath.Dir(c.configuration.Self().GetValue()))
 		if err != nil {
 			backupErr = errors.Wrap(err, "failed to format archive directory")
+
 			continue
 		}
 		archivePath := filepath.Join(archiveDir, backupName)
@@ -177,6 +183,7 @@ func (c *configManager) regularlyBackup(duration time.Duration, signalChan chan 
 		if err != nil {
 			log.Warn("failed to check and clean backups, " + err.Error())
 			backupErr = err
+
 			continue
 		}
 
@@ -192,6 +199,7 @@ func (c *configManager) regularlyBackup(duration time.Duration, signalChan chan 
 		if err != nil {
 			log.Warn("failed to backup configs, " + err.Error())
 			backupErr = err
+
 			continue
 		}
 
@@ -202,6 +210,7 @@ func (c *configManager) regularlyBackup(duration time.Duration, signalChan chan 
 		}
 		log.Info("complete configs backup")
 	}
+
 	return backupErr
 }
 
@@ -222,6 +231,7 @@ func (c *configManager) regularlyReload(duration time.Duration, signalChan chan 
 		config, configPaths, err := c.load()
 		if err != nil {
 			reloadErr = err
+
 			continue
 		}
 
@@ -235,6 +245,7 @@ func (c *configManager) regularlyReload(duration time.Duration, signalChan chan 
 			if !errors.IsCode(err, code.ErrSameConfigFingerprint) {
 				reloadErr = err
 			}
+
 			continue
 		}
 		c.rwLocker.Lock()
@@ -242,6 +253,7 @@ func (c *configManager) regularlyReload(duration time.Duration, signalChan chan 
 		c.configFilesFingerprint.Renew(config.getConfigFingerprinter())
 		c.rwLocker.Unlock()
 	}
+
 	return reloadErr
 }
 
@@ -279,6 +291,7 @@ func (c *configManager) regularlySave(duration time.Duration, signalChan chan in
 		// 1) 不一致则save with check
 		saveErr = c.SaveWithCheck()
 	}
+
 	return saveErr
 }
 
@@ -291,7 +304,10 @@ func (c *configManager) SaveWithCheck() error {
 
 	// 2) 比较内存配置指纹与old配置指纹是否一致
 	if !c.configuration.getConfigFingerprinter().Diff(oldConfig.getConfigFingerprinter()) {
-		return errors.WithCode(code.ErrSameConfigFingerprints, "same config fingerprint between files and configuration")
+		return errors.WithCode(
+			code.ErrSameConfigFingerprints,
+			"same config fingerprint between files and configuration",
+		)
 	}
 
 	// 2) 不一致则save内存配置
@@ -332,11 +348,11 @@ func (c configManager) save() ([]string, error) {
 	for s, bytes := range dumps {
 		// 判断是否为单元测试
 		if len(os.Args) > 3 && os.Args[1] == "-test.v" && os.Args[2] == "-test.run" {
-			fmt.Println(s, ":")
-			fmt.Println(string(bytes))
+			log.Infof("%s: %s", s, string(bytes))
+
 			continue
 		}
-		err := ioutil.WriteFile(s, bytes, 0755)
+		err := ioutil.WriteFile(s, bytes, 0600)
 		if err != nil {
 			return nil, err
 		}
@@ -348,6 +364,7 @@ func (c configManager) save() ([]string, error) {
 
 		configPaths = append(configPaths, s)
 	}
+
 	return configPaths, nil
 }
 
@@ -356,9 +373,10 @@ func (c configManager) Check() error {
 	if arrays.ContainsString(os.Args, "-test.v") >= 0 && arrays.ContainsString(os.Args, "-test.run") >= 0 {
 		return nil
 	}
-	//cmd := exec.Command(c.serverBinPath, "-tc", c.mainConfigPath)
+	// cmd := exec.Command(c.serverBinPath, "-tc", c.mainConfigPath)
 	cmd := c.serverBinCMD("-t")
 	cmd.Stderr = os.Stderr
+
 	return cmd.Run()
 
 	/*// debug test
@@ -368,7 +386,8 @@ func (c configManager) Check() error {
 
 func (c configManager) serverBinCMD(arg ...string) *exec.Cmd {
 	arg = append(arg, "-c", c.mainConfigPath)
-	return exec.Command(c.serverBinPath, arg...)
+
+	return exec.Command(c.serverBinPath, arg...) //nolint:gosec
 }
 
 func (c *configManager) Start() error {
@@ -395,6 +414,7 @@ func (c *configManager) Start() error {
 		}
 	}()
 	c.isRunning = true
+
 	return nil
 }
 
@@ -410,7 +430,12 @@ func (c *configManager) Stop() error {
 			if errorStr != "" {
 				errorStr += ", "
 			}
-			errorStr += fmt.Sprintf("stop goroutine %s timed out for more than %d", goroutineName, int(waittime/time.Second))
+			errorStr += fmt.Sprintf(
+				"stop goroutine %s timed out for more than %d",
+				goroutineName,
+				int(waittime/time.Second),
+			)
+
 			break
 		case signalChan <- 9:
 			break
@@ -425,10 +450,17 @@ func (c *configManager) Stop() error {
 		return errors.New(errorStr)
 	}
 	c.isRunning = false
+
 	return nil
 }
 
-func NewNginxConfigurationManager(loader loader.Loader, configuration Configuration, serverBinPath, backupDir string, backupCycle, backupSaveTime int, rwLocker *sync.RWMutex) ConfigManager {
+func NewNginxConfigurationManager(
+	loader loader.Loader,
+	configuration Configuration,
+	serverBinPath, backupDir string,
+	backupCycle, backupSaveTime int,
+	rwLocker *sync.RWMutex,
+) ConfigManager {
 	fingerprinter := utils.NewConfigFingerprinter(make(map[string][]byte))
 	fingerprinter.Renew(configuration.getConfigFingerprinter())
 	cm := &configManager{
@@ -450,5 +482,6 @@ func NewNginxConfigurationManager(loader loader.Loader, configuration Configurat
 	for s := range cm.configuration.Dump() {
 		cm.configPaths = append(cm.configPaths, s)
 	}
+
 	return cm
 }

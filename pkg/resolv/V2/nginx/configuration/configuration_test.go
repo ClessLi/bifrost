@@ -3,9 +3,10 @@ package configuration
 import (
 	"encoding/json"
 	"fmt"
+	"testing"
+
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_type"
-	"testing"
 )
 
 func exampleNewConfiguration() (Configuration, error) {
@@ -93,12 +94,18 @@ func TestConfiguration_InsertLoopConfig(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	locationConfig, err := config.Query("config:sep: F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\conf.d\\location.conf")
+	locationConfig, err := config.Query(
+		"config:sep: F:\\GO_Project\\src\\bifrost\\test\\nginx\\conf\\conf.d\\location.conf",
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
 	svr := location.fatherContext()
-	loopInclude := parser.NewContext("./conf.d/location.conf", parser_type.TypeInclude, svr.GetIndention().NextIndention())
+	loopInclude := parser.NewContext(
+		"./conf.d/location.conf",
+		parser_type.TypeInclude,
+		svr.GetIndention().NextIndention(),
+	)
 	err = config.InsertByQueryer(loopInclude, location)
 	if err != nil {
 		t.Fatal(err)

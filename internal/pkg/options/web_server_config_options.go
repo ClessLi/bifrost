@@ -1,22 +1,24 @@
 package options
 
 import (
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
-	"github.com/marmotedu/errors"
-	"github.com/spf13/pflag"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/marmotedu/errors"
+	"github.com/spf13/pflag"
+
+	log "github.com/ClessLi/bifrost/pkg/log/v1"
 )
 
 type WebServerConfigOptions struct {
-	ServerName     string `json:"server-name" mapstructure:"server-name"`
-	ServerType     string `json:"server-type" mapstructure:"server-type"`
-	ConfigPath     string `json:"config-path" mapstructure:"config-path"`
+	ServerName     string `json:"server-name"      mapstructure:"server-name"`
+	ServerType     string `json:"server-type"      mapstructure:"server-type"`
+	ConfigPath     string `json:"config-path"      mapstructure:"config-path"`
 	VerifyExecPath string `json:"verify-exec-path" mapstructure:"verify-exec-path"`
-	LogsDirPath    string `json:"logs-dir-path" mapstructure:"logs-dir-path"`
-	BackupDir      string `json:"backup-dir" mapstructure:"backup-dir"`
-	BackupCycle    int    `json:"backup-cycle" mapstructure:"backup-cycle"`
+	LogsDirPath    string `json:"logs-dir-path"    mapstructure:"logs-dir-path"`
+	BackupDir      string `json:"backup-dir"       mapstructure:"backup-dir"`
+	BackupCycle    int    `json:"backup-cycle"     mapstructure:"backup-cycle"`
 	BackupSaveTime int    `json:"backup-save-time" mapstructure:"backup-save-time"`
 }
 
@@ -43,8 +45,13 @@ func (c *WebServerConfigOptions) AddFlags(fs *pflag.FlagSet) {
 		"Set the path of the web server configuration verification binary file."+
 		" It cannot be empty and the file exists.")
 
-	fs.StringVar(&c.LogsDirPath, "web-server-config.logs-dir-path", filepath.Join(filepath.Dir(filepath.Dir(c.VerifyExecPath)), "logs"), ""+
-		"Set the path of the web server logs dir path.")
+	fs.StringVar(
+		&c.LogsDirPath,
+		"web-server-config.logs-dir-path",
+		filepath.Join(filepath.Dir(filepath.Dir(c.VerifyExecPath)), "logs"),
+		""+
+			"Set the path of the web server logs dir path.",
+	)
 
 	fs.StringVar(&c.BackupDir, "web-server-config.backup-dir", c.BackupDir, ""+
 		"Set the special path of the web server configuration file backup directory."+
@@ -74,9 +81,7 @@ func (c *WebServerConfigOptions) Validate() []error {
 	}
 
 	// validate config-path
-	if len(strings.TrimSpace(c.ConfigPath)) == 0 {
-		errs = append(errs, errors.New("--web-server-config.config-path cannot be empty."))
-	} else {
+	if len(strings.TrimSpace(c.ConfigPath)) != 0 { //nolint:nestif
 		conff, err := os.Stat(c.ConfigPath)
 		if err != nil {
 			errs = append(errs, errors.Wrapf(err, "--web-server-config.config-path %s check failed.", c.ConfigPath))
@@ -85,12 +90,12 @@ func (c *WebServerConfigOptions) Validate() []error {
 				errs = append(errs, errors.Errorf("--web-server-config.config-path %s cannot be a directory.", c.ConfigPath))
 			}
 		}
+	} else {
+		errs = append(errs, errors.New("--web-server-config.config-path cannot be empty."))
 	}
 
 	// validate verify-exec-path
-	if len(strings.TrimSpace(c.VerifyExecPath)) == 0 {
-		errs = append(errs, errors.New("--web-server-config.verify-exec-path cannot be empty."))
-	} else {
+	if len(strings.TrimSpace(c.VerifyExecPath)) != 0 { //nolint:nestif
 		vexecf, err := os.Stat(c.VerifyExecPath)
 		if err != nil {
 			errs = append(errs, errors.Wrapf(err, "--web-server-config.verify-exec-path %s check failed.", c.VerifyExecPath))
@@ -99,6 +104,8 @@ func (c *WebServerConfigOptions) Validate() []error {
 				errs = append(errs, errors.Errorf("--web-server-config.verify-exec-path %s cannot be a directory.", c.VerifyExecPath))
 			}
 		}
+	} else {
+		errs = append(errs, errors.New("--web-server-config.verify-exec-path cannot be empty."))
 	}
 
 	// validate backup-dir
@@ -112,6 +119,7 @@ func (c *WebServerConfigOptions) Validate() []error {
 			}
 		}
 	}
+
 	return errs
 }
 

@@ -2,14 +2,16 @@ package health_check
 
 import (
 	"context"
-	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
-	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/fake"
-	clientv1 "github.com/ClessLi/bifrost/pkg/client/grpc_health_v1"
+	"net"
+	"testing"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
-	"net"
-	"testing"
+
+	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
+	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/fake"
+	clientv1 "github.com/ClessLi/bifrost/pkg/client/grpc_health_v1"
 )
 
 //func TestHealthCheck(t *testing.T) {

@@ -2,13 +2,19 @@ package web_server_log_watcher
 
 import (
 	"context"
+	"io"
+
+	"github.com/marmotedu/errors"
+
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
 	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/utils"
-	"io"
 )
 
-func (w *webServerLogWatcherServer) Watch(request *pbv1.LogWatchRequest, stream pbv1.WebServerLogWatcher_WatchServer) error {
+func (w *webServerLogWatcherServer) Watch(
+	request *pbv1.LogWatchRequest,
+	stream pbv1.WebServerLogWatcher_WatchServer,
+) error {
 	reqCtx, cancel := context.WithCancel(stream.Context())
 	defer cancel()
 
@@ -32,10 +38,10 @@ func (w *webServerLogWatcherServer) Watch(request *pbv1.LogWatchRequest, stream 
 			err = utils.StreamSendMsg(stream, line, w.options.ChunkSize, func(msg []byte) interface{} {
 				return &pbv1.Response{Msg: msg}
 			})
-			if err != nil && err != io.EOF {
+			if err != nil && !errors.Is(err, io.EOF) {
 				return err
 			}
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				return nil
 			}
 		}

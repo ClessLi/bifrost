@@ -2,6 +2,7 @@ package parser
 
 import (
 	"bytes"
+
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/dumper"
 )
 
@@ -18,6 +19,7 @@ func (c Config) Bytes() []byte {
 		child.SetGlobalDeep(c.indention.GlobalDeep())
 		buff.Write(child.Bytes())
 	}
+
 	return buff.Bytes()
 }
 
@@ -31,6 +33,7 @@ func (c Config) Dump(dumper dumper.Dumper) error {
 			return err
 		}
 	}
-	//return nil
+	// return nil
+
 	return dumper.Done(c.GetValue())
 }

@@ -79,14 +79,14 @@ func newKW(pType parserType, values ...string) (*Keywords, error) {
 		case TypeEvents, TypeHttp, TypeServer, TypeStream, TypeTypes:
 			kws = NewKeyWords(pType, "", "", false, false)
 		default:
-			return nil, fmt.Errorf("unkown nginx context type: %s", pType)
+			return nil, fmt.Errorf("unknown nginx context type: %s", pType)
 		}
 	} else {
 		switch pType {
 		case TypeEvents, TypeHttp, TypeServer, TypeStream, TypeTypes:
 			kws = NewKeyWords(pType, "", "", false, false)
 		default:
-			return nil, fmt.Errorf("unkown nginx context type: %s", pType)
+			return nil, fmt.Errorf("unknown nginx context type: %s", pType)
 		}
 	}
 

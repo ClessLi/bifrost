@@ -2,8 +2,9 @@ package test
 
 import (
 	"fmt"
-	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
 	"testing"
+
+	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
 )
 
 func TestOperate(t *testing.T) {
@@ -54,7 +55,12 @@ func TestOperate(t *testing.T) {
 		t.Log(s2Err)
 	}
 
-	s3Err := http.Insert(http.Query(nginx.TypeServer, false, "listen:^80$", "server_name:example.com"), nginx.TypeServer, "listen:80", "server_name:test.example.com")
+	s3Err := http.Insert(
+		http.Query(nginx.TypeServer, false, "listen:^80$", "server_name:example.com"),
+		nginx.TypeServer,
+		"listen:80",
+		"server_name:test.example.com",
+	)
 	if s3Err != nil {
 		t.Log(s3Err)
 	}
@@ -73,7 +79,12 @@ func TestOperate(t *testing.T) {
 		}
 
 		// http Modify 方法测试， 配置查询 include 内 server 对象
-		smErr := h.(*nginx.Http).Modify(conf.Query(nginx.TypeServer, true, "listen:^443$"), nginx.TypeServer, "listen:5443", "server_name:test2.example.com")
+		smErr := h.(*nginx.Http).Modify(
+			conf.Query(nginx.TypeServer, true, "listen:^443$"),
+			nginx.TypeServer,
+			"listen:5443",
+			"server_name:test2.example.com",
+		)
 		if smErr != nil {
 			t.Log(smErr)
 		}
@@ -84,7 +95,13 @@ func TestOperate(t *testing.T) {
 	if cicommErr != nil {
 		t.Log(cicommErr)
 	}
-	ciupErr := conf.Insert(h, nginx.TypeUpstream, "test", "server:1.1.1.1:443    weight=10", "server:1.1.1.2:443  weight=10")
+	ciupErr := conf.Insert(
+		h,
+		nginx.TypeUpstream,
+		"test",
+		"server:1.1.1.1:443    weight=10",
+		"server:1.1.1.2:443  weight=10",
+	)
 	if ciupErr != nil {
 		t.Log(ciupErr)
 	}

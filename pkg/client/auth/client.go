@@ -1,9 +1,11 @@
 package auth
 
 import (
-	"github.com/ClessLi/bifrost/internal/pkg/auth/service"
-	"google.golang.org/grpc"
 	"time"
+
+	"google.golang.org/grpc"
+
+	"github.com/ClessLi/bifrost/internal/pkg/auth/service"
 )
 
 type Client struct {
@@ -12,7 +14,7 @@ type Client struct {
 }
 
 func NewClient(svrAddr string) (*Client, error) {
-	conn, err := grpc.Dial(svrAddr, grpc.WithInsecure(), grpc.WithTimeout(time.Second))
+	conn, err := grpc.Dial(svrAddr, grpc.WithInsecure(), grpc.WithTimeout(time.Second)) //nolint:staticcheck
 	if err != nil {
 		return nil, err
 	}

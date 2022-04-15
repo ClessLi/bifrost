@@ -1,13 +1,14 @@
 package graph
 
 import (
+	log "github.com/ClessLi/bifrost/pkg/log/v1"
 	"github.com/ClessLi/bifrost/pkg/queue"
 )
 
 type Graph struct {
 	graph          map[string]*Vertex
 	StartingVertex *Vertex
-	//currentVertex  *Vertex
+	// currentVertex  *Vertex
 }
 
 //func (g *Graph) SetCurrentVertex(id string) error {
@@ -41,12 +42,14 @@ func (g *Graph) AddEdge(sid, tid string) error {
 	if tv == nil {
 		g.graph[tid] = newVertex(tid)
 	} else {
-		err = g.topoLogicalSortByKahn()
+		err = g.topologicalSortByKahn()
 		if err != nil {
 			sv.DelEdge(tid)
+
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -56,6 +59,7 @@ func (g *Graph) DelEdge(sid, tid string) error {
 		return ErrVertexNotExist
 	}
 	sv.DelEdge(tid)
+
 	return nil
 }
 
@@ -64,10 +68,12 @@ func (g Graph) GetVertex(sid string) *Vertex {
 	if ok {
 		return v
 	}
+
 	return nil
 }
 
-func (g *Graph) topoLogicalSortByKahn() error {
+//nolint:gocognit
+func (g *Graph) topologicalSortByKahn() error {
 	vertexCount := len(g.graph)
 	inDegrees := make(map[string]int)
 	for idx := range g.graph {
@@ -79,7 +85,7 @@ func (g *Graph) topoLogicalSortByKahn() error {
 			if tid == "" {
 				return nil
 			}
-			if _, ok := inDegrees[tid]; ok {
+			if _, ok := inDegrees[tid]; ok { //nolint:gosimple
 				inDegrees[tid]++
 			} else {
 				inDegrees[tid] = 1
@@ -96,7 +102,7 @@ func (g *Graph) topoLogicalSortByKahn() error {
 	if stringQueue.IsEmpty() {
 		return ErrLoopOfTopologicalGraph
 	}
-	//stringQueue.Add(g.StartingVertex.id)
+	// stringQueue.Add(g.StartingVertex.id)
 
 	var currentVertex *Vertex
 	var topoGraph *Graph
@@ -108,7 +114,9 @@ func (g *Graph) topoLogicalSortByKahn() error {
 		} else {
 			err := topoGraph.AddEdge(currentVertex.id, id)
 			if err != nil {
-				return nil
+				log.Warnf("graph add edge error: %w", err)
+
+				return nil //nolint:nilerr
 			}
 			currentVertex = topoGraph.GetVertex(id)
 		}
@@ -130,6 +138,7 @@ func (g *Graph) topoLogicalSortByKahn() error {
 	if loopVertex != nil {
 		return ErrLoopOfTopologicalGraph
 	}
+
 	return nil
 }
 
@@ -138,8 +147,9 @@ func NewGraph(startingVertexId string) *Graph {
 	graph := &Graph{
 		graph:          make(map[string]*Vertex),
 		StartingVertex: v,
-		//currentVertex:  v,
+		// currentVertex:  v,
 	}
 	graph.graph[startingVertexId] = v
+
 	return graph
 }

@@ -1,19 +1,22 @@
 package options
 
 import (
-	"github.com/ClessLi/bifrost/internal/pkg/file_watcher"
+	"time"
+
 	"github.com/marmotedu/errors"
 	"github.com/spf13/pflag"
-	"time"
+
+	"github.com/ClessLi/bifrost/internal/pkg/file_watcher"
 )
 
 type WebServerLogWatcherOptions struct {
 	MaxConnections int           `json:"max-connections" mapstructure:"max-connections"`
-	WatchTimeout   time.Duration `json:"watch-timeout" mapstructure:"watch-timeout"`
+	WatchTimeout   time.Duration `json:"watch-timeout"   mapstructure:"watch-timeout"`
 }
 
 func NewWebServerLogWatcherOptions() *WebServerLogWatcherOptions {
 	defaults := file_watcher.NewConfig()
+
 	return &WebServerLogWatcherOptions{
 		MaxConnections: defaults.MaxConnections,
 		WatchTimeout:   defaults.OutputTimeout,
@@ -32,7 +35,10 @@ func (w *WebServerLogWatcherOptions) Validate() []error {
 	var errs []error
 
 	if w.MaxConnections < 1 {
-		errs = append(errs, errors.Errorf("--web-server-log-watcher.max-connections %d must great than 0", w.MaxConnections))
+		errs = append(
+			errs,
+			errors.Errorf("--web-server-log-watcher.max-connections %d must great than 0", w.MaxConnections),
+		)
 	}
 
 	return errs
@@ -41,5 +47,6 @@ func (w *WebServerLogWatcherOptions) Validate() []error {
 func (w *WebServerLogWatcherOptions) ApplyTo(c *file_watcher.Config) error {
 	c.MaxConnections = w.MaxConnections
 	c.OutputTimeout = w.WatchTimeout
+
 	return nil
 }

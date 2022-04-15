@@ -10,7 +10,10 @@ type webServerStatusServer struct {
 	options *options.Options
 }
 
-func NewWebServerStatusServer(handler handler.WebServerStatusHandlers, options *options.Options) *webServerStatusServer {
+func NewWebServerStatusServer(
+	handler handler.WebServerStatusHandlers,
+	options *options.Options,
+) *webServerStatusServer {
 	return &webServerStatusServer{
 		handler: handler,
 		options: options,

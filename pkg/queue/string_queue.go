@@ -9,6 +9,7 @@ func (q *StringQueue) Add(n string) {
 func (q *StringQueue) Poll() string {
 	p := (*q)[0]
 	*q = (*q)[1:]
+
 	return p
 }
 
