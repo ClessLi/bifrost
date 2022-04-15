@@ -21,6 +21,7 @@ readonly BIFROST_GITHUB_ORG=ClessLi
 readonly BIFROST_GITHUB_REPO=bifrost
 
 readonly ARTIFACT=bifrost.tar.gz
+readonly SERVER_ARTIFACTS='bifrost-server-*-*.tar.gz'
 readonly CHECKSUM=${ARTIFACT}.sha1sum
 
 BIFROST_BUILD_CONFORMANCE=${BIFROST_BUILD_CONFORMANCE:-y}
@@ -82,7 +83,7 @@ function bifrost::release::package_tarballs() {
   # Clean out any old releases
   rm -rf "${RELEASE_STAGE}" "${RELEASE_TARS}" "${RELEASE_IMAGES}"
   mkdir -p "${RELEASE_TARS}"
-  bifrost::release::package_src_tarball &
+#  bifrost::release::package_src_tarball &
   bifrost::release::package_server_tarballs &
   bifrost::util::wait-for-jobs || { bifrost::log::error "previous tarball phase failed"; return 1; }
 
@@ -194,9 +195,10 @@ function bifrost::release::package_final_tarball() {
   cp -R "${BIFROST_ROOT}/scripts/release" "${release_stage}/"
 
   mkdir -p "${release_stage}/server"
-  cat <<EOF > "${release_stage}/server/README"
-Server binary tarballs are no longer included in the Bifrost final tarball.
-EOF
+#  cat <<EOF > "${release_stage}/server/README"
+#Server binary tarballs are no longer included in the Bifrost final tarball.
+#EOF
+  cp ${RELEASE_TARS}/${SERVER_ARTIFACTS} ${release_stage}/server
 
   # Include hack/lib as a dependency for the cluster/ scripts
   #mkdir -p "${release_stage}/hack"
@@ -287,13 +289,13 @@ function bifrost::release::github_release() {
     --name ${ARTIFACT} \
     --file ${RELEASE_TARS}/${ARTIFACT}
 
-  bifrost::log::info "upload bifrost-src.tar.gz to release ${BIFROST_GIT_VERSION}"
-  github-release upload \
-    --user ${BIFROST_GITHUB_ORG} \
-    --repo ${BIFROST_GITHUB_REPO} \
-    --tag ${BIFROST_GIT_VERSION} \
-    --name "bifrost-src.tar.gz" \
-    --file ${RELEASE_TARS}/bifrost-src.tar.gz
+#  bifrost::log::info "upload bifrost-src.tar.gz to release ${BIFROST_GIT_VERSION}"
+#  github-release upload \
+#    --user ${BIFROST_GITHUB_ORG} \
+#    --repo ${BIFROST_GITHUB_REPO} \
+#    --tag ${BIFROST_GIT_VERSION} \
+#    --name "bifrost-src.tar.gz" \
+#    --file ${RELEASE_TARS}/bifrost-src.tar.gz
 }
 
 function bifrost::release::generate_changelog() {
