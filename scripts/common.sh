@@ -28,7 +28,7 @@ source "${BIFROST_ROOT}/scripts/lib/init.sh"
 #                    is really remote, this is the stuff that has to be copied
 #                    back.
 # OUT_DIR can come in from the Makefile, so honor it.
-readonly LOCAL_OUTPUT_ROOT="${BIFROST_ROOT}/${OUT_DIR:-_output}"
+readonly LOCAL_OUTPUT_ROOT="${ROOT_DIR}/${OUT_DIR:-_output}"
 readonly LOCAL_OUTPUT_SUBPATH="${LOCAL_OUTPUT_ROOT}/platforms"
 readonly LOCAL_OUTPUT_BINPATH="${LOCAL_OUTPUT_SUBPATH}"
 readonly LOCAL_OUTPUT_GOPATH="${LOCAL_OUTPUT_SUBPATH}/go"
