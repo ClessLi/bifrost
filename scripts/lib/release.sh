@@ -299,20 +299,24 @@ function bifrost::release::github_release() {
 function bifrost::release::generate_changelog() {
   bifrost::log::info "generate CHANGELOG-${BIFROST_GIT_VERSION#v}.md and commit it"
 
+  readonly BIFROST_CHANGELOG="$(git-chglog ${BIFROST_GIT_VERSION})"
   local CHANGELOG_COMMIT_MSG="docs(changelog): add \`CHANGELOG-${BIFROST_GIT_VERSION#v}.md\`"
 
   if [[ "$(git log origin/${BIFROST_CURRENT_BRANCH} | grep -F "${CHANGELOG_COMMIT_MSG}" | wc -l)" -ne 0 ]]
     then
-      bifrost::log::info "CHANGELOG-${BIFROST_GIT_VERSION#v}.md is committed and pushed"
+      bifrost::log::info "CHANGELOG-${BIFROST_GIT_VERSION#v}.md has been committed and pushed"
       return
   fi
 
-  readonly BIFROST_CHANGELOG="$(git-chglog ${BIFROST_GIT_VERSION})"
   echo "${BIFROST_CHANGELOG}" > ${BIFROST_ROOT}/CHANGELOG/CHANGELOG-${BIFROST_GIT_VERSION#v}.md
 
   current_commit_id=$(git log HEAD -n 1 --pretty=format:%H)
   git add ${ROOT_DIR}/CHANGELOG/CHANGELOG-${BIFROST_GIT_VERSION#v}.md
   git commit -a -m "${CHANGELOG_COMMIT_MSG}"
-  git push origin HEAD || git reset --soft "${current_commit_id}"
+  if ! git push origin HEAD
+    then
+      git reset --soft "${current_commit_id}"
+      bifrost::log::error_exit "failed to push commit"
+  fi
 }
 
