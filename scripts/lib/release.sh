@@ -299,7 +299,6 @@ function bifrost::release::github_release() {
 function bifrost::release::generate_changelog() {
   bifrost::log::info "generate CHANGELOG-${BIFROST_GIT_VERSION#v}.md and commit it"
 
-  readonly BIFROST_CHANGELOG="$(git-chglog ${BIFROST_GIT_VERSION})"
   local CHANGELOG_COMMIT_MSG="docs(changelog): add \`CHANGELOG-${BIFROST_GIT_VERSION#v}.md\`"
 
   if [[ "$(git log origin/${BIFROST_CURRENT_BRANCH} | grep -F "${CHANGELOG_COMMIT_MSG}" | wc -l)" -ne 0 ]]

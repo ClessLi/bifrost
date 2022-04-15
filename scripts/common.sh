@@ -55,6 +55,7 @@ function bifrost::build::verify_prereqs() {
 
   bifrost::version::get_version_vars
   #bifrost::version::save_version_vars "${BIFROST_ROOT}/.dockerized-bifrost-version-defs"
+  BIFROST_CHANGELOG="$(git-chglog ${BIFROST_GIT_VERSION})"
 }
 
 # ---------------------------------------------------------------------------
