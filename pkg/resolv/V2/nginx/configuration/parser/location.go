@@ -1,5 +1,5 @@
 package parser
 
-type location struct {
+type Location struct {
 	BasicContext `json:"location"`
 }
