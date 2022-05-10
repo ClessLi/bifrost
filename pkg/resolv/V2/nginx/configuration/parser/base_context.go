@@ -133,6 +133,13 @@ func (b *BasicContext) Query(words KeyWords) (Context, int) {
 		if child.Match(words) {
 			return b, idx
 		}
+
+		// if query with non-cascaded KeyWords,
+		// only the children of the current context will be used for retrieval matching.
+		if !words.Cascaded() {
+			continue
+		}
+
 		if c, ok := child.(Context); ok {
 			ctx, index := c.Query(words)
 			if ctx != nil {
@@ -150,6 +157,13 @@ func (b *BasicContext) QueryAll(words KeyWords) map[Context][]int {
 		if child.Match(words) {
 			result[b] = append(result[b], idx)
 		}
+
+		// if query with non-cascaded KeyWords,
+		// only the children of the current context will be used for retrieval matching.
+		if !words.Cascaded() {
+			continue
+		}
+
 		if c, ok := child.(Context); ok {
 			subResult := c.QueryAll(words)
 			for ctx, indexes := range subResult {
