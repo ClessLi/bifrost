@@ -10,12 +10,15 @@ import (
 
 type KeyWords interface {
 	Match(parser Parser) bool
+	Cascaded() bool
+	SetCascaded(cascaded bool)
 }
 
 type keyWord struct {
 	parserType parser_type.ParserType
 	value      string
 	isReg      bool
+	cascaded   bool
 }
 
 func (k keyWord) Match(parser Parser) bool {
@@ -38,11 +41,25 @@ func (k keyWord) Match(parser Parser) bool {
 	return matched
 }
 
+func (k keyWord) Cascaded() bool {
+	return k.cascaded
+}
+
+func (k *keyWord) SetCascaded(cascaded bool) {
+	k.cascaded = cascaded
+}
+
 func NewKeyWords(pType parser_type.ParserType, isReg bool, value ...string) (KeyWords, error) {
-	var kw keyWord
+	kw := &keyWord{
+		parserType: pType,
+		value:      "",
+		isReg:      isReg,
+		cascaded:   true,
+	}
 	if value != nil {
 		switch pType { //nolint:exhaustive
-		case parser_type.TypeComment,
+		case
+			parser_type.TypeComment,
 			parser_type.TypeKey,
 			parser_type.TypeConfig,
 			parser_type.TypeGeo,
@@ -51,36 +68,36 @@ func NewKeyWords(pType parser_type.ParserType, isReg bool, value ...string) (Key
 			parser_type.TypeLocation,
 			parser_type.TypeMap,
 			parser_type.TypeUpstream:
-			kw = keyWord{
-				parserType: pType,
-				value:      value[0],
-				isReg:      isReg,
-			}
-		case parser_type.TypeEvents,
+
+			kw.value = value[0]
+
+		case
+			parser_type.TypeEvents,
 			parser_type.TypeHttp,
 			parser_type.TypeServer,
 			parser_type.TypeStream,
 			parser_type.TypeTypes:
-			kw = keyWord{
-				parserType: pType,
-				value:      "",
-				isReg:      false,
-			}
+
+			kw.isReg = false
+
 		default:
 			return nil, fmt.Errorf("unknown nginx context type: %s", pType)
 		}
 	} else {
 		switch pType { //nolint:exhaustive
-		case parser_type.TypeEvents, parser_type.TypeHttp, parser_type.TypeServer, parser_type.TypeStream, parser_type.TypeTypes:
-			kw = keyWord{
-				parserType: pType,
-				value:      "",
-				isReg:      false,
-			}
+		case
+			parser_type.TypeEvents,
+			parser_type.TypeHttp,
+			parser_type.TypeServer,
+			parser_type.TypeStream,
+			parser_type.TypeTypes:
+
+			kw.isReg = false
+
 		default:
 			return nil, fmt.Errorf("unknown nginx context type: %s", pType)
 		}
 	}
 
-	return &kw, nil
+	return kw, nil
 }
