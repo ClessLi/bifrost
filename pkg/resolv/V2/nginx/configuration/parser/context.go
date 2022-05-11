@@ -53,7 +53,7 @@ func NewContext(value string, parserType parser_type.ParserType, indention parse
 	case parser_type.TypeLocation:
 		basicContext.Value = value
 
-		return &location{basicContext}
+		return &Location{basicContext}
 	case parser_type.TypeMap:
 		basicContext.Value = value
 

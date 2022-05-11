@@ -29,6 +29,9 @@ func (d *dumper) Truncate(k string, n int) (err error) {
 		}
 	}()
 	if buff, ok := d.cache[k]; ok {
+		if d.isDone(k) {
+			return nil
+		}
 		buff.Truncate(n)
 
 		return nil
