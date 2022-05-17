@@ -1,6 +1,7 @@
 package loader
 
 import (
+	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"os"
@@ -150,6 +151,36 @@ func (l *loader) loadFromConfigPosition(configAbsPath string) (parser.Context, e
 		return false
 	}
 
+	parseLuaContext := func(reg *regexp.Regexp, indention parser_indention.Indention) bool {
+		var (
+			contextValue string
+			contextName  string
+		)
+
+		if matchIndexes := reg.FindIndex(configData[index:]); matchIndexes != nil {
+			configDeep++
+			switch reg {
+			case RegLuaBlockHead:
+				matchValues := reg.FindSubmatch(configData[index:])
+				contextValue = string(matchValues[len(matchValues)-1])
+				contextName = string(matchValues[len(matchValues)-2])
+			default:
+				configDeep--
+
+				return false
+			}
+			ctx := parser.NewLuaContext(contextName, contextValue, indention)
+			if ctx != nil {
+				parsers = append([]parser.Parser{ctx}, parsers...)
+				index += matchIndexes[len(matchIndexes)-1]
+
+				return true
+			}
+		}
+
+		return false
+	}
+
 	parseContextEnd := func() bool {
 		if matchIndexes := RegContextEnd.FindIndex(configData[index:]); matchIndexes != nil { //nolint:nestif
 			index += matchIndexes[len(matchIndexes)-1]
@@ -258,6 +289,37 @@ func (l *loader) loadFromConfigPosition(configAbsPath string) (parser.Context, e
 		return false
 	}
 
+	parseLuaCode := func(indention parser_indention.Indention) bool {
+		ctx, ok := checkContext(parsers)
+		if !ok {
+			return false
+		}
+		_, ok = ctx.(*parser.LuaBlock)
+		if !ok {
+			return false
+		}
+
+		nextBracketIndex := findNextValidBrackets(configData[index:])
+
+		p := parser.NewText(strings.TrimSpace(string(configData[index:index+nextBracketIndex])), indention)
+		index += nextBracketIndex
+		parseErr = ctx.Insert(p, ctx.Len())
+		//if matchIndexes := reg.FindIndex(configData[index:]); matchIndexes != nil { //nolint:nestif
+		//	//subMatch := reg.FindSubmatch(configData[index:])
+		//	p := parser.NewText(string(configData[index:index+matchIndexes[0]]), indention)
+		//	// matchStr := string(configData[index:index+matchIndexes[len(matchIndexes)-1]])
+		//	// fmt.Println(matchStr)
+		//	index += matchIndexes[0]
+		//	parseErr = ctx.Insert(p, ctx.Len())
+		//	if parseErr != nil {
+		//		return false
+		//	}
+		//	return true
+		//}
+
+		return true
+	}
+
 	for {
 		// initial indention
 		for i := len(indentions); i <= configDeep; i++ {
@@ -281,8 +343,10 @@ func (l *loader) loadFromConfigPosition(configAbsPath string) (parser.Context, e
 			parseContext(RegMapHead, indention),
 			parseContext(RegLimitExceptHead, indention),
 			parseContext(RegTypesHead, indention),
+			parseLuaContext(RegLuaBlockHead, indention),
 			parseComment(indention),
 			parseContextEnd(),
+			parseLuaCode(indention),
 			parseKeyOrInclude(RegKeyValue, indention),
 			parseKeyOrInclude(RegKey, indention):
 			if parseErr != nil {
@@ -300,6 +364,58 @@ func (l *loader) loadFromConfigPosition(configAbsPath string) (parser.Context, e
 	}
 
 	return config, parseErr
+}
+
+func findNextValidBrackets(confData []byte) int {
+	runes := bytes.Runes(confData)
+	escape := false
+	enableMatch := true
+	var disableRune rune
+	startCnt := 0
+	validRuneIndex := -1
+	escapeRuneCnt := 0
+Loop:
+	for i, r := range runes {
+		if enableMatch {
+			switch r {
+			case '{':
+				startCnt++
+			case '}':
+				if startCnt == 0 {
+					validRuneIndex = i
+					break Loop
+				} else {
+					startCnt--
+				}
+			case '"', '\'':
+				disableRune = r
+				enableMatch = false
+				escape = true
+			}
+		} else {
+			if r == '\\' {
+				escapeRuneCnt++
+				if escapeRuneCnt == 2 {
+					escapeRuneCnt = 0
+					continue
+				}
+			} else if escapeRuneCnt == 1 {
+				escapeRuneCnt = 0
+				continue
+			}
+			if escape {
+				escape = false
+				continue
+			}
+			if r == disableRune && escapeRuneCnt == 0 {
+				enableMatch = true
+			}
+		}
+	}
+	if validRuneIndex > 0 {
+		return len([]byte(string(runes[:validRuneIndex])))
+	}
+	return -1
 }
 
 func (l *loader) LoadFromJsonBytes(data []byte) (parser.Context, loop_preventer.LoopPreventer, error) {

@@ -22,4 +22,5 @@ const (
 	TypeTypes       ParserType = "types"
 	TypeUpstream    ParserType = "upstream"
 	TypeComment     ParserType = "comment"
+	TypeLuaBlock    ParserType = "lua_block"
 )

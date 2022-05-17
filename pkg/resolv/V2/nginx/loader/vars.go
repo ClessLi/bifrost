@@ -21,6 +21,7 @@ var (
 	RegTypesHead       = regexp.MustCompile(`^\s*types\s*{`)
 	RegContextEnd      = regexp.MustCompile(`^\s*}`)
 	RegCommentHead     = regexp.MustCompile(`^(\s*)#+[ \r\t\f]*(.*?)\n`)
+	RegLuaBlockHead    = regexp.MustCompile(`^\s*(.*_by_lua_block)\s(\$.*)?\s?{`)
 	RegKeyValue        = regexp.MustCompile(S)
 	RegKey             = regexp.MustCompile(`^\s*(` + Normal + `)\s*;`)
 	RegBlankLine       = regexp.MustCompile(`^\n\s*` + LineBreak + `$`)

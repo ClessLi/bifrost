@@ -36,3 +36,22 @@ func TestLoader_LoadFromJsonBytes(t *testing.T) {
 
 	t.Logf(string(testConfig.Bytes()))
 }
+
+func TestReg(t *testing.T) {
+	regStr := `
+       require("phases_module").modules_set()
+
+       require("phasescc_module{}").modules_set()
+		require("phasescc_module").modules_set()
+       require("phases222_modulesdf").modules_set()
+if{
+ {}
+}
+   }
+
+   location = /login/sign/byted/callback {
+       set $loc
+	}`
+
+	t.Log(regStr[:findNextValidBrackets([]byte(regStr))])
+}
