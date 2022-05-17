@@ -1,8 +1,8 @@
 package fake
 
 import (
-	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
-	txpv1 "github.com/ClessLi/bifrost/internal/bifrost/transport/v1"
+	pbv1 "github.com/yongPhone/bifrost/api/protobuf-spec/bifrostpb/v1"
+	txpv1 "github.com/yongPhone/bifrost/internal/bifrost/transport/v1"
 )
 
 type transport struct{}

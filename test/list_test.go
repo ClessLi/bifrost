@@ -3,7 +3,7 @@ package test
 import (
 	"testing"
 
-	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
+	"github.com/yongPhone/bifrost/pkg/resolv/nginx"
 )
 
 func TestList(t *testing.T) {

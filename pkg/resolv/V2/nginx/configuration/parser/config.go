@@ -3,7 +3,7 @@ package parser
 import (
 	"bytes"
 
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/dumper"
+	"github.com/yongPhone/bifrost/pkg/resolv/V2/nginx/dumper"
 )
 
 type Config struct {

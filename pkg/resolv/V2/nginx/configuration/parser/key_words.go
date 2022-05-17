@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_type"
+	"github.com/yongPhone/bifrost/pkg/resolv/V2/nginx/parser_type"
 )
 
 type KeyWords interface {

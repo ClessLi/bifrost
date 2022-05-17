@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
-	svcv1 "github.com/ClessLi/bifrost/internal/bifrost/service/v1"
+	v1 "github.com/yongPhone/bifrost/api/bifrost/v1"
+	svcv1 "github.com/yongPhone/bifrost/internal/bifrost/service/v1"
 )
 
 type loggingWebServerConfigService struct {

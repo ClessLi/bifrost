@@ -5,9 +5,9 @@ import (
 
 	"github.com/marmotedu/errors"
 
-	"github.com/ClessLi/bifrost/internal/pkg/code"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_type"
+	"github.com/yongPhone/bifrost/internal/pkg/code"
+	"github.com/yongPhone/bifrost/pkg/resolv/V2/nginx/configuration/parser"
+	"github.com/yongPhone/bifrost/pkg/resolv/V2/nginx/parser_type"
 )
 
 // keyword string: <parser type>[':sep: <value string>', ':sep: :reg: <value regexp>']

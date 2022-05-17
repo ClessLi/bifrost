@@ -5,7 +5,7 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/ClessLi/bifrost/internal/pkg/auth/service"
+	"github.com/yongPhone/bifrost/internal/pkg/auth/service"
 )
 
 type Client struct {

@@ -1,4 +1,4 @@
-module github.com/ClessLi/bifrost
+module github.com/yongPhone/bifrost
 
 go 1.13
 

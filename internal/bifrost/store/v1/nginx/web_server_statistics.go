@@ -5,10 +5,10 @@ import (
 
 	"github.com/marmotedu/errors"
 
-	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
-	storev1 "github.com/ClessLi/bifrost/internal/bifrost/store/v1"
-	"github.com/ClessLi/bifrost/internal/pkg/code"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration"
+	v1 "github.com/yongPhone/bifrost/api/bifrost/v1"
+	storev1 "github.com/yongPhone/bifrost/internal/bifrost/store/v1"
+	"github.com/yongPhone/bifrost/internal/pkg/code"
+	"github.com/yongPhone/bifrost/pkg/resolv/V2/nginx/configuration"
 )
 
 type webServerStatisticsStore struct {

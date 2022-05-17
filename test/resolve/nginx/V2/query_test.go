@@ -1,9 +1,9 @@
 package V2_test
 
 import (
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_type"
+	"github.com/yongPhone/bifrost/pkg/resolv/V2/nginx/configuration"
+	"github.com/yongPhone/bifrost/pkg/resolv/V2/nginx/configuration/parser"
+	"github.com/yongPhone/bifrost/pkg/resolv/V2/nginx/parser_type"
 	"strings"
 	"testing"
 )

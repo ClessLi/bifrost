@@ -1,8 +1,8 @@
 package web_server_status
 
 import (
-	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
-	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/utils"
+	pbv1 "github.com/yongPhone/bifrost/api/protobuf-spec/bifrostpb/v1"
+	"github.com/yongPhone/bifrost/internal/bifrost/transport/v1/utils"
 )
 
 func (w *webServerStatusServer) Get(r *pbv1.Null, stream pbv1.WebServerStatus_GetServer) error {

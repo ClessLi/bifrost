@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ClessLi/bifrost/internal/bifrost"
-	"github.com/ClessLi/bifrost/internal/bifrost/config"
-	bifrost_opts "github.com/ClessLi/bifrost/internal/bifrost/options"
-	"github.com/ClessLi/bifrost/internal/pkg/options"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
+	"github.com/yongPhone/bifrost/internal/bifrost"
+	"github.com/yongPhone/bifrost/internal/bifrost/config"
+	bifrost_opts "github.com/yongPhone/bifrost/internal/bifrost/options"
+	"github.com/yongPhone/bifrost/internal/pkg/options"
+	log "github.com/yongPhone/bifrost/pkg/log/v1"
 )
 
 const (

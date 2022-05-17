@@ -1,11 +1,11 @@
 package v1
 
 import (
-	"github.com/ClessLi/bifrost/internal/bifrost/endpoint/v1/web_server_config"
-	"github.com/ClessLi/bifrost/internal/bifrost/endpoint/v1/web_server_log_watcher"
-	"github.com/ClessLi/bifrost/internal/bifrost/endpoint/v1/web_server_statistics"
-	"github.com/ClessLi/bifrost/internal/bifrost/endpoint/v1/web_server_status"
-	svcv1 "github.com/ClessLi/bifrost/internal/bifrost/service/v1"
+	"github.com/yongPhone/bifrost/internal/bifrost/endpoint/v1/web_server_config"
+	"github.com/yongPhone/bifrost/internal/bifrost/endpoint/v1/web_server_log_watcher"
+	"github.com/yongPhone/bifrost/internal/bifrost/endpoint/v1/web_server_statistics"
+	"github.com/yongPhone/bifrost/internal/bifrost/endpoint/v1/web_server_status"
+	svcv1 "github.com/yongPhone/bifrost/internal/bifrost/service/v1"
 )
 
 type EndpointsFactory interface {

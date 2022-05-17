@@ -4,8 +4,8 @@ import (
 	"github.com/go-kit/kit/transport/grpc"
 	"golang.org/x/net/context"
 
-	"github.com/ClessLi/bifrost/api/protobuf-spec/authpb"
-	"github.com/ClessLi/bifrost/internal/pkg/auth/endpoint"
+	"github.com/yongPhone/bifrost/api/protobuf-spec/authpb"
+	"github.com/yongPhone/bifrost/internal/pkg/auth/endpoint"
 )
 
 type grpcServer struct {

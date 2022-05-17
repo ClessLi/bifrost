@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/ClessLi/bifrost/internal/pkg/auth/daemon"
+	"github.com/yongPhone/bifrost/internal/pkg/auth/daemon"
 )
 
 func main() {

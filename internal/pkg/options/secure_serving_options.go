@@ -7,8 +7,8 @@ import (
 
 	"github.com/spf13/pflag"
 
-	"github.com/ClessLi/bifrost/internal/pkg/server"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
+	"github.com/yongPhone/bifrost/internal/pkg/server"
+	log "github.com/yongPhone/bifrost/pkg/log/v1"
 )
 
 // SecureServingOptions contains configuration items related to TLS server startup.

@@ -1,6 +1,6 @@
 package web_server_log_watcher
 
-import storev1 "github.com/ClessLi/bifrost/internal/bifrost/store/v1"
+import storev1 "github.com/yongPhone/bifrost/internal/bifrost/store/v1"
 
 type webServerLogWatcherService struct {
 	store storev1.StoreFactory

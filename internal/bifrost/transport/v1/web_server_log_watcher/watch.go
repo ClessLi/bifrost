@@ -6,9 +6,9 @@ import (
 
 	"github.com/marmotedu/errors"
 
-	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
-	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
-	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/utils"
+	v1 "github.com/yongPhone/bifrost/api/bifrost/v1"
+	pbv1 "github.com/yongPhone/bifrost/api/protobuf-spec/bifrostpb/v1"
+	"github.com/yongPhone/bifrost/internal/bifrost/transport/v1/utils"
 )
 
 func (w *webServerLogWatcherServer) Watch(

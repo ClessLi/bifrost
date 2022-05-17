@@ -5,7 +5,7 @@ import (
 
 	"github.com/marmotedu/errors"
 
-	"github.com/ClessLi/bifrost/pkg/graph"
+	"github.com/yongPhone/bifrost/pkg/graph"
 )
 
 type LoopPreventer interface {

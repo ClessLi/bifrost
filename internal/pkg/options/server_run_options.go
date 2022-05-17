@@ -3,7 +3,7 @@ package options
 import (
 	"github.com/spf13/pflag"
 
-	"github.com/ClessLi/bifrost/internal/pkg/server"
+	"github.com/yongPhone/bifrost/internal/pkg/server"
 )
 
 // ServerRunOptions contains the options while running a generic api server.

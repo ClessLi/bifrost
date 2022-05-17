@@ -17,11 +17,11 @@ import (
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
 
-	"github.com/ClessLi/bifrost/internal/pkg/service_register"
-	healthzclient_v1 "github.com/ClessLi/bifrost/pkg/client/grpc_health_v1"
+	"github.com/yongPhone/bifrost/internal/pkg/service_register"
+	healthzclient_v1 "github.com/yongPhone/bifrost/pkg/client/grpc_health_v1"
 
 	//"github.com/ClessLi/bifrost/internal/pkg/middleware".
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
+	log "github.com/yongPhone/bifrost/pkg/log/v1"
 )
 
 // GenericGRPCServer contains state for a bifrost api server.

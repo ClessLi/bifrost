@@ -6,7 +6,7 @@ import (
 	"github.com/marmotedu/errors"
 	"google.golang.org/grpc"
 
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
+	log "github.com/yongPhone/bifrost/pkg/log/v1"
 )
 
 type Client struct {

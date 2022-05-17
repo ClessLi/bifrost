@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_type"
+	"github.com/yongPhone/bifrost/pkg/resolv/V2/nginx/configuration/parser"
+	"github.com/yongPhone/bifrost/pkg/resolv/V2/nginx/parser_type"
 )
 
 func exampleNewConfiguration() (Configuration, error) {

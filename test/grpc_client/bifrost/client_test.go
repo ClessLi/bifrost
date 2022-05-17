@@ -7,13 +7,13 @@ import (
 	"testing"
 	"time"
 
-	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
-	healthzclient_v1 "github.com/ClessLi/bifrost/pkg/client/grpc_health_v1"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration"
+	v1 "github.com/yongPhone/bifrost/api/bifrost/v1"
+	healthzclient_v1 "github.com/yongPhone/bifrost/pkg/client/grpc_health_v1"
+	"github.com/yongPhone/bifrost/pkg/resolv/V2/nginx/configuration"
 
 	"google.golang.org/grpc"
 
-	bifrost_cliv1 "github.com/ClessLi/bifrost/pkg/client/bifrost/v1"
+	bifrost_cliv1 "github.com/yongPhone/bifrost/pkg/client/bifrost/v1"
 )
 
 func TestRun(t *testing.T) {

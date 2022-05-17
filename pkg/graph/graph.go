@@ -1,8 +1,8 @@
 package graph
 
 import (
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
-	"github.com/ClessLi/bifrost/pkg/queue"
+	log "github.com/yongPhone/bifrost/pkg/log/v1"
+	"github.com/yongPhone/bifrost/pkg/queue"
 )
 
 type Graph struct {

@@ -3,15 +3,15 @@ package bifrost
 import (
 	"time"
 
-	epv1 "github.com/ClessLi/bifrost/internal/bifrost/endpoint/v1"
-	"github.com/ClessLi/bifrost/internal/bifrost/middleware"
-	svcv1 "github.com/ClessLi/bifrost/internal/bifrost/service/v1"
-	storev1 "github.com/ClessLi/bifrost/internal/bifrost/store/v1"
-	txpv1 "github.com/ClessLi/bifrost/internal/bifrost/transport/v1"
-	handlerv1 "github.com/ClessLi/bifrost/internal/bifrost/transport/v1/handler"
-	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/options"
-	genericgrpcserver "github.com/ClessLi/bifrost/internal/pkg/server"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
+	epv1 "github.com/yongPhone/bifrost/internal/bifrost/endpoint/v1"
+	"github.com/yongPhone/bifrost/internal/bifrost/middleware"
+	svcv1 "github.com/yongPhone/bifrost/internal/bifrost/service/v1"
+	storev1 "github.com/yongPhone/bifrost/internal/bifrost/store/v1"
+	txpv1 "github.com/yongPhone/bifrost/internal/bifrost/transport/v1"
+	handlerv1 "github.com/yongPhone/bifrost/internal/bifrost/transport/v1/handler"
+	"github.com/yongPhone/bifrost/internal/bifrost/transport/v1/options"
+	genericgrpcserver "github.com/yongPhone/bifrost/internal/pkg/server"
+	log "github.com/yongPhone/bifrost/pkg/log/v1"
 )
 
 func initRouter(server *genericgrpcserver.GenericGRPCServer) {

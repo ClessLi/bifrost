@@ -8,7 +8,7 @@ import (
 
 	"github.com/marmotedu/errors"
 
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
+	log "github.com/yongPhone/bifrost/pkg/log/v1"
 )
 
 type Config struct {

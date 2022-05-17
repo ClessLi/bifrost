@@ -6,7 +6,7 @@ import (
 	"github.com/go-kit/kit/endpoint"
 	"github.com/marmotedu/errors"
 
-	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
+	pbv1 "github.com/yongPhone/bifrost/api/protobuf-spec/bifrostpb/v1"
 )
 
 func (w *webServerStatusEndpoints) EndpointGet() endpoint.Endpoint {

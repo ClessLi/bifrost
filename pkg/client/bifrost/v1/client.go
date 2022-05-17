@@ -3,9 +3,9 @@ package v1
 import (
 	"google.golang.org/grpc"
 
-	epclient "github.com/ClessLi/bifrost/pkg/client/bifrost/v1/endpoint"
-	svcclient "github.com/ClessLi/bifrost/pkg/client/bifrost/v1/service"
-	txpclient "github.com/ClessLi/bifrost/pkg/client/bifrost/v1/transport"
+	epclient "github.com/yongPhone/bifrost/pkg/client/bifrost/v1/endpoint"
+	svcclient "github.com/yongPhone/bifrost/pkg/client/bifrost/v1/service"
+	txpclient "github.com/yongPhone/bifrost/pkg/client/bifrost/v1/transport"
 )
 
 type Client struct {

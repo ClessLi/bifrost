@@ -6,8 +6,8 @@ import (
 
 	"github.com/marmotedu/errors"
 
-	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
+	pbv1 "github.com/yongPhone/bifrost/api/protobuf-spec/bifrostpb/v1"
+	log "github.com/yongPhone/bifrost/pkg/log/v1"
 )
 
 type webServerConfig struct{}

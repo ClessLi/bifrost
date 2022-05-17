@@ -13,8 +13,8 @@ import (
 	"github.com/apsdehal/go-logger"
 	"gopkg.in/yaml.v2"
 
-	"github.com/ClessLi/bifrost/internal/pkg/auth/config"
-	"github.com/ClessLi/bifrost/internal/pkg/auth/service"
+	"github.com/yongPhone/bifrost/internal/pkg/auth/config"
+	"github.com/yongPhone/bifrost/internal/pkg/auth/service"
 )
 
 var (

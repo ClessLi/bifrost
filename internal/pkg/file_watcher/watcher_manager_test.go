@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
+	log "github.com/yongPhone/bifrost/pkg/log/v1"
 )
 
 func TestWatcherManager_Watch(t *testing.T) {

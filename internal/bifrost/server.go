@@ -4,12 +4,12 @@ import (
 	"github.com/marmotedu/iam/pkg/shutdown"
 	"github.com/marmotedu/iam/pkg/shutdown/shutdownmanagers/posixsignal"
 
-	"github.com/ClessLi/bifrost/internal/bifrost/config"
-	storev1 "github.com/ClessLi/bifrost/internal/bifrost/store/v1"
-	storev1nginx "github.com/ClessLi/bifrost/internal/bifrost/store/v1/nginx"
-	genericoptions "github.com/ClessLi/bifrost/internal/pkg/options"
-	genericgrpcserver "github.com/ClessLi/bifrost/internal/pkg/server"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
+	"github.com/yongPhone/bifrost/internal/bifrost/config"
+	storev1 "github.com/yongPhone/bifrost/internal/bifrost/store/v1"
+	storev1nginx "github.com/yongPhone/bifrost/internal/bifrost/store/v1/nginx"
+	genericoptions "github.com/yongPhone/bifrost/internal/pkg/options"
+	genericgrpcserver "github.com/yongPhone/bifrost/internal/pkg/server"
+	log "github.com/yongPhone/bifrost/pkg/log/v1"
 )
 
 type bifrostServer struct {

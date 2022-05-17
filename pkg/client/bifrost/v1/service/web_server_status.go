@@ -1,9 +1,9 @@
 package service
 
 import (
-	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
-	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
-	epv1 "github.com/ClessLi/bifrost/internal/bifrost/endpoint/v1"
+	v1 "github.com/yongPhone/bifrost/api/bifrost/v1"
+	pbv1 "github.com/yongPhone/bifrost/api/protobuf-spec/bifrostpb/v1"
+	epv1 "github.com/yongPhone/bifrost/internal/bifrost/endpoint/v1"
 )
 
 type WebServerStatusService interface {

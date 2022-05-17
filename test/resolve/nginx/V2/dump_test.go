@@ -3,8 +3,8 @@ package V2
 import (
 	"testing"
 
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/dumper"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loader"
+	"github.com/yongPhone/bifrost/pkg/resolv/V2/nginx/dumper"
+	"github.com/yongPhone/bifrost/pkg/resolv/V2/nginx/loader"
 )
 
 func TestDump(t *testing.T) {

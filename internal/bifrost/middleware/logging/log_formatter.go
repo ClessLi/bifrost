@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/ClessLi/bifrost/internal/bifrost/middleware/utils"
+	"github.com/yongPhone/bifrost/internal/bifrost/middleware/utils"
 )
 
 type logFormatter struct {

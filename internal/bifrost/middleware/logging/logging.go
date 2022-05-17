@@ -5,8 +5,8 @@ import (
 
 	kitlog "github.com/go-kit/kit/log"
 
-	svcv1 "github.com/ClessLi/bifrost/internal/bifrost/service/v1"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
+	svcv1 "github.com/yongPhone/bifrost/internal/bifrost/service/v1"
+	log "github.com/yongPhone/bifrost/pkg/log/v1"
 )
 
 var (

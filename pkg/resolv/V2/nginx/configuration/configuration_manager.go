@@ -14,12 +14,12 @@ import (
 	"github.com/marmotedu/errors"
 	"github.com/wxnacy/wgo/arrays"
 
-	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
-	"github.com/ClessLi/bifrost/internal/pkg/code"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loader"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/utils"
+	v1 "github.com/yongPhone/bifrost/api/bifrost/v1"
+	"github.com/yongPhone/bifrost/internal/pkg/code"
+	log "github.com/yongPhone/bifrost/pkg/log/v1"
+	"github.com/yongPhone/bifrost/pkg/resolv/V2/nginx/configuration/parser"
+	"github.com/yongPhone/bifrost/pkg/resolv/V2/nginx/loader"
+	"github.com/yongPhone/bifrost/pkg/resolv/V2/utils"
 )
 
 type ConfigManager interface {

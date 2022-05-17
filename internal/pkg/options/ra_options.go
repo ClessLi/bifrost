@@ -4,7 +4,7 @@ import (
 	"github.com/marmotedu/errors"
 	"github.com/spf13/pflag"
 
-	"github.com/ClessLi/bifrost/internal/pkg/server"
+	"github.com/yongPhone/bifrost/internal/pkg/server"
 )
 
 // RAOptions contains the options used to connect to the RA server.

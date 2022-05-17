@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
+	"github.com/yongPhone/bifrost/pkg/resolv/nginx"
 )
 
 // unmarshaler, json反序列化内部接口对象，定义了用于nginx配置对象json反序列化所需实现的方法.

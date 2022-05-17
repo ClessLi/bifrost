@@ -1,7 +1,7 @@
 package web_server_log_watcher
 
 import (
-	svcv1 "github.com/ClessLi/bifrost/internal/bifrost/service/v1"
+	svcv1 "github.com/yongPhone/bifrost/internal/bifrost/service/v1"
 )
 
 type webServerLogWatcherEndpoints struct {

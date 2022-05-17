@@ -1,8 +1,8 @@
 package endpoint
 
 import (
-	epv1 "github.com/ClessLi/bifrost/internal/bifrost/endpoint/v1"
-	txpclient "github.com/ClessLi/bifrost/pkg/client/bifrost/v1/transport"
+	epv1 "github.com/yongPhone/bifrost/internal/bifrost/endpoint/v1"
+	txpclient "github.com/yongPhone/bifrost/pkg/client/bifrost/v1/transport"
 )
 
 type Factory interface {

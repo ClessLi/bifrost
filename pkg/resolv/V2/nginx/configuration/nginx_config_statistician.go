@@ -6,9 +6,9 @@ import (
 
 	"github.com/marmotedu/errors"
 
-	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
-	"github.com/ClessLi/bifrost/internal/pkg/code"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/utils"
+	v1 "github.com/yongPhone/bifrost/api/bifrost/v1"
+	"github.com/yongPhone/bifrost/internal/pkg/code"
+	"github.com/yongPhone/bifrost/pkg/resolv/V2/utils"
 )
 
 var (

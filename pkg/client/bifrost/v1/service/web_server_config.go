@@ -3,9 +3,9 @@ package service
 import (
 	"github.com/marmotedu/errors"
 
-	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
-	epv1 "github.com/ClessLi/bifrost/internal/bifrost/endpoint/v1"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
+	v1 "github.com/yongPhone/bifrost/api/bifrost/v1"
+	epv1 "github.com/yongPhone/bifrost/internal/bifrost/endpoint/v1"
+	log "github.com/yongPhone/bifrost/pkg/log/v1"
 )
 
 type WebServerConfigService interface {

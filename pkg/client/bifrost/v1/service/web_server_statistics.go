@@ -1,8 +1,8 @@
 package service
 
 import (
-	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
-	epv1 "github.com/ClessLi/bifrost/internal/bifrost/endpoint/v1"
+	v1 "github.com/yongPhone/bifrost/api/bifrost/v1"
+	epv1 "github.com/yongPhone/bifrost/internal/bifrost/endpoint/v1"
 )
 
 type WebServerStatisticsService interface {

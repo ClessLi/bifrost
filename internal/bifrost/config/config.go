@@ -1,6 +1,6 @@
 package config
 
-import "github.com/ClessLi/bifrost/internal/bifrost/options"
+import "github.com/yongPhone/bifrost/internal/bifrost/options"
 
 // Config is the running configuration structure of the Bifrost pump service.
 type Config struct {

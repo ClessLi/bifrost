@@ -11,7 +11,7 @@ import (
 	"github.com/shirou/gopsutil/disk"
 	"github.com/shirou/gopsutil/mem"
 
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
+	log "github.com/yongPhone/bifrost/pkg/log/v1"
 )
 
 const (

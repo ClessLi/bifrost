@@ -6,9 +6,9 @@ import (
 	"github.com/go-kit/kit/endpoint"
 	"google.golang.org/grpc"
 
-	"github.com/ClessLi/bifrost/pkg/client/bifrost/v1/transport/decoder"
-	"github.com/ClessLi/bifrost/pkg/client/bifrost/v1/transport/encoder"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
+	"github.com/yongPhone/bifrost/pkg/client/bifrost/v1/transport/decoder"
+	"github.com/yongPhone/bifrost/pkg/client/bifrost/v1/transport/encoder"
+	log "github.com/yongPhone/bifrost/pkg/log/v1"
 )
 
 type Client interface {

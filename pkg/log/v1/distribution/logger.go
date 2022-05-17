@@ -6,7 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"go.uber.org/zap"
 
-	logruslogger "github.com/ClessLi/bifrost/pkg/log/v1/logrus"
+	logruslogger "github.com/yongPhone/bifrost/pkg/log/v1/logrus"
 )
 
 // Logger is a logger which compatible to logrus/std log/prometheus.

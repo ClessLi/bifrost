@@ -8,12 +8,12 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/ClessLi/bifrost/api/protobuf-spec/authpb"
-	"github.com/ClessLi/bifrost/internal/pkg/auth/config"
-	"github.com/ClessLi/bifrost/internal/pkg/auth/endpoint"
-	"github.com/ClessLi/bifrost/internal/pkg/auth/logging"
-	"github.com/ClessLi/bifrost/internal/pkg/auth/service"
-	"github.com/ClessLi/bifrost/internal/pkg/auth/transport"
+	"github.com/yongPhone/bifrost/api/protobuf-spec/authpb"
+	"github.com/yongPhone/bifrost/internal/pkg/auth/config"
+	"github.com/yongPhone/bifrost/internal/pkg/auth/endpoint"
+	"github.com/yongPhone/bifrost/internal/pkg/auth/logging"
+	"github.com/yongPhone/bifrost/internal/pkg/auth/service"
+	"github.com/yongPhone/bifrost/internal/pkg/auth/transport"
 )
 
 // authSvc service.AuthService.

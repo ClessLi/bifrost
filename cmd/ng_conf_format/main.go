@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
+	"github.com/yongPhone/bifrost/pkg/resolv/nginx"
 )
 
 func init() {

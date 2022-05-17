@@ -9,7 +9,7 @@ import (
 	"github.com/go-kit/kit/log"
 	"google.golang.org/grpc/peer"
 
-	"github.com/ClessLi/bifrost/internal/pkg/auth/service"
+	"github.com/yongPhone/bifrost/internal/pkg/auth/service"
 )
 
 // loggingMiddleware Make a new type

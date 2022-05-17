@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 
-	epclient "github.com/ClessLi/bifrost/pkg/client/bifrost/v1/endpoint"
+	epclient "github.com/yongPhone/bifrost/pkg/client/bifrost/v1/endpoint"
 )
 
 var ctxIns context.Context

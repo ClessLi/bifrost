@@ -11,7 +11,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"github.com/ClessLi/bifrost/pkg/log/v1/klog"
+	"github.com/yongPhone/bifrost/pkg/log/v1/klog"
 )
 
 // InfoLogger represents the ability to log non-error messages, at a particular verbosity.

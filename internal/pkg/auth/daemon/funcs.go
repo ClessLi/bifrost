@@ -9,7 +9,7 @@ import (
 
 	"github.com/apsdehal/go-logger"
 
-	"github.com/ClessLi/bifrost/internal/pkg/auth/service"
+	"github.com/yongPhone/bifrost/internal/pkg/auth/service"
 )
 
 // readFile, 读取文件函数

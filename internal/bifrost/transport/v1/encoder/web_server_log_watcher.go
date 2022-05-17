@@ -5,8 +5,8 @@ import (
 
 	"github.com/marmotedu/errors"
 
-	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
-	"github.com/ClessLi/bifrost/internal/pkg/code"
+	v1 "github.com/yongPhone/bifrost/api/bifrost/v1"
+	"github.com/yongPhone/bifrost/internal/pkg/code"
 )
 
 type webServerLogWatcher struct{}

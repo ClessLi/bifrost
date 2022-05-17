@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
+	"github.com/yongPhone/bifrost/pkg/resolv/nginx"
 )
 
 func TestRel(t *testing.T) {

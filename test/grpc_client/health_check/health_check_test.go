@@ -9,9 +9,9 @@ import (
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
 
-	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
-	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/fake"
-	clientv1 "github.com/ClessLi/bifrost/pkg/client/grpc_health_v1"
+	pbv1 "github.com/yongPhone/bifrost/api/protobuf-spec/bifrostpb/v1"
+	"github.com/yongPhone/bifrost/internal/bifrost/transport/v1/fake"
+	clientv1 "github.com/yongPhone/bifrost/pkg/client/grpc_health_v1"
 )
 
 //func TestHealthCheck(t *testing.T) {

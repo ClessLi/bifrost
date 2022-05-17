@@ -9,9 +9,9 @@ import (
 	"github.com/marmotedu/errors"
 	"github.com/marmotedu/iam/pkg/log"
 
-	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
-	"github.com/ClessLi/bifrost/internal/pkg/code"
-	"github.com/ClessLi/bifrost/internal/pkg/file_watcher"
+	v1 "github.com/yongPhone/bifrost/api/bifrost/v1"
+	"github.com/yongPhone/bifrost/internal/pkg/code"
+	"github.com/yongPhone/bifrost/internal/pkg/file_watcher"
 )
 
 type webServerLogWatcherStore struct {

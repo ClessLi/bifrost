@@ -5,8 +5,8 @@ import (
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
 
-	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
-	"github.com/ClessLi/bifrost/internal/pkg/service_register"
+	pbv1 "github.com/yongPhone/bifrost/api/protobuf-spec/bifrostpb/v1"
+	"github.com/yongPhone/bifrost/internal/pkg/service_register"
 )
 
 const (

@@ -9,7 +9,7 @@ import (
 	"github.com/hpcloud/tail"
 	"github.com/marmotedu/errors"
 
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
+	log "github.com/yongPhone/bifrost/pkg/log/v1"
 )
 
 type FileWatcher struct {

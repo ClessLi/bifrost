@@ -1,10 +1,10 @@
 package bifrost
 
 import (
-	"github.com/ClessLi/bifrost/internal/bifrost/config"
-	"github.com/ClessLi/bifrost/internal/bifrost/options"
-	"github.com/ClessLi/bifrost/pkg/app"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
+	"github.com/yongPhone/bifrost/internal/bifrost/config"
+	"github.com/yongPhone/bifrost/internal/bifrost/options"
+	"github.com/yongPhone/bifrost/pkg/app"
+	log "github.com/yongPhone/bifrost/pkg/log/v1"
 )
 
 const commandDesc = `The Bifrost is used to parse the nginx configuration file 

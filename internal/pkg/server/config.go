@@ -10,7 +10,7 @@ import (
 	"github.com/marmotedu/component-base/pkg/util/homedir"
 	"github.com/spf13/viper"
 
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
+	log "github.com/yongPhone/bifrost/pkg/log/v1"
 )
 
 const (

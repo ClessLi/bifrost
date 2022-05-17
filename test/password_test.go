@@ -3,7 +3,7 @@ package test
 import (
 	"testing"
 
-	"github.com/ClessLi/bifrost/internal/pkg/password"
+	"github.com/yongPhone/bifrost/internal/pkg/password"
 )
 
 func TestPassword(t *testing.T) {

@@ -5,10 +5,10 @@ import (
 
 	"github.com/marmotedu/errors"
 
-	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loader"
+	v1 "github.com/yongPhone/bifrost/api/bifrost/v1"
+	log "github.com/yongPhone/bifrost/pkg/log/v1"
+	"github.com/yongPhone/bifrost/pkg/resolv/V2/nginx/configuration"
+	"github.com/yongPhone/bifrost/pkg/resolv/V2/nginx/loader"
 )
 
 // ConfigManagerOptions defines options for nginx configuration and manager.

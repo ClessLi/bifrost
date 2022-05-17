@@ -3,8 +3,8 @@ package web_server_config
 import (
 	"context"
 
-	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
-	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/utils"
+	pbv1 "github.com/yongPhone/bifrost/api/protobuf-spec/bifrostpb/v1"
+	"github.com/yongPhone/bifrost/internal/bifrost/transport/v1/utils"
 )
 
 func (w *webServerConfigServer) GetServerNames(ctx context.Context, null *pbv1.Null) (*pbv1.ServerNames, error) {

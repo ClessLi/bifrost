@@ -5,10 +5,10 @@ import (
 
 	"github.com/go-kit/kit/transport/grpc"
 
-	epv1 "github.com/ClessLi/bifrost/internal/bifrost/endpoint/v1"
-	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/decoder"
-	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/encoder"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
+	epv1 "github.com/yongPhone/bifrost/internal/bifrost/endpoint/v1"
+	"github.com/yongPhone/bifrost/internal/bifrost/transport/v1/decoder"
+	"github.com/yongPhone/bifrost/internal/bifrost/transport/v1/encoder"
+	log "github.com/yongPhone/bifrost/pkg/log/v1"
 )
 
 type WebServerConfigHandlers interface {

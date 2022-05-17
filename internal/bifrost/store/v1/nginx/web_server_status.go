@@ -7,9 +7,9 @@ import (
 	"github.com/marmotedu/component-base/pkg/version"
 	"github.com/shirou/gopsutil/host"
 
-	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
-	"github.com/ClessLi/bifrost/internal/pkg/monitor"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
+	v1 "github.com/yongPhone/bifrost/api/bifrost/v1"
+	"github.com/yongPhone/bifrost/internal/pkg/monitor"
+	log "github.com/yongPhone/bifrost/pkg/log/v1"
 )
 
 const webServerStatusTimeFormatLayout = "2006/01/02 15:04:05"

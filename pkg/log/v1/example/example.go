@@ -4,7 +4,7 @@ import (
 	"context"
 	"flag"
 
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
+	log "github.com/yongPhone/bifrost/pkg/log/v1"
 )
 
 var (

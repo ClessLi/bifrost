@@ -9,7 +9,7 @@ import (
 	"github.com/marmotedu/errors"
 	"google.golang.org/grpc"
 
-	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
+	pbv1 "github.com/yongPhone/bifrost/api/protobuf-spec/bifrostpb/v1"
 )
 
 //const (

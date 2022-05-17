@@ -3,8 +3,8 @@ package parser
 import (
 	"bytes"
 
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/dumper"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_position"
+	"github.com/yongPhone/bifrost/pkg/resolv/V2/nginx/dumper"
+	"github.com/yongPhone/bifrost/pkg/resolv/V2/nginx/parser_position"
 )
 
 type Include struct {

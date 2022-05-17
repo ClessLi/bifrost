@@ -1,9 +1,9 @@
 package parser
 
 import (
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/dumper"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_indention"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_type"
+	"github.com/yongPhone/bifrost/pkg/resolv/V2/nginx/dumper"
+	"github.com/yongPhone/bifrost/pkg/resolv/V2/nginx/parser_indention"
+	"github.com/yongPhone/bifrost/pkg/resolv/V2/nginx/parser_type"
 )
 
 type Parser interface {

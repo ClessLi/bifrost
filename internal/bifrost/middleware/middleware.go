@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"github.com/ClessLi/bifrost/internal/bifrost/middleware/logging"
-	svcv1 "github.com/ClessLi/bifrost/internal/bifrost/service/v1"
+	"github.com/yongPhone/bifrost/internal/bifrost/middleware/logging"
+	svcv1 "github.com/yongPhone/bifrost/internal/bifrost/service/v1"
 )
 
 type Middleware func(svcv1.ServiceFactory) svcv1.ServiceFactory

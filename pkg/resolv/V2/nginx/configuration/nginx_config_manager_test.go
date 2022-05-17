@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loader"
+	"github.com/yongPhone/bifrost/pkg/resolv/V2/nginx/configuration/parser"
+	"github.com/yongPhone/bifrost/pkg/resolv/V2/nginx/loader"
 )
 
 func exampleNewConfigManager() (*configManager, error) {

@@ -7,7 +7,7 @@ import (
 
 	"github.com/marmotedu/component-base/pkg/time"
 
-	"github.com/ClessLi/bifrost/internal/bifrost"
+	"github.com/yongPhone/bifrost/internal/bifrost"
 )
 
 func main() {

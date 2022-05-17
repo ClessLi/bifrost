@@ -8,7 +8,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
-	"github.com/ClessLi/bifrost/api/protobuf-spec/authpb"
+	"github.com/yongPhone/bifrost/api/protobuf-spec/authpb"
 )
 
 var ErrResponseNull = errors.New("response is null")

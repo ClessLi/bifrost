@@ -5,9 +5,9 @@ import (
 
 	cliflag "github.com/marmotedu/component-base/pkg/cli/flag"
 
-	genericoptions "github.com/ClessLi/bifrost/internal/pkg/options"
-	"github.com/ClessLi/bifrost/internal/pkg/server"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
+	genericoptions "github.com/yongPhone/bifrost/internal/pkg/options"
+	"github.com/yongPhone/bifrost/internal/pkg/server"
+	log "github.com/yongPhone/bifrost/pkg/log/v1"
 )
 
 type Options struct {
