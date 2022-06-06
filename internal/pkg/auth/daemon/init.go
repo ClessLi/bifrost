@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 
 	"github.com/apsdehal/go-logger"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 
 	"github.com/ClessLi/bifrost/internal/pkg/auth/config"
 	"github.com/ClessLi/bifrost/internal/pkg/auth/service"
