@@ -311,12 +311,12 @@ function bifrost::release::generate_changelog() {
 
   echo "${BIFROST_CHANGELOG}" > ${BIFROST_ROOT}/CHANGELOG/CHANGELOG-${BIFROST_GIT_VERSION#v}.md
 
-  current_commit_id=$(git log HEAD -n 1 --pretty=format:%H)
+#  current_commit_id=$(git log HEAD -n 1 --pretty=format:%H)
   git add ${ROOT_DIR}/CHANGELOG/CHANGELOG-${BIFROST_GIT_VERSION#v}.md
   git commit -a -m "${CHANGELOG_COMMIT_MSG}"
   if ! git push origin HEAD
     then
-      git reset --soft "${current_commit_id}"
+#      git reset --soft "${current_commit_id}"
       bifrost::log::error_exit "failed to push commit"
   fi
 }
