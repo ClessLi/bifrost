@@ -300,7 +300,7 @@ linters-settings:
         - gorm.io/gorm
         - gorm.io/driver/mysql
         - k8s.io/klog
-        # - gopkg.in/yaml.v2
+        # - gopkg.in/yaml.v3
       domains:                                                        # List of allowed module domains
         - google.golang.org
         - gopkg.in
