@@ -1,3 +1,6 @@
+//go:build !viper_yaml2
+// +build !viper_yaml2
+
 package server
 
 import (
