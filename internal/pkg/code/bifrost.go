@@ -33,6 +33,24 @@ const (
 
 	// ErrParseFailed - 500: Config parse failed.
 	ErrParseFailed
+
+	// V3ErrContextIndexOutOfRange - 500: Index of the Context's children is out of range.
+	V3ErrContextIndexOutOfRange
+
+	// V3ErrNullContextPosition - 500: Null Context position.
+	V3ErrNullContextPosition
+
+	// V3ErrSetFatherContextFailed - 500: Set father Context failed.
+	V3ErrSetFatherContextFailed
+
+	// V3ErrOperationOnErrorContext - 500: Performing operations on Error Context.
+	V3ErrOperationOnErrorContext
+
+	// V3ErrInvalidContext - 500: Invalid Context.
+	V3ErrInvalidContext
+
+	// V3ErrInvalidOperation - 500: Invalid operation.
+	V3ErrInvalidOperation
 )
 
 // bifrost: statistics errors.
