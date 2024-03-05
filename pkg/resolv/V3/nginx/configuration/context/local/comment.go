@@ -85,6 +85,9 @@ func (c *Comment) Error() error {
 }
 
 func (c *Comment) ConfigLines(isDumping bool) ([]string, error) {
+	if len(strings.TrimSpace(c.Value())) == 0 {
+		return []string{"#"}, nil
+	}
 	return []string{"# " + c.Value()}, nil
 }
 

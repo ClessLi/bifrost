@@ -56,8 +56,12 @@ func (d *Directive) SetValue(v string) error {
 	if len(strings.TrimSpace(kv[0])) == 0 {
 		return errors.WithCode(code.V3ErrInvalidOperation, "set value for directive failed, cased by: split null value")
 	}
-	d.Name = kv[0]
-	d.Params = kv[1]
+	d.Name = strings.TrimSpace(kv[0])
+	if len(kv) == 2 {
+		d.Params = strings.TrimSpace(kv[1])
+	} else {
+		d.Params = ""
+	}
 	return nil
 }
 
@@ -75,7 +79,11 @@ func (d *Directive) Len() int {
 }
 
 func (d *Directive) Value() string {
-	return strings.Join([]string{d.Name, d.Params}, " ")
+	v := strings.TrimSpace(d.Name)
+	if params := strings.TrimSpace(d.Params); len(params) > 0 {
+		v += " " + params
+	}
+	return v
 }
 
 func (d *Directive) Type() context_type.ContextType {
@@ -87,13 +95,13 @@ func (d *Directive) Error() error {
 }
 
 func (d *Directive) ConfigLines(isDumping bool) ([]string, error) {
-	return []string{d.Name + " " + d.Params + ";"}, nil
+	return []string{d.Value() + ";"}, nil
 }
 
 func NewDirective(name, params string) *Directive {
 	return &Directive{
-		Name:          name,
-		Params:        params,
+		Name:          strings.TrimSpace(name),
+		Params:        strings.TrimSpace(params),
 		fatherContext: context.NullContext(),
 	}
 }

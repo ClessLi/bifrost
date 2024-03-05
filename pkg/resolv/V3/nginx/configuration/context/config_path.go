@@ -2,7 +2,6 @@ package context
 
 import (
 	"github.com/marmotedu/errors"
-	"os"
 	"path/filepath"
 )
 
@@ -31,13 +30,6 @@ func (c RelConfigPath) RelativePath() string {
 
 func NewRelConfigPath(dir, file string) (ConfigPath, error) {
 	cleanDir := filepath.Clean(dir)
-	dirInfo, err := os.Stat(cleanDir)
-	if err != nil && !os.IsExist(err) {
-		return nil, errors.Errorf("check config home dir(%s) failed, cased by: %v", cleanDir, err)
-	}
-	if !dirInfo.IsDir() {
-		return nil, errors.Errorf("%s is not a directory")
-	}
 
 	if filepath.IsAbs(file) {
 		rel, err := filepath.Rel(cleanDir, file)

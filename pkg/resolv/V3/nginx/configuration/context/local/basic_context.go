@@ -22,6 +22,32 @@ type BasicContext struct {
 }
 
 func (b *BasicContext) Insert(ctx context.Context, idx int) context.Context {
+	// negative index
+	if idx < 0 {
+		return context.ErrContext(errors.WithCode(code.V3ErrContextIndexOutOfRange, "index(%d) out of range", idx))
+	}
+
+	// refuse to insert nil
+	if ctx == nil {
+		return context.ErrContext(errors.WithCode(code.V3ErrInvalidOperation, "refuse to insert nil"))
+	}
+
+	// refuse to insert error context and config context
+	switch ctx.Type() {
+	case context_type.TypeErrContext:
+		errctx, ok := ctx.(*context.ErrorContext)
+		if ok {
+			return errctx.AppendError(errors.WithCode(code.V3ErrInvalidOperation, "refuse to insert error context"))
+		}
+		return context.ErrContext(errors.WithCode(code.V3ErrInvalidOperation, "refuse to insert invalid context"))
+	case context_type.TypeConfig:
+		_, ok := ctx.(*Config)
+		if ok {
+			return context.ErrContext(errors.WithCode(code.V3ErrInvalidOperation, "refuse to insert config context"))
+		}
+		return context.ErrContext(errors.WithCode(code.V3ErrInvalidOperation, "refuse to insert invalid context"))
+	}
+
 	if idx >= b.Len() {
 		idx = b.Len()
 	}
@@ -42,6 +68,11 @@ func (b *BasicContext) Insert(ctx context.Context, idx int) context.Context {
 }
 
 func (b *BasicContext) Remove(idx int) context.Context {
+	// negative index
+	if idx < 0 {
+		return context.ErrContext(errors.WithCode(code.V3ErrContextIndexOutOfRange, "index(%d) out of range", idx))
+	}
+
 	if idx < b.Len() {
 		// release father ctx
 		err := b.Children[idx].SetFather(context.NullContext())
@@ -55,10 +86,26 @@ func (b *BasicContext) Remove(idx int) context.Context {
 }
 
 func (b *BasicContext) Modify(ctx context.Context, idx int) context.Context {
-	if idx < b.Len() {
-		b.Remove(idx).Insert(ctx, idx)
+	// refuse to modify to nil
+	if ctx == nil {
+		return context.ErrContext(errors.WithCode(code.V3ErrInvalidOperation, "refuse to modify to nil"))
 	}
-	return b.self
+
+	// refuse to modify to error context
+	if ctx.Type() == context_type.TypeErrContext {
+		errctx, ok := ctx.(*context.ErrorContext)
+		if ok {
+			return errctx.AppendError(errors.WithCode(code.V3ErrInvalidOperation, "refuse to modify to error context"))
+		}
+		return context.ErrContext(errors.WithCode(code.V3ErrInvalidOperation, "refuse to modify to invalid context"))
+	}
+
+	// if the context before and after modification is the same, no modification will be made
+	if ctx == b.Child(idx) {
+		return b.self
+	}
+
+	return b.Remove(idx).Insert(ctx, idx)
 }
 
 func (b *BasicContext) Father() context.Context {
@@ -66,7 +113,7 @@ func (b *BasicContext) Father() context.Context {
 }
 
 func (b *BasicContext) Child(idx int) context.Context {
-	if idx >= b.Len() {
+	if idx >= b.Len() || idx < 0 {
 		return context.ErrContext(errors.WithCode(code.V3ErrContextIndexOutOfRange, "index(%d) out of range", idx))
 	}
 	return b.Children[idx]
@@ -152,20 +199,21 @@ func (b *BasicContext) ConfigLines(isDumping bool) ([]string, error) {
 	lines := make([]string, 0)
 	title := b.headStringFunc(b.ContextType, b.Value())
 	tail := b.tailStringFunc()
-	if len(tail) == 0 {
-		return nil, errors.WithCode(code.ErrParseFailed, "parse tail string failed")
-	}
 	if len(title) > 0 {
 		lines = append(lines, title)
 	}
-	// TODO: watch out for nil
-	for _, child := range b.Children {
+	for idx, child := range b.Children {
+		if child == nil {
+			return nil, errors.WithCode(code.V3ErrInvalidOperation, "child(index:%d) is nil", idx)
+		}
 		clines, err := child.ConfigLines(isDumping)
 		if err != nil {
 			return nil, err
 		}
 		if clines != nil {
-			if child.Type() == context_type.TypeInlineComment && len(lines) > 0 {
+			if child.Type() == context_type.TypeInlineComment && len(lines) > 0 &&
+				b.Child(idx-1).Type() != context_type.TypeComment &&
+				b.Child(idx-1).Type() != context_type.TypeInlineComment {
 				lines[len(lines)-1] += INDENT + clines[0]
 				continue
 			}
@@ -176,7 +224,9 @@ func (b *BasicContext) ConfigLines(isDumping bool) ([]string, error) {
 		}
 	}
 
-	lines = append(lines, tail)
+	if len(tail) > 0 {
+		lines = append(lines, tail)
+	}
 
 	return lines, nil
 }

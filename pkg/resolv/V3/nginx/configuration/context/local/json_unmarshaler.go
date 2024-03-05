@@ -6,7 +6,6 @@ import (
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
 	"github.com/marmotedu/errors"
-	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -53,26 +52,26 @@ func (u unmarshalContext) GetChildren() []*json.RawMessage {
 }
 
 type _main struct {
-	config `json:"main"`
+	_config `json:"main"`
 }
 
-type comment struct {
+type _comment struct {
 	Comments string `json:"comments,omitempty"`
 	Inline   bool   `json:"inline,omitempty"`
 }
 
-func (c comment) Type() context_type.ContextType {
+func (c _comment) Type() context_type.ContextType {
 	if c.Inline {
 		return context_type.TypeInlineComment
 	}
 	return context_type.TypeComment
 }
 
-func (c comment) GetValue() string {
+func (c _comment) GetValue() string {
 	return c.Comments
 }
 
-func (c comment) GetChildren() []*json.RawMessage {
+func (c _comment) GetChildren() []*json.RawMessage {
 	return []*json.RawMessage{}
 }
 
@@ -82,11 +81,11 @@ func registerCommentJsonRegMatcher() error {
 
 func registerCommentJsonUnmarshalerBuilder() error {
 	return RegisterJsonUnmarshalerBuilder(context_type.TypeComment, func() UnmarshalContext {
-		return new(comment)
+		return new(_comment)
 	})
 }
 
-type config struct {
+type _config struct {
 	unmarshalContext `json:"config"`
 }
 
@@ -303,8 +302,8 @@ func (m *mainUnmarshaler) UnmarshalJSON(bytes []byte) error {
 	m.completedMain = main
 
 	mainConfigUnmarshaler := &unmarshaler{
-		unmarshalContext: m.unmarshalContext.config,
-		configGraph:      m.completedMain.ConfigGraph,
+		unmarshalContext: m.unmarshalContext._config,
+		configGraph:      m.completedMain.Graph,
 		completedContext: m.completedMain.Config,
 		fatherContext:    context.NullContext(),
 	}
@@ -396,24 +395,18 @@ func (u *unmarshaler) unmarshalInclude() error {
 		return err
 	}
 
-	isAbsInclude := filepath.IsAbs(u.completedContext.Value())
 	// unmarshal included configs
 	// new configs
 	newconfigs := make([]*Config, 0)
 	includedconfigs := make([]*Config, 0)
 	for path := range unmarshalIncludeCtx.Children {
-		var configpath context.ConfigPath
-		if isAbsInclude {
-			configpath, err = context.NewAbsConfigPath(path)
-		} else {
-			configpath, err = context.NewRelConfigPath(u.configGraph.MainConfig().BaseDir(), path)
-		}
+		configPath, err := newConfigPath(u.configGraph, path)
 		if err != nil {
 			return err
 		}
 
 		// get config cache
-		cache, err := u.configGraph.GetConfig(configpath.FullPath())
+		cache, err := u.configGraph.GetConfig(configPath.FullPath())
 		if err == nil { // has cache
 			includedconfigs = append(includedconfigs, cache)
 			continue
@@ -421,13 +414,8 @@ func (u *unmarshaler) unmarshalInclude() error {
 			return err
 		}
 
-		// build new config
-		config, ok := NewContext(context_type.TypeConfig, path).(*Config)
-		if !ok {
-			return errors.Errorf("failed to build included config %s", path)
-		}
-		config.ConfigPath = configpath
-		newconfigs = append(newconfigs, config)
+		// add new config
+		newconfigs = append(newconfigs, NewContext(context_type.TypeConfig, path).(*Config))
 	}
 	includedconfigs = append(includedconfigs, newconfigs...)
 	// include configs
@@ -438,7 +426,7 @@ func (u *unmarshaler) unmarshalInclude() error {
 	// unmarshal new configs
 	for _, c := range newconfigs {
 		configUnmarshaler := &unmarshaler{
-			unmarshalContext: new(config),
+			unmarshalContext: new(_config),
 			configGraph:      u.configGraph,
 			completedContext: c,
 			fatherContext:    context.NullContext(),

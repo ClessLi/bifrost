@@ -44,15 +44,15 @@ var (
 	JsonUnmarshalRegUpstreamHead    = regexp.MustCompile(`^\s*{\s*"upstream"\s*:\s*{`)
 
 	// parse config function maps
-	pushStackParseFuncMap map[context_type.ContextType]parseFunc
-	inStackParseFuncMap   map[context_type.ContextType]parseFunc
+	pushStackParseFuncMap = make(map[context_type.ContextType]parseFunc)
+	inStackParseFuncMap   = make(map[context_type.ContextType]parseFunc)
 
 	// context builder map
-	builderMap map[context_type.ContextType]func(value string) context.Context
+	builderMap = make(map[context_type.ContextType]func(value string) context.Context)
 
 	// json unmarshal regexp matcher map
-	jsonUnmarshalRegMatcherMap map[context_type.ContextType]func(jsonraw []byte) bool
+	jsonUnmarshalRegMatcherMap = make(map[context_type.ContextType]func(jsonraw []byte) bool)
 
 	// json unmarshaler builder map
-	jsonUnmarshalerBuilderMap map[context_type.ContextType]func(graph ConfigGraph, father context.Context) *unmarshaler
+	jsonUnmarshalerBuilderMap = make(map[context_type.ContextType]func(graph ConfigGraph, father context.Context) *unmarshaler)
 )

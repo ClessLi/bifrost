@@ -13,14 +13,14 @@ type BuildBasicContextConfig struct {
 }
 
 func OptsApplyTo(opts context.BuildOptions) (BuildBasicContextConfig, error) {
-	config := BuildBasicContextConfig{}
-	config.headStringFunc, config.tailStringFunc = buildHeadAndTailStringFuncs(opts)
-	if config.headStringFunc == nil || config.tailStringFunc == nil {
-		return config, errors.New("TODO")
+	buildConfig := BuildBasicContextConfig{}
+	buildConfig.headStringFunc, buildConfig.tailStringFunc = buildHeadAndTailStringFuncs(opts)
+	if buildConfig.headStringFunc == nil || buildConfig.tailStringFunc == nil {
+		return buildConfig, errors.New("TODO")
 	}
 
-	config.ContextType = opts.ContextType
-	return config, nil
+	buildConfig.ContextType = opts.ContextType
+	return buildConfig, nil
 }
 
 func (b BuildBasicContextConfig) BasicContext() BasicContext {
@@ -68,11 +68,11 @@ func directiveTailString() string {
 }
 
 func RegisterBuilder(opts context.BuildOptions, registrar ContextBuilderRegistrar) error {
-	config, err := OptsApplyTo(opts)
+	buildConfig, err := OptsApplyTo(opts)
 	if err != nil {
 		return err
 	}
-	builder := registrar(config.BasicContext)
+	builder := registrar(buildConfig.BasicContext)
 	if builder == nil {
 		return errors.New("the registered context builder is nil")
 	}
@@ -121,6 +121,61 @@ func buildHeadAndTailStringFuncs(options context.BuildOptions) (func(context_typ
 
 type Main struct {
 	*Config `json:"main"`
+}
+
+func (m *Main) Insert(ctx context.Context, idx int) context.Context {
+	if got := m.Config.Insert(ctx, idx); got == m.self {
+		return m
+	} else {
+		return got
+	}
+}
+
+func (m *Main) Remove(idx int) context.Context {
+	if got := m.Config.Remove(idx); got == m.self {
+		return m
+	} else {
+		return got
+	}
+}
+
+func (m *Main) Modify(ctx context.Context, idx int) context.Context {
+	if got := m.Config.Modify(ctx, idx); got == m.self {
+		return m
+	} else {
+		return got
+	}
+}
+
+func (m *Main) QueryByKeyWords(kw context.KeyWords) context.Pos {
+	gotPos := m.Config.QueryByKeyWords(kw)
+	if got, idx := gotPos.Position(); got == m.self {
+		return context.SetPos(m, idx)
+	}
+	return gotPos
+}
+
+func (m *Main) QueryAllByKeyWords(kw context.KeyWords) []context.Pos {
+	gotPoses := m.Config.QueryAllByKeyWords(kw)
+	for i, pos := range gotPoses {
+		if got, idx := pos.Position(); got == m.self {
+			gotPoses[i] = context.SetPos(m, idx)
+		}
+	}
+	return gotPoses
+}
+
+func (m *Main) Clone() context.Context {
+	clone := &Main{Config: m.Config.Clone().(*Config)}
+	err := setGraphForMainConfig(clone.Config)
+	if err != nil {
+		return context.ErrContext(err)
+	}
+	return clone
+}
+
+func (m *Main) Type() context_type.ContextType {
+	return context_type.TypeMain
 }
 
 func registerMainBuilder() error {

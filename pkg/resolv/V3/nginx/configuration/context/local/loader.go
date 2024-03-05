@@ -60,7 +60,7 @@ func (f *fileLoader) Load() (*Main, error) {
 		return nil, errors.New("failed to build main context")
 	}
 
-	f.configGraph = main.ConfigGraph
+	f.configGraph = main.Graph
 
 	err = f.load(main.Config)
 
@@ -180,18 +180,13 @@ func (f *fileLoader) loadInclude(include *Include) error {
 	newconfigs := make([]*Config, 0)
 	includedconfigs := make([]*Config, 0)
 	for _, path := range paths {
-		var configpath context.ConfigPath
-		if isAbsInclude {
-			configpath, err = context.NewAbsConfigPath(path)
-		} else {
-			configpath, err = context.NewRelConfigPath(filepath.Dir(f.mainConfigAbsPath), path)
-		}
+		configPath, err := newConfigPath(f.configGraph, path)
 		if err != nil {
 			return err
 		}
 
 		// get config cache
-		cache, err := f.configGraph.GetConfig(configpath.FullPath())
+		cache, err := f.configGraph.GetConfig(configPath.FullPath())
 		if err == nil { // has cache
 			includedconfigs = append(includedconfigs, cache)
 			continue
@@ -199,13 +194,8 @@ func (f *fileLoader) loadInclude(include *Include) error {
 			return err
 		}
 
-		// build new config
-		config, ok := NewContext(context_type.TypeConfig, path).(*Config)
-		if !ok {
-			return errors.Errorf("failed to build included config %s", path)
-		}
-		config.ConfigPath = configpath
-		newconfigs = append(newconfigs, config)
+		// add new config
+		newconfigs = append(newconfigs, NewContext(context_type.TypeConfig, path).(*Config))
 	}
 	includedconfigs = append(includedconfigs, newconfigs...)
 

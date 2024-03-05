@@ -4,7 +4,6 @@ import (
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
-	"github.com/dominikbraun/graph"
 	"github.com/marmotedu/errors"
 	"path/filepath"
 )
@@ -43,6 +42,7 @@ func (i *Include) InsertConfig(configs ...*Config) error {
 		return err
 	}
 
+	includingConfigs := make([]*Config, 0)
 	for _, config := range configs {
 		// match config path
 		if config.ConfigPath == nil {
@@ -57,29 +57,14 @@ func (i *Include) InsertConfig(configs ...*Config) error {
 			}
 		}
 
-		// clone inserted config
-		//clone := config.Clone().(*Config)
-
-		err = fatherConfig.AddConfig(config)
-		if err != nil {
-			if !errors.Is(err, graph.ErrVertexAlreadyExists) {
-				return err
-			}
-			config, err = fatherConfig.GetConfig(config.FullPath())
-			if err != nil {
-				return err
-			}
-		}
-
-		// config graph add edge
-		err = fatherConfig.IncludeConfig(config)
-		if err != nil {
-			return err
-		}
-		i.Configs[config.FullPath()] = config
+		includingConfigs = append(includingConfigs, config)
 
 	}
-	return nil
+	includedConfigs, err := fatherConfig.IncludeConfig(includingConfigs...)
+	for _, config := range includedConfigs {
+		i.Configs[config.FullPath()] = config
+	}
+	return err
 }
 
 func (i *Include) Remove(idx int) context.Context {
@@ -96,16 +81,19 @@ func (i *Include) RemoveConfig(configs ...*Config) error {
 		return err
 	}
 	for _, config := range configs {
-		_, has := i.Configs[config.FullPath()]
-		if !has {
-			continue
-		}
-		delete(i.Configs, config.FullPath())
-		err = fatherConfig.RemoveEdge(fatherConfig, config)
+		cache, err := fatherConfig.Graph.GetConfig(config.FullPath())
 		if err != nil {
 			return err
 		}
-		// TODO:删除本地文件
+		_, has := i.Configs[cache.FullPath()]
+		if !has {
+			continue
+		}
+		delete(i.Configs, cache.FullPath())
+		err = fatherConfig.Graph.RemoveEdge(fatherConfig, cache)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -161,15 +149,11 @@ func (i *Include) QueryAllByKeyWords(kw context.KeyWords) []context.Pos {
 }
 
 func (i *Include) Clone() context.Context {
-	configs := make(map[string]*Config)
-	for path, config := range i.Configs {
-		configs[path] = config.Clone().(*Config)
-	}
-	return &Include{
-		ContextValue:  i.ContextValue,
-		Configs:       configs,
-		fatherContext: i.Father(),
-	}
+	//configs := make([]*Config, 0)
+	//for _, config := range i.Configs {
+	//	configs = append(configs, config) // clone config's pointer
+	//}
+	return NewContext(context_type.TypeInclude, i.ContextValue)
 }
 
 func (i *Include) SetValue(v string) error {
@@ -225,7 +209,7 @@ func (i *Include) matchConfigPath(path string) error {
 		return errors.WithCode(code.V3ErrInvalidContext, "pattern(%s) match included config(%s) failed, cased by: %v", i.ContextValue, path, err)
 	}
 	if !isMatch {
-		return errors.WithCode(code.V3ErrInvalidContext, "pattern(%s) cannot match included config(%s)", i.ContextValue, path, err)
+		return errors.WithCode(code.V3ErrInvalidContext, "pattern(%s) cannot match included config(%s)", i.ContextValue, path)
 	}
 	return nil
 }
