@@ -68,7 +68,7 @@ func (c *Config) ConfigLines(isDumping bool) ([]string, error) {
 	return lines, nil
 }
 
-func (c *Config) IncludeConfig(configs ...*Config) ([]*Config, error) {
+func (c *Config) includeConfig(configs ...*Config) ([]*Config, error) {
 	errs := make([]error, 0)
 	if c.Graph == nil {
 		errs = append(errs,

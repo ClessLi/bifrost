@@ -31,6 +31,7 @@ func (i *Include) FatherConfig() (*Config, error) {
 func (i *Include) Insert(ctx context.Context, idx int) context.Context {
 	return context.ErrContext(errors.WithCode(code.V3ErrInvalidOperation, "include cannot insert by index"))
 }
+
 func (i *Include) InsertConfig(configs ...*Config) error {
 	if configs == nil {
 		return errors.WithCode(code.V3ErrInvalidContext, "null config")
@@ -44,6 +45,9 @@ func (i *Include) InsertConfig(configs ...*Config) error {
 
 	includingConfigs := make([]*Config, 0)
 	for _, config := range configs {
+		if config == nil {
+			return errors.WithCode(code.V3ErrInvalidContext, "nil config")
+		}
 		// match config path
 		if config.ConfigPath == nil {
 			return errors.WithCode(code.V3ErrInvalidContext, "config with no ConfigPath")
@@ -60,7 +64,7 @@ func (i *Include) InsertConfig(configs ...*Config) error {
 		includingConfigs = append(includingConfigs, config)
 
 	}
-	includedConfigs, err := fatherConfig.IncludeConfig(includingConfigs...)
+	includedConfigs, err := fatherConfig.includeConfig(includingConfigs...)
 	for _, config := range includedConfigs {
 		i.Configs[config.FullPath()] = config
 	}
@@ -80,20 +84,28 @@ func (i *Include) RemoveConfig(configs ...*Config) error {
 	if err != nil {
 		return err
 	}
+
+	removingConfigs := make([]*Config, 0)
 	for _, config := range configs {
-		cache, err := fatherConfig.Graph.GetConfig(config.FullPath())
+		if config == nil {
+			return errors.WithCode(code.V3ErrInvalidContext, "nil config")
+		}
+		cache, err := fatherConfig.Graph.GetConfig(configHash(config))
 		if err != nil {
 			return err
 		}
-		_, has := i.Configs[cache.FullPath()]
-		if !has {
-			continue
+		_, has := i.Configs[configHash(cache)]
+		if has {
+			removingConfigs = append(removingConfigs, cache)
 		}
-		delete(i.Configs, cache.FullPath())
-		err = fatherConfig.Graph.RemoveEdge(fatherConfig, cache)
+	}
+
+	for _, config := range removingConfigs {
+		err = fatherConfig.Graph.RemoveEdge(fatherConfig, config)
 		if err != nil {
 			return err
 		}
+		delete(i.Configs, configHash(config))
 	}
 	return nil
 }

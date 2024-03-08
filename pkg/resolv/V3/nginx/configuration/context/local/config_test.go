@@ -190,7 +190,7 @@ func TestConfig_Father(t *testing.T) {
 	}
 }
 
-func TestConfig_IncludeConfig(t *testing.T) {
+func TestConfig_includeConfig(t *testing.T) {
 	// main config
 	testMain := NewContext(context_type.TypeMain, "C:\\test\\nginx.conf").
 		Insert(
@@ -207,7 +207,7 @@ func TestConfig_IncludeConfig(t *testing.T) {
 				),
 			0,
 		).(*Main)
-	_, err := testMain.IncludeConfig(
+	_, err := testMain.includeConfig(
 		NewContext(context_type.TypeConfig, "C:\\test\\existing.conf").(*Config),
 		NewContext(context_type.TypeConfig, "a.conf").(*Config),
 		NewContext(context_type.TypeConfig, "b.conf").(*Config),
@@ -240,7 +240,7 @@ func TestConfig_IncludeConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 	cConfig := NewContext(context_type.TypeConfig, "c.conf").(*Config)
-	_, err = aConfig.IncludeConfig(bConfig)
+	_, err = aConfig.includeConfig(bConfig)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -444,13 +444,13 @@ func TestConfig_IncludeConfig(t *testing.T) {
 				}
 				return true
 			}
-			got, err := c.IncludeConfig(tt.args.configs...)
+			got, err := c.includeConfig(tt.args.configs...)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("IncludeConfig() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("includeConfig() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !isSame(got, tt.want) {
-				t.Errorf("IncludeConfig() got = %v, want %v", got, tt.want)
+				t.Errorf("includeConfig() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -507,7 +507,7 @@ func TestConfig_SetValue(t *testing.T) {
 				),
 			0,
 		).(*Main)
-	_, err := testMain.IncludeConfig(NewContext(context_type.TypeConfig, "a.conf").(*Config))
+	_, err := testMain.includeConfig(NewContext(context_type.TypeConfig, "a.conf").(*Config))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -681,7 +681,7 @@ func TestConfig_modifyPathInGraph(t *testing.T) {
 				),
 			0,
 		).(*Main)
-	_, err := testMain.IncludeConfig(
+	_, err := testMain.includeConfig(
 		NewContext(context_type.TypeConfig, "a.conf").(*Config),
 		NewContext(context_type.TypeConfig, "b.conf").(*Config),
 	)
@@ -773,7 +773,7 @@ func Test_configGraph_AddConfig(t *testing.T) {
 				),
 			0,
 		).(*Main)
-	_, err := testMain.IncludeConfig(NewContext(context_type.TypeConfig, "a.conf").(*Config))
+	_, err := testMain.includeConfig(NewContext(context_type.TypeConfig, "a.conf").(*Config))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -839,7 +839,7 @@ func Test_configGraph_AddEdge(t *testing.T) {
 				),
 			0,
 		).(*Main)
-	_, err := testMain.IncludeConfig(
+	_, err := testMain.includeConfig(
 		NewContext(context_type.TypeConfig, "a.conf").(*Config),
 		NewContext(context_type.TypeConfig, "b.conf").(*Config),
 	)
@@ -856,7 +856,7 @@ func Test_configGraph_AddEdge(t *testing.T) {
 	}
 
 	otherMain := NewContext(context_type.TypeMain, "C:\\test1\\nginx.conf").(*Main)
-	_, err = otherMain.IncludeConfig(
+	_, err = otherMain.includeConfig(
 		NewContext(context_type.TypeConfig, "other.conf").(*Config),
 	)
 	if err != nil {
@@ -992,7 +992,7 @@ func Test_configGraph_GetConfig(t *testing.T) {
 				),
 			0,
 		).(*Main)
-	_, err := testMain.IncludeConfig(
+	_, err := testMain.includeConfig(
 		NewContext(context_type.TypeConfig, "a.conf").(*Config),
 	)
 	if err != nil {
@@ -1084,11 +1084,11 @@ func Test_configGraph_RemoveEdge(t *testing.T) {
 				),
 			0,
 		).(*Main)
-	testMain.IncludeConfig(NewContext(context_type.TypeConfig, "a.conf").(*Config))
+	testMain.includeConfig(NewContext(context_type.TypeConfig, "a.conf").(*Config))
 	a, _ := testMain.Graph.GetConfig("C:\\test\\a.conf")
-	a.IncludeConfig(NewContext(context_type.TypeConfig, "b.conf").(*Config))
+	a.includeConfig(NewContext(context_type.TypeConfig, "b.conf").(*Config))
 	b, _ := testMain.Graph.GetConfig("C:\\test\\b.conf")
-	b.IncludeConfig(NewContext(context_type.TypeConfig, "c.conf").(*Config))
+	b.includeConfig(NewContext(context_type.TypeConfig, "c.conf").(*Config))
 	c, _ := testMain.Graph.GetConfig("C:\\test\\c.conf")
 	notInGraphConfig := NewContext(context_type.TypeConfig, "notingraph.conf").(*Config)
 	type args struct {
@@ -1156,7 +1156,7 @@ func Test_configGraph_RenewConfigPath(t *testing.T) {
 				),
 			0,
 		).(*Main)
-	_, err := testMain.IncludeConfig(
+	_, err := testMain.includeConfig(
 		NewContext(context_type.TypeConfig, "a.conf").(*Config),
 		NewContext(context_type.TypeConfig, "2exist.conf").(*Config),
 		NewContext(context_type.TypeConfig, "inedge.conf").(*Config),
@@ -1184,8 +1184,8 @@ func Test_configGraph_RenewConfigPath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, _ = inEdgeConfig.IncludeConfig(testConfig)
-	_, _ = testConfig.IncludeConfig(NewContext(context_type.TypeConfig, "outedge.conf").(*Config))
+	_, _ = inEdgeConfig.includeConfig(testConfig)
+	_, _ = testConfig.includeConfig(NewContext(context_type.TypeConfig, "outedge.conf").(*Config))
 	testConfig.ConfigPath, err = newConfigPath(testConfig.Graph, "modified.conf")
 	if err != nil {
 		t.Fatal(err)
@@ -1252,13 +1252,13 @@ func Test_configGraph_Topology(t *testing.T) {
 				),
 			0,
 		).(*Main)
-	testMain.IncludeConfig(NewContext(context_type.TypeConfig, "a.conf").(*Config))
+	testMain.includeConfig(NewContext(context_type.TypeConfig, "a.conf").(*Config))
 	a, _ := testMain.Graph.GetConfig("C:\\test\\a.conf")
-	a.IncludeConfig(NewContext(context_type.TypeConfig, "b.conf").(*Config))
+	a.includeConfig(NewContext(context_type.TypeConfig, "b.conf").(*Config))
 	b, _ := testMain.Graph.GetConfig("C:\\test\\b.conf")
-	b.IncludeConfig(NewContext(context_type.TypeConfig, "c.conf").(*Config))
+	b.includeConfig(NewContext(context_type.TypeConfig, "c.conf").(*Config))
 	c, _ := testMain.Graph.GetConfig("C:\\test\\c.conf")
-	c.IncludeConfig(NewContext(context_type.TypeConfig, "d.conf").(*Config))
+	c.includeConfig(NewContext(context_type.TypeConfig, "d.conf").(*Config))
 	d, _ := testMain.Graph.GetConfig("C:\\test\\d.conf")
 	e := NewContext(context_type.TypeConfig, "e.conf").(*Config)
 	e.ConfigPath, _ = newConfigPath(testMain.Graph, e.Value())
@@ -1266,7 +1266,7 @@ func Test_configGraph_Topology(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = e.IncludeConfig(
+	_, err = e.includeConfig(
 		a,
 		NewContext(context_type.TypeConfig, "f.conf").(*Config),
 		NewContext(context_type.TypeConfig, "g.conf").(*Config),
@@ -1313,13 +1313,13 @@ func Test_configGraph_removeConfig(t *testing.T) {
 				),
 			0,
 		).(*Main)
-	testMain.IncludeConfig(NewContext(context_type.TypeConfig, "a.conf").(*Config))
+	testMain.includeConfig(NewContext(context_type.TypeConfig, "a.conf").(*Config))
 	a, _ := testMain.Graph.GetConfig("C:\\test\\a.conf")
-	a.IncludeConfig(NewContext(context_type.TypeConfig, "b.conf").(*Config))
+	a.includeConfig(NewContext(context_type.TypeConfig, "b.conf").(*Config))
 	b, _ := testMain.Graph.GetConfig("C:\\test\\b.conf")
-	b.IncludeConfig(NewContext(context_type.TypeConfig, "c.conf").(*Config))
+	b.includeConfig(NewContext(context_type.TypeConfig, "c.conf").(*Config))
 	c, _ := testMain.Graph.GetConfig("C:\\test\\c.conf")
-	c.IncludeConfig(NewContext(context_type.TypeConfig, "d.conf").(*Config))
+	c.includeConfig(NewContext(context_type.TypeConfig, "d.conf").(*Config))
 	d, _ := testMain.Graph.GetConfig("C:\\test\\d.conf")
 	err := testMain.Graph.(*configGraph).graph.RemoveEdge(configHash(c), configHash(d))
 	if err != nil {
@@ -1331,7 +1331,7 @@ func Test_configGraph_removeConfig(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = e.IncludeConfig(
+	_, err = e.includeConfig(
 		a,
 		NewContext(context_type.TypeConfig, "f.conf").(*Config),
 		NewContext(context_type.TypeConfig, "g.conf").(*Config),
@@ -1394,7 +1394,7 @@ func Test_configGraph_setGraphFor(t *testing.T) {
 				),
 			0,
 		).(*Main)
-	testMain.IncludeConfig(NewContext(context_type.TypeConfig, "a.conf").(*Config))
+	testMain.includeConfig(NewContext(context_type.TypeConfig, "a.conf").(*Config))
 	a, _ := testMain.Graph.GetConfig("C:\\test\\a.conf")
 	diffGraphConfig := NewContext(context_type.TypeConfig, "different_graph.conf").(*Config)
 	diffGraphConfig.Graph = &configGraph{}
