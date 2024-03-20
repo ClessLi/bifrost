@@ -9,7 +9,7 @@ import (
 )
 
 type Directive struct {
-	Name   string `json:"name,omitempty"`
+	Name   string `json:"directive,omitempty"`
 	Params string `json:"params,omitempty"`
 
 	fatherContext context.Context

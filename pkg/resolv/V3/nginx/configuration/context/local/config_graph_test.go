@@ -6,13 +6,13 @@ import (
 )
 
 func TestModifyConfigPathInGraph(t *testing.T) {
-	testMainConfig, err := newMainConfig("C:\\test\\nginx.conf")
+	testMain, err := newMain("C:\\test\\nginx.conf")
 	if err != nil {
 		t.Fatal(err)
 	}
 	childConfig := NewContext(context_type.TypeConfig, "test.conf").(*Config)
 
-	_, err = testMainConfig.includeConfig(childConfig)
+	_, err = testMain.MainConfig().includeConfig(childConfig)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -22,7 +22,7 @@ func TestModifyConfigPathInGraph(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cache, err := testMainConfig.Graph.GetConfig(childConfig.FullPath())
+	cache, err := testMain.GetConfig(childConfig.FullPath())
 	if err != nil {
 		t.Fatal(err)
 	}

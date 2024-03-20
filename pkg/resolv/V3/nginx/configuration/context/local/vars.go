@@ -28,8 +28,7 @@ var (
 	RegErrorHeed             = regexp.MustCompile(Abnormal)
 
 	// json unmarshal regexps
-	JsonUnmarshalRegCommentHead     = regexp.MustCompile(`^\s*{\s*"comments"\s*:\s*"`)
-	JsonUnmarshalRegConfigHead      = regexp.MustCompile(`^\s*{\s*"config"\s*:\s*{`)
+	JsonUnmarshalRegCommentHead     = regexp.MustCompile(`^\s*{[^{]*"comments"\s*:\s*"`)
 	JsonUnmarshalRegEventsHead      = regexp.MustCompile(`^\s*{\s*"events"\s*:\s*{`)
 	JsonUnmarshalRegGeoHead         = regexp.MustCompile(`^\s*{\s*"geo"\s*:\s*{`)
 	JsonUnmarshalRegHttpHead        = regexp.MustCompile(`^\s*{\s*"http"\s*:\s*{`)
@@ -54,5 +53,5 @@ var (
 	jsonUnmarshalRegMatcherMap = make(map[context_type.ContextType]func(jsonraw []byte) bool)
 
 	// json unmarshaler builder map
-	jsonUnmarshalerBuilderMap = make(map[context_type.ContextType]func(graph ConfigGraph, father context.Context) *unmarshaler)
+	jsonUnmarshalerBuilderMap = make(map[context_type.ContextType]func(graph ConfigGraph, father context.Context) *jsonUnmarshaler)
 )

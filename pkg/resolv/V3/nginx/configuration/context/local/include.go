@@ -1,6 +1,7 @@
 package local
 
 import (
+	"encoding/json"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
@@ -15,12 +16,38 @@ type Include struct {
 	fatherContext context.Context
 }
 
+func (i *Include) MarshalJSON() ([]byte, error) {
+	marshalCtx := struct {
+		Include struct {
+			Value  string   `json:"value,omitempty"`
+			Params []string `json:"params,omitempty"`
+		} `json:"include,omitempty"`
+	}{Include: struct {
+		Value  string   `json:"value,omitempty"`
+		Params []string `json:"params,omitempty"`
+	}(struct {
+		Value  string
+		Params []string
+	}{Value: i.Value(), Params: make([]string, 0)})}
+
+	for _, config := range i.Configs {
+		marshalCtx.Include.Params = append(marshalCtx.Include.Params, config.Value())
+	}
+	return json.Marshal(marshalCtx)
+}
+
 func (i *Include) FatherConfig() (*Config, error) {
 	fatherCtx := i.Father()
 	fatherConfig, ok := fatherCtx.(*Config)
 	for !ok {
+		switch fatherCtx.Type() {
+		case context_type.TypeErrContext:
+			return nil, fatherCtx.(*context.ErrorContext).AppendError(errors.WithCode(code.V3ErrInvalidContext, "found an error config context")).Error()
+		case context_type.TypeMain:
+			return nil, errors.WithCode(code.V3ErrInvalidContext, "found an Main context")
+		}
+
 		if fatherCtx.Type() == context_type.TypeErrContext {
-			return nil, fatherCtx.(*context.ErrorContext).AppendError(errors.WithCode(code.V3ErrInvalidContext, "found a error config context")).Error()
 		}
 		fatherCtx = fatherCtx.Father()
 		fatherConfig, ok = fatherCtx.(*Config)
@@ -42,6 +69,10 @@ func (i *Include) InsertConfig(configs ...*Config) error {
 	if err != nil {
 		return err
 	}
+	fatherMain, ok := fatherConfig.Father().(*Main)
+	if !ok {
+		return errors.WithCode(code.V3ErrInvalidContext, "this include context is not bound to a main context")
+	}
 
 	includingConfigs := make([]*Config, 0)
 	for _, config := range configs {
@@ -50,7 +81,10 @@ func (i *Include) InsertConfig(configs ...*Config) error {
 		}
 		// match config path
 		if config.ConfigPath == nil {
-			return errors.WithCode(code.V3ErrInvalidContext, "config with no ConfigPath")
+			config.ConfigPath, err = newConfigPath(fatherMain.ConfigGraph, config.Value())
+			if err != nil {
+				return err
+			}
 		}
 
 		err = i.matchConfigPath(config.RelativePath())
@@ -66,7 +100,7 @@ func (i *Include) InsertConfig(configs ...*Config) error {
 	}
 	includedConfigs, err := fatherConfig.includeConfig(includingConfigs...)
 	for _, config := range includedConfigs {
-		i.Configs[config.FullPath()] = config
+		i.Configs[configHash(config)] = config
 	}
 	return err
 }
@@ -87,27 +121,17 @@ func (i *Include) RemoveConfig(configs ...*Config) error {
 
 	removingConfigs := make([]*Config, 0)
 	for _, config := range configs {
-		if config == nil {
-			return errors.WithCode(code.V3ErrInvalidContext, "nil config")
-		}
-		cache, err := fatherConfig.Graph.GetConfig(configHash(config))
-		if err != nil {
-			return err
-		}
-		_, has := i.Configs[configHash(cache)]
+		_, has := i.Configs[configHash(config)]
 		if has {
-			removingConfigs = append(removingConfigs, cache)
+			removingConfigs = append(removingConfigs, config)
 		}
 	}
 
-	for _, config := range removingConfigs {
-		err = fatherConfig.Graph.RemoveEdge(fatherConfig, config)
-		if err != nil {
-			return err
-		}
+	removedConfigs, err := fatherConfig.removeIncludedConfig(removingConfigs...)
+	for _, config := range removedConfigs {
 		delete(i.Configs, configHash(config))
 	}
-	return nil
+	return err
 }
 
 func (i *Include) Modify(ctx context.Context, idx int) context.Context {
@@ -118,12 +142,7 @@ func (i *Include) ModifyConfig(configs ...*Config) error {
 	if configs == nil {
 		return errors.WithCode(code.V3ErrInvalidContext, "null config")
 	}
-	err := i.RemoveConfig(configs...)
-	if err != nil {
-		return err
-	}
-	err = i.InsertConfig(configs...)
-	return err
+	return errors.NewAggregate([]error{i.RemoveConfig(configs...), i.InsertConfig(configs...)})
 }
 
 func (i *Include) Father() context.Context {
@@ -186,7 +205,7 @@ func (i *Include) Len() int {
 }
 
 func (i *Include) Value() string {
-	return i.ContextValue
+	return filepath.Clean(i.ContextValue)
 }
 
 func (i *Include) Type() context_type.ContextType {
@@ -216,7 +235,7 @@ func (i *Include) ConfigLines(isDumping bool) ([]string, error) {
 }
 
 func (i *Include) matchConfigPath(path string) error {
-	isMatch, err := filepath.Match(i.ContextValue, path)
+	isMatch, err := filepath.Match(i.Value(), path)
 	if err != nil {
 		return errors.WithCode(code.V3ErrInvalidContext, "pattern(%s) match included config(%s) failed, cased by: %v", i.ContextValue, path, err)
 	}
@@ -241,10 +260,10 @@ func registerIncludeParseFunc() error {
 	pushStackParseFuncMap[context_type.TypeInclude] = func(data []byte, idx *int) context.Context {
 		if matchIndexes := RegDirectiveWithValue.FindIndex(data[*idx:]); matchIndexes != nil { //nolint:nestif
 			subMatch := RegDirectiveWithValue.FindSubmatch(data[*idx:])
-			*idx += matchIndexes[len(matchIndexes)-1]
 			key := string(subMatch[1])
 			value := string(subMatch[2])
 			if key == string(context_type.TypeInclude) {
+				*idx += matchIndexes[len(matchIndexes)-1]
 				return NewContext(context_type.TypeInclude, value)
 			}
 		}

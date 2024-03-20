@@ -2,7 +2,6 @@ package local
 
 import (
 	"encoding/json"
-	"github.com/ClessLi/bifrost/pkg/graph"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
 	"github.com/marmotedu/errors"
@@ -10,68 +9,52 @@ import (
 	"strings"
 )
 
-type UnmarshalContext interface {
+type JsonUnmarshalContext interface {
 	Type() context_type.ContextType
 	GetValue() string
 	GetChildren() []*json.RawMessage
 }
 
-type unmarshalIncludeContext struct {
-	Value    string                      `json:"value,omitempty"`
-	Children map[string]*json.RawMessage `json:"param,omitempty"`
-}
-
-func (u unmarshalIncludeContext) Type() context_type.ContextType {
-	return context_type.TypeInclude
-}
-
-func (u unmarshalIncludeContext) GetValue() string {
-	return u.Value
-}
-
-func (u unmarshalIncludeContext) GetChildren() []*json.RawMessage {
-	return nil
-}
-
-type unmarshalContext struct {
+type jsonUnmarshalContext struct {
 	Value       string             `json:"value,omitempty"`
-	Children    []*json.RawMessage `json:"param,omitempty"`
+	Children    []*json.RawMessage `json:"params,omitempty"`
 	contextType context_type.ContextType
 }
 
-func (u unmarshalContext) Type() context_type.ContextType {
+func (u jsonUnmarshalContext) Type() context_type.ContextType {
 	return u.contextType
 }
 
-func (u unmarshalContext) GetValue() string {
+func (u jsonUnmarshalContext) GetValue() string {
 	return u.Value
 }
 
-func (u unmarshalContext) GetChildren() []*json.RawMessage {
+func (u jsonUnmarshalContext) GetChildren() []*json.RawMessage {
 	return u.Children
 }
 
-type _main struct {
-	_config `json:"main"`
+type jsonUnmarshalMain struct {
+	MainConfig string                        `json:"main-config,omitempty"`
+	Configs    map[string][]*json.RawMessage `json:"configs,omitempty"`
 }
 
-type _comment struct {
+type jsonUnmarshalComment struct {
 	Comments string `json:"comments,omitempty"`
 	Inline   bool   `json:"inline,omitempty"`
 }
 
-func (c _comment) Type() context_type.ContextType {
+func (c jsonUnmarshalComment) Type() context_type.ContextType {
 	if c.Inline {
 		return context_type.TypeInlineComment
 	}
 	return context_type.TypeComment
 }
 
-func (c _comment) GetValue() string {
+func (c jsonUnmarshalComment) GetValue() string {
 	return c.Comments
 }
 
-func (c _comment) GetChildren() []*json.RawMessage {
+func (c jsonUnmarshalComment) GetChildren() []*json.RawMessage {
 	return []*json.RawMessage{}
 }
 
@@ -80,40 +63,44 @@ func registerCommentJsonRegMatcher() error {
 }
 
 func registerCommentJsonUnmarshalerBuilder() error {
-	return RegisterJsonUnmarshalerBuilder(context_type.TypeComment, func() UnmarshalContext {
-		return new(_comment)
+	return RegisterJsonUnmarshalerBuilder(context_type.TypeComment, func() JsonUnmarshalContext {
+		return new(jsonUnmarshalComment)
 	})
 }
 
-type _config struct {
-	unmarshalContext `json:"config"`
+type jsonUnmarshalConfig struct {
+	jsonUnmarshalContext `json:"config"`
 }
 
-type directive struct {
-	Name   string `json:"name,omitempty"`
+type jsonUnmarshalDirective struct {
+	Name   string `json:"directive,omitempty"`
 	Params string `json:"params,omitempty"`
 }
 
-func (d directive) Type() context_type.ContextType {
+func (d jsonUnmarshalDirective) Type() context_type.ContextType {
 	return context_type.TypeDirective
 }
 
-func (d directive) GetValue() string {
-	return strings.Join([]string{d.Name, d.Params}, " ")
+func (d jsonUnmarshalDirective) GetValue() string {
+	v := strings.TrimSpace(d.Name)
+	if params := strings.TrimSpace(d.Params); len(params) > 0 {
+		v += " " + params
+	}
+	return v
 }
 
-func (d directive) GetChildren() []*json.RawMessage {
+func (d jsonUnmarshalDirective) GetChildren() []*json.RawMessage {
 	return []*json.RawMessage{}
 }
 
 func registerDirectiveJsonUnmarshalerBuilder() error {
-	return RegisterJsonUnmarshalerBuilder(context_type.TypeDirective, func() UnmarshalContext {
-		return new(directive)
+	return RegisterJsonUnmarshalerBuilder(context_type.TypeDirective, func() JsonUnmarshalContext {
+		return new(jsonUnmarshalDirective)
 	})
 }
 
-type events struct {
-	unmarshalContext `json:"events"`
+type jsonUnmarshalEvents struct {
+	jsonUnmarshalContext `json:"events"`
 }
 
 func registerEventsJsonRegMatcher() error {
@@ -121,13 +108,15 @@ func registerEventsJsonRegMatcher() error {
 }
 
 func registerEventsJsonUnmarshalerBuilder() error {
-	return RegisterJsonUnmarshalerBuilder(context_type.TypeEvents, func() UnmarshalContext {
-		return new(events)
+	return RegisterJsonUnmarshalerBuilder(context_type.TypeEvents, func() JsonUnmarshalContext {
+		u := new(jsonUnmarshalEvents)
+		u.contextType = context_type.TypeEvents
+		return u
 	})
 }
 
-type geo struct {
-	unmarshalContext `json:"geo"`
+type jsonUnmarshalGeo struct {
+	jsonUnmarshalContext `json:"geo"`
 }
 
 func registerGEOJsonRegMatcher() error {
@@ -135,13 +124,15 @@ func registerGEOJsonRegMatcher() error {
 }
 
 func registerGEOJsonUnmarshalerBuilder() error {
-	return RegisterJsonUnmarshalerBuilder(context_type.TypeGeo, func() UnmarshalContext {
-		return new(geo)
+	return RegisterJsonUnmarshalerBuilder(context_type.TypeGeo, func() JsonUnmarshalContext {
+		u := new(jsonUnmarshalGeo)
+		u.contextType = context_type.TypeGeo
+		return u
 	})
 }
 
-type http struct {
-	unmarshalContext `json:"http"`
+type jsonUnmarshalHttp struct {
+	jsonUnmarshalContext `json:"http"`
 }
 
 func registerHTTPJsonRegMatcher() error {
@@ -149,13 +140,15 @@ func registerHTTPJsonRegMatcher() error {
 }
 
 func registerHTTPJsonUnmarshalerBuilder() error {
-	return RegisterJsonUnmarshalerBuilder(context_type.TypeHttp, func() UnmarshalContext {
-		return new(http)
+	return RegisterJsonUnmarshalerBuilder(context_type.TypeHttp, func() JsonUnmarshalContext {
+		u := new(jsonUnmarshalHttp)
+		u.contextType = context_type.TypeHttp
+		return u
 	})
 }
 
-type _if struct {
-	unmarshalContext `json:"if"`
+type jsonUnmarshalIf struct {
+	jsonUnmarshalContext `json:"if"`
 }
 
 func registerIFJsonRegMatcher() error {
@@ -163,13 +156,15 @@ func registerIFJsonRegMatcher() error {
 }
 
 func registerIFJsonUnmarshalerBuilder() error {
-	return RegisterJsonUnmarshalerBuilder(context_type.TypeIf, func() UnmarshalContext {
-		return new(_if)
+	return RegisterJsonUnmarshalerBuilder(context_type.TypeIf, func() JsonUnmarshalContext {
+		u := new(jsonUnmarshalIf)
+		u.contextType = context_type.TypeIf
+		return u
 	})
 }
 
-type include struct {
-	unmarshalIncludeContext `json:"include"`
+type jsonUnmarshalInclude struct {
+	jsonUnmarshalContext `json:"include"`
 }
 
 func registerIncludeJsonRegMatcher() error {
@@ -177,13 +172,15 @@ func registerIncludeJsonRegMatcher() error {
 }
 
 func registerIncludeJsonUnmarshalerBuilder() error {
-	return RegisterJsonUnmarshalerBuilder(context_type.TypeInclude, func() UnmarshalContext {
-		return new(include)
+	return RegisterJsonUnmarshalerBuilder(context_type.TypeInclude, func() JsonUnmarshalContext {
+		u := new(jsonUnmarshalInclude)
+		u.contextType = context_type.TypeInclude
+		return u
 	})
 }
 
-type limitExcept struct {
-	unmarshalContext `json:"limit_except"`
+type jsonUnmarshalLimitExcept struct {
+	jsonUnmarshalContext `json:"limit-except"`
 }
 
 func registerLimitExceptJsonRegMatcher() error {
@@ -191,13 +188,15 @@ func registerLimitExceptJsonRegMatcher() error {
 }
 
 func registerLimitExceptJsonUnmarshalerBuilder() error {
-	return RegisterJsonUnmarshalerBuilder(context_type.TypeLimitExcept, func() UnmarshalContext {
-		return new(limitExcept)
+	return RegisterJsonUnmarshalerBuilder(context_type.TypeLimitExcept, func() JsonUnmarshalContext {
+		u := new(jsonUnmarshalLimitExcept)
+		u.contextType = context_type.TypeLimitExcept
+		return u
 	})
 }
 
-type location struct {
-	unmarshalContext `json:"location"`
+type jsonUnmarshalLocation struct {
+	jsonUnmarshalContext `json:"location"`
 }
 
 func registerLocationJsonRegMatcher() error {
@@ -205,13 +204,15 @@ func registerLocationJsonRegMatcher() error {
 }
 
 func registerLocationJsonUnmarshalerBuilder() error {
-	return RegisterJsonUnmarshalerBuilder(context_type.TypeLocation, func() UnmarshalContext {
-		return new(location)
+	return RegisterJsonUnmarshalerBuilder(context_type.TypeLocation, func() JsonUnmarshalContext {
+		u := new(jsonUnmarshalLocation)
+		u.contextType = context_type.TypeLocation
+		return u
 	})
 }
 
-type _map struct {
-	unmarshalContext `json:"map"`
+type jsonUnmarshalMap struct {
+	jsonUnmarshalContext `json:"map"`
 }
 
 func registerMapJsonRegMatcher() error {
@@ -219,13 +220,15 @@ func registerMapJsonRegMatcher() error {
 }
 
 func registerMapJsonUnmarshalerBuilder() error {
-	return RegisterJsonUnmarshalerBuilder(context_type.TypeMap, func() UnmarshalContext {
-		return new(_map)
+	return RegisterJsonUnmarshalerBuilder(context_type.TypeMap, func() JsonUnmarshalContext {
+		u := new(jsonUnmarshalMap)
+		u.contextType = context_type.TypeMap
+		return u
 	})
 }
 
-type server struct {
-	unmarshalContext `json:"server"`
+type jsonUnmarshalServer struct {
+	jsonUnmarshalContext `json:"server"`
 }
 
 func registerServerJsonRegMatcher() error {
@@ -233,13 +236,15 @@ func registerServerJsonRegMatcher() error {
 }
 
 func registerServerJsonUnmarshalerBuilder() error {
-	return RegisterJsonUnmarshalerBuilder(context_type.TypeServer, func() UnmarshalContext {
-		return new(server)
+	return RegisterJsonUnmarshalerBuilder(context_type.TypeServer, func() JsonUnmarshalContext {
+		u := new(jsonUnmarshalServer)
+		u.contextType = context_type.TypeServer
+		return u
 	})
 }
 
-type stream struct {
-	unmarshalContext `json:"stream"`
+type jsonUnmarshalStream struct {
+	jsonUnmarshalContext `json:"stream"`
 }
 
 func registerStreamJsonRegMatcher() error {
@@ -247,13 +252,15 @@ func registerStreamJsonRegMatcher() error {
 }
 
 func registerStreamJsonUnmarshalerBuilder() error {
-	return RegisterJsonUnmarshalerBuilder(context_type.TypeStream, func() UnmarshalContext {
-		return new(stream)
+	return RegisterJsonUnmarshalerBuilder(context_type.TypeStream, func() JsonUnmarshalContext {
+		u := new(jsonUnmarshalStream)
+		u.contextType = context_type.TypeStream
+		return u
 	})
 }
 
-type types struct {
-	unmarshalContext `json:"types"`
+type jsonUnmarshalTypes struct {
+	jsonUnmarshalContext `json:"types"`
 }
 
 func registerTypesJsonRegMatcher() error {
@@ -261,13 +268,15 @@ func registerTypesJsonRegMatcher() error {
 }
 
 func registerTypesJsonUnmarshalerBuilder() error {
-	return RegisterJsonUnmarshalerBuilder(context_type.TypeTypes, func() UnmarshalContext {
-		return new(types)
+	return RegisterJsonUnmarshalerBuilder(context_type.TypeTypes, func() JsonUnmarshalContext {
+		u := new(jsonUnmarshalTypes)
+		u.contextType = context_type.TypeTypes
+		return u
 	})
 }
 
-type upstream struct {
-	unmarshalContext `json:"upstream"`
+type jsonUnmarshalUpstream struct {
+	jsonUnmarshalContext `json:"upstream"`
 }
 
 func registerUpstreamJsonRegMatcher() error {
@@ -275,13 +284,15 @@ func registerUpstreamJsonRegMatcher() error {
 }
 
 func registerUpstreamJsonUnmarshalerBuilder() error {
-	return RegisterJsonUnmarshalerBuilder(context_type.TypeUpstream, func() UnmarshalContext {
-		return new(upstream)
+	return RegisterJsonUnmarshalerBuilder(context_type.TypeUpstream, func() JsonUnmarshalContext {
+		u := new(jsonUnmarshalUpstream)
+		u.contextType = context_type.TypeUpstream
+		return u
 	})
 }
 
 type mainUnmarshaler struct {
-	unmarshalContext *_main
+	unmarshalContext *jsonUnmarshalMain
 	completedMain    *Main
 }
 
@@ -290,7 +301,7 @@ func (m *mainUnmarshaler) UnmarshalJSON(bytes []byte) error {
 	if err != nil {
 		return err
 	}
-	mainCtx := NewContext(context_type.TypeMain, m.unmarshalContext.GetValue())
+	mainCtx := NewContext(context_type.TypeMain, m.unmarshalContext.MainConfig)
 	if err = mainCtx.Error(); err != nil {
 		return err
 	}
@@ -301,30 +312,63 @@ func (m *mainUnmarshaler) UnmarshalJSON(bytes []byte) error {
 
 	m.completedMain = main
 
-	mainConfigUnmarshaler := &unmarshaler{
-		unmarshalContext: m.unmarshalContext._config,
-		configGraph:      m.completedMain.Graph,
-		completedContext: m.completedMain.Config,
-		fatherContext:    context.NullContext(),
+	toBeUnmarshalledConfigs := make(map[string]*jsonUnmarshalConfig, 0)
+	for value, rawMessages := range m.unmarshalContext.Configs {
+		var configHashString string
+		if value != m.unmarshalContext.MainConfig {
+			config, ok := NewContext(context_type.TypeConfig, value).(*Config)
+			if !ok {
+				return errors.Errorf("failed to build config '%v'", value)
+			}
+			config.ConfigPath, err = newConfigPath(m.completedMain, value)
+			if err != nil {
+				return err
+			}
+			err = m.completedMain.AddConfig(config)
+			if err != nil {
+				return err
+			}
+			configHashString = configHash(config)
+		} else {
+			configHashString = configHash(m.completedMain.MainConfig())
+		}
+		toBeUnmarshalledConfigs[configHashString] = &jsonUnmarshalConfig{jsonUnmarshalContext{
+			Value:       value,
+			Children:    rawMessages,
+			contextType: context_type.TypeConfig,
+		}}
 	}
 
-	for _, childRaw := range mainConfigUnmarshaler.unmarshalContext.GetChildren() {
-		err = mainConfigUnmarshaler.nextUnmarshaler(childRaw).UnmarshalJSON(*childRaw)
+	// unmarshal configs
+	for configHashString, unmarshalConfig := range toBeUnmarshalledConfigs {
+		cache, err := m.completedMain.GetConfig(configHashString)
 		if err != nil {
 			return err
 		}
+		unmarshaler := &jsonUnmarshaler{
+			unmarshalContext: unmarshalConfig,
+			configGraph:      m.completedMain.ConfigGraph,
+			completedContext: cache,
+		}
+		for _, childRaw := range unmarshaler.unmarshalContext.GetChildren() {
+			err = unmarshaler.nextUnmarshaler(childRaw).UnmarshalJSON(*childRaw)
+			if err != nil {
+				return err
+			}
+		}
 	}
+
 	return nil
 }
 
-type unmarshaler struct {
-	unmarshalContext UnmarshalContext
+type jsonUnmarshaler struct {
+	unmarshalContext JsonUnmarshalContext
 	configGraph      ConfigGraph
 	completedContext context.Context
 	fatherContext    context.Context
 }
 
-func (u *unmarshaler) UnmarshalJSON(bytes []byte) error {
+func (u *jsonUnmarshaler) UnmarshalJSON(bytes []byte) error {
 	// unmarshal context, it's self
 	err := json.Unmarshal(bytes, u.unmarshalContext)
 	if err != nil {
@@ -333,14 +377,7 @@ func (u *unmarshaler) UnmarshalJSON(bytes []byte) error {
 
 	switch u.unmarshalContext.Type() {
 	case context_type.TypeConfig:
-		// pre unmarshal config context from include unmarshaler
-		if err = u.completedContext.Error(); err != nil {
-			return err
-		}
-		// check config path
-		if u.completedContext.(*Config).FullPath() != u.unmarshalContext.GetValue() {
-			return errors.Errorf("config paths are different between completed config(%s) and unmarshalled config(%s)", u.completedContext.(*Config).FullPath(), u.unmarshalContext.GetValue())
-		}
+		return errors.New("invalid JSON data: the unmarshal operation for config should be completed in the unmarshal operation of the main unmarshaler")
 	case context_type.TypeInclude:
 		// insert the include context to be unmarshalled into its father, and unmarshal itself
 		return u.unmarshalInclude()
@@ -349,7 +386,7 @@ func (u *unmarshaler) UnmarshalJSON(bytes []byte) error {
 	case context_type.TypeInlineComment:
 		return u.fatherContext.Insert(NewComment(u.unmarshalContext.GetValue(), true), u.fatherContext.Len()).Error()
 	case context_type.TypeDirective:
-		return u.fatherContext.Insert(NewDirective(u.unmarshalContext.(*directive).Name, u.unmarshalContext.(*directive).Params), u.fatherContext.Len()).Error()
+		return u.fatherContext.Insert(NewDirective(u.unmarshalContext.(*jsonUnmarshalDirective).Name, u.unmarshalContext.(*jsonUnmarshalDirective).Params), u.fatherContext.Len()).Error()
 	default:
 		u.completedContext = NewContext(u.unmarshalContext.Type(), u.unmarshalContext.GetValue())
 		if err = u.completedContext.Error(); err != nil {
@@ -372,7 +409,7 @@ func (u *unmarshaler) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-func (u *unmarshaler) nextUnmarshaler(message *json.RawMessage) *unmarshaler {
+func (u *jsonUnmarshaler) nextUnmarshaler(message *json.RawMessage) *jsonUnmarshaler {
 	matchedType := context_type.TypeDirective
 	for contextType, matcher := range jsonUnmarshalRegMatcherMap {
 		if matcher(*message) {
@@ -384,59 +421,45 @@ func (u *unmarshaler) nextUnmarshaler(message *json.RawMessage) *unmarshaler {
 	return jsonUnmarshalerBuilderMap[matchedType](u.configGraph, u.completedContext)
 }
 
-func (u *unmarshaler) unmarshalInclude() error {
-	unmarshalIncludeCtx, ok := u.unmarshalContext.(*unmarshalIncludeContext)
+func (u *jsonUnmarshaler) unmarshalInclude() error {
+	unmarshalInclude, ok := u.unmarshalContext.(*jsonUnmarshalInclude)
 	if !ok {
-		return errors.New("unmarshal context is not unmarshalIncludeContext")
+		return errors.New("unmarshal context is not jsonUnmarshalInclude")
 	}
-	u.completedContext = NewContext(context_type.TypeInclude, unmarshalIncludeCtx.GetValue())
+	u.completedContext = NewContext(context_type.TypeInclude, unmarshalInclude.GetValue())
 	err := u.completedContext.Error()
 	if err != nil {
 		return err
 	}
 
+	// insert the Include context to be unmarshalled into its father
+	if err = u.fatherContext.Insert(u.completedContext, u.fatherContext.Len()).Error(); err != nil {
+		return err
+	}
+
 	// unmarshal included configs
-	// new configs
-	newconfigs := make([]*Config, 0)
-	includedconfigs := make([]*Config, 0)
-	for path := range unmarshalIncludeCtx.Children {
+	configs := make([]*Config, 0)
+	for _, childRaw := range unmarshalInclude.GetChildren() {
+		var path string
+		err := json.Unmarshal(*childRaw, &path)
+		if err != nil {
+			return err
+		}
 		configPath, err := newConfigPath(u.configGraph, path)
 		if err != nil {
 			return err
 		}
 
 		// get config cache
-		cache, err := u.configGraph.GetConfig(configPath.FullPath())
-		if err == nil { // has cache
-			includedconfigs = append(includedconfigs, cache)
-			continue
-		} else if !errors.Is(err, graph.ErrVertexNotExist) {
-			return err
-		}
-
-		// add new config
-		newconfigs = append(newconfigs, NewContext(context_type.TypeConfig, path).(*Config))
-	}
-	includedconfigs = append(includedconfigs, newconfigs...)
-	// include configs
-	err = u.completedContext.(*Include).InsertConfig(includedconfigs...)
-	if err != nil {
-		return err
-	}
-	// unmarshal new configs
-	for _, c := range newconfigs {
-		configUnmarshaler := &unmarshaler{
-			unmarshalContext: new(_config),
-			configGraph:      u.configGraph,
-			completedContext: c,
-			fatherContext:    context.NullContext(),
-		}
-		err = configUnmarshaler.UnmarshalJSON(*unmarshalIncludeCtx.Children[c.FullPath()])
+		cache, err := u.configGraph.GetConfig(strings.TrimSpace(configPath.FullPath()))
 		if err != nil {
 			return err
 		}
+		configs = append(configs, cache)
+
 	}
-	return nil
+	// include configs
+	return u.completedContext.(*Include).InsertConfig(configs...)
 }
 
 func RegisterJsonRegMatcher(contextType context_type.ContextType, regexp *regexp.Regexp) error {
@@ -446,9 +469,9 @@ func RegisterJsonRegMatcher(contextType context_type.ContextType, regexp *regexp
 	return nil
 }
 
-func RegisterJsonUnmarshalerBuilder(contextType context_type.ContextType, newFunc func() UnmarshalContext) error {
-	jsonUnmarshalerBuilderMap[contextType] = func(graph ConfigGraph, father context.Context) *unmarshaler {
-		return &unmarshaler{
+func RegisterJsonUnmarshalerBuilder(contextType context_type.ContextType, newFunc func() JsonUnmarshalContext) error {
+	jsonUnmarshalerBuilderMap[contextType] = func(graph ConfigGraph, father context.Context) *jsonUnmarshaler {
+		return &jsonUnmarshaler{
 			unmarshalContext: newFunc(),
 			configGraph:      graph,
 			completedContext: context.NullContext(),

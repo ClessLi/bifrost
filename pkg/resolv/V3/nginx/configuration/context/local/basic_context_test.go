@@ -127,7 +127,7 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 		Insert(NewContext(context_type.TypeHttp, "").
 			Insert(includeCtx, 0),
 			0)
-	configPath, err := context.NewRelConfigPath("C:\\test", "conf.d/server.conf")
+	configPath, err := context.NewRelConfigPath("C:\\test", "conf.d\\server.conf")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -136,7 +136,7 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 		ConfigPath:   configPath,
 	}
 	includeConfig.self = includeConfig
-	includeConfig.ContextValue = "conf.d/server.conf"
+	includeConfig.ContextValue = "conf.d\\server.conf"
 	includeConfig.Insert(NewContext(context_type.TypeServer, "").
 		Insert(NewDirective("server_name", "testserver"), 0).
 		Insert(NewContext(context_type.TypeLocation, "~ /test"), 1),

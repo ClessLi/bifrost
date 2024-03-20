@@ -317,12 +317,18 @@ func TestInclude_FatherConfig(t *testing.T) {
 				Configs:       testInclude.Configs,
 				fatherContext: testInclude.fatherContext,
 			},
-			want:    testMain.Config,
+			want:    testMain.MainConfig(),
 			wantErr: false,
 		},
 		{
 			name:    "father config not found",
 			fields:  fields{fatherContext: context.NullContext()},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "found a father main context",
+			fields:  fields{fatherContext: NewContext(context_type.TypeMain, "C:\\test\\test.conf")},
 			want:    nil,
 			wantErr: true,
 		},
@@ -428,11 +434,15 @@ func TestInclude_InsertConfig(t *testing.T) {
 		0,
 	)
 	relConfig := NewContext(context_type.TypeConfig, "relative.conf").(*Config)
-	relConfig.ConfigPath, _ = newConfigPath(testMain.Graph, relConfig.ContextValue)
+	relConfig.ConfigPath, _ = newConfigPath(testMain, relConfig.ContextValue)
 	absConfig := NewContext(context_type.TypeConfig, "C:\\test\\absolut.conf").(*Config)
-	absConfig.ConfigPath, _ = newConfigPath(testMain.Graph, absConfig.ContextValue)
+	absConfig.ConfigPath, _ = newConfigPath(testMain, absConfig.ContextValue)
 	notMatchConfig := NewContext(context_type.TypeConfig, "test\\test.conf").(*Config)
-	notMatchConfig.ConfigPath, _ = newConfigPath(testMain.Graph, notMatchConfig.ContextValue)
+	notMatchConfig.ConfigPath, _ = newConfigPath(testMain, notMatchConfig.ContextValue)
+
+	unboundedConfig := NewContext(context_type.TypeConfig, "unbound.conf")
+	unboundedInclude := NewContext(context_type.TypeInclude, "unbound.*.conf").(*Include)
+	unboundedConfig.Insert(unboundedInclude, 0)
 	type fields struct {
 		ContextValue  string
 		Configs       map[string]*Config
@@ -468,13 +478,33 @@ func TestInclude_InsertConfig(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "included config has no config path",
+			name: "Include context has no father main",
+			fields: fields{
+				ContextValue:  unboundedInclude.ContextValue,
+				Configs:       unboundedInclude.Configs,
+				fatherContext: unboundedInclude.fatherContext,
+			},
+			args:    args{configs: []*Config{NewContext(context_type.TypeConfig, "test.conf").(*Config)}},
+			wantErr: true,
+		},
+		{
+			name: "the included config has no config path",
 			fields: fields{
 				ContextValue:  testInclude.ContextValue,
 				Configs:       testInclude.Configs,
 				fatherContext: testInclude.fatherContext,
 			},
 			args:    args{configs: []*Config{NewContext(context_type.TypeConfig, "test.conf").(*Config)}},
+			wantErr: false,
+		},
+		{
+			name: "the included config has no config path, and not matched up",
+			fields: fields{
+				ContextValue:  testInclude.ContextValue,
+				Configs:       testInclude.Configs,
+				fatherContext: testInclude.fatherContext,
+			},
+			args:    args{configs: []*Config{NewContext(context_type.TypeConfig, "test\\test.conf").(*Config)}},
 			wantErr: true,
 		},
 		{
@@ -609,21 +639,25 @@ func TestInclude_ModifyConfig(t *testing.T) {
 		0,
 	)
 	relConfig := NewContext(context_type.TypeConfig, "relative.conf").(*Config)
-	relConfig.ConfigPath, _ = newConfigPath(testMain.Graph, relConfig.ContextValue)
+	relConfig.ConfigPath, _ = newConfigPath(testMain, relConfig.ContextValue)
 	absConfig := NewContext(context_type.TypeConfig, "C:\\test\\absolut.conf").(*Config)
-	absConfig.ConfigPath, _ = newConfigPath(testMain.Graph, absConfig.ContextValue)
+	absConfig.ConfigPath, _ = newConfigPath(testMain, absConfig.ContextValue)
 	notMatchConfig := NewContext(context_type.TypeConfig, "test\\test.conf").(*Config)
-	notMatchConfig.ConfigPath, _ = newConfigPath(testMain.Graph, notMatchConfig.ContextValue)
+	notMatchConfig.ConfigPath, _ = newConfigPath(testMain, notMatchConfig.ContextValue)
 	err := testInclude.InsertConfig(relConfig, absConfig)
 	if err != nil {
 		t.Fatal(err)
 	}
 	modifiedRelConfig := relConfig.Clone().(*Config)
-	modifiedRelConfig.ConfigPath, _ = newConfigPath(testMain.Graph, modifiedRelConfig.Value())
+	modifiedRelConfig.ConfigPath, _ = newConfigPath(testMain, modifiedRelConfig.Value())
 	modifiedRelConfig.Insert(NewDirective("keepalive_timeout", "300s"), 0)
 	modifiedAbsConfig := absConfig.Clone().(*Config)
-	modifiedAbsConfig.ConfigPath, _ = newConfigPath(testMain.Graph, modifiedAbsConfig.Value())
+	modifiedAbsConfig.ConfigPath, _ = newConfigPath(testMain, modifiedAbsConfig.Value())
 	modifiedAbsConfig.Insert(NewDirective("proxy_http_version", "1.1"), 0)
+
+	unboundedConfig := NewContext(context_type.TypeConfig, "unbound.conf")
+	unboundedInclude := NewContext(context_type.TypeInclude, "unbound.*.conf").(*Include)
+	unboundedConfig.Insert(unboundedInclude, 0)
 	type fields struct {
 		ContextValue  string
 		Configs       map[string]*Config
@@ -653,6 +687,16 @@ func TestInclude_ModifyConfig(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "Include context has no father main",
+			fields: fields{
+				ContextValue:  unboundedInclude.ContextValue,
+				Configs:       unboundedInclude.Configs,
+				fatherContext: unboundedInclude.fatherContext,
+			},
+			args:    args{configs: []*Config{NewContext(context_type.TypeConfig, "test.conf").(*Config)}},
+			wantErr: true,
+		},
+		{
 			name: "config has no config path",
 			fields: fields{
 				ContextValue:  testInclude.ContextValue,
@@ -660,6 +704,16 @@ func TestInclude_ModifyConfig(t *testing.T) {
 				fatherContext: testInclude.fatherContext,
 			},
 			args:    args{configs: []*Config{NewContext(context_type.TypeConfig, "test.conf").(*Config)}},
+			wantErr: false,
+		},
+		{
+			name: "the modified config has no config path, and not matched up",
+			fields: fields{
+				ContextValue:  testInclude.ContextValue,
+				Configs:       testInclude.Configs,
+				fatherContext: testInclude.fatherContext,
+			},
+			args:    args{configs: []*Config{NewContext(context_type.TypeConfig, "test\\test.conf").(*Config)}},
 			wantErr: true,
 		},
 		{
@@ -812,19 +866,19 @@ func TestInclude_RemoveConfig(t *testing.T) {
 		0,
 	)
 	relConfig := NewContext(context_type.TypeConfig, "relative.conf").(*Config)
-	relConfig.ConfigPath, _ = newConfigPath(testMain.Graph, relConfig.ContextValue)
+	relConfig.ConfigPath, _ = newConfigPath(testMain, relConfig.ContextValue)
 	absConfig := NewContext(context_type.TypeConfig, "C:\\test\\absolut.conf").(*Config)
-	absConfig.ConfigPath, _ = newConfigPath(testMain.Graph, absConfig.ContextValue)
+	absConfig.ConfigPath, _ = newConfigPath(testMain, absConfig.ContextValue)
 	notMatchConfig := NewContext(context_type.TypeConfig, "test\\test.conf").(*Config)
-	notMatchConfig.ConfigPath, _ = newConfigPath(testMain.Graph, notMatchConfig.ContextValue)
+	notMatchConfig.ConfigPath, _ = newConfigPath(testMain, notMatchConfig.ContextValue)
 	err := testInclude.InsertConfig(relConfig, absConfig)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	onlyAddedIntoGraphConfig := NewContext(context_type.TypeConfig, "C:\\test\\unbound.conf").(*Config)
-	onlyAddedIntoGraphConfig.ConfigPath, _ = newConfigPath(testMain.Graph, onlyAddedIntoGraphConfig.ContextValue)
-	err = testMain.Graph.AddConfig(onlyAddedIntoGraphConfig)
+	onlyAddedIntoGraphConfig.ConfigPath, _ = newConfigPath(testMain, onlyAddedIntoGraphConfig.ContextValue)
+	err = testMain.AddConfig(onlyAddedIntoGraphConfig)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -856,7 +910,7 @@ func TestInclude_RemoveConfig(t *testing.T) {
 				fatherContext: testInclude.fatherContext,
 			},
 			args:    args{configs: []*Config{nil}},
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			name:    "Include context has no father config",
@@ -872,7 +926,7 @@ func TestInclude_RemoveConfig(t *testing.T) {
 				fatherContext: testInclude.fatherContext,
 			},
 			args:    args{configs: []*Config{NewContext(context_type.TypeConfig, "test.conf").(*Config)}},
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			name: "removed config is not included in",
@@ -882,7 +936,7 @@ func TestInclude_RemoveConfig(t *testing.T) {
 				fatherContext: testInclude.fatherContext,
 			},
 			args:    args{configs: []*Config{notMatchConfig}},
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			name: "removed config is not included into father config",

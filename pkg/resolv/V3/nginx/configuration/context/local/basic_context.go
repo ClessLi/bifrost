@@ -12,7 +12,7 @@ const INDENT = "    "
 type BasicContext struct {
 	ContextType  context_type.ContextType `json:"-"`
 	ContextValue string                   `json:"value,omitempty"`
-	Children     []context.Context        `json:"param,omitempty"`
+	Children     []context.Context        `json:"params,omitempty"`
 
 	father context.Context
 	self   context.Context

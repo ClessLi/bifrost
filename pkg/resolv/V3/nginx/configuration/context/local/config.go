@@ -1,6 +1,7 @@
 package local
 
 import (
+	"encoding/json"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
@@ -11,21 +12,24 @@ import (
 )
 
 type Config struct {
-	BasicContext       `json:"config"`
-	Graph              ConfigGraph `json:"-"`
-	context.ConfigPath `json:"-"`
+	BasicContext       // `json:"config"`
+	context.ConfigPath // `json:"-"`
+}
+
+func (c *Config) MarshalJSON() ([]byte, error) {
+	return json.Marshal(c.BasicContext.Children)
 }
 
 func (c *Config) isInGraph() bool {
-	if c.Graph == nil || c.ConfigPath == nil {
+	if c.ConfigPath == nil {
 		return false
 	}
-	_, err := c.Graph.GetConfig(configHash(c))
+	fatherMain, ok := c.Father().(*Main)
+	if !ok || fatherMain.ConfigGraph == nil {
+		return false
+	}
+	_, err := fatherMain.GetConfig(configHash(c))
 	return err == nil
-}
-
-func (c *Config) Father() context.Context {
-	return context.NullContext()
 }
 
 func (c *Config) Clone() context.Context {
@@ -47,8 +51,12 @@ func (c *Config) SetValue(v string) error {
 	return nil
 }
 
-func (c *Config) SetFather(_ context.Context) error {
-	return errors.WithCode(code.V3ErrInvalidOperation, "cannot set father for Config Context")
+func (c *Config) SetFather(ctx context.Context) error {
+	if _, ok := ctx.(*Main); !ok {
+		return errors.WithCode(code.V3ErrInvalidOperation, "the set father is not Main Context")
+	}
+	c.father = ctx
+	return nil
 }
 
 func (c *Config) ConfigLines(isDumping bool) ([]string, error) {
@@ -68,74 +76,75 @@ func (c *Config) ConfigLines(isDumping bool) ([]string, error) {
 	return lines, nil
 }
 
-func (c *Config) includeConfig(configs ...*Config) ([]*Config, error) {
-	errs := make([]error, 0)
-	if c.Graph == nil {
-		errs = append(errs,
-			errors.WithCode(code.V3ErrInvalidOperation, "this config has not been added to a certain graph"+
-				" and other configs cannot be inserted into this config"))
-	}
+func (c *Config) checkIncludedConfigs(configs []*Config) error {
 	if c.ConfigPath == nil {
-		errs = append(errs,
-			errors.WithCode(code.V3ErrInvalidOperation, "this config has not been banded with a `ConfigPath`"+
-				" and other configs cannot be inserted into this config"))
+		return errors.WithCode(code.V3ErrInvalidOperation, "this config has not been banded with a `ConfigPath`"+
+			" and other configs cannot be inserted into this config")
 	}
-	if err := errors.NewAggregate(errs); err != nil {
-		return nil, err
+
+	fatherMain, ok := c.Father().(*Main)
+	if !ok || fatherMain.ConfigGraph == nil {
+		return errors.WithCode(code.V3ErrInvalidOperation, "this config has not been added to a certain graph"+
+			" and other configs cannot be inserted into this config")
 	}
 
 	if configs == nil {
-		return nil, errors.WithCode(code.V3ErrInvalidContext, "null config")
+		return errors.WithCode(code.V3ErrInvalidContext, "null config")
 	}
-	includedConfigs := make([]*Config, 0)
 	for _, config := range configs {
 		if config == nil {
-			errs = append(errs, errors.WithCode(code.V3ErrInvalidContext, "config with no ConfigPath"))
-			continue
+			return errors.WithCode(code.V3ErrInvalidContext, "config with no ConfigPath")
 		}
-		if config.Graph != nil && config.Graph != c.Graph {
+		if config.ConfigPath != nil {
+			if _, ok := config.ConfigPath.(*context.RelConfigPath); ok && config.ConfigPath.BaseDir() != fatherMain.MainConfig().BaseDir() {
+				return errors.WithCode(code.V3ErrInvalidContext,
+					"he relative target directory(%s) of the included configuration file does not match the directory(%s) where the main configuration file is located",
+					config.BaseDir(), fatherMain.MainConfig().BaseDir())
+			}
+		}
+	}
+	return nil
+}
+
+func (c *Config) includeConfig(configs ...*Config) ([]*Config, error) {
+	includedConfigs := make([]*Config, 0)
+	err := c.checkIncludedConfigs(configs)
+	if err != nil {
+		return includedConfigs, err
+	}
+
+	var errs []error
+	fatherMain := c.Father().(*Main)
+
+	for _, config := range configs {
+		if config.isInGraph() && config.Father() != fatherMain {
 			config = config.Clone().(*Config)
 		}
-		if !config.isInGraph() {
-			configpath, err := newConfigPath(c.Graph, config.Value())
-			if err != nil {
-				errs = append(errs, err)
-				continue
-			}
-			config.Graph = c.Graph
-			config.ConfigPath = configpath
-		}
 
-		switch config.ConfigPath.(type) {
-		case *context.RelConfigPath:
-			if config.BaseDir() != c.BaseDir() {
-				errs = append(errs, errors.WithCode(code.V3ErrInvalidContext,
-					"he relative target directory(%s) of the included configuration file does not match the directory(%s) where the main configuration file is located",
-					config.BaseDir(), c.BaseDir()))
-				continue
-			}
+		configpath, err := newConfigPath(fatherMain, config.Value())
+		if err != nil {
+			errs = append(errs, err)
+			continue
 		}
-		err := c.Graph.AddConfig(config)
+		config.ConfigPath = configpath
+
+		err = fatherMain.AddConfig(config)
 		if err != nil {
 			if !errors.Is(err, graph.ErrVertexAlreadyExists) { // Temporarily unable to be covered for testing
 				errs = append(errs, err)
 				continue
 			}
 			// get cache from graph
-			cache, err := c.Graph.GetConfig(configHash(config))
+			cache, err := fatherMain.GetConfig(configHash(config))
 			if err != nil { // Temporarily unable to be covered for testing
 				errs = append(errs, err)
 				continue
 			}
 
-			if config != cache {
-				errs = append(errs, errors.WithCode(code.V3ErrInvalidContext, "the config(%s) is already exist in graph,"+
-					" and the inserted config is inconsistent with the cache in the graph", config.FullPath()))
-				continue
-			}
+			config = cache
 		}
 
-		err = c.Graph.AddEdge(c, config)
+		err = fatherMain.AddEdge(c, config)
 		if err != nil && !errors.Is(err, graph.ErrEdgeAlreadyExists) {
 			errs = append(errs, err)
 			continue
@@ -146,33 +155,57 @@ func (c *Config) includeConfig(configs ...*Config) ([]*Config, error) {
 	return includedConfigs, errors.NewAggregate(errs)
 }
 
+func (c *Config) removeIncludedConfig(configs ...*Config) ([]*Config, error) {
+	removedConfigs := make([]*Config, 0)
+	err := c.checkIncludedConfigs(configs)
+	if err != nil {
+		return removedConfigs, err
+	}
+
+	var errs []error
+	fatherMain := c.Father().(*Main)
+	for _, config := range configs {
+		// get cache from graph
+		cache, err := fatherMain.GetConfig(configHash(config))
+		if err != nil {
+			errs = append(errs, err)
+			removedConfigs = append(removedConfigs, config)
+			continue
+		}
+		removedConfigs = append(removedConfigs, cache)
+		errs = append(errs, fatherMain.RemoveEdge(c, cache))
+	}
+	return removedConfigs, errors.NewAggregate(errs)
+}
+
 func (c *Config) modifyPathInGraph(path string) error {
 	if !c.isInGraph() {
 		return nil
 	}
+	fatherMain := c.Father().(*Main)
 
-	targetConfigPath, err := newConfigPath(c.Graph, path)
+	targetConfigPath, err := newConfigPath(fatherMain, path)
 	if err != nil {
 		return err
 	}
 
-	if c.FullPath() == targetConfigPath.FullPath() {
+	if configHash(c) == strings.TrimSpace(targetConfigPath.FullPath()) {
 		return nil
 	}
 
-	targetConfig, err := c.Graph.GetConfig(targetConfigPath.FullPath())
+	targetConfig, err := fatherMain.GetConfig(strings.TrimSpace(targetConfigPath.FullPath()))
 	if err != nil {
 		if !errors.Is(err, graph.ErrVertexNotFound) { // Temporarily unable to be covered for testing
 			return err
 		}
 	} else {
-		return errors.Wrapf(graph.ErrVertexAlreadyExists, "config(%s) is already exists in config graph", targetConfig.FullPath())
+		return errors.Wrapf(graph.ErrVertexAlreadyExists, "config(%s) is already exists in config graph", configHash(targetConfig))
 	}
-	oldPath := c.FullPath()
+	oldPath := configHash(c)
 	c.ConfigPath = targetConfigPath
-	cache, _ := c.Graph.GetConfig(oldPath)
+	cache, _ := fatherMain.GetConfig(oldPath)
 	if cache == c {
-		return c.Graph.RenewConfigPath(oldPath)
+		return fatherMain.RenewConfigPath(oldPath)
 	}
 	return nil
 }
@@ -232,11 +265,11 @@ func (c *configGraph) AddEdge(src, dst *Config) error {
 	if src == nil || dst == nil || configHash(src) == "" || configHash(dst) == "" {
 		return errors.WithCode(code.V3ErrInvalidContext, "source or destination config is nil")
 	}
-	err := c.setGraphFor(src)
+	err := c.setFatherFor(src)
 	if err != nil {
 		return err
 	}
-	err = c.setGraphFor(dst)
+	err = c.setFatherFor(dst)
 	if err != nil {
 		return err
 	}
@@ -261,7 +294,7 @@ func (c *configGraph) GetConfig(fullpath string) (*Config, error) {
 }
 
 func (c *configGraph) AddConfig(config *Config) error {
-	err := c.setGraphFor(config)
+	err := c.setFatherFor(config)
 	if err != nil {
 		return err
 	}
@@ -273,21 +306,18 @@ func (c *configGraph) removeConfig(config *Config) error {
 	if err != nil {
 		return err
 	}
-	config.Graph = nil
+	config.father = context.NullContext()
 	return nil
 }
 
-func (c *configGraph) setGraphFor(config *Config) error {
+func (c *configGraph) setFatherFor(config *Config) error {
 	if config == nil {
 		return errors.WithCode(code.V3ErrInvalidContext, "added config is nil")
 	}
-	if config.Graph == nil {
-		config.Graph = c
-	}
-	if config.Graph != c {
+	if config.isInGraph() && config.Father() != c.MainConfig().Father() {
 		return errors.WithCode(code.V3ErrInvalidContext, "%s config is in another config graph", configHash(config))
 	}
-	return nil
+	return config.SetFather(c.MainConfig().Father())
 }
 
 func (c *configGraph) Topology() []*Config {
@@ -320,7 +350,7 @@ func (c *configGraph) RenewConfigPath(fullpath string) error {
 	if err != nil {
 		return err
 	}
-	if config.FullPath() == fullpath {
+	if configHash(config) == fullpath {
 		return nil
 	}
 
@@ -354,7 +384,7 @@ func (c *configGraph) RenewConfigPath(fullpath string) error {
 	return c.graph.RemoveVertex(fullpath)
 }
 
-func newMainConfig(abspath string) (*Config, error) {
+func newMain(abspath string) (*Main, error) {
 	confpath, err := context.NewAbsConfigPath(abspath)
 	if err != nil {
 		return nil, err
@@ -365,25 +395,29 @@ func newMainConfig(abspath string) (*Config, error) {
 	}
 	config.self = config
 	config.ContextValue = abspath
-	err = setGraphForMainConfig(config)
+	g, err := newConfigGraph(config)
 	if err != nil { // Temporarily unable to be covered for testing
 		return nil, err
 	}
-	return config, nil
+	m := &Main{ConfigGraph: g}
+	m.MainConfig().father = m
+	return m, nil
 }
 
-func setGraphForMainConfig(mainConfig *Config) error {
-	if mainConfig.isInGraph() || (mainConfig.Graph != nil && mainConfig.Graph.MainConfig() == mainConfig) {
-		return errors.WithCode(code.V3ErrInvalidContext, "main config(%s) is in another config graph", configHash(mainConfig))
+func newConfigGraph(mainConfig *Config) (ConfigGraph, error) {
+	if mainConfig.ConfigPath == nil {
+		return nil, errors.WithCode(code.V3ErrInvalidContext, "main config's ConfigPath is nil")
+	}
+	if mainConfig.isInGraph() {
+		return nil, errors.WithCode(code.V3ErrInvalidContext, "main config(%s) is in another config graph", configHash(mainConfig))
 	}
 	g := graph.New(configHash, graph.PreventCycles(), graph.Directed())
 	err := g.AddVertex(mainConfig)
 	if err != nil { // Temporarily unable to be covered for testing
-		return err
+		return nil, err
 	}
-	mainConfig.Graph = &configGraph{
+	return &configGraph{
 		graph:      g,
 		mainConfig: mainConfig,
-	}
-	return nil
+	}, nil
 }

@@ -3,13 +3,13 @@ package local
 import (
 	"encoding/json"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
-	"github.com/ClessLi/bifrost/pkg/graph"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
 	"github.com/marmotedu/errors"
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 )
 
 type Loader interface {
@@ -33,7 +33,7 @@ func (j *jsonLoader) Load() (*Main, error) {
 
 func JsonLoader(data []byte) Loader {
 	return &jsonLoader{
-		unmarshaler: &mainUnmarshaler{unmarshalContext: new(_main)},
+		unmarshaler: &mainUnmarshaler{unmarshalContext: new(jsonUnmarshalMain)},
 		jsonBytes:   data,
 	}
 }
@@ -60,15 +60,15 @@ func (f *fileLoader) Load() (*Main, error) {
 		return nil, errors.New("failed to build main context")
 	}
 
-	f.configGraph = main.Graph
+	f.configGraph = main.ConfigGraph
 
-	err = f.load(main.Config)
+	err = f.load(main.MainConfig())
 
 	return main, err
 }
 
 func (f *fileLoader) load(config *Config) error {
-	data, err := os.ReadFile(config.FullPath())
+	data, err := os.ReadFile(configHash(config))
 	if err != nil {
 		return err
 	}
@@ -117,6 +117,17 @@ func (f *fileLoader) load(config *Config) error {
 					return err
 				}
 				isParsed = true
+				// load include configs
+				if ctx.Type() == context_type.TypeInclude {
+					err = f.loadInclude(ctx.(*Include))
+					if err != nil {
+						return err
+					}
+					_, err = f.contextStack.pop()
+					if err != nil {
+						return err
+					}
+				}
 				break
 			}
 		}
@@ -137,13 +148,6 @@ func (f *fileLoader) load(config *Config) error {
 				}
 				isParsed = true
 				break
-			}
-			// load include configs
-			if ctx.Type() == context_type.TypeInclude {
-				err = f.loadInclude(ctx.(*Include))
-				if err != nil {
-					return err
-				}
 			}
 		}
 		if isParsed {
@@ -169,43 +173,54 @@ func (f *fileLoader) loadInclude(include *Include) error {
 	var err error
 	if isAbsInclude {
 		paths, err = filepath.Glob(include.Value())
+		if err != nil {
+			return err
+		}
 	} else {
-		paths, err = filepath.Glob(filepath.Join(filepath.Dir(f.mainConfigAbsPath), include.Value()))
+		absPaths, err := filepath.Glob(filepath.Join(filepath.Dir(f.mainConfigAbsPath), include.Value()))
+		if err != nil {
+			return err
+		}
+		for _, absPath := range absPaths {
+			path, err := filepath.Rel(filepath.Dir(f.mainConfigAbsPath), absPath)
+			if err != nil {
+				return err
+			}
+			paths = append(paths, path)
+		}
 	}
-	if err != nil {
-		return err
+
+	// no match included configs
+	if len(paths) == 0 {
+		return nil
 	}
 
 	// new configs
 	newconfigs := make([]*Config, 0)
-	includedconfigs := make([]*Config, 0)
 	for _, path := range paths {
-		configPath, err := newConfigPath(f.configGraph, path)
+		newconfig := NewContext(context_type.TypeConfig, strings.TrimSpace(path)).(*Config)
+		newconfig.ConfigPath, err = newConfigPath(f.configGraph, newconfig.Value())
 		if err != nil {
 			return err
 		}
-
-		// get config cache
-		cache, err := f.configGraph.GetConfig(configPath.FullPath())
-		if err == nil { // has cache
-			includedconfigs = append(includedconfigs, cache)
-			continue
-		} else if !errors.Is(err, graph.ErrVertexNotExist) {
-			return err
-		}
-
-		// add new config
-		newconfigs = append(newconfigs, NewContext(context_type.TypeConfig, path).(*Config))
+		newconfigs = append(newconfigs, newconfig)
 	}
-	includedconfigs = append(includedconfigs, newconfigs...)
 
 	// include configs
-	err = include.InsertConfig(includedconfigs...)
+	err = include.InsertConfig(newconfigs...)
 	if err != nil {
 		return err
 	}
 	// load new configs
 	for _, config := range newconfigs {
+		if cache, err := include.ChildConfig(config.FullPath()); err != nil {
+			return err
+		} else {
+			if cache != config {
+				// the config is not newly created and does not require loading
+				continue
+			}
+		}
 		err = f.load(config)
 		if err != nil {
 			return err
@@ -242,6 +257,9 @@ func (s *contextStack) pop() (context.Context, error) {
 }
 
 func (s *contextStack) push(ctx context.Context) error {
+	if ctx == nil {
+		return errors.New("input a nil")
+	}
 	err := ctx.Error()
 	if err != nil {
 		return err
@@ -272,14 +290,14 @@ func parseBlankLine(data []byte, idx *int) bool {
 
 func parseErrLine(data []byte, idx *int, config *Config) error {
 	if matchIndexes := RegErrorHeed.FindIndex(data[*idx:]); matchIndexes != nil {
-		*idx += matchIndexes[0]
+		*idx += matchIndexes[len(matchIndexes)-1]
 		line := 1
 		for i := 0; i < *idx; i++ {
 			if (data)[i] == []byte("\n")[0] {
 				line++
 			}
 		}
-		return errors.WithCode(code.ErrParseFailed, "parse failed at line %d of %s", line, config.FullPath())
+		return errors.WithCode(code.ErrParseFailed, "parse failed at line %d of %s", line, configHash(config))
 	}
 	return nil
 }
