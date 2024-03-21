@@ -887,7 +887,7 @@ func TestInclude_QueryByKeyWords(t *testing.T) {
 				Configs:       testInclude.Configs,
 				fatherContext: testInclude.fatherContext,
 			},
-			args: args{kw: context.NewKeyWords(context_type.TypeLocation, "test", true, true)},
+			args: args{kw: context.NewKeyWords(context_type.TypeLocation, "test", false, true)},
 			want: context.SetPos(aFather, 0),
 		},
 	}

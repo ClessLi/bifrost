@@ -32,7 +32,7 @@ func (k *keywords) Match(ctx Context) bool {
 				return false
 			}
 		} else {
-			matched = strings.EqualFold(k.matchingValue, ctx.Value())
+			matched = strings.Contains(ctx.Value(), k.matchingValue)
 		}
 	}
 	return matched
