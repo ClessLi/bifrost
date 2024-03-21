@@ -985,6 +985,11 @@ func TestBasicContext_Modify(t *testing.T) {
 }
 
 func TestBasicContext_QueryAllByKeyWords(t *testing.T) {
+	testFather := NewContext(context_type.TypeServer, "").
+		Insert(NewContext(context_type.TypeLocation, "~ /test"), 0).
+		Insert(NewContext(context_type.TypeLocation, "/text"), 1).
+		Insert(NewContext(context_type.TypeLocation, "~ /test2"), 2)
+	testContext := NewContext(context_type.TypeHttp, "").Insert(testFather, 0).(*Http)
 	type fields struct {
 		ContextType    context_type.ContextType
 		ContextValue   string
@@ -1003,7 +1008,23 @@ func TestBasicContext_QueryAllByKeyWords(t *testing.T) {
 		args   args
 		want   []context.Pos
 	}{
-		// TODO: Add test cases.
+		{
+			name: "normal test",
+			fields: fields{
+				ContextType:    testContext.ContextType,
+				ContextValue:   testContext.ContextValue,
+				Children:       testContext.Children,
+				father:         testContext.father,
+				self:           testContext.self,
+				headStringFunc: testContext.headStringFunc,
+				tailStringFunc: testContext.tailStringFunc,
+			},
+			args: args{kw: context.NewKeyWords(context_type.TypeLocation, "test", true, true)},
+			want: []context.Pos{
+				context.SetPos(testFather, 0),
+				context.SetPos(testFather, 2),
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1024,6 +1045,11 @@ func TestBasicContext_QueryAllByKeyWords(t *testing.T) {
 }
 
 func TestBasicContext_QueryByKeyWords(t *testing.T) {
+	testFather := NewContext(context_type.TypeServer, "").
+		Insert(NewContext(context_type.TypeLocation, "~ /test"), 0).
+		Insert(NewContext(context_type.TypeLocation, "/text"), 1).
+		Insert(NewContext(context_type.TypeLocation, "~ /test2"), 2)
+	testContext := NewContext(context_type.TypeHttp, "").Insert(testFather, 0).(*Http)
 	type fields struct {
 		ContextType    context_type.ContextType
 		ContextValue   string
@@ -1042,7 +1068,20 @@ func TestBasicContext_QueryByKeyWords(t *testing.T) {
 		args   args
 		want   context.Pos
 	}{
-		// TODO: Add test cases.
+		{
+			name: "normal test",
+			fields: fields{
+				ContextType:    testContext.ContextType,
+				ContextValue:   testContext.ContextValue,
+				Children:       testContext.Children,
+				father:         testContext.father,
+				self:           testContext.self,
+				headStringFunc: testContext.headStringFunc,
+				tailStringFunc: testContext.tailStringFunc,
+			},
+			args: args{kw: context.NewKeyWords(context_type.TypeLocation, "test", true, true)},
+			want: context.SetPos(testFather, 0),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

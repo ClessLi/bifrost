@@ -339,7 +339,10 @@ func TestDirective_QueryAllByKeyWords(t *testing.T) {
 		args   args
 		want   []context.Pos
 	}{
-		// TODO: Add test cases.
+		{
+			name: "has no children",
+			want: nil,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -370,7 +373,10 @@ func TestDirective_QueryByKeyWords(t *testing.T) {
 		args   args
 		want   context.Pos
 	}{
-		// TODO: Add test cases.
+		{
+			name: "has no children",
+			want: context.NullPos(),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

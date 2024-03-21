@@ -759,6 +759,38 @@ func TestInclude_ModifyConfig(t *testing.T) {
 }
 
 func TestInclude_QueryAllByKeyWords(t *testing.T) {
+	testMain := NewContext(context_type.TypeMain, "C:\\test\\nginx.conf").(*Main)
+	testInclude := NewContext(context_type.TypeInclude, "*.conf").(*Include)
+	testMain.Insert(
+		NewContext(context_type.TypeHttp, "").
+			Insert(
+				testInclude,
+				0,
+			),
+		0,
+	)
+	aConfig := NewContext(context_type.TypeConfig, "a.conf").(*Config)
+	aConfig.ConfigPath, _ = newConfigPath(testMain, aConfig.ContextValue)
+	bConfig := NewContext(context_type.TypeConfig, "C:\\test\\b.conf").(*Config)
+	bConfig.ConfigPath, _ = newConfigPath(testMain, bConfig.ContextValue)
+	err := testInclude.InsertConfig(aConfig, bConfig)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	aFather := NewContext(context_type.TypeServer, "")
+	aConfig.Insert(
+		aFather.
+			Insert(NewContext(context_type.TypeLocation, "~ /test"), 0),
+		0,
+	)
+	bFather := NewContext(context_type.TypeServer, "")
+	bConfig.Insert(
+		bFather.
+			Insert(NewContext(context_type.TypeLocation, "/text"), 0).
+			Insert(NewContext(context_type.TypeLocation, "/test1"), 1),
+		0,
+	)
 	type fields struct {
 		ContextValue  string
 		Configs       map[string]*Config
@@ -773,7 +805,19 @@ func TestInclude_QueryAllByKeyWords(t *testing.T) {
 		args   args
 		want   []context.Pos
 	}{
-		// TODO: Add test cases.
+		{
+			name: "normal test",
+			fields: fields{
+				ContextValue:  testInclude.ContextValue,
+				Configs:       testInclude.Configs,
+				fatherContext: testInclude.fatherContext,
+			},
+			args: args{kw: context.NewKeyWords(context_type.TypeLocation, "test", true, true)},
+			want: []context.Pos{
+				context.SetPos(aFather, 0),
+				context.SetPos(bFather, 1),
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -790,6 +834,38 @@ func TestInclude_QueryAllByKeyWords(t *testing.T) {
 }
 
 func TestInclude_QueryByKeyWords(t *testing.T) {
+	testMain := NewContext(context_type.TypeMain, "C:\\test\\nginx.conf").(*Main)
+	testInclude := NewContext(context_type.TypeInclude, "*.conf").(*Include)
+	testMain.Insert(
+		NewContext(context_type.TypeHttp, "").
+			Insert(
+				testInclude,
+				0,
+			),
+		0,
+	)
+	aConfig := NewContext(context_type.TypeConfig, "a.conf").(*Config)
+	aConfig.ConfigPath, _ = newConfigPath(testMain, aConfig.ContextValue)
+	bConfig := NewContext(context_type.TypeConfig, "C:\\test\\b.conf").(*Config)
+	bConfig.ConfigPath, _ = newConfigPath(testMain, bConfig.ContextValue)
+	err := testInclude.InsertConfig(aConfig, bConfig)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	aFather := NewContext(context_type.TypeServer, "")
+	aConfig.Insert(
+		aFather.
+			Insert(NewContext(context_type.TypeLocation, "~ /test"), 0),
+		0,
+	)
+	bFather := NewContext(context_type.TypeServer, "")
+	bConfig.Insert(
+		bFather.
+			Insert(NewContext(context_type.TypeLocation, "/text"), 0).
+			Insert(NewContext(context_type.TypeLocation, "/test1"), 1),
+		0,
+	)
 	type fields struct {
 		ContextValue  string
 		Configs       map[string]*Config
@@ -804,7 +880,16 @@ func TestInclude_QueryByKeyWords(t *testing.T) {
 		args   args
 		want   context.Pos
 	}{
-		// TODO: Add test cases.
+		{
+			name: "normal test",
+			fields: fields{
+				ContextValue:  testInclude.ContextValue,
+				Configs:       testInclude.Configs,
+				fatherContext: testInclude.fatherContext,
+			},
+			args: args{kw: context.NewKeyWords(context_type.TypeLocation, "test", true, true)},
+			want: context.SetPos(aFather, 0),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
