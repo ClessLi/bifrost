@@ -79,7 +79,8 @@ func GetNginxStoreFactory(
 			}
 			svrLogsDirs[itemOpts.ServerName] = itemOpts.LogsDirPath
 		}
-		cmCompletedConf, err := cmConf.Complete()
+		var cmCompletedConf *nginx.CompletedConfig
+		cmCompletedConf, err = cmConf.Complete()
 		if err != nil {
 			return
 		}
@@ -130,7 +131,7 @@ func GetNginxStoreFactory(
 
 	if nginxStoreFactory == nil || err != nil {
 		return nil, errors.Errorf( //nolint:govet
-			"failed to get nginx store factory, nginx store factory: %+v, err: %w",
+			"failed to get nginx store factory, nginx store factory: %+v, err: %+v",
 			nginxStoreFactory,
 			err,
 		)

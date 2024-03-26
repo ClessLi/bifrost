@@ -11,12 +11,12 @@ import (
 	"sync"
 	"time"
 
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"github.com/marmotedu/errors"
 	"github.com/wxnacy/wgo/arrays"
 
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loader"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/utils"
@@ -181,7 +181,7 @@ func (c *configManager) regularlyBackup(duration time.Duration, signalChan chan 
 		// 判断是否需要备份
 		needBackup, err := utils.CheckAndCleanBackups(backupPrefix, c.backupDir, c.backupSaveTime, c.backupCycle, now)
 		if err != nil {
-			log.Warn("failed to check and clean backups, " + err.Error())
+			logV1.Warn("failed to check and clean backups, " + err.Error())
 			backupErr = err
 
 			continue
@@ -193,11 +193,11 @@ func (c *configManager) regularlyBackup(duration time.Duration, signalChan chan 
 
 		// 压缩归档
 		c.rwLocker.RLock()
-		log.Info("start backup configs")
+		logV1.Info("start backup configs")
 		err = utils.TarGZ(archivePath, c.configPaths)
 		c.rwLocker.RUnlock()
 		if err != nil {
-			log.Warn("failed to backup configs, " + err.Error())
+			logV1.Warn("failed to backup configs, " + err.Error())
 			backupErr = err
 
 			continue
@@ -208,7 +208,7 @@ func (c *configManager) regularlyBackup(duration time.Duration, signalChan chan 
 			backupPath := filepath.Join(c.backupDir, backupName)
 			backupErr = os.Rename(archivePath, backupPath)
 		}
-		log.Info("complete configs backup")
+		logV1.Info("complete configs backup")
 	}
 
 	return backupErr
@@ -348,7 +348,7 @@ func (c configManager) save() ([]string, error) {
 	for s, bytes := range dumps {
 		// 判断是否为单元测试
 		if len(os.Args) > 3 && os.Args[1] == "-test.v" && os.Args[2] == "-test.run" {
-			log.Infof("%s: %s", s, string(bytes))
+			logV1.Infof("%s: %s", s, string(bytes))
 
 			continue
 		}
@@ -398,19 +398,19 @@ func (c *configManager) Start() error {
 	go func() {
 		err := c.regularlyBackup(time.Minute*5, c.backupSignalChan)
 		if err != nil {
-			log.Errorf("regularly backup error. %+v", err)
+			logV1.Errorf("regularly backup error. %+v", err)
 		}
 	}()
 	go func() {
 		err := c.regularlyReload(time.Second*30, c.reloadSignalChan)
 		if err != nil {
-			log.Errorf("regularly reload error. %+v", err)
+			logV1.Errorf("regularly reload error. %+v", err)
 		}
 	}()
 	go func() {
 		err := c.regularlySave(time.Second*10, c.saveSignalChan)
 		if err != nil {
-			log.Errorf("regularly save error. %+v", err)
+			logV1.Errorf("regularly save error. %+v", err)
 		}
 	}()
 	c.isRunning = true

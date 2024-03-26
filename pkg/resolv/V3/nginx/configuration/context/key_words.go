@@ -10,6 +10,8 @@ type KeyWords interface {
 	Match(ctx Context) bool
 	Cascaded() bool
 	SetCascaded(cascaded bool) KeyWords
+	SetStringMatchingValue(value string) KeyWords
+	SetRegexMatchingValue(value string) KeyWords
 }
 
 type keywords struct {
@@ -47,11 +49,22 @@ func (k *keywords) SetCascaded(cascaded bool) KeyWords {
 	return k
 }
 
-func NewKeyWords(ctxtype context_type.ContextType, matching string, isregex, iscascaded bool) KeyWords {
+func (k *keywords) SetStringMatchingValue(value string) KeyWords {
+	k.isRegex = false
+	k.matchingValue = value
+	return k
+}
+
+func (k *keywords) SetRegexMatchingValue(value string) KeyWords {
+	k.isRegex = true
+	k.matchingValue = value
+	return k
+}
+
+func NewKeyWords(ctxtype context_type.ContextType) KeyWords {
 	return &keywords{
-		matchingType:  ctxtype,
-		matchingValue: matching,
-		isRegex:       isregex,
-		isCascaded:    iscascaded,
+		matchingType: ctxtype,
+		isRegex:      false,
+		isCascaded:   true,
 	}
 }

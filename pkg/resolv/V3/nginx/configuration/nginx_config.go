@@ -7,6 +7,7 @@ import (
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context/local"
 	utilsV3 "github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/utils"
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"github.com/marmotedu/errors"
 	"strings"
 	"sync"
@@ -96,6 +97,7 @@ func NewNginxConfigFromJsonBytes(data []byte) (NginxConfig, error) {
 func NewNginxConfigFromFS(filepath string) (NginxConfig, error) {
 	m, t, err := loadMainContextFromFS(filepath)
 	if err != nil {
+		logV1.Warnf("load nginx config failed: %w", err)
 		return nil, err
 	}
 	return newNginxConfigWithTimestamp(m, t)

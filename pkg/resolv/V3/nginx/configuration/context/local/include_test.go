@@ -812,7 +812,7 @@ func TestInclude_QueryAllByKeyWords(t *testing.T) {
 				Configs:       testInclude.Configs,
 				fatherContext: testInclude.fatherContext,
 			},
-			args: args{kw: context.NewKeyWords(context_type.TypeLocation, "test", true, true)},
+			args: args{kw: context.NewKeyWords(context_type.TypeLocation).SetRegexMatchingValue("test")},
 			want: []context.Pos{
 				context.SetPos(aFather, 0),
 				context.SetPos(bFather, 1),
@@ -887,7 +887,7 @@ func TestInclude_QueryByKeyWords(t *testing.T) {
 				Configs:       testInclude.Configs,
 				fatherContext: testInclude.fatherContext,
 			},
-			args: args{kw: context.NewKeyWords(context_type.TypeLocation, "test", false, true)},
+			args: args{kw: context.NewKeyWords(context_type.TypeLocation).SetStringMatchingValue("test")},
 			want: context.SetPos(aFather, 0),
 		},
 	}

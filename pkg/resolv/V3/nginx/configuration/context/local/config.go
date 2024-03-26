@@ -61,12 +61,19 @@ func (c *Config) SetFather(ctx context.Context) error {
 
 func (c *Config) ConfigLines(isDumping bool) ([]string, error) {
 	lines := make([]string, 0)
-	for _, child := range c.Children {
+	for idx, child := range c.Children {
 		clines, err := child.ConfigLines(isDumping)
 		if err != nil {
 			return nil, err
 		}
 		if clines != nil {
+			if child.Type() == context_type.TypeInlineComment && len(lines) > 0 &&
+				c.Child(idx-1).Type() != context_type.TypeComment &&
+				c.Child(idx-1).Type() != context_type.TypeInlineComment {
+				lines[len(lines)-1] += INDENT + clines[0]
+				continue
+			}
+
 			for _, cline := range clines {
 				lines = append(lines, cline)
 			}

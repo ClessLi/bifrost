@@ -70,14 +70,14 @@ func (f *fileLoader) Load() (*Main, error) {
 func (f *fileLoader) load(config *Config) error {
 	data, err := os.ReadFile(configHash(config))
 	if err != nil {
-		return err
+		return errors.Wrap(err, "read file failed")
 	}
 
 	idx := 0
 	stackIdx := len(f.contextStack.contexts)
 	err = f.contextStack.push(config)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "push config context to stack failed")
 	}
 
 	for {
@@ -89,13 +89,13 @@ func (f *fileLoader) load(config *Config) error {
 
 		err = parseErrLine(data, &idx, config)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "has parsed an error line")
 		}
 
 		if parseBraceEnd(data, &idx) {
 			_, err = f.contextStack.pop()
 			if err != nil {
-				return err
+				return errors.Wrap(err, "quit context from stack failed")
 			}
 			continue
 		}
@@ -105,27 +105,27 @@ func (f *fileLoader) load(config *Config) error {
 			if ctx != context.NullContext() {
 				father, err := f.contextStack.current()
 				if err != nil {
-					return err
+					return errors.Wrap(err, "get father context failed")
 				}
 				err = father.Insert(ctx, father.Len()).Error()
 				if err != nil {
-					return err
+					return errors.Wrap(err, "insert context failed")
 				}
 
 				err = f.contextStack.push(ctx)
 				if err != nil {
-					return err
+					return errors.Wrap(err, "push context to stack failed")
 				}
 				isParsed = true
 				// load include configs
 				if ctx.Type() == context_type.TypeInclude {
 					err = f.loadInclude(ctx.(*Include))
 					if err != nil {
-						return err
+						return errors.Wrap(err, "load include configs failed")
 					}
 					_, err = f.contextStack.pop()
 					if err != nil {
-						return err
+						return errors.Wrap(err, "quit context from stack failed")
 					}
 				}
 				break
@@ -140,11 +140,11 @@ func (f *fileLoader) load(config *Config) error {
 			if ctx != context.NullContext() {
 				father, err := f.contextStack.current()
 				if err != nil {
-					return err
+					return errors.Wrap(err, "get father context failed")
 				}
 				err = father.Insert(ctx, father.Len()).Error()
 				if err != nil {
-					return err
+					return errors.Wrap(err, "insert context failed")
 				}
 				isParsed = true
 				break

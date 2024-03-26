@@ -3,12 +3,12 @@ package transport
 import (
 	"sync"
 
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"github.com/go-kit/kit/endpoint"
 	"google.golang.org/grpc"
 
 	"github.com/ClessLi/bifrost/pkg/client/bifrost/v1/transport/decoder"
 	"github.com/ClessLi/bifrost/pkg/client/bifrost/v1/transport/encoder"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
 )
 
 type Client interface {
@@ -60,7 +60,7 @@ func (t *transport) WebServerConfig() WebServerConfigTransport {
 		}
 	})
 	if t.singletonWSCTXP == nil {
-		log.Fatal("web server config transport client is nil")
+		logV1.Fatal("web server config transport client is nil")
 
 		return nil
 	}
@@ -75,7 +75,7 @@ func (t *transport) WebServerStatistics() WebServerStatisticsTransport {
 		}
 	})
 	if t.singletonWSSTXP == nil {
-		log.Fatal("web server statistics transport client is nil")
+		logV1.Fatal("web server statistics transport client is nil")
 
 		return nil
 	}
@@ -90,7 +90,7 @@ func (t *transport) WebServerStatus() WebServerStatusTransport {
 		}
 	})
 	if t.singletonWSStatusTXP == nil {
-		log.Fatal("web server status transport client is nil")
+		logV1.Fatal("web server status transport client is nil")
 
 		return nil
 	}
@@ -105,7 +105,7 @@ func (t *transport) WebServerLogWatcher() WebServerLogWatcherTransport {
 		}
 	})
 	if t.singletonWSLWTXP == nil {
-		log.Fatal("web server log watcher transport client is nil")
+		logV1.Fatal("web server log watcher transport client is nil")
 
 		return nil
 	}

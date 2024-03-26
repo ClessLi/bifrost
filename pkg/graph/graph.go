@@ -1,7 +1,8 @@
 package graph
 
 import (
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
+
 	"github.com/ClessLi/bifrost/pkg/queue"
 )
 
@@ -114,7 +115,7 @@ func (g *Graph) topologicalSortByKahn() error {
 		} else {
 			err := topoGraph.AddEdge(currentVertex.id, id)
 			if err != nil {
-				log.Warnf("graph add edge error: %w", err)
+				logV1.Warnf("graph add edge error: %w", err)
 
 				return nil //nolint:nilerr
 			}

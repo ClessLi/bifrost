@@ -105,7 +105,7 @@ func registerCommentParseFunc() error {
 			matchIndexes := RegCommentHead.FindIndex(data[*idx:])
 			cmt := NewComment(
 				string(subMatch[2]),
-				!strings.Contains(string(subMatch[1]), "\n") && *idx != 0,
+				!RegLineBreak.Match(subMatch[1]) && *idx != 0,
 			)
 			*idx += matchIndexes[len(matchIndexes)-1] - 1
 
