@@ -1,12 +1,12 @@
 package logging
 
 import (
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"sync"
 
 	kitlog "github.com/go-kit/kit/log"
 
 	svcv1 "github.com/ClessLi/bifrost/internal/bifrost/service/v1"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
 )
 
 var (
@@ -37,7 +37,7 @@ func (l *loggingService) WebServerLogWatcher() svcv1.WebServerLogWatcherService 
 
 func New(svc svcv1.ServiceFactory) svcv1.ServiceFactory {
 	once.Do(func() {
-		logger = log.K()
+		logger = logV1.K()
 		limit = 100
 	})
 

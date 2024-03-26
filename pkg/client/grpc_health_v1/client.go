@@ -1,12 +1,11 @@
 package grpc_health_v1
 
 import (
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"github.com/ClessLi/skirnir/pkg/discover"
 	kitzaplog "github.com/go-kit/kit/log/zap"
 	"github.com/marmotedu/errors"
 	"google.golang.org/grpc"
-
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
 )
 
 type Client struct {
@@ -24,7 +23,7 @@ func NewClientFromConsul(consulHost string, consulPort uint16, opts ...grpc.Dial
 	}
 	relay, err := discoveryClient.DiscoverServicesClient(
 		"com.github.ClessLi.api.bifrost",
-		kitzaplog.NewZapSugarLogger(log.ZapLogger(), log.InfoLevel),
+		kitzaplog.NewZapSugarLogger(logV1.ZapLogger(), logV1.InfoLevel),
 		factory,
 	)
 	if err != nil {

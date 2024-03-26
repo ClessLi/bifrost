@@ -1,6 +1,7 @@
 package handler
 
 import (
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"sync"
 
 	"github.com/go-kit/kit/transport/grpc"
@@ -8,7 +9,6 @@ import (
 	epv1 "github.com/ClessLi/bifrost/internal/bifrost/endpoint/v1"
 	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/decoder"
 	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/encoder"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
 )
 
 type WebServerConfigHandlers interface {
@@ -38,7 +38,7 @@ func (wsc *webServerConfigHandlers) HandlerGetServerNames() grpc.Handler {
 		}
 	})
 	if wsc.singletonHandlerGetServerNames == nil {
-		log.Fatal("web server config handler `GetServerNames` is nil")
+		logV1.Fatal("web server config handler `GetServerNames` is nil")
 
 		return nil
 	}
@@ -53,7 +53,7 @@ func (wsc *webServerConfigHandlers) HandlerGet() grpc.Handler {
 		}
 	})
 	if wsc.singletonHandlerGet == nil {
-		log.Fatal("web server config handler `Get` is nil")
+		logV1.Fatal("web server config handler `Get` is nil")
 
 		return nil
 	}
@@ -68,7 +68,7 @@ func (wsc *webServerConfigHandlers) HandlerUpdate() grpc.Handler {
 		}
 	})
 	if wsc.singletonHandlerUpdate == nil {
-		log.Fatal("web server config handler `Update` is nil")
+		logV1.Fatal("web server config handler `Update` is nil")
 
 		return nil
 	}

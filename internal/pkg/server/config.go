@@ -4,6 +4,7 @@
 package server
 
 import (
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"net"
 	"path/filepath"
 	"strconv"
@@ -12,8 +13,6 @@ import (
 
 	"github.com/marmotedu/component-base/pkg/util/homedir"
 	"github.com/spf13/viper"
-
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
 )
 
 const (
@@ -148,6 +147,6 @@ func LoadConfig(cfg string, defaultName string) {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err != nil {
-		log.Warnf("WARNING: viper failed to discover and load the configuration file: %s", err.Error())
+		logV1.Warnf("WARNING: viper failed to discover and load the configuration file: %s", err.Error())
 	}
 }

@@ -1,6 +1,7 @@
 package handler //nolint:dupl
 
 import (
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"sync"
 
 	"github.com/go-kit/kit/transport/grpc"
@@ -8,7 +9,6 @@ import (
 	epv1 "github.com/ClessLi/bifrost/internal/bifrost/endpoint/v1"
 	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/decoder"
 	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/encoder"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
 )
 
 type WebServerStatisticsHandlers interface {
@@ -33,7 +33,7 @@ func (wss *webServerStatisticsHandlers) HandlerGet() grpc.Handler {
 	})
 
 	if wss.singletonHandlerGet == nil {
-		log.Fatal("web server statistics handler `Get` is nil")
+		logV1.Fatal("web server statistics handler `Get` is nil")
 
 		return nil
 	}

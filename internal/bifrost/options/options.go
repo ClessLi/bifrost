@@ -7,7 +7,6 @@ import (
 
 	genericoptions "github.com/ClessLi/bifrost/internal/pkg/options"
 	"github.com/ClessLi/bifrost/internal/pkg/server"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
 )
 
 type Options struct {
@@ -19,7 +18,7 @@ type Options struct {
 	WebServerConfigsOptions    *genericoptions.WebServerConfigsOptions    `json:"web-server-configs"     mapstructure:"web-server-configs"`
 	MonitorOptions             *genericoptions.MonitorOptions             `json:"monitor"                mapstructure:"monitor"`
 	WebServerLogWatcherOptions *genericoptions.WebServerLogWatcherOptions `json:"web-server-log-watcher" mapstructure:"web-server-log-watcher"`
-	Log                        *log.Options                               `json:"log"                    mapstructure:"log"`
+	Log                        *genericoptions.LoggerOptions              `json:"log"                    mapstructure:"log"`
 }
 
 func NewOptions() *Options {
@@ -32,7 +31,7 @@ func NewOptions() *Options {
 		WebServerConfigsOptions:    genericoptions.NewWebServerConfigsOptions(),
 		MonitorOptions:             genericoptions.NewMonitorOptions(),
 		WebServerLogWatcherOptions: genericoptions.NewWebServerLogWatcherOptions(),
-		Log:                        log.NewOptions(),
+		Log:                        genericoptions.NewLoggerOptions(),
 	}
 }
 

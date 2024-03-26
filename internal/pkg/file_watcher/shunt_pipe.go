@@ -2,12 +2,11 @@ package file_watcher
 
 import (
 	"context"
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"sync"
 	"time"
 
 	"github.com/marmotedu/errors"
-
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
 )
 
 type ShuntPipe interface {
@@ -125,7 +124,7 @@ func (s *shuntPipe) Start() error {
 							return
 						}
 						if !outputPipe.IsClosed() {
-							log.Warnf("panic transferring data to output pipe. %s", pInfo)
+							logV1.Warnf("panic transferring data to output pipe. %s", pInfo)
 							outputPipe.Close()
 						}
 					}()

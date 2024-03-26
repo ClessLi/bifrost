@@ -2,13 +2,13 @@ package options
 
 import (
 	"fmt"
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"net"
 	"path"
 
 	"github.com/spf13/pflag"
 
 	"github.com/ClessLi/bifrost/internal/pkg/server"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
 )
 
 // SecureServingOptions contains configuration items related to TLS server startup.
@@ -59,7 +59,7 @@ func NewSecureServingOptions() *SecureServingOptions {
 // ApplyTo applies the run options to the method receiver and returns self.
 func (s *SecureServingOptions) ApplyTo(c *server.Config) error {
 	if s == nil || s.BindPort == 0 {
-		log.Debug("secure serving is disabled.")
+		logV1.Debug("secure serving is disabled.")
 		c.SecureServing = nil
 
 		return nil

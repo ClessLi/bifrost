@@ -3,6 +3,7 @@ package monitor
 import (
 	"context"
 	"fmt"
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"sync"
 	"time"
 
@@ -10,8 +11,6 @@ import (
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/disk"
 	"github.com/shirou/gopsutil/mem"
-
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
 )
 
 const (
@@ -102,12 +101,12 @@ func (m *monitor) Start() error {
 	go func() {
 		syncWork, syncCancel := context.WithCancel(m.ctx)
 		defer syncCancel()
-		log.Info("start to sync system information")
+		logV1.Info("start to sync system information")
 		syncTicker := time.NewTicker(syncDuration)
 		for {
 			select {
 			case <-syncWork.Done():
-				log.Info("sync system information stopped")
+				logV1.Info("sync system information stopped")
 
 				return
 			case <-syncTicker.C:
@@ -126,17 +125,17 @@ func (m *monitor) Stop() error {
 	timeoutC, cancel := context.WithTimeout(m.ctx, time.Second*10)
 	defer cancel()
 	go func() {
-		log.Info("monitoring stopping...")
+		logV1.Info("monitoring stopping...")
 		m.cancel()
-		log.Debugf("monitoring stop complete.")
+		logV1.Debugf("monitoring stop complete.")
 	}()
 	select {
 	case <-m.ctx.Done():
-		log.Info("monitoring stopped")
+		logV1.Info("monitoring stopped")
 
 		return m.ctx.Err()
 	case <-timeoutC.Done():
-		log.Errorf("monitoring stop timeout")
+		logV1.Errorf("monitoring stop timeout")
 
 		return timeoutC.Err()
 	}
@@ -151,7 +150,7 @@ func (m *monitor) Report() SystemInfo {
 
 func (m *monitor) infoSync(ctx context.Context) {
 	if m.cannotSync {
-		log.Error("infoSync() call blocked!!")
+		logV1.Error("infoSync() call blocked!!")
 
 		return
 	}
@@ -170,12 +169,12 @@ func (m *monitor) infoSync(ctx context.Context) {
 		m.cachemu.Lock()
 		defer m.cachemu.Unlock()
 		*m.cache = sysinfo
-		log.Infof("system info sync to cache succeeded.")
+		logV1.Infof("system info sync to cache succeeded.")
 		done()
 	}()
 	select {
 	case <-timeout.Done():
-		log.Warn("system info sync to cache timeout!")
+		logV1.Warn("system info sync to cache timeout!")
 
 		return
 	case <-work.Done():
@@ -186,10 +185,10 @@ func (m *monitor) watch(cycle, interval time.Duration) error {
 	var err error
 	defer func() {
 		if err != nil {
-			log.Warn(err.Error())
+			logV1.Warn(err.Error())
 			err = m.Stop()
 			if err != nil {
-				log.Error(err.Error())
+				logV1.Error(err.Error())
 			}
 		}
 	}()
@@ -201,7 +200,7 @@ func (m *monitor) watch(cycle, interval time.Duration) error {
 	for {
 		select {
 		case <-m.ctx.Done():
-			log.Info("watching completed.")
+			logV1.Info("watching completed.")
 
 			return m.ctx.Err()
 		case <-intervalTicker.C:

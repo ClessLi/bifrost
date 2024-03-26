@@ -2,14 +2,13 @@ package file_watcher
 
 import (
 	"context"
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"os"
 	"sync"
 	"time"
 
 	"github.com/hpcloud/tail"
 	"github.com/marmotedu/errors"
-
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
 )
 
 type FileWatcher struct {
@@ -38,13 +37,13 @@ func (f *FileWatcher) Start() error {
 	go func() {
 		err := f.shuntPipe.Start()
 		if err != nil {
-			log.Warnf("file '%s' watching error. %s", f.filePath, err.Error())
+			logV1.Warnf("file '%s' watching error. %s", f.filePath, err.Error())
 		}
 	}()
 
-	log.Debugf("tail '%s' starting...", f.filePath)
+	logV1.Debugf("tail '%s' starting...", f.filePath)
 	t, err := tail.TailFile(f.filePath, tail.Config{
-		Logger: log.StdInfoLogger(),
+		Logger: logV1.StdInfoLogger(),
 		Location: &tail.SeekInfo{
 			Offset: 0,
 			Whence: os.SEEK_END,
@@ -60,9 +59,9 @@ func (f *FileWatcher) Start() error {
 
 	// defer to stop tail
 	defer func(t *tail.Tail) {
-		log.Debugf("tail '%s' stopping...", f.filePath)
+		logV1.Debugf("tail '%s' stopping...", f.filePath)
 		if err = t.Stop(); err != nil {
-			log.Warnf("tail stop error. %s", err.Error())
+			logV1.Warnf("tail stop error. %s", err.Error())
 		}
 	}(t)
 
@@ -73,9 +72,9 @@ func (f *FileWatcher) Start() error {
 			return
 		}
 		if !f.shuntPipe.IsClosed() {
-			log.Warnf("panic transferring data to shunt pipe. %s", pInfo)
+			logV1.Warnf("panic transferring data to shunt pipe. %s", pInfo)
 			if err = f.shuntPipe.Close(); err != nil {
-				log.Warnf("failed to stop shunt pipe. %s", err.Error())
+				logV1.Warnf("failed to stop shunt pipe. %s", err.Error())
 			}
 		}
 	}()
@@ -91,7 +90,7 @@ func (f *FileWatcher) Start() error {
 				return err
 			}
 		case <-f.ctx.Done(): // FileWatcher Close method has been called
-			log.Debugf("watching file '%s' completed")
+			logV1.Debugf("watching file '%s' completed")
 
 			return nil
 		default: // sleep 1ms and return to loop with shut pipe closed check

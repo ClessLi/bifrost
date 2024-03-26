@@ -3,6 +3,7 @@ package utils
 import (
 	"bytes"
 	"fmt"
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -12,8 +13,6 @@ import (
 	"time"
 
 	"github.com/marmotedu/errors"
-
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
 )
 
 const backupDateLayout = `20060102`
@@ -49,14 +48,17 @@ func GetBackupFileName(backupPrefix string, now time.Time) string {
 // CheckAndCleanBackups 检查归档目录下归档文件是否需要清理及是否可以进行归档操作的函数
 //
 // 参数:
-//     backupPrefix: 归档文件前缀名
-//     backupDir: 归档文件目录路径
-//     retentionTime: 归档文件保存时间，单位天
-//     backupCycleTime: 归档操作周期，单位天
-//     now: 当前检查时间
+//
+//	backupPrefix: 归档文件前缀名
+//	backupDir: 归档文件目录路径
+//	retentionTime: 归档文件保存时间，单位天
+//	backupCycleTime: 归档操作周期，单位天
+//	now: 当前检查时间
+//
 // 返回值:
-//     true: 需要归档操作; false: 不需要归档
-//     错误
+//
+//	true: 需要归档操作; false: 不需要归档
+//	错误
 func CheckAndCleanBackups(
 	backupPrefix, backupDir string,
 	retentionTime, backupCycleTime int,
@@ -91,12 +93,12 @@ func CheckAndCleanBackups(
 
 			// 判断是否需要清理，并清理过期归档
 			if bakDate.Unix() < saveDate.Unix() {
-				log.Infof("cleaning up expired archive '%s'", baks[i])
+				logV1.Infof("cleaning up expired archive '%s'", baks[i])
 				rmErr := os.Remove(baks[i])
 				if rmErr != nil {
 					return false, errors.Wrapf(rmErr, "failed to clean up expired archive '%s'", baks[i])
 				}
-				log.Infof("successfully cleaned up expired archive '%s'", baks[i])
+				logV1.Infof("successfully cleaned up expired archive '%s'", baks[i])
 			}
 
 			// 判断该归档是否是最新归档，是反馈不需归档，并退出循环
@@ -111,8 +113,9 @@ func CheckAndCleanBackups(
 
 // GetPid, 查询pid文件并返回pid
 // 返回值:
-//     pid
-//     错误
+//
+//	pid
+//	错误
 func GetPid(path string) (int, error) {
 	// 判断pid文件是否存在
 	if _, err := os.Stat(path); err == nil || os.IsExist(err) { // 存在
@@ -141,10 +144,13 @@ func GetPid(path string) (int, error) {
 
 // ReadFile, 读取文件函数
 // 参数:
-//     path: 文件路径字符串
+//
+//	path: 文件路径字符串
+//
 // 返回值:
-//     文件数据
-//     错误
+//
+//	文件数据
+//	错误
 func ReadFile(path string) ([]byte, error) {
 	f, err := os.Open(path)
 	if err != nil {

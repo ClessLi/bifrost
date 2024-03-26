@@ -1,6 +1,7 @@
 package bifrost
 
 import (
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"time"
 
 	epv1 "github.com/ClessLi/bifrost/internal/bifrost/endpoint/v1"
@@ -11,7 +12,6 @@ import (
 	handlerv1 "github.com/ClessLi/bifrost/internal/bifrost/transport/v1/handler"
 	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/options"
 	genericgrpcserver "github.com/ClessLi/bifrost/internal/pkg/server"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
 )
 
 func initRouter(server *genericgrpcserver.GenericGRPCServer) {
@@ -29,7 +29,7 @@ func initService() svcv1.ServiceFactory {
 func initMiddleware(svc *svcv1.ServiceFactory) {
 	middlewaresIns := middleware.GetMiddlewares()
 	for name, m := range middlewaresIns {
-		log.Infof("Install middleware: %s", name)
+		logV1.Infof("Install middleware: %s", name)
 		*svc = m(*svc)
 	}
 }

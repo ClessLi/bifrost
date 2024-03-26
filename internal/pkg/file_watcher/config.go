@@ -2,13 +2,12 @@ package file_watcher
 
 import (
 	"context"
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/marmotedu/errors"
-
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
 )
 
 type Config struct {
@@ -64,7 +63,7 @@ func (cc *CompletedConfig) NewFileWatcher(firstOutputCtx context.Context) (*File
 	go func() {
 		err := watcher.Start()
 		if err != nil {
-			log.Warnf(err.Error())
+			logV1.Warnf(err.Error())
 		}
 	}()
 

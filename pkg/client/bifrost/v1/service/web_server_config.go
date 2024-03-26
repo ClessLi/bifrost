@@ -1,11 +1,11 @@
 package service
 
 import (
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"github.com/marmotedu/errors"
 
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	epv1 "github.com/ClessLi/bifrost/internal/bifrost/endpoint/v1"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
 )
 
 type WebServerConfigService interface {
@@ -56,7 +56,7 @@ func (w *webServerConfigService) Update(servername string, config []byte) error 
 	if err != nil {
 		return err
 	}
-	log.Infof("Update result: %s", resp.(*v1.Response).Message)
+	logV1.Infof("Update result: %s", resp.(*v1.Response).Message)
 
 	return nil
 }

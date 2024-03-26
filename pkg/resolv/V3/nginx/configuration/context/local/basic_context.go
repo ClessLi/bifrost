@@ -135,7 +135,7 @@ func (b *BasicContext) QueryByKeyWords(kw context.KeyWords) context.Pos {
 			}
 		}
 	}
-	return context.NullPos()
+	return context.NotFoundPos()
 }
 
 func (b *BasicContext) QueryAllByKeyWords(kw context.KeyWords) []context.Pos {
