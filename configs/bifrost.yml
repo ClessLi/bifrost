@@ -21,7 +21,7 @@ web-server-configs:
       logs-dir-path: "/usr/local/nginx/logs"  # WebServer 日志存放路径
       backup-dir: ""  # WebServer 配置文件自动备份路径，为空时将使用`config-path`文件的目录路径作为备份目录路径
       backup-cycle: 1  # WebServer 配置文件自动备份周期时长，单位（天），为0时不启用自动备份
-      backup-save-time: 7  # WebServer 配置文件自动备份归档保存时长，单位（天），为0时不启用自动备份
+      backups-retention-duration: 7  # WebServer 配置文件自动备份归档保存时长，单位（天），为0时不启用自动备份
 
 # 注册中心配置
 # RA:  # 注册中心地址配置
@@ -30,4 +30,31 @@ web-server-configs:
 
 # 日志配置
 log:
-  output-paths: "logs/bifrost.log"
+# 启用开发模式
+# development: false
+
+# 禁用日志输出
+# disable-caller: false
+
+# 禁用日志追踪
+# disable-stracktrace: false
+
+# 启用代色彩的日志记录
+# enable-color: false
+
+# 错误日志最低级别, 默认为“warn”
+# error-level: warn
+
+# 错误日志输出路径，默认为“logs/biforst-error.log”
+# error-output-paths:
+# - logs/bifrost-error.log
+
+# 日志输出格式，支持“console”，“json”，默认为“console”
+# format: console
+
+# Info日志最低级别，默认为“info”
+# info-level: info
+
+# Info日志输出路径，默认为“logs/bifrost.log”
+# info-output-paths:
+# - logs/bifrost.log

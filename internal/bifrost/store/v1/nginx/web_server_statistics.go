@@ -8,7 +8,7 @@ import (
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	storev1 "github.com/ClessLi/bifrost/internal/bifrost/store/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration"
 )
 
 type webServerStatisticsStore struct {
@@ -27,7 +27,7 @@ var _ storev1.WebServerStatisticsStore = &webServerStatisticsStore{}
 
 func newNginxStatisticsStore(store *webServerStore) storev1.WebServerStatisticsStore {
 	statisticians := make(map[string]configuration.Statistician)
-	for servername, config := range store.cms.GetConfigs() {
+	for servername, config := range store.configsManger.GetConfigs() {
 		statisticians[servername] = configuration.NewStatistician(config)
 	}
 

@@ -8,11 +8,11 @@ import (
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	storev1 "github.com/ClessLi/bifrost/internal/bifrost/store/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration"
 )
 
 type webServerConfigStore struct {
-	configs map[string]configuration.Configuration
+	configs map[string]configuration.NginxConfig
 }
 
 func (w *webServerConfigStore) GetServerNames(ctx context.Context) (*v1.ServerNames, error) {
@@ -51,5 +51,5 @@ func (w *webServerConfigStore) Update(ctx context.Context, config *v1.WebServerC
 var _ storev1.WebServerConfigStore = &webServerConfigStore{}
 
 func newNginxConfigStore(store *webServerStore) storev1.WebServerConfigStore {
-	return &webServerConfigStore{configs: store.cms.GetConfigs()}
+	return &webServerConfigStore{configs: store.configsManger.GetConfigs()}
 }

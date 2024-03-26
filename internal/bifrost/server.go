@@ -1,6 +1,7 @@
 package bifrost
 
 import (
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"github.com/marmotedu/iam/pkg/shutdown"
 	"github.com/marmotedu/iam/pkg/shutdown/shutdownmanagers/posixsignal"
 
@@ -9,7 +10,6 @@ import (
 	storev1nginx "github.com/ClessLi/bifrost/internal/bifrost/store/v1/nginx"
 	genericoptions "github.com/ClessLi/bifrost/internal/pkg/options"
 	genericgrpcserver "github.com/ClessLi/bifrost/internal/pkg/server"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
 )
 
 type bifrostServer struct {
@@ -25,7 +25,7 @@ type preparedBifrostServer struct {
 }
 
 func createBifrostServer(cfg *config.Config) (*bifrostServer, error) {
-	log.Debug("create bifrost server...")
+	logV1.Debug("create bifrost server...")
 	gs := shutdown.New()
 	gs.AddShutdownManager(posixsignal.NewPosixSignalManager())
 
@@ -51,7 +51,7 @@ func createBifrostServer(cfg *config.Config) (*bifrostServer, error) {
 }
 
 func (b *bifrostServer) PrepareRun() preparedBifrostServer {
-	log.Debug("prepare run...")
+	logV1.Debug("prepare run...")
 	b.initStore()
 	initRouter(b.genericGRPCServer)
 	b.gs.AddShutdownCallback(shutdown.ShutdownFunc(func(string) error {
@@ -69,26 +69,26 @@ func (b *bifrostServer) PrepareRun() preparedBifrostServer {
 }
 
 func (p preparedBifrostServer) Run() error {
-	log.Debug("prepareBifrostServer run...")
+	logV1.Debug("prepareBifrostServer run...")
 	if err := p.gs.Start(); err != nil {
-		log.Fatalf("start shutdown manager failed: %s", err.Error())
+		logV1.Fatalf("start shutdown manager failed: %s", err.Error())
 	}
-	log.Infof("the generic gRPC server is going to run...")
+	logV1.Infof("the generic gRPC server is going to run...")
 
 	return p.genericGRPCServer.Run()
 }
 
 func (b *bifrostServer) initStore() {
-	log.Debug("bifrost server init store...")
+	logV1.Debug("bifrost server init store...")
 	storeIns, err := storev1nginx.GetNginxStoreFactory(b.webSvrConfigsOpts, b.monitorOpts, b.webSvrLogWatcherOpts)
 	if err != nil {
-		log.Fatalf("init nginx store failed: %+v", err)
+		logV1.Fatalf("init nginx store failed: %+v", err)
 	}
 	storev1.SetClient(storeIns)
 }
 
 func buildGenericConfig(cfg *config.Config) (genericConfig *genericgrpcserver.Config, lastErr error) {
-	log.Debug("build generic config, apply all options to generic config")
+	logV1.Debug("build generic config, apply all options to generic config")
 	genericConfig = genericgrpcserver.NewConfig()
 
 	if lastErr = cfg.GenericServerRunOptions.ApplyTo(genericConfig); lastErr != nil {

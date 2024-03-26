@@ -3,8 +3,7 @@ package bifrost
 import (
 	"github.com/ClessLi/bifrost/internal/bifrost/config"
 	"github.com/ClessLi/bifrost/internal/bifrost/options"
-	"github.com/ClessLi/bifrost/pkg/app"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
+	"github.com/ClessLi/component-base/pkg/app"
 )
 
 const commandDesc = `The Bifrost is used to parse the nginx configuration file 
@@ -30,9 +29,6 @@ func NewApp(basename string) *app.App {
 
 func run(opts *options.Options) app.RunFunc {
 	return func(basename string) error {
-		log.Init(opts.Log)
-		defer log.Flush()
-
 		// init auth api client
 		// auth.Init(opts.AuthAPIClient)
 

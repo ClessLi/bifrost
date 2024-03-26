@@ -2,6 +2,7 @@ package nginx
 
 import (
 	"context"
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"time"
 
 	"github.com/marmotedu/component-base/pkg/version"
@@ -9,7 +10,6 @@ import (
 
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/monitor"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
 )
 
 const webServerStatusTimeFormatLayout = "2006/01/02 15:04:05"
@@ -40,15 +40,15 @@ func newWebServerStatusStore(store *webServerStore) *webServerStatusStore {
 	var os string
 	platform, _, release, err := host.PlatformInformation()
 	if err != nil {
-		log.Warnf("Failed to get platform information. %s", err.Error())
+		logV1.Warnf("Failed to get platform information. %s", err.Error())
 		os = "unknown"
 	} else {
 		os = platform + " " + release
 	}
 
 	return &webServerStatusStore{
-		m:                  store.m,
-		webServerInfosFunc: store.cms.GetServerInfos,
+		m:                  store.monitor,
+		webServerInfosFunc: store.configsManger.GetServerInfos,
 		os:                 os,
 		bifrostVersion:     version.GitVersion,
 	}

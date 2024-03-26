@@ -51,6 +51,9 @@ const (
 
 	// V3ErrInvalidOperation - 500: Invalid operation.
 	V3ErrInvalidOperation
+
+	// V3ErrContextNotFound - 500: queried context not found.
+	V3ErrContextNotFound
 )
 
 // bifrost: statistics errors.

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"net"
 	"strings"
 	"time"
@@ -19,9 +20,7 @@ import (
 
 	"github.com/ClessLi/bifrost/internal/pkg/service_register"
 	healthzclient_v1 "github.com/ClessLi/bifrost/pkg/client/grpc_health_v1"
-
 	//"github.com/ClessLi/bifrost/internal/pkg/middleware".
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
 )
 
 // GenericGRPCServer contains state for a bifrost api server.
@@ -60,7 +59,7 @@ type GenericGRPCServer struct {
 
 func (s *GenericGRPCServer) Setup() {
 	if s.SecureServingInfo == nil && s.InsecureServingInfo == nil {
-		log.Fatal("Failed to setup generic gRPC server, no serving information is available for setup.")
+		logV1.Fatal("Failed to setup generic gRPC server, no serving information is available for setup.")
 
 		return
 	}
@@ -70,12 +69,12 @@ func (s *GenericGRPCServer) Setup() {
 			s.SecureServingInfo.CertKey.KeyFile,
 		)
 		if err != nil {
-			log.Fatal(err.Error())
+			logV1.Fatal(err.Error())
 
 			return
 		}
 		s.secureServer = grpc.NewServer(grpc.MaxSendMsgSize(s.ChunkSize), grpc.Creds(cerds))
-		log.Infof("Secure server initialization succeeded. Chunk size: %d.", s.ChunkSize)
+		logV1.Infof("Secure server initialization succeeded. Chunk size: %d.", s.ChunkSize)
 		if s.healthz {
 			s.secureSvrHealthz = health.NewServer()
 		}
@@ -85,7 +84,7 @@ func (s *GenericGRPCServer) Setup() {
 		// TODO: Checking mechanism of gRPC server max send msg size
 		// s.insecureServer = grpc.NewServer(grpc.MaxSendMsgSize(s.ChunkSize))
 		s.insecureServer = grpc.NewServer()
-		log.Infof("Insecure server initialization succeeded. Chunk size: %d.", s.ChunkSize)
+		logV1.Infof("Insecure server initialization succeeded. Chunk size: %d.", s.ChunkSize)
 		if s.healthz {
 			s.insecureSvrHealthz = health.NewServer()
 		}
@@ -114,15 +113,15 @@ func (s *GenericGRPCServer) InstallServices() {
 	// check healthz handler
 	if s.healthz {
 		if s.insecureServer != nil {
-			log.Debug("Register health server for insecure gRPC server...")
+			logV1.Debug("Register health server for insecure gRPC server...")
 			grpc_health_v1.RegisterHealthServer(s.insecureServer, s.insecureSvrHealthz)
-			log.Debug("Registered health server for insecure gRPC server succeeded.")
+			logV1.Debug("Registered health server for insecure gRPC server succeeded.")
 		}
 
 		if s.secureServer != nil {
-			log.Debug("Register health server for secure gRPC server...")
+			logV1.Debug("Register health server for secure gRPC server...")
 			grpc_health_v1.RegisterHealthServer(s.secureServer, s.secureSvrHealthz)
-			log.Debug("Registered health server for secure gRPC server succeeded.")
+			logV1.Debug("Registered health server for secure gRPC server succeeded.")
 		}
 	}
 }
@@ -132,13 +131,13 @@ func (s *GenericGRPCServer) InstallRAClient() {
 		var err error
 		s.registryClient, err = discover.NewKitConsulRegistryClient(s.RAInfo.Host, uint16(s.RAInfo.Port))
 		if err != nil {
-			log.Fatal(err.Error())
+			logV1.Fatal(err.Error())
 
 			return
 		}
 		id, err := uuid.NewV4()
 		if err != nil {
-			log.Fatalf(err.Error())
+			logV1.Fatalf(err.Error())
 
 			return
 		}
@@ -156,13 +155,13 @@ func (s *GenericGRPCServer) RegisterServices(registers map[string]service_regist
 		bindPort uint16,
 	) {
 		if svcRegister == nil {
-			log.Warn("service register is nil")
+			logV1.Warn("service register is nil")
 
 			return
 		}
 		svcRegister(grpcSvr, healthSvr)
 		if s.registryClient != nil {
-			log.Debugf("Register service `%s` to RA for gRPC server...", svcname+"-"+s.instanceSuffixID)
+			logV1.Debugf("Register service `%s` to RA for gRPC server...", svcname+"-"+s.instanceSuffixID)
 
 			s.registryClient.Register(
 				svcname,
@@ -170,13 +169,13 @@ func (s *GenericGRPCServer) RegisterServices(registers map[string]service_regist
 				bindHost,
 				bindPort,
 				nil,
-				log.K(),
+				logV1.K(),
 			)
 		}
 	}
 	for svcname, register := range registers {
 		if s.InsecureServingInfo != nil {
-			log.Debugf("Register service `%s` for insecure gRPC server...", svcname)
+			logV1.Debugf("Register service `%s` for insecure gRPC server...", svcname)
 			f(
 				svcname,
 				s.insecureServer,
@@ -187,7 +186,7 @@ func (s *GenericGRPCServer) RegisterServices(registers map[string]service_regist
 			)
 		}
 		if s.SecureServingInfo != nil {
-			log.Debugf("Register service `%s` for secure gRPC server...", svcname)
+			logV1.Debugf("Register service `%s` for secure gRPC server...", svcname)
 			f(
 				svcname,
 				s.secureServer,
@@ -205,13 +204,13 @@ func (s *GenericGRPCServer) RegisterServices(registers map[string]service_regist
 func initGenericGRPCServer(s *GenericGRPCServer) {
 	// do some setup
 
-	log.Debug("Setup generic gRPC server...")
+	logV1.Debug("Setup generic gRPC server...")
 	s.Setup()
-	log.Debug("Install RA client for generic gRPC server...")
+	logV1.Debug("Install RA client for generic gRPC server...")
 	s.InstallRAClient()
-	log.Debug("Install middlewares for generic gRPC server...")
+	logV1.Debug("Install middlewares for generic gRPC server...")
 	s.InstallMiddlewares()
-	log.Debug("Install services for generic gRPC server...")
+	logV1.Debug("Install services for generic gRPC server...")
 	s.InstallServices()
 }
 
@@ -221,19 +220,19 @@ func (s *GenericGRPCServer) Run() error {
 
 	// Initializing the server in a goroutine so that
 	// it won't block the graceful shutdown handling below
-	log.Debugf("Goroutine start the insecure gRPC server...")
+	logV1.Debugf("Goroutine start the insecure gRPC server...")
 	// TODO: fix duplicate code for insecure server and secure server startup
 	eg.Go(func() error { //nolint:dupl
 		if s.InsecureServingInfo == nil {
-			log.Info("Pass start insecure server")
+			logV1.Info("Pass start insecure server")
 
 			return nil
 		}
 
-		log.Infof("Start to listening the incoming requests on address: %s", s.InsecureServingInfo.Address())
+		logV1.Infof("Start to listening the incoming requests on address: %s", s.InsecureServingInfo.Address())
 		lis, err := net.Listen("tcp", s.InsecureServingInfo.Address())
 		if err != nil {
-			log.Errorf(
+			logV1.Errorf(
 				"Failed to listen the incoming requests on address: %s, %s",
 				s.InsecureServingInfo.Address(),
 				err.Error(),
@@ -248,27 +247,27 @@ func (s *GenericGRPCServer) Run() error {
 		}
 
 		if err = s.insecureServer.Serve(lis); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
-			log.Errorf("Failed to serve the insecure server, %s", err.Error())
+			logV1.Errorf("Failed to serve the insecure server, %s", err.Error())
 
 			return err
 		}
 
-		log.Infof("Server on %s stopped", s.InsecureServingInfo.Address())
+		logV1.Infof("Server on %s stopped", s.InsecureServingInfo.Address())
 
 		return nil
 	})
 
-	log.Debugf("Goroutine start the secure gRPC server...")
+	logV1.Debugf("Goroutine start the secure gRPC server...")
 	eg.Go(func() error { //nolint:dupl
 		if s.SecureServingInfo == nil {
-			log.Info("Pass start secure server")
+			logV1.Info("Pass start secure server")
 
 			return nil
 		}
-		log.Infof("Start to listening the incoming requests on https address: %s", s.SecureServingInfo.Address())
+		logV1.Infof("Start to listening the incoming requests on https address: %s", s.SecureServingInfo.Address())
 		lis, err := net.Listen("tcp", s.SecureServingInfo.Address())
 		if err != nil {
-			log.Errorf(
+			logV1.Errorf(
 				"Failed to listen the incoming requests on address: %s, %s",
 				s.SecureServingInfo.Address(),
 				err.Error(),
@@ -282,12 +281,12 @@ func (s *GenericGRPCServer) Run() error {
 			defer s.secureSvrHealthz.Shutdown()
 		}
 		if err = s.secureServer.Serve(lis); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
-			log.Errorf("Failed to serve the secure server, %s", err.Error())
+			logV1.Errorf("Failed to serve the secure server, %s", err.Error())
 
 			return err
 		}
 
-		log.Infof("Server on %s stopped", s.SecureServingInfo.Address())
+		logV1.Infof("Server on %s stopped", s.SecureServingInfo.Address())
 
 		return nil
 	})
@@ -296,14 +295,14 @@ func (s *GenericGRPCServer) Run() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if s.healthz {
-		log.Debugf("Start to run the health check...")
+		logV1.Debugf("Start to run the health check...")
 		if err := s.ping(ctx); err != nil {
 			return err
 		}
 	}
 
 	if err := eg.Wait(); err != nil {
-		log.Errorf("%+v", err.Error())
+		logV1.Errorf("%+v", err.Error())
 
 		return err
 	}
@@ -320,7 +319,7 @@ func (s *GenericGRPCServer) Close() {
 
 	if s.registryClient != nil {
 		for _, servicename := range s.registeredService {
-			s.registryClient.DeRegister(servicename+"-"+s.instanceSuffixID, log.K())
+			s.registryClient.DeRegister(servicename+"-"+s.instanceSuffixID, logV1.K())
 		}
 	}
 
@@ -329,7 +328,7 @@ func (s *GenericGRPCServer) Close() {
 		if s.healthz {
 			s.secureSvrHealthz.Shutdown()
 		}
-		log.Info("Secure server has been stopped!")
+		logV1.Info("Secure server has been stopped!")
 	}
 
 	if s.insecureServer != nil {
@@ -337,16 +336,17 @@ func (s *GenericGRPCServer) Close() {
 		if s.healthz {
 			s.insecureSvrHealthz.Shutdown()
 		}
-		log.Info("Insecure server has been stopped!")
+		logV1.Info("Insecure server has been stopped!")
 	}
 }
 
 // ping pings the http server to make sure the router is working.
+//
 //nolint:funlen,gocognit
 func (s *GenericGRPCServer) ping(ctx context.Context) error {
 	healthzClients := make(map[string]*healthzclient_v1.Client)
 	if s.InsecureServingInfo != nil {
-		log.Debugf("initialization insecure server health check...")
+		logV1.Debugf("initialization insecure server health check...")
 		var address string
 		if strings.Contains(s.InsecureServingInfo.Address(), "0.0.0.0") {
 			address = fmt.Sprintf("127.0.0.1:%s", strings.Split(s.InsecureServingInfo.Address(), ":")[1])
@@ -362,7 +362,7 @@ func (s *GenericGRPCServer) ping(ctx context.Context) error {
 		defer func(client *healthzclient_v1.Client) {
 			err := client.Close()
 			if err != nil {
-				log.Warn(err.Error())
+				logV1.Warn(err.Error())
 			}
 		}(client)
 
@@ -370,7 +370,7 @@ func (s *GenericGRPCServer) ping(ctx context.Context) error {
 	}
 
 	if s.SecureServingInfo != nil { //nolint:nestif
-		log.Debugf("initialization secure server health check...")
+		logV1.Debugf("initialization secure server health check...")
 		var address string
 		if strings.Contains(s.SecureServingInfo.Address(), "0.0.0.0") {
 			address = fmt.Sprintf("127.0.0.1:%s", strings.Split(s.SecureServingInfo.Address(), ":")[1])
@@ -392,7 +392,7 @@ func (s *GenericGRPCServer) ping(ctx context.Context) error {
 		defer func(client *healthzclient_v1.Client) {
 			err := client.Close()
 			if err != nil {
-				log.Warn(err.Error())
+				logV1.Warn(err.Error())
 			}
 		}(client)
 
@@ -410,13 +410,13 @@ func (s *GenericGRPCServer) ping(ctx context.Context) error {
 
 				status, err := client.Check(ctx, svcname)
 				if err != nil {
-					log.Info(err.Error())
+					logV1.Info(err.Error())
 					healthzOK[tag+" "+svcname] = false
 
 					continue
 				}
 				healthzOK[tag+" "+svcname] = true
-				log.Infof("The '%s' %s-service state is: %v", svcname, tag, healthzclient_v1.StatusString(status))
+				logV1.Infof("The '%s' %s-service state is: %v", svcname, tag, healthzclient_v1.StatusString(status))
 			}
 		}
 
@@ -424,26 +424,26 @@ func (s *GenericGRPCServer) ping(ctx context.Context) error {
 		for tSvcname, ok := range healthzOK {
 			if !ok {
 				allOK = false
-				log.Debugf("service `%s` is not healthy.", tSvcname)
+				logV1.Debugf("service `%s` is not healthy.", tSvcname)
 			}
 		}
 
 		if allOK {
-			log.Infof("all services are healthy!")
+			logV1.Infof("all services are healthy!")
 
 			return nil
 		}
 
 		// Sleep for a second to continue the next ping.
-		log.Info("Waiting for the router, retry in 1 second.")
+		logV1.Info("Waiting for the router, retry in 1 second.")
 		time.Sleep(1 * time.Second)
 
 		select {
 		case <-ctx.Done():
-			log.Fatal("can not check grpc server health within the specified time interval.")
+			logV1.Fatal("can not check grpc server health within the specified time interval.")
 		default:
 			if len(healthzClients) == 0 {
-				log.Fatal("can not check grpc server health")
+				logV1.Fatal("can not check grpc server health")
 			}
 		}
 	}

@@ -3,14 +3,13 @@ package grpc_health_v1
 import (
 	"context"
 	"errors"
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"io"
 
 	"github.com/go-kit/kit/endpoint"
 	grpctransport "github.com/go-kit/kit/transport/grpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
-
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
 )
 
 type endpoints struct {
@@ -43,11 +42,11 @@ func (e *endpoints) Watch(ctx context.Context, service string) (<-chan HealthSta
 			for {
 				select {
 				case <-ctx.Done():
-					log.Info("health watch connect closed by client")
+					logV1.Info("health watch connect closed by client")
 					close(statusC)
 					err := c.CloseSend()
 					if err != nil {
-						log.Warnf(err.Error())
+						logV1.Warnf(err.Error())
 					}
 
 					return
@@ -55,11 +54,11 @@ func (e *endpoints) Watch(ctx context.Context, service string) (<-chan HealthSta
 					s, err := c.Recv()
 					if err != nil {
 						if errors.Is(err, io.EOF) {
-							log.Info("health watch connect closed by server")
+							logV1.Info("health watch connect closed by server")
 
 							return
 						}
-						log.Error(err.Error())
+						logV1.Error(err.Error())
 
 						return
 					}

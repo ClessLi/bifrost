@@ -2,12 +2,12 @@ package nginx
 
 import (
 	"context"
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"path/filepath"
 	"regexp"
 	"time"
 
 	"github.com/marmotedu/errors"
-	"github.com/marmotedu/iam/pkg/log"
 
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
@@ -53,7 +53,7 @@ func (w *webServerLogWatcherStore) Watch(
 						select {
 						case fOutputC <- data:
 						case <-time.After(time.Second * 30):
-							log.Warnf("send filtered data timeout(30s)")
+							logV1.Warnf("send filtered data timeout(30s)")
 
 							return
 						}
@@ -79,7 +79,7 @@ func filterOutput(data []byte, pattern string) (bool, error) {
 	}
 	match, err := regexp.Match(pattern, data)
 	if err != nil {
-		log.Warnf("web server log watch error. %s", err.Error())
+		logV1.Warnf("web server log watch error. %s", err.Error())
 
 		return true, err
 	}
@@ -92,7 +92,7 @@ func filterOutput(data []byte, pattern string) (bool, error) {
 
 func newWebServerLogWatcherStore(store *webServerStore) *webServerLogWatcherStore {
 	return &webServerLogWatcherStore{
-		watcherManager:    store.wm,
+		watcherManager:    store.watcherManager,
 		webServerLogsDirs: store.logsDirs,
 	}
 }

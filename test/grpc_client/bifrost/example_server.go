@@ -36,14 +36,14 @@ func exampleServerRun() error {
 	opts.WebServerConfigsOptions.WebServerConfigs = append(
 		opts.WebServerConfigsOptions.WebServerConfigs,
 		&options.WebServerConfigOptions{
-			ServerName:     "example test",
-			ServerType:     "nginx",
-			ConfigPath:     "../../nginx/conf/nginx.conf",
-			VerifyExecPath: "../../nginx/sbin/nginx.sh",
-			LogsDirPath:    "../../nginx/logs",
-			BackupDir:      "",
-			BackupCycle:    1,
-			BackupSaveTime: 1,
+			ServerName:               "example test",
+			ServerType:               "nginx",
+			ConfigPath:               "../../nginx/conf/nginx.conf",
+			VerifyExecPath:           "../../nginx/sbin/nginx.sh",
+			LogsDirPath:              "../../nginx/logs",
+			BackupDir:                "",
+			BackupCycle:              1,
+			BackupsRetentionDuration: 1,
 		},
 	)
 

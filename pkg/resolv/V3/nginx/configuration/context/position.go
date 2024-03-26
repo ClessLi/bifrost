@@ -1,5 +1,10 @@
 package context
 
+import (
+	"github.com/ClessLi/bifrost/internal/pkg/code"
+	"github.com/marmotedu/errors"
+)
+
 type Pos interface {
 	Position() (Context, int)
 	Target() Context
@@ -41,4 +46,10 @@ var nullPos = &errPos{nullContext}
 
 func NullPos() Pos {
 	return nullPos
+}
+
+var notFoundPos = &errPos{ErrContext(errors.WithCode(code.V3ErrContextNotFound, "queried context not found")).(*ErrorContext)}
+
+func NotFoundPos() Pos {
+	return notFoundPos
 }

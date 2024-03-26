@@ -1,7 +1,10 @@
 package nginx
 
 import (
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration"
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"sync"
+	"time"
 
 	"github.com/marmotedu/errors"
 
@@ -9,8 +12,7 @@ import (
 	"github.com/ClessLi/bifrost/internal/pkg/file_watcher"
 	"github.com/ClessLi/bifrost/internal/pkg/monitor"
 	genericoptions "github.com/ClessLi/bifrost/internal/pkg/options"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx"
 )
 
 const (
@@ -18,10 +20,10 @@ const (
 )
 
 type webServerStore struct {
-	cms      nginx.ConfigsManager
-	m        monitor.Monitor
-	wm       *file_watcher.WatcherManager
-	logsDirs map[string]string
+	configsManger  nginx.ConfigsManager
+	monitor        monitor.Monitor
+	watcherManager *file_watcher.WatcherManager
+	logsDirs       map[string]string
 }
 
 func (w *webServerStore) WebServerStatus() storev1.WebServerStatusStore {
@@ -42,9 +44,9 @@ func (w *webServerStore) WebServerLogWatcher() storev1.WebServerLogWatcher {
 
 func (w *webServerStore) Close() error {
 	return errors.NewAggregate([]error{
-		w.cms.Stop(),
-		w.m.Stop(),
-		w.wm.StopAll(),
+		w.configsManger.Stop(5 * time.Minute),
+		w.monitor.Stop(),
+		w.watcherManager.StopAll(),
 	})
 }
 
@@ -65,31 +67,28 @@ func GetNginxStoreFactory(
 	}
 
 	var err error
-	var cms nginx.ConfigsManager
+	var configsManager nginx.ConfigsManager
 	var m monitor.Monitor
 	once.Do(func() {
 		// init and start config managers and log watcher manager
-		cmsOpts := nginx.ConfigsManagerOptions{Options: make([]nginx.ConfigManagerOptions, 0)}
+		cmConf := &nginx.Config{ManagersConfig: make(map[string]*configuration.ManagerConfig)}
 		svrLogsDirs := make(map[string]string)
 		for _, itemOpts := range webSvrConfOpts.WebServerConfigs {
 			if itemOpts.ServerType == nginxServer {
-				cmsOpts.Options = append(cmsOpts.Options, nginx.ConfigManagerOptions{
-					ServerName:     itemOpts.ServerName,
-					MainConfigPath: itemOpts.ConfigPath,
-					ServerBinPath:  itemOpts.VerifyExecPath,
-					BackupDir:      itemOpts.BackupDir,
-					BackupCycle:    itemOpts.BackupCycle,
-					BackupSaveTime: itemOpts.BackupSaveTime,
-				})
+				itemOpts.ApplyToNginx(cmConf)
 			}
 			svrLogsDirs[itemOpts.ServerName] = itemOpts.LogsDirPath
 		}
-		cms, err = nginx.New(cmsOpts)
+		cmCompletedConf, err := cmConf.Complete()
+		if err != nil {
+			return
+		}
+		configsManager, err = cmCompletedConf.NewConfigsManager()
 		if err != nil {
 			return
 		}
 
-		err = cms.Start()
+		err = configsManager.Start()
 		if err != nil {
 			return
 		}
@@ -114,7 +113,7 @@ func GetNginxStoreFactory(
 
 		go func() {
 			if err := m.Start(); err != nil { //nolint:govet
-				log.Fatal(err.Error())
+				logV1.Fatal(err.Error())
 
 				return
 			}
@@ -122,10 +121,10 @@ func GetNginxStoreFactory(
 
 		// build nginx store factory
 		nginxStoreFactory = &webServerStore{
-			cms:      cms,
-			m:        m,
-			wm:       wm,
-			logsDirs: svrLogsDirs,
+			configsManger:  configsManager,
+			monitor:        m,
+			watcherManager: wm,
+			logsDirs:       svrLogsDirs,
 		}
 	})
 

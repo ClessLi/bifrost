@@ -3,6 +3,7 @@ module github.com/ClessLi/bifrost
 go 1.21
 
 require (
+	github.com/ClessLi/component-base v1.0.6
 	github.com/ClessLi/skirnir v0.0.0-20201204082302-47fe98943ef8
 	github.com/apsdehal/go-logger v0.0.0-20190515212710-b0d6ccfee0e6
 	github.com/dominikbraun/graph v0.23.0

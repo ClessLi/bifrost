@@ -164,11 +164,11 @@ func (i *Include) ChildConfig(fullpath string) (*Config, error) {
 func (i *Include) QueryByKeyWords(kw context.KeyWords) context.Pos {
 	for _, child := range i.Configs {
 		pos := child.QueryByKeyWords(kw)
-		if pos != context.NullPos() {
+		if pos != context.NotFoundPos() {
 			return pos
 		}
 	}
-	return context.NullPos()
+	return context.NotFoundPos()
 }
 
 func (i *Include) QueryAllByKeyWords(kw context.KeyWords) []context.Pos {
