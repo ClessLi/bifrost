@@ -7,13 +7,12 @@ import (
 	"testing"
 	"time"
 
-	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
-	healthzclient_v1 "github.com/ClessLi/bifrost/pkg/client/grpc_health_v1"
-	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration"
-
 	"google.golang.org/grpc"
 
+	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	bifrost_cliv1 "github.com/ClessLi/bifrost/pkg/client/bifrost/v1"
+	healthzclient_v1 "github.com/ClessLi/bifrost/pkg/client/grpc_health_v1"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration"
 )
 
 func TestRun(t *testing.T) {
@@ -106,11 +105,18 @@ func TestBifrostClient(t *testing.T) {
 		if err != nil {
 			t.Fatalf(err.Error())
 		}
-		conf, err := configuration.NewConfigurationFromJsonBytes(jsondata)
+		conf, err := configuration.NewNginxConfigFromJsonBytes(jsondata)
 		if err != nil {
 			t.Fatalf(err.Error())
 		}
-		t.Logf("get config len: %d", len(conf.View()))
+		lines, err := conf.Main().ConfigLines(false)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+		t.Logf("get config lines len: %d", len(lines))
+		for _, line := range lines {
+			t.Log(line)
+		}
 		//fmt.Printf("config %s:\n\n%s", servername, conf.View())
 		t.Logf("before jsondata len: %d, after jasondata len: %d", len(jsondata), len(conf.Json()))
 
@@ -118,7 +124,7 @@ func TestBifrostClient(t *testing.T) {
 		if err != nil {
 			t.Fatalf(err.Error())
 		}
-		t.Logf("statistics %s:\n\n%v", servername, statistics)
+		t.Logf("statistics %s:\n\n%+v", servername, statistics)
 
 		logC, lwCancel, err := client.WebServerLogWatcher().Watch(&v1.WebServerLogWatchRequest{
 			ServerName:          &v1.ServerName{Name: servername},

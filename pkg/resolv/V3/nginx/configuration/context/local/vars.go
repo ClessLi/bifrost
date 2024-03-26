@@ -9,7 +9,7 @@ import (
 var (
 
 	// regexps
-	RegCommentHead           = regexp.MustCompile(`^(\s*)#+[ \r\t\f]*(.*?)\n`)
+	RegCommentHead           = regexp.MustCompile(`^(\s*)#+[ \t\f]*([^\r\n]*?)` + LineBreak + `+`)
 	RegDirectiveWithValue    = regexp.MustCompile(S)
 	RegDirectiveWithoutValue = regexp.MustCompile(`^\s*(` + Normal + `)\s*;`)
 	RegEventsHead            = regexp.MustCompile(`^\s*events\s*{`)
@@ -23,9 +23,10 @@ var (
 	RegStreamHead            = regexp.MustCompile(`^\s*stream\s*{`)
 	RegTypesHead             = regexp.MustCompile(`^\s*types\s*{`)
 	RegUpstreamHead          = regexp.MustCompile(`^\s*upstream\s*([^;]*?)\s*{`)
-	RegBlankLine             = regexp.MustCompile(`^\n\s*` + LineBreak + `$`)
+	RegBlankLine             = regexp.MustCompile(`^` + LineBreak + `\s*` + LineBreak + `$`)
 	RegBraceEnd              = regexp.MustCompile(`^\s*}`)
 	RegErrorHeed             = regexp.MustCompile(Abnormal)
+	RegLineBreak             = regexp.MustCompile(LineBreak)
 
 	// json unmarshal regexps
 	JsonUnmarshalRegCommentHead     = regexp.MustCompile(`^\s*{[^{]*"comments"\s*:\s*"`)

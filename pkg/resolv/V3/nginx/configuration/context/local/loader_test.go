@@ -217,10 +217,11 @@ func Test_fileLoader_Load(t *testing.T) {
 	simpleMain.
 		Insert(NewComment("user  nobody;", false), 0).
 		Insert(NewDirective("worker_processes", "1"), 1).
+		Insert(NewComment("inline comments", true), 2).
 		Insert(
 			NewContext(context_type.TypeEvents, "").
 				Insert(NewDirective("worker_connections", "1024"), 0),
-			2,
+			3,
 		)
 	type fields struct {
 		mainConfigAbsPath string

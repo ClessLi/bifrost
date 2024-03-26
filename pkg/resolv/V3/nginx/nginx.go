@@ -35,6 +35,7 @@ func (m *configsManager) Stop(timeout time.Duration) error {
 }
 
 func (m *configsManager) GetConfigs() (configs map[string]configuration.NginxConfig) {
+	configs = make(map[string]configuration.NginxConfig)
 	for svrname, manager := range m.managerMap {
 		configs[svrname] = manager.NginxConfig()
 	}
@@ -42,6 +43,7 @@ func (m *configsManager) GetConfigs() (configs map[string]configuration.NginxCon
 }
 
 func (m *configsManager) GetServerInfos() (infos []*v1.WebServerInfo) {
+	infos = make([]*v1.WebServerInfo, 0)
 	for svrname, manager := range m.managerMap {
 		infos = append(infos, &v1.WebServerInfo{
 			Name:    svrname,

@@ -3,10 +3,10 @@ package nginx
 import (
 	"sync"
 
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"github.com/marmotedu/errors"
 
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loader"
 )
@@ -30,7 +30,7 @@ func newConfigManager(options ConfigManagerOptions) (configuration.ConfigManager
 	if err != nil {
 		return nil, err
 	}
-	log.Debugf("init nginx config(Size: %d): \n\n%s", len(conf.View()), conf.View())
+	logV1.Debugf("init nginx config(Size: %d): \n\n%s", len(conf.View()), conf.View())
 
 	return configuration.NewNginxConfigurationManager(
 		loader.NewLoader(),
@@ -61,7 +61,7 @@ func (c *configsManager) Start() error {
 		if err != nil {
 			for _, servername := range isStarted {
 				if err = c.cms[servername].Stop(); err != nil {
-					log.Warnf("failed to stop %s nginx config manager, err: %w", servername, err)
+					logV1.Warnf("failed to stop %s nginx config manager, err: %w", servername, err)
 				}
 			}
 		}

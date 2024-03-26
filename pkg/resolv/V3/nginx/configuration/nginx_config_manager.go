@@ -85,7 +85,7 @@ func (m *nginxConfigManager) NginxConfig() NginxConfig {
 func (m *nginxConfigManager) ServerStatus() (state v1.State) {
 	state = v1.UnknownState
 	svrPidFilePath := filepath.Join("logs", "nginx.pid")
-	pidCtx := m.configuration.Main().QueryByKeyWords(context.NewKeyWords(context_type.TypeDirective, `pid\s+.*`, true, true)).Target()
+	pidCtx := m.configuration.Main().QueryByKeyWords(context.NewKeyWords(context_type.TypeDirective).SetRegexMatchingValue(`pid\s+.*`)).Target()
 	if pidCtx.Error() == nil {
 		pidCtxKV := strings.Split(pidCtx.Value(), " ")
 		if len(pidCtxKV) == 2 {
@@ -193,8 +193,9 @@ func (m *nginxConfigManager) refresh() error {
 		return err
 	}
 
-	if fsFingerprinter.Diff(utilsV3.NewConfigFingerprinter(m.configuration.Dump())) {
-
+	if !fsFingerprinter.Diff(utilsV3.NewConfigFingerprinter(m.configuration.Dump())) {
+		// 指纹一致不做刷新
+		return nil
 	}
 
 	if fsFingerprinter.NewerThan(m.configuration.UpdatedTimestamp()) {

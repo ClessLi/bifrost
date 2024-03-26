@@ -74,7 +74,7 @@ func NewStatistician(c NginxConfig) Statistician {
 }
 
 func Port(ctx context.Context) int {
-	portDirective := ctx.QueryByKeyWords(context.NewKeyWords(context_type.TypeDirective, "listen .*", true, true)).Target()
+	portDirective := ctx.QueryByKeyWords(context.NewKeyWords(context_type.TypeDirective).SetRegexMatchingValue("listen .*")).Target()
 	if portDirective.Error() != nil {
 		return -1
 	}
@@ -100,8 +100,8 @@ func Ports(contexts []context.Context) []int {
 
 func HttpPorts(ctx context.Context) []int {
 	httpServerPoses := ctx.
-		QueryByKeyWords(context.NewKeyWords(context_type.TypeHttp, "", false, true)).Target().
-		QueryAllByKeyWords(context.NewKeyWords(context_type.TypeServer, "", false, true))
+		QueryByKeyWords(context.NewKeyWords(context_type.TypeHttp)).Target().
+		QueryAllByKeyWords(context.NewKeyWords(context_type.TypeServer))
 	httpServers := make([]context.Context, 0)
 	for _, pos := range httpServerPoses {
 		httpServers = append(httpServers, pos.Target())
@@ -113,13 +113,13 @@ func HttpPorts(ctx context.Context) []int {
 func HttpServers(ctx context.Context) (int, map[string][]int) {
 	serverCount := 0
 	httpServerPoses := ctx.
-		QueryByKeyWords(context.NewKeyWords(context_type.TypeHttp, "", false, true)).Target().
-		QueryAllByKeyWords(context.NewKeyWords(context_type.TypeServer, "", false, true))
+		QueryByKeyWords(context.NewKeyWords(context_type.TypeHttp)).Target().
+		QueryAllByKeyWords(context.NewKeyWords(context_type.TypeServer))
 
 	serverPortCount := make(map[string][]int)
 	for _, pos := range httpServerPoses {
 		serverCount++
-		servernameDirective := pos.Target().QueryByKeyWords(context.NewKeyWords(context_type.TypeDirective, "^server_name .*", true, true)).Target()
+		servernameDirective := pos.Target().QueryByKeyWords(context.NewKeyWords(context_type.TypeDirective).SetRegexMatchingValue("^server_name .*")).Target()
 		if servernameDirective.Error() != nil {
 			if !errors.IsCode(servernameDirective.Error(), code.V3ErrContextNotFound) {
 				return 0, nil
@@ -139,8 +139,8 @@ func HttpServers(ctx context.Context) (int, map[string][]int) {
 
 func StreamServers(ctx context.Context) []int {
 	streamServerPoses := ctx.
-		QueryByKeyWords(context.NewKeyWords(context_type.TypeStream, "", false, true)).Target().
-		QueryAllByKeyWords(context.NewKeyWords(context_type.TypeServer, "", false, true))
+		QueryByKeyWords(context.NewKeyWords(context_type.TypeStream)).Target().
+		QueryAllByKeyWords(context.NewKeyWords(context_type.TypeServer))
 
 	streamServers := make([]context.Context, 0)
 	for _, pos := range streamServerPoses {
