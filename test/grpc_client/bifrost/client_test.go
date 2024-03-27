@@ -3,6 +3,9 @@ package bifrost
 import (
 	"context"
 	"fmt"
+	nginx_ctx "github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context/local"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
 	"sync"
 	"testing"
 	"time"
@@ -153,4 +156,48 @@ func TestBifrostClient(t *testing.T) {
 		}()
 	}
 	wg.Wait()
+}
+
+func TestBifrostClientOperation(t *testing.T) {
+	client, err := bifrost_cliv1.New(serverAddress(), grpc.WithInsecure(), grpc.WithTimeout(time.Second))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer client.Close()
+
+	servernames, err := client.WebServerConfig().GetServerNames()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, servername := range servernames {
+		jsondata, err := client.WebServerConfig().Get(servername)
+		if err != nil {
+			t.Fatal(err)
+		}
+		conf, err := configuration.NewNginxConfigFromJsonBytes(jsondata)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, pos := range conf.Main().QueryByKeyWords(nginx_ctx.NewKeyWords(context_type.TypeHttp)).Target().
+			QueryByKeyWords(nginx_ctx.NewKeyWords(context_type.TypeServer)).Target().
+			QueryAllByKeyWords(nginx_ctx.NewKeyWords(context_type.TypeDirective).SetStringMatchingValue("server_name test1.com")) {
+			server, _ := pos.Position()
+			if server.QueryByKeyWords(nginx_ctx.NewKeyWords(context_type.TypeDirective).SetRegexMatchingValue("^listen 80$")).Target().Error() != nil {
+				continue
+			}
+			ctx, idx := server.QueryByKeyWords(nginx_ctx.NewKeyWords(context_type.TypeLocation).SetRegexMatchingValue(`^/test1-location$`)).Target().
+				QueryByKeyWords(nginx_ctx.NewKeyWords(context_type.TypeIf).SetRegexMatchingValue(`^\(\$http_api_name != ''\)$`)).Target().
+				QueryByKeyWords(nginx_ctx.NewKeyWords(context_type.TypeDirective).SetStringMatchingValue("proxy_pass")).Position()
+			err = ctx.Insert(local.NewComment(fmt.Sprintf("[%s]test comments", time.Now().String()), true), idx+1).Error()
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+		err = client.WebServerConfig().Update(servername, conf.Json())
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
 }

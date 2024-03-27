@@ -9,7 +9,7 @@ import (
 )
 
 type Comment struct {
-	Comments string `json:"comments,omitempty"`
+	Comments string `json:"comments"`
 	Inline   bool   `json:"inline,omitempty"`
 
 	fatherContext context.Context
