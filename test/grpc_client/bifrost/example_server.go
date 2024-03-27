@@ -43,7 +43,7 @@ func exampleServerRun() error {
 			ServerName:               "example test",
 			ServerType:               "nginx",
 			ConfigPath:               absConfigPath,
-			VerifyExecPath:           "../../nginx/sbin/nginx.sh",
+			VerifyExecPath:           verifyExecPath,
 			LogsDirPath:              "../../nginx/logs",
 			BackupDir:                "",
 			BackupCycle:              1,

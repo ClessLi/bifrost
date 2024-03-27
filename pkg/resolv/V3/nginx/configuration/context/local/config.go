@@ -12,8 +12,8 @@ import (
 )
 
 type Config struct {
-	BasicContext       // `json:"config"`
-	context.ConfigPath // `json:"-"`
+	BasicContext
+	context.ConfigPath
 }
 
 func (c *Config) MarshalJSON() ([]byte, error) {
