@@ -26,7 +26,7 @@ func TestInclude_Child(t *testing.T) {
 	}{
 		{
 			name: "error context",
-			want: context.ErrContext(errors.WithCode(code.V3ErrInvalidOperation, "include cannot get child config by index")),
+			want: context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "include cannot get child config by index")),
 		},
 	}
 	for _, tt := range tests {
@@ -405,7 +405,7 @@ func TestInclude_Insert(t *testing.T) {
 	}{
 		{
 			name: "return error context",
-			want: context.ErrContext(errors.WithCode(code.V3ErrInvalidOperation, "include cannot insert by index")),
+			want: context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "include cannot insert by index")),
 		},
 	}
 	for _, tt := range tests {
@@ -610,7 +610,7 @@ func TestInclude_Modify(t *testing.T) {
 	}{
 		{
 			name: "return error context",
-			want: context.ErrContext(errors.WithCode(code.V3ErrInvalidOperation, "include cannot modify by index")),
+			want: context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "include cannot modify by index")),
 		},
 	}
 	for _, tt := range tests {
@@ -922,7 +922,7 @@ func TestInclude_Remove(t *testing.T) {
 	}{
 		{
 			name: "return error context",
-			want: context.ErrContext(errors.WithCode(code.V3ErrInvalidOperation, "include cannot remove by index")),
+			want: context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "include cannot remove by index")),
 		},
 	}
 	for _, tt := range tests {

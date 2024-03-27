@@ -33,13 +33,13 @@ func TestBasicContext_Child(t *testing.T) {
 			name:   "negative index",
 			fields: fields{Children: []context.Context{context.NullContext()}},
 			args:   args{idx: -1},
-			want:   context.ErrContext(errors.WithCode(code.V3ErrContextIndexOutOfRange, "index(%d) out of range", -1)),
+			want:   context.ErrContext(errors.WithCode(code.ErrV3ContextIndexOutOfRange, "index(%d) out of range", -1)),
 		},
 		{
 			name:   "index larger than children's length",
 			fields: fields{Children: []context.Context{context.NullContext()}},
 			args:   args{idx: 1},
-			want:   context.ErrContext(errors.WithCode(code.V3ErrContextIndexOutOfRange, "index(%d) out of range", 1)),
+			want:   context.ErrContext(errors.WithCode(code.ErrV3ContextIndexOutOfRange, "index(%d) out of range", 1)),
 		},
 		{
 			name:   "null context child",
@@ -609,7 +609,7 @@ func TestBasicContext_Insert(t *testing.T) {
 				ctx: nil,
 				idx: -1,
 			},
-			want: context.ErrContext(errors.WithCode(code.V3ErrContextIndexOutOfRange, "index(%d) out of range", -1)),
+			want: context.ErrContext(errors.WithCode(code.ErrV3ContextIndexOutOfRange, "index(%d) out of range", -1)),
 		},
 		{
 			name:   "insert nil",
@@ -618,7 +618,7 @@ func TestBasicContext_Insert(t *testing.T) {
 				ctx: nil,
 				idx: 0,
 			},
-			want: context.ErrContext(errors.WithCode(code.V3ErrInvalidOperation, "refuse to insert nil")),
+			want: context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "refuse to insert nil")),
 		},
 		{
 			name:   "insert null context",
@@ -627,7 +627,7 @@ func TestBasicContext_Insert(t *testing.T) {
 				ctx: context.NullContext(),
 				idx: 0,
 			},
-			want: context.NullContext().(*context.ErrorContext).AppendError(errors.WithCode(code.V3ErrInvalidOperation, "refuse to insert error context")),
+			want: context.NullContext().(*context.ErrorContext).AppendError(errors.WithCode(code.ErrV3InvalidOperation, "refuse to insert error context")),
 		},
 		{
 			name:   "insert error context",
@@ -636,7 +636,7 @@ func TestBasicContext_Insert(t *testing.T) {
 				ctx: context.ErrContext(errors.New("test error")),
 				idx: 0,
 			},
-			want: context.ErrContext(errors.New("test error")).(*context.ErrorContext).AppendError(errors.WithCode(code.V3ErrInvalidOperation, "refuse to insert error context")),
+			want: context.ErrContext(errors.New("test error")).(*context.ErrorContext).AppendError(errors.WithCode(code.ErrV3InvalidOperation, "refuse to insert error context")),
 		},
 		{
 			name:   "insert invalid error context",
@@ -645,7 +645,7 @@ func TestBasicContext_Insert(t *testing.T) {
 				ctx: &Location{BasicContext{ContextType: context_type.TypeErrContext}},
 				idx: 0,
 			},
-			want: context.ErrContext(errors.WithCode(code.V3ErrInvalidOperation, "refuse to insert invalid context")),
+			want: context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "refuse to insert invalid context")),
 		},
 		{
 			name:   "insert config context",
@@ -654,7 +654,7 @@ func TestBasicContext_Insert(t *testing.T) {
 				ctx: NewContext(context_type.TypeConfig, "test.conf"),
 				idx: 0,
 			},
-			want: context.ErrContext(errors.WithCode(code.V3ErrInvalidOperation, "refuse to insert config context")),
+			want: context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "refuse to insert config context")),
 		},
 		{
 			name:   "insert invalid config context",
@@ -663,7 +663,7 @@ func TestBasicContext_Insert(t *testing.T) {
 				ctx: &Http{BasicContext{ContextType: context_type.TypeConfig}},
 				idx: 0,
 			},
-			want: context.ErrContext(errors.WithCode(code.V3ErrInvalidOperation, "refuse to insert invalid context")),
+			want: context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "refuse to insert invalid context")),
 		},
 		{
 			name: "insert normal context into index within range",
@@ -711,7 +711,7 @@ func TestBasicContext_Insert(t *testing.T) {
 				ctx: &Config{BasicContext: BasicContext{ContextType: context_type.TypeConfig}},
 				idx: 0,
 			},
-			want: context.ErrContext(errors.WithCode(code.V3ErrSetFatherContextFailed, "cannot set father for Config Context")),
+			want: context.ErrContext(errors.WithCode(code.ErrV3SetFatherContextFailed, "cannot set father for Config Context")),
 		},
 	}
 	for _, tt := range tests {
@@ -828,7 +828,7 @@ func TestBasicContext_Modify(t *testing.T) {
 				ctx: nil,
 				idx: -1,
 			},
-			want:         context.ErrContext(errors.WithCode(code.V3ErrContextIndexOutOfRange, "index(%d) out of range", -1)),
+			want:         context.ErrContext(errors.WithCode(code.ErrV3ContextIndexOutOfRange, "index(%d) out of range", -1)),
 			wantModified: false,
 		},
 		{
@@ -838,7 +838,7 @@ func TestBasicContext_Modify(t *testing.T) {
 				ctx: nil,
 				idx: 0,
 			},
-			want:         context.ErrContext(errors.WithCode(code.V3ErrInvalidOperation, "refuse to modify to nil")),
+			want:         context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "refuse to modify to nil")),
 			wantModified: false,
 		},
 		{
@@ -848,7 +848,7 @@ func TestBasicContext_Modify(t *testing.T) {
 				ctx: context.NullContext(),
 				idx: 0,
 			},
-			want:         context.NullContext().(*context.ErrorContext).AppendError(errors.WithCode(code.V3ErrInvalidOperation, "refuse to modify to error context")),
+			want:         context.NullContext().(*context.ErrorContext).AppendError(errors.WithCode(code.ErrV3InvalidOperation, "refuse to modify to error context")),
 			wantModified: false,
 		},
 		{
@@ -859,7 +859,7 @@ func TestBasicContext_Modify(t *testing.T) {
 				idx: 0,
 			},
 			want: context.ErrContext(errors.New("test error")).(*context.ErrorContext).
-				AppendError(errors.WithCode(code.V3ErrInvalidOperation, "refuse to modify to error context")),
+				AppendError(errors.WithCode(code.ErrV3InvalidOperation, "refuse to modify to error context")),
 			wantModified: false,
 		},
 		{
@@ -869,7 +869,7 @@ func TestBasicContext_Modify(t *testing.T) {
 				ctx: &Location{BasicContext{ContextType: context_type.TypeErrContext}},
 				idx: 0,
 			},
-			want:         context.ErrContext(errors.WithCode(code.V3ErrInvalidOperation, "refuse to modify to invalid context")),
+			want:         context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "refuse to modify to invalid context")),
 			wantModified: false,
 		},
 		{
@@ -920,7 +920,7 @@ func TestBasicContext_Modify(t *testing.T) {
 				ctx: NewContext(context_type.TypeLocation, "~ /test4"),
 				idx: hasErrChildCtx.Len() - 1,
 			},
-			want: context.ErrContext(errors.WithCode(code.V3ErrSetFatherContextFailed, context.NullContext().(*context.ErrorContext).
+			want: context.ErrContext(errors.WithCode(code.ErrV3SetFatherContextFailed, context.NullContext().(*context.ErrorContext).
 				AppendError(context.ErrSetFatherToErrorContext).Error().Error())).(*context.ErrorContext).
 				AppendError(context.ErrInsertIntoErrorContext),
 			wantModified: false,
@@ -1131,7 +1131,7 @@ func TestBasicContext_Remove(t *testing.T) {
 			args: args{
 				idx: -1,
 			},
-			want:           context.ErrContext(errors.WithCode(code.V3ErrContextIndexOutOfRange, "index(%d) out of range", -1)),
+			want:           context.ErrContext(errors.WithCode(code.ErrV3ContextIndexOutOfRange, "index(%d) out of range", -1)),
 			wantRemovedCtx: nil,
 		},
 		{
@@ -1175,7 +1175,7 @@ func TestBasicContext_Remove(t *testing.T) {
 			args: args{
 				idx: hasErrChildCtx.Len() - 1,
 			},
-			want: context.ErrContext(errors.WithCode(code.V3ErrSetFatherContextFailed, context.NullContext().(*context.ErrorContext).
+			want: context.ErrContext(errors.WithCode(code.ErrV3SetFatherContextFailed, context.NullContext().(*context.ErrorContext).
 				AppendError(context.ErrSetFatherToErrorContext).Error().Error())).(*context.ErrorContext).
 				AppendError(context.ErrInsertIntoErrorContext),
 			wantRemovedCtx: hasErrChildCtx.Child(hasErrChildCtx.Len() - 1),

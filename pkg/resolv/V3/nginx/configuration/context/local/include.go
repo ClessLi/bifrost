@@ -42,9 +42,9 @@ func (i *Include) FatherConfig() (*Config, error) {
 	for !ok {
 		switch fatherCtx.Type() {
 		case context_type.TypeErrContext:
-			return nil, fatherCtx.(*context.ErrorContext).AppendError(errors.WithCode(code.V3ErrInvalidContext, "found an error config context")).Error()
+			return nil, fatherCtx.(*context.ErrorContext).AppendError(errors.WithCode(code.ErrV3InvalidContext, "found an error config context")).Error()
 		case context_type.TypeMain:
-			return nil, errors.WithCode(code.V3ErrInvalidContext, "found an Main context")
+			return nil, errors.WithCode(code.ErrV3InvalidContext, "found an Main context")
 		}
 
 		if fatherCtx.Type() == context_type.TypeErrContext {
@@ -56,12 +56,12 @@ func (i *Include) FatherConfig() (*Config, error) {
 }
 
 func (i *Include) Insert(ctx context.Context, idx int) context.Context {
-	return context.ErrContext(errors.WithCode(code.V3ErrInvalidOperation, "include cannot insert by index"))
+	return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "include cannot insert by index"))
 }
 
 func (i *Include) InsertConfig(configs ...*Config) error {
 	if configs == nil {
-		return errors.WithCode(code.V3ErrInvalidContext, "null config")
+		return errors.WithCode(code.ErrV3InvalidContext, "null config")
 	}
 
 	// find father config
@@ -71,13 +71,13 @@ func (i *Include) InsertConfig(configs ...*Config) error {
 	}
 	fatherMain, ok := fatherConfig.Father().(*Main)
 	if !ok {
-		return errors.WithCode(code.V3ErrInvalidContext, "this include context is not bound to a main context")
+		return errors.WithCode(code.ErrV3InvalidContext, "this include context is not bound to a main context")
 	}
 
 	includingConfigs := make([]*Config, 0)
 	for _, config := range configs {
 		if config == nil {
-			return errors.WithCode(code.V3ErrInvalidContext, "nil config")
+			return errors.WithCode(code.ErrV3InvalidContext, "nil config")
 		}
 		// match config path
 		if config.ConfigPath == nil {
@@ -106,12 +106,12 @@ func (i *Include) InsertConfig(configs ...*Config) error {
 }
 
 func (i *Include) Remove(idx int) context.Context {
-	return context.ErrContext(errors.WithCode(code.V3ErrInvalidOperation, "include cannot remove by index"))
+	return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "include cannot remove by index"))
 }
 
 func (i *Include) RemoveConfig(configs ...*Config) error {
 	if configs == nil {
-		return errors.WithCode(code.V3ErrInvalidContext, "null config")
+		return errors.WithCode(code.ErrV3InvalidContext, "null config")
 	}
 	// find father config
 	fatherConfig, err := i.FatherConfig()
@@ -135,12 +135,12 @@ func (i *Include) RemoveConfig(configs ...*Config) error {
 }
 
 func (i *Include) Modify(ctx context.Context, idx int) context.Context {
-	return context.ErrContext(errors.WithCode(code.V3ErrInvalidOperation, "include cannot modify by index"))
+	return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "include cannot modify by index"))
 }
 
 func (i *Include) ModifyConfig(configs ...*Config) error {
 	if configs == nil {
-		return errors.WithCode(code.V3ErrInvalidContext, "null config")
+		return errors.WithCode(code.ErrV3InvalidContext, "null config")
 	}
 	return errors.NewAggregate([]error{i.RemoveConfig(configs...), i.InsertConfig(configs...)})
 }
@@ -150,7 +150,7 @@ func (i *Include) Father() context.Context {
 }
 
 func (i *Include) Child(idx int) context.Context {
-	return context.ErrContext(errors.WithCode(code.V3ErrInvalidOperation, "include cannot get child config by index"))
+	return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "include cannot get child config by index"))
 }
 
 func (i *Include) ChildConfig(fullpath string) (*Config, error) {
@@ -188,7 +188,7 @@ func (i *Include) Clone() context.Context {
 }
 
 func (i *Include) SetValue(v string) error {
-	return errors.WithCode(code.V3ErrInvalidOperation, "cannot set include context's value")
+	return errors.WithCode(code.ErrV3InvalidOperation, "cannot set include context's value")
 }
 
 func (i *Include) SetFather(ctx context.Context) error {
@@ -237,10 +237,10 @@ func (i *Include) ConfigLines(isDumping bool) ([]string, error) {
 func (i *Include) matchConfigPath(path string) error {
 	isMatch, err := filepath.Match(i.Value(), path)
 	if err != nil {
-		return errors.WithCode(code.V3ErrInvalidContext, "pattern(%s) match included config(%s) failed, cased by: %v", i.ContextValue, path, err)
+		return errors.WithCode(code.ErrV3InvalidContext, "pattern(%s) match included config(%s) failed, cased by: %v", i.ContextValue, path, err)
 	}
 	if !isMatch {
-		return errors.WithCode(code.V3ErrInvalidContext, "pattern(%s) cannot match included config(%s)", i.ContextValue, path)
+		return errors.WithCode(code.ErrV3InvalidContext, "pattern(%s) cannot match included config(%s)", i.ContextValue, path)
 	}
 	return nil
 }

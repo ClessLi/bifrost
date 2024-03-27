@@ -34,26 +34,26 @@ const (
 	// ErrParseFailed - 500: Config parse failed.
 	ErrParseFailed
 
-	// V3ErrContextIndexOutOfRange - 500: Index of the Context's children is out of range.
-	V3ErrContextIndexOutOfRange
+	// ErrV3ContextIndexOutOfRange - 500: Index of the Context's children is out of range.
+	ErrV3ContextIndexOutOfRange
 
-	// V3ErrNullContextPosition - 500: Null Context position.
-	V3ErrNullContextPosition
+	// ErrV3NullContextPosition - 500: Null Context position.
+	ErrV3NullContextPosition
 
-	// V3ErrSetFatherContextFailed - 500: Set father Context failed.
-	V3ErrSetFatherContextFailed
+	// ErrV3SetFatherContextFailed - 500: Set father Context failed.
+	ErrV3SetFatherContextFailed
 
-	// V3ErrOperationOnErrorContext - 500: Performing operations on Error Context.
-	V3ErrOperationOnErrorContext
+	// ErrV3OperationOnErrorContext - 500: Performing operations on Error Context.
+	ErrV3OperationOnErrorContext
 
-	// V3ErrInvalidContext - 500: Invalid Context.
-	V3ErrInvalidContext
+	// ErrV3InvalidContext - 500: Invalid Context.
+	ErrV3InvalidContext
 
-	// V3ErrInvalidOperation - 500: Invalid operation.
-	V3ErrInvalidOperation
+	// ErrV3InvalidOperation - 500: Invalid operation.
+	ErrV3InvalidOperation
 
-	// V3ErrContextNotFound - 500: queried context not found.
-	V3ErrContextNotFound
+	// ErrV3ContextNotFound - 500: Queried context not found.
+	ErrV3ContextNotFound
 )
 
 // bifrost: statistics errors.
