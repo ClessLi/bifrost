@@ -48,7 +48,7 @@ func NullPos() Pos {
 	return nullPos
 }
 
-var notFoundPos = &errPos{ErrContext(errors.WithCode(code.V3ErrContextNotFound, "queried context not found")).(*ErrorContext)}
+var notFoundPos = &errPos{ErrContext(errors.WithCode(code.ErrV3ContextNotFound, "queried context not found")).(*ErrorContext)}
 
 func NotFoundPos() Pos {
 	return notFoundPos

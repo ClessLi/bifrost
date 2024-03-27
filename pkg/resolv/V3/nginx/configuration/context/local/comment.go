@@ -16,15 +16,15 @@ type Comment struct {
 }
 
 func (c *Comment) Insert(ctx context.Context, idx int) context.Context {
-	return context.ErrContext(errors.WithCode(code.V3ErrInvalidOperation, "comment cannot insert context"))
+	return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "comment cannot insert context"))
 }
 
 func (c *Comment) Remove(idx int) context.Context {
-	return context.ErrContext(errors.WithCode(code.V3ErrInvalidOperation, "comment cannot remove context"))
+	return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "comment cannot remove context"))
 }
 
 func (c *Comment) Modify(ctx context.Context, idx int) context.Context {
-	return context.ErrContext(errors.WithCode(code.V3ErrInvalidOperation, "comment cannot modify context"))
+	return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "comment cannot modify context"))
 }
 
 func (c *Comment) Father() context.Context {
@@ -32,7 +32,7 @@ func (c *Comment) Father() context.Context {
 }
 
 func (c *Comment) Child(idx int) context.Context {
-	return context.ErrContext(errors.WithCode(code.V3ErrInvalidOperation, "comment has no context"))
+	return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "comment has no context"))
 }
 
 func (c *Comment) QueryByKeyWords(kw context.KeyWords) context.Pos {

@@ -142,7 +142,7 @@ func dumpMainContext(m *local.Main) map[string]*bytes.Buffer {
 
 func newNginxConfigWithTimestamp(maincontext *local.Main, timestamp time.Time) (NginxConfig, error) {
 	if maincontext == nil {
-		return nil, errors.WithCode(code.V3ErrInvalidContext, "new nginx config with a nil main context")
+		return nil, errors.WithCode(code.ErrV3InvalidContext, "new nginx config with a nil main context")
 	}
 	return &nginxConfig{
 		mainContext: maincontext,

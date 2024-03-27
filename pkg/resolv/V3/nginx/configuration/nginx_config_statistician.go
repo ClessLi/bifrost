@@ -121,7 +121,7 @@ func HttpServers(ctx context.Context) (int, map[string][]int) {
 		serverCount++
 		servernameDirective := pos.Target().QueryByKeyWords(context.NewKeyWords(context_type.TypeDirective).SetRegexMatchingValue("^server_name .*")).Target()
 		if servernameDirective.Error() != nil {
-			if !errors.IsCode(servernameDirective.Error(), code.V3ErrContextNotFound) {
+			if !errors.IsCode(servernameDirective.Error(), code.ErrV3ContextNotFound) {
 				return 0, nil
 			}
 
