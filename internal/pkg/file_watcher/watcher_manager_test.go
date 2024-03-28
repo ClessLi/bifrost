@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	log "github.com/ClessLi/bifrost/pkg/log/v1"
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 )
 
 func TestWatcherManager_Watch(t *testing.T) {
@@ -59,7 +59,7 @@ func TestWatcherManager_Watch(t *testing.T) {
 					select {
 					case data := <-got:
 						if data == nil {
-							log.Infof("watch stopped")
+							logV1.Infof("watch stopped")
 							return
 						}
 						t.Logf("%s", data)
