@@ -4,7 +4,6 @@ import (
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context/local"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
-	"regexp"
 	"strconv"
 
 	"github.com/marmotedu/errors"
@@ -12,11 +11,6 @@ import (
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	utilsV2 "github.com/ClessLi/bifrost/pkg/resolv/V2/utils"
-)
-
-var (
-	RegPortValue       = regexp.MustCompile(`^listen\s*(\d+)\s*\S*$`)
-	RegServerNameValue = regexp.MustCompile(`^server_name\s*(.+)$`)
 )
 
 type HttpInfo struct {
@@ -74,7 +68,7 @@ func NewStatistician(c NginxConfig) Statistician {
 }
 
 func Port(ctx context.Context) int {
-	portDirective := ctx.QueryByKeyWords(context.NewKeyWords(context_type.TypeDirective).SetRegexMatchingValue("listen .*")).Target()
+	portDirective := ctx.QueryByKeyWords(context.NewKeyWords(context_type.TypeDirective).SetRegexpMatchingValue(context.RegexpMatchingListenPortValue)).Target()
 	if portDirective.Error() != nil {
 		return -1
 	}
@@ -119,7 +113,7 @@ func HttpServers(ctx context.Context) (int, map[string][]int) {
 	serverPortCount := make(map[string][]int)
 	for _, pos := range httpServerPoses {
 		serverCount++
-		servernameDirective := pos.Target().QueryByKeyWords(context.NewKeyWords(context_type.TypeDirective).SetRegexMatchingValue("^server_name .*")).Target()
+		servernameDirective := pos.Target().QueryByKeyWords(context.NewKeyWords(context_type.TypeDirective).SetRegexpMatchingValue(context.RegexpMatchingServerNameValue)).Target()
 		if servernameDirective.Error() != nil {
 			if !errors.IsCode(servernameDirective.Error(), code.ErrV3ContextNotFound) {
 				return 0, nil

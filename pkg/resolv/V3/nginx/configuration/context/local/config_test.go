@@ -9,21 +9,24 @@ import (
 )
 
 func TestConfig_Clone(t *testing.T) {
-	testMain := NewContext(context_type.TypeMain, "C:\\test\\test.conf").
-		Insert(
-			NewContext(context_type.TypeHttp, "").
-				Insert(NewComment("test comment", true), 0).
-				Insert(
-					NewContext(context_type.TypeServer, "").
-						Insert(NewDirective("server_name", "testserver"), 0).
-						Insert(
-							NewContext(context_type.TypeLocation, "~ /test"),
-							1,
-						),
-					1,
-				),
-			0,
-		).(*Main)
+	testMain, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	testMain.Insert(
+		NewContext(context_type.TypeHttp, "").
+			Insert(NewComment("test comment", true), 0).
+			Insert(
+				NewContext(context_type.TypeServer, "").
+					Insert(NewDirective("server_name", "testserver"), 0).
+					Insert(
+						NewContext(context_type.TypeLocation, "~ /test"),
+						1,
+					),
+				1,
+			),
+		0,
+	)
 	testCloneChildren := make([]context.Context, 0)
 	for _, child := range testMain.MainConfig().Children {
 		testCloneChildren = append(testCloneChildren, child.Clone())
@@ -87,21 +90,24 @@ func TestConfig_Clone(t *testing.T) {
 }
 
 func TestConfig_ConfigLines(t *testing.T) {
-	testMain := NewContext(context_type.TypeMain, "C:\\test\\test.conf").
-		Insert(
-			NewContext(context_type.TypeHttp, "").
-				Insert(NewComment("test comment", true), 0).
-				Insert(
-					NewContext(context_type.TypeServer, "").
-						Insert(NewDirective("server_name", "testserver"), 0).
-						Insert(
-							NewContext(context_type.TypeLocation, "~ /test"),
-							1,
-						),
-					1,
-				),
-			0,
-		).(*Main)
+	testMain, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	testMain.Insert(
+		NewContext(context_type.TypeHttp, "").
+			Insert(NewComment("test comment", true), 0).
+			Insert(
+				NewContext(context_type.TypeServer, "").
+					Insert(NewDirective("server_name", "testserver"), 0).
+					Insert(
+						NewContext(context_type.TypeLocation, "~ /test"),
+						1,
+					),
+				1,
+			),
+		0,
+	)
 	type fields struct {
 		BasicContext BasicContext
 		ConfigPath   context.ConfigPath
@@ -153,7 +159,10 @@ func TestConfig_ConfigLines(t *testing.T) {
 }
 
 func TestConfig_Father(t *testing.T) {
-	testMain := NewContext(context_type.TypeMain, "C:\\test\\test.conf")
+	testMain, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
 	type fields struct {
 		BasicContext BasicContext
 		ConfigPath   context.ConfigPath
@@ -259,6 +268,10 @@ func TestConfig_MarshalJSON(t *testing.T) {
 }
 
 func TestConfig_SetFather(t *testing.T) {
+	testMain, err := NewMain("C:\\test\\test.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
 	type fields struct {
 		BasicContext BasicContext
 		ConfigPath   context.ConfigPath
@@ -284,7 +297,7 @@ func TestConfig_SetFather(t *testing.T) {
 		{
 			name:    "normal test",
 			fields:  fields{BasicContext: BasicContext{father: context.NullContext()}},
-			args:    args{ctx: NewContext(context_type.TypeMain, "C:\\test\\test.conf")},
+			args:    args{ctx: testMain},
 			wantErr: false,
 		},
 	}
@@ -303,22 +316,25 @@ func TestConfig_SetFather(t *testing.T) {
 
 func TestConfig_SetValue(t *testing.T) {
 	// main config
-	testMain := NewContext(context_type.TypeMain, "C:\\test\\nginx.conf").
-		Insert(
-			NewContext(context_type.TypeHttp, "").
-				Insert(NewComment("test comment", true), 0).
-				Insert(
-					NewContext(context_type.TypeServer, "").
-						Insert(NewDirective("server_name", "testserver"), 0).
-						Insert(
-							NewContext(context_type.TypeLocation, "~ /test"),
-							1,
-						),
-					1,
-				),
-			0,
-		).(*Main)
-	_, err := testMain.MainConfig().includeConfig(NewContext(context_type.TypeConfig, "a.conf").(*Config))
+	testMain, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	testMain.Insert(
+		NewContext(context_type.TypeHttp, "").
+			Insert(NewComment("test comment", true), 0).
+			Insert(
+				NewContext(context_type.TypeServer, "").
+					Insert(NewDirective("server_name", "testserver"), 0).
+					Insert(
+						NewContext(context_type.TypeLocation, "~ /test"),
+						1,
+					),
+				1,
+			),
+		0,
+	)
+	_, err = testMain.MainConfig().includeConfig(NewContext(context_type.TypeConfig, "a.conf").(*Config))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -364,7 +380,7 @@ func TestConfig_SetValue(t *testing.T) {
 				BasicContext: tt.fields.BasicContext,
 				ConfigPath:   tt.fields.ConfigPath,
 			}
-			cache, err := c.Father().(*Main).GetConfig(configHash(c))
+			cache, err := c.Father().(MainContext).GetConfig(configHash(c))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -377,22 +393,25 @@ func TestConfig_SetValue(t *testing.T) {
 
 func TestConfig_includeConfig(t *testing.T) {
 	// main config
-	testMain := NewContext(context_type.TypeMain, "C:\\test\\nginx.conf").
-		Insert(
-			NewContext(context_type.TypeHttp, "").
-				Insert(NewComment("test comment", true), 0).
-				Insert(
-					NewContext(context_type.TypeServer, "").
-						Insert(NewDirective("server_name", "testserver"), 0).
-						Insert(
-							NewContext(context_type.TypeLocation, "~ /test"),
-							1,
-						),
-					1,
-				),
-			0,
-		).(*Main)
-	_, err := testMain.MainConfig().includeConfig(
+	testMain, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	testMain.Insert(
+		NewContext(context_type.TypeHttp, "").
+			Insert(NewComment("test comment", true), 0).
+			Insert(
+				NewContext(context_type.TypeServer, "").
+					Insert(NewDirective("server_name", "testserver"), 0).
+					Insert(
+						NewContext(context_type.TypeLocation, "~ /test"),
+						1,
+					),
+				1,
+			),
+		0,
+	)
+	_, err = testMain.MainConfig().includeConfig(
 		NewContext(context_type.TypeConfig, "C:\\test\\existing.conf").(*Config),
 		NewContext(context_type.TypeConfig, "a.conf").(*Config),
 		NewContext(context_type.TypeConfig, "b.conf").(*Config),
@@ -406,12 +425,12 @@ func TestConfig_includeConfig(t *testing.T) {
 	}
 	nullPathConfig := NewContext(context_type.TypeConfig, "").(*Config)
 	nullPathConfig.ConfigPath = &context.AbsConfigPath{}
-	err = testMain.ConfigGraph.(*configGraph).graph.AddVertex(nullPathConfig)
+	err = testMain.graph().(*configGraph).graph.AddVertex(nullPathConfig)
 	if err != nil {
 		t.Fatal(err)
 	}
 	nullPathConfig.father = testMain
-	err = testMain.ConfigGraph.(*configGraph).graph.AddEdge("", existingConfig.FullPath())
+	err = testMain.graph().(*configGraph).graph.AddEdge("", existingConfig.FullPath())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -431,9 +450,9 @@ func TestConfig_includeConfig(t *testing.T) {
 	}
 
 	// different main config
-	diffTestMain := NewContext(context_type.TypeMain, "C:\\test2\\nginx.conf").(*Main)
+	diffTestMain, _ := NewMain("C:\\test2\\nginx.conf")
 	// main with invalid value
-	invalidTestMain := NewContext(context_type.TypeMain, "C:\\test\\nginx.conf").(*Main)
+	invalidTestMain, _ := NewMain("C:\\test\\nginx.conf")
 	invalidTestMainCP := invalidTestMain.MainConfig().ConfigPath
 	invalidTestMain.MainConfig().ConfigPath = nil
 	newcpFailedConfig := NewContext(context_type.TypeConfig, "test\\test2.conf").(*Config)
@@ -609,7 +628,7 @@ func TestConfig_includeConfig(t *testing.T) {
 				if len(got) != len(want) {
 					return false
 				}
-				father, ok := c.Father().(*Main)
+				father, ok := c.Father().(MainContext)
 				if !ok && len(got) != 0 {
 					t.Errorf("father context is not main context")
 					return false
@@ -635,21 +654,24 @@ func TestConfig_includeConfig(t *testing.T) {
 
 func TestConfig_isInGraph(t *testing.T) {
 	// main config
-	testMain := NewContext(context_type.TypeMain, "C:\\test\\nginx.conf").
-		Insert(
-			NewContext(context_type.TypeHttp, "").
-				Insert(NewComment("test comment", true), 0).
-				Insert(
-					NewContext(context_type.TypeServer, "").
-						Insert(NewDirective("server_name", "testserver"), 0).
-						Insert(
-							NewContext(context_type.TypeLocation, "~ /test"),
-							1,
-						),
-					1,
-				),
-			0,
-		).(*Main)
+	testMain, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	testMain.Insert(
+		NewContext(context_type.TypeHttp, "").
+			Insert(NewComment("test comment", true), 0).
+			Insert(
+				NewContext(context_type.TypeServer, "").
+					Insert(NewDirective("server_name", "testserver"), 0).
+					Insert(
+						NewContext(context_type.TypeLocation, "~ /test"),
+						1,
+					),
+				1,
+			),
+		0,
+	)
 	nilGraphConfig := NewContext(context_type.TypeConfig, "nilgraph").(*Config)
 	nilGraphConfig.ConfigPath, _ = newConfigPath(testMain, nilGraphConfig.Value())
 
@@ -663,7 +685,7 @@ func TestConfig_isInGraph(t *testing.T) {
 	inGraphConfig := NewContext(context_type.TypeConfig, "ingraph").(*Config)
 	inGraphConfig.ConfigPath, _ = newConfigPath(testMain, inGraphConfig.Value())
 	inGraphConfig.SetFather(testMain)
-	err := inGraphConfig.Father().(*Main).AddConfig(inGraphConfig)
+	err = inGraphConfig.Father().(MainContext).AddConfig(inGraphConfig)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -725,22 +747,25 @@ func TestConfig_isInGraph(t *testing.T) {
 
 func TestConfig_modifyPathInGraph(t *testing.T) {
 	// main config
-	testMain := NewContext(context_type.TypeMain, "C:\\test\\nginx.conf").
-		Insert(
-			NewContext(context_type.TypeHttp, "").
-				Insert(NewComment("test comment", true), 0).
-				Insert(
-					NewContext(context_type.TypeServer, "").
-						Insert(NewDirective("server_name", "testserver"), 0).
-						Insert(
-							NewContext(context_type.TypeLocation, "~ /test"),
-							1,
-						),
-					1,
-				),
-			0,
-		).(*Main)
-	_, err := testMain.MainConfig().includeConfig(
+	testMain, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	testMain.Insert(
+		NewContext(context_type.TypeHttp, "").
+			Insert(NewComment("test comment", true), 0).
+			Insert(
+				NewContext(context_type.TypeServer, "").
+					Insert(NewDirective("server_name", "testserver"), 0).
+					Insert(
+						NewContext(context_type.TypeLocation, "~ /test"),
+						1,
+					),
+				1,
+			),
+		0,
+	)
+	_, err = testMain.MainConfig().includeConfig(
 		NewContext(context_type.TypeConfig, "a.conf").(*Config),
 		NewContext(context_type.TypeConfig, "b.conf").(*Config),
 	)
@@ -816,22 +841,25 @@ func TestConfig_modifyPathInGraph(t *testing.T) {
 
 func TestConfig_removeIncludedConfig(t *testing.T) {
 	// main config
-	testMain := NewContext(context_type.TypeMain, "C:\\test\\nginx.conf").
-		Insert(
-			NewContext(context_type.TypeHttp, "").
-				Insert(NewComment("test comment", true), 0).
-				Insert(
-					NewContext(context_type.TypeServer, "").
-						Insert(NewDirective("server_name", "testserver"), 0).
-						Insert(
-							NewContext(context_type.TypeLocation, "~ /test"),
-							1,
-						),
-					1,
-				),
-			0,
-		).(*Main)
-	_, err := testMain.MainConfig().includeConfig(
+	testMain, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	testMain.Insert(
+		NewContext(context_type.TypeHttp, "").
+			Insert(NewComment("test comment", true), 0).
+			Insert(
+				NewContext(context_type.TypeServer, "").
+					Insert(NewDirective("server_name", "testserver"), 0).
+					Insert(
+						NewContext(context_type.TypeLocation, "~ /test"),
+						1,
+					),
+				1,
+			),
+		0,
+	)
+	_, err = testMain.MainConfig().includeConfig(
 		NewContext(context_type.TypeConfig, "C:\\test\\existing.conf").(*Config),
 		NewContext(context_type.TypeConfig, "a.conf").(*Config),
 		NewContext(context_type.TypeConfig, "b.conf").(*Config),
@@ -849,7 +877,7 @@ func TestConfig_removeIncludedConfig(t *testing.T) {
 	}
 
 	// different main config
-	diffTestMain := NewContext(context_type.TypeMain, "C:\\test2\\nginx.conf").(*Main)
+	diffTestMain, _ := NewMain("C:\\test2\\nginx.conf")
 	// different graph config
 	diffGraphConfig := NewContext(context_type.TypeConfig, "C:\\test\\test2.conf").(*Config)
 	_, err = diffTestMain.MainConfig().includeConfig(diffGraphConfig)
@@ -952,22 +980,25 @@ func TestConfig_removeIncludedConfig(t *testing.T) {
 
 func Test_configGraph_AddConfig(t *testing.T) {
 	// main config
-	testMain := NewContext(context_type.TypeMain, "C:\\test\\nginx.conf").
-		Insert(
-			NewContext(context_type.TypeHttp, "").
-				Insert(NewComment("test comment", true), 0).
-				Insert(
-					NewContext(context_type.TypeServer, "").
-						Insert(NewDirective("server_name", "testserver"), 0).
-						Insert(
-							NewContext(context_type.TypeLocation, "~ /test"),
-							1,
-						),
-					1,
-				),
-			0,
-		).(*Main)
-	_, err := testMain.MainConfig().includeConfig(NewContext(context_type.TypeConfig, "a.conf").(*Config))
+	testMain, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	testMain.Insert(
+		NewContext(context_type.TypeHttp, "").
+			Insert(NewComment("test comment", true), 0).
+			Insert(
+				NewContext(context_type.TypeServer, "").
+					Insert(NewDirective("server_name", "testserver"), 0).
+					Insert(
+						NewContext(context_type.TypeLocation, "~ /test"),
+						1,
+					),
+				1,
+			),
+		0,
+	)
+	_, err = testMain.MainConfig().includeConfig(NewContext(context_type.TypeConfig, "a.conf").(*Config))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -989,19 +1020,19 @@ func Test_configGraph_AddConfig(t *testing.T) {
 	}{
 		{
 			name:    "add nil config",
-			fields:  testMain.ConfigGraph,
+			fields:  testMain.graph(),
 			args:    args{config: nil},
 			wantErr: true,
 		},
 		{
 			name:    "add an already exist config",
-			fields:  testMain.ConfigGraph,
+			fields:  testMain.graph(),
 			args:    args{config: aConfig},
 			wantErr: true,
 		},
 		{
 			name:    "normal test",
-			fields:  testMain.ConfigGraph,
+			fields:  testMain.graph(),
 			args:    args{config: bConfig},
 			wantErr: false,
 		},
@@ -1018,22 +1049,25 @@ func Test_configGraph_AddConfig(t *testing.T) {
 
 func Test_configGraph_AddEdge(t *testing.T) {
 	// main config
-	testMain := NewContext(context_type.TypeMain, "C:\\test\\nginx.conf").
-		Insert(
-			NewContext(context_type.TypeHttp, "").
-				Insert(NewComment("test comment", true), 0).
-				Insert(
-					NewContext(context_type.TypeServer, "").
-						Insert(NewDirective("server_name", "testserver"), 0).
-						Insert(
-							NewContext(context_type.TypeLocation, "~ /test"),
-							1,
-						),
-					1,
-				),
-			0,
-		).(*Main)
-	_, err := testMain.MainConfig().includeConfig(
+	testMain, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	testMain.Insert(
+		NewContext(context_type.TypeHttp, "").
+			Insert(NewComment("test comment", true), 0).
+			Insert(
+				NewContext(context_type.TypeServer, "").
+					Insert(NewDirective("server_name", "testserver"), 0).
+					Insert(
+						NewContext(context_type.TypeLocation, "~ /test"),
+						1,
+					),
+				1,
+			),
+		0,
+	)
+	_, err = testMain.MainConfig().includeConfig(
 		NewContext(context_type.TypeConfig, "a.conf").(*Config),
 		NewContext(context_type.TypeConfig, "b.conf").(*Config),
 	)
@@ -1049,7 +1083,7 @@ func Test_configGraph_AddEdge(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	otherMain := NewContext(context_type.TypeMain, "C:\\test1\\nginx.conf").(*Main)
+	otherMain, _ := NewMain("C:\\test1\\nginx.conf")
 	_, err = otherMain.MainConfig().includeConfig(
 		NewContext(context_type.TypeConfig, "other.conf").(*Config),
 	)
@@ -1079,7 +1113,7 @@ func Test_configGraph_AddEdge(t *testing.T) {
 	}{
 		{
 			name:   "nil source config",
-			fields: testMain.ConfigGraph,
+			fields: testMain.graph(),
 			args: args{
 				src: nil,
 				dst: aConfig,
@@ -1088,7 +1122,7 @@ func Test_configGraph_AddEdge(t *testing.T) {
 		},
 		{
 			name:   "nil destination config",
-			fields: testMain.ConfigGraph,
+			fields: testMain.graph(),
 			args: args{
 				src: aConfig,
 				dst: nil,
@@ -1097,7 +1131,7 @@ func Test_configGraph_AddEdge(t *testing.T) {
 		},
 		{
 			name:   "source config with null config path",
-			fields: testMain.ConfigGraph,
+			fields: testMain.graph(),
 			args: args{
 				src: nullpathConfig,
 				dst: aConfig,
@@ -1106,7 +1140,7 @@ func Test_configGraph_AddEdge(t *testing.T) {
 		},
 		{
 			name:   "destination config with null config path",
-			fields: testMain.ConfigGraph,
+			fields: testMain.graph(),
 			args: args{
 				src: aConfig,
 				dst: nullpathConfig,
@@ -1115,7 +1149,7 @@ func Test_configGraph_AddEdge(t *testing.T) {
 		},
 		{
 			name:   "source config is exclude from the graph",
-			fields: testMain.ConfigGraph,
+			fields: testMain.graph(),
 			args: args{
 				src: excludeConfig,
 				dst: aConfig,
@@ -1124,7 +1158,7 @@ func Test_configGraph_AddEdge(t *testing.T) {
 		},
 		{
 			name:   "destination config is exclude from the graph",
-			fields: testMain.ConfigGraph,
+			fields: testMain.graph(),
 			args: args{
 				src: aConfig,
 				dst: excludeConfig,
@@ -1133,7 +1167,7 @@ func Test_configGraph_AddEdge(t *testing.T) {
 		},
 		{
 			name:   "source config is in the other graph",
-			fields: testMain.ConfigGraph,
+			fields: testMain.graph(),
 			args: args{
 				src: inOtherGraphConfig,
 				dst: aConfig,
@@ -1142,7 +1176,7 @@ func Test_configGraph_AddEdge(t *testing.T) {
 		},
 		{
 			name:   "destination config is in the other graph",
-			fields: testMain.ConfigGraph,
+			fields: testMain.graph(),
 			args: args{
 				src: aConfig,
 				dst: inOtherGraphConfig,
@@ -1151,7 +1185,7 @@ func Test_configGraph_AddEdge(t *testing.T) {
 		},
 		{
 			name:   "normal test",
-			fields: testMain.ConfigGraph,
+			fields: testMain.graph(),
 			args: args{
 				src: aConfig,
 				dst: bConfig,
@@ -1171,22 +1205,25 @@ func Test_configGraph_AddEdge(t *testing.T) {
 
 func Test_configGraph_GetConfig(t *testing.T) {
 	// main config
-	testMain := NewContext(context_type.TypeMain, "C:\\test\\nginx.conf").
-		Insert(
-			NewContext(context_type.TypeHttp, "").
-				Insert(NewComment("test comment", true), 0).
-				Insert(
-					NewContext(context_type.TypeServer, "").
-						Insert(NewDirective("server_name", "testserver"), 0).
-						Insert(
-							NewContext(context_type.TypeLocation, "~ /test"),
-							1,
-						),
-					1,
-				),
-			0,
-		).(*Main)
-	_, err := testMain.MainConfig().includeConfig(
+	testMain, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	testMain.Insert(
+		NewContext(context_type.TypeHttp, "").
+			Insert(NewComment("test comment", true), 0).
+			Insert(
+				NewContext(context_type.TypeServer, "").
+					Insert(NewDirective("server_name", "testserver"), 0).
+					Insert(
+						NewContext(context_type.TypeLocation, "~ /test"),
+						1,
+					),
+				1,
+			),
+		0,
+	)
+	_, err = testMain.MainConfig().includeConfig(
 		NewContext(context_type.TypeConfig, "a.conf").(*Config),
 	)
 	if err != nil {
@@ -1208,14 +1245,14 @@ func Test_configGraph_GetConfig(t *testing.T) {
 	}{
 		{
 			name:    "wrong config path",
-			fields:  testMain.ConfigGraph,
+			fields:  testMain.graph(),
 			args:    args{fullpath: "wrong/config/path.conf"},
 			want:    nil,
 			wantErr: true,
 		},
 		{
 			name:    "normal test",
-			fields:  testMain.ConfigGraph,
+			fields:  testMain.graph(),
 			args:    args{fullpath: "C:\\test\\a.conf"},
 			want:    aConfig,
 			wantErr: false,
@@ -1263,21 +1300,24 @@ func Test_configGraph_MainConfig(t *testing.T) {
 
 func Test_configGraph_RemoveEdge(t *testing.T) {
 	// main config
-	testMain := NewContext(context_type.TypeMain, "C:\\test\\nginx.conf").
-		Insert(
-			NewContext(context_type.TypeHttp, "").
-				Insert(NewComment("test comment", true), 0).
-				Insert(
-					NewContext(context_type.TypeServer, "").
-						Insert(NewDirective("server_name", "testserver"), 0).
-						Insert(
-							NewContext(context_type.TypeLocation, "~ /test"),
-							1,
-						),
-					1,
-				),
-			0,
-		).(*Main)
+	testMain, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	testMain.Insert(
+		NewContext(context_type.TypeHttp, "").
+			Insert(NewComment("test comment", true), 0).
+			Insert(
+				NewContext(context_type.TypeServer, "").
+					Insert(NewDirective("server_name", "testserver"), 0).
+					Insert(
+						NewContext(context_type.TypeLocation, "~ /test"),
+						1,
+					),
+				1,
+			),
+		0,
+	)
 	testMain.MainConfig().includeConfig(NewContext(context_type.TypeConfig, "a.conf").(*Config))
 	a, _ := testMain.GetConfig("C:\\test\\a.conf")
 	a.includeConfig(NewContext(context_type.TypeConfig, "b.conf").(*Config))
@@ -1297,7 +1337,7 @@ func Test_configGraph_RemoveEdge(t *testing.T) {
 	}{
 		{
 			name:   "removed edge not found",
-			fields: testMain.ConfigGraph,
+			fields: testMain.graph(),
 			args: args{
 				src: b,
 				dst: notInGraphConfig,
@@ -1306,7 +1346,7 @@ func Test_configGraph_RemoveEdge(t *testing.T) {
 		},
 		{
 			name:   "destination has edge",
-			fields: testMain.ConfigGraph,
+			fields: testMain.graph(),
 			args: args{
 				src: a,
 				dst: b,
@@ -1315,7 +1355,7 @@ func Test_configGraph_RemoveEdge(t *testing.T) {
 		},
 		{
 			name:   "remove edge and destination",
-			fields: testMain.ConfigGraph,
+			fields: testMain.graph(),
 			args: args{
 				src: b,
 				dst: c,
@@ -1335,22 +1375,25 @@ func Test_configGraph_RemoveEdge(t *testing.T) {
 
 func Test_configGraph_RenewConfigPath(t *testing.T) {
 	// main config
-	testMain := NewContext(context_type.TypeMain, "C:\\test\\nginx.conf").
-		Insert(
-			NewContext(context_type.TypeHttp, "").
-				Insert(NewComment("test comment", true), 0).
-				Insert(
-					NewContext(context_type.TypeServer, "").
-						Insert(NewDirective("server_name", "testserver"), 0).
-						Insert(
-							NewContext(context_type.TypeLocation, "~ /test"),
-							1,
-						),
-					1,
-				),
-			0,
-		).(*Main)
-	_, err := testMain.MainConfig().includeConfig(
+	testMain, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	testMain.Insert(
+		NewContext(context_type.TypeHttp, "").
+			Insert(NewComment("test comment", true), 0).
+			Insert(
+				NewContext(context_type.TypeServer, "").
+					Insert(NewDirective("server_name", "testserver"), 0).
+					Insert(
+						NewContext(context_type.TypeLocation, "~ /test"),
+						1,
+					),
+				1,
+			),
+		0,
+	)
+	_, err = testMain.MainConfig().includeConfig(
 		NewContext(context_type.TypeConfig, "a.conf").(*Config),
 		NewContext(context_type.TypeConfig, "2exist.conf").(*Config),
 		NewContext(context_type.TypeConfig, "inedge.conf").(*Config),
@@ -1396,25 +1439,25 @@ func Test_configGraph_RenewConfigPath(t *testing.T) {
 	}{
 		{
 			name:    "not exist config",
-			fields:  testMain.ConfigGraph,
+			fields:  testMain.graph(),
 			args:    args{fullpath: "notexist.conf"},
 			wantErr: true,
 		},
 		{
 			name:    "need not renew config",
-			fields:  testMain.ConfigGraph,
+			fields:  testMain.graph(),
 			args:    args{fullpath: configHash(testMain.MainConfig())},
 			wantErr: false,
 		},
 		{
 			name:    "renew to exist config",
-			fields:  testMain.ConfigGraph,
+			fields:  testMain.graph(),
 			args:    args{fullpath: "C:\\test\\2exist.conf"},
 			wantErr: true,
 		},
 		{
 			name:    "normal test",
-			fields:  testMain.ConfigGraph,
+			fields:  testMain.graph(),
 			args:    args{fullpath: "C:\\test\\test.conf"},
 			wantErr: false,
 		},
@@ -1431,21 +1474,24 @@ func Test_configGraph_RenewConfigPath(t *testing.T) {
 
 func Test_configGraph_Topology(t *testing.T) {
 	// main config
-	testMain := NewContext(context_type.TypeMain, "C:\\test\\nginx.conf").
-		Insert(
-			NewContext(context_type.TypeHttp, "").
-				Insert(NewComment("test comment", true), 0).
-				Insert(
-					NewContext(context_type.TypeServer, "").
-						Insert(NewDirective("server_name", "testserver"), 0).
-						Insert(
-							NewContext(context_type.TypeLocation, "~ /test"),
-							1,
-						),
-					1,
-				),
-			0,
-		).(*Main)
+	testMain, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	testMain.Insert(
+		NewContext(context_type.TypeHttp, "").
+			Insert(NewComment("test comment", true), 0).
+			Insert(
+				NewContext(context_type.TypeServer, "").
+					Insert(NewDirective("server_name", "testserver"), 0).
+					Insert(
+						NewContext(context_type.TypeLocation, "~ /test"),
+						1,
+					),
+				1,
+			),
+		0,
+	)
 	testMain.MainConfig().includeConfig(NewContext(context_type.TypeConfig, "a.conf").(*Config))
 	a, _ := testMain.GetConfig("C:\\test\\a.conf")
 	a.includeConfig(NewContext(context_type.TypeConfig, "b.conf").(*Config))
@@ -1456,7 +1502,7 @@ func Test_configGraph_Topology(t *testing.T) {
 	d, _ := testMain.GetConfig("C:\\test\\d.conf")
 	e := NewContext(context_type.TypeConfig, "e.conf").(*Config)
 	e.ConfigPath, _ = newConfigPath(testMain, e.Value())
-	err := testMain.AddConfig(e)
+	err = testMain.AddConfig(e)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1476,7 +1522,7 @@ func Test_configGraph_Topology(t *testing.T) {
 	}{
 		{
 			name:   "generate only one tree starting from the main config",
-			fields: testMain.ConfigGraph,
+			fields: testMain.graph(),
 			want:   []*Config{testMain.MainConfig(), a, b, c, d},
 		},
 	}
@@ -1492,21 +1538,24 @@ func Test_configGraph_Topology(t *testing.T) {
 
 func Test_configGraph_removeConfig(t *testing.T) {
 	// main config
-	testMain := NewContext(context_type.TypeMain, "C:\\test\\nginx.conf").
-		Insert(
-			NewContext(context_type.TypeHttp, "").
-				Insert(NewComment("test comment", true), 0).
-				Insert(
-					NewContext(context_type.TypeServer, "").
-						Insert(NewDirective("server_name", "testserver"), 0).
-						Insert(
-							NewContext(context_type.TypeLocation, "~ /test"),
-							1,
-						),
-					1,
-				),
-			0,
-		).(*Main)
+	testMain, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	testMain.Insert(
+		NewContext(context_type.TypeHttp, "").
+			Insert(NewComment("test comment", true), 0).
+			Insert(
+				NewContext(context_type.TypeServer, "").
+					Insert(NewDirective("server_name", "testserver"), 0).
+					Insert(
+						NewContext(context_type.TypeLocation, "~ /test"),
+						1,
+					),
+				1,
+			),
+		0,
+	)
 	testMain.MainConfig().includeConfig(NewContext(context_type.TypeConfig, "a.conf").(*Config))
 	a, _ := testMain.GetConfig("C:\\test\\a.conf")
 	a.includeConfig(NewContext(context_type.TypeConfig, "b.conf").(*Config))
@@ -1515,7 +1564,7 @@ func Test_configGraph_removeConfig(t *testing.T) {
 	c, _ := testMain.GetConfig("C:\\test\\c.conf")
 	c.includeConfig(NewContext(context_type.TypeConfig, "d.conf").(*Config))
 	d, _ := testMain.GetConfig("C:\\test\\d.conf")
-	err := testMain.ConfigGraph.(*configGraph).graph.RemoveEdge(configHash(c), configHash(d))
+	err = testMain.graph().(*configGraph).graph.RemoveEdge(configHash(c), configHash(d))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1544,19 +1593,19 @@ func Test_configGraph_removeConfig(t *testing.T) {
 	}{
 		{
 			name:    "normal test",
-			fields:  testMain.ConfigGraph.(*configGraph),
+			fields:  testMain.graph().(*configGraph),
 			args:    args{d},
 			wantErr: false,
 		},
 		{
 			name:    "config has no in edge but out edges",
-			fields:  testMain.ConfigGraph.(*configGraph),
+			fields:  testMain.graph().(*configGraph),
 			args:    args{e},
 			wantErr: true,
 		},
 		{
 			name:    "config has edges",
-			fields:  testMain.ConfigGraph.(*configGraph),
+			fields:  testMain.graph().(*configGraph),
 			args:    args{a},
 			wantErr: true,
 		},
@@ -1573,26 +1622,29 @@ func Test_configGraph_removeConfig(t *testing.T) {
 
 func Test_configGraph_setFatherFor(t *testing.T) {
 	// main config
-	testMain := NewContext(context_type.TypeMain, "C:\\test\\nginx.conf").
-		Insert(
-			NewContext(context_type.TypeHttp, "").
-				Insert(NewComment("test comment", true), 0).
-				Insert(
-					NewContext(context_type.TypeServer, "").
-						Insert(NewDirective("server_name", "testserver"), 0).
-						Insert(
-							NewContext(context_type.TypeLocation, "~ /test"),
-							1,
-						),
-					1,
-				),
-			0,
-		).(*Main)
+	testMain, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	testMain.Insert(
+		NewContext(context_type.TypeHttp, "").
+			Insert(NewComment("test comment", true), 0).
+			Insert(
+				NewContext(context_type.TypeServer, "").
+					Insert(NewDirective("server_name", "testserver"), 0).
+					Insert(
+						NewContext(context_type.TypeLocation, "~ /test"),
+						1,
+					),
+				1,
+			),
+		0,
+	)
 	testMain.MainConfig().includeConfig(NewContext(context_type.TypeConfig, "a.conf").(*Config))
 	a, _ := testMain.GetConfig("C:\\test\\a.conf")
-	diffMain := NewContext(context_type.TypeMain, "C:\\test2\\nginx.conf").(*Main)
+	diffMain, _ := NewMain("C:\\test2\\nginx.conf")
 	diffGraphConfig := NewContext(context_type.TypeConfig, "different_graph.conf").(*Config)
-	_, err := diffMain.MainConfig().includeConfig(diffGraphConfig)
+	_, err = diffMain.MainConfig().includeConfig(diffGraphConfig)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1607,30 +1659,30 @@ func Test_configGraph_setFatherFor(t *testing.T) {
 	}{
 		{
 			name:    "nil config",
-			fields:  testMain.ConfigGraph.(*configGraph),
+			fields:  testMain.graph().(*configGraph),
 			wantErr: true,
 		},
 		{
 			name:    "config in the other graph",
-			fields:  testMain.ConfigGraph.(*configGraph),
+			fields:  testMain.graph().(*configGraph),
 			args:    args{diffGraphConfig},
 			wantErr: true,
 		},
 		{
 			name:    "config clone",
-			fields:  testMain.ConfigGraph.(*configGraph),
+			fields:  testMain.graph().(*configGraph),
 			args:    args{a.Clone().(*Config)},
 			wantErr: false,
 		},
 		{
 			name:    "same graph config",
-			fields:  testMain.ConfigGraph.(*configGraph),
+			fields:  testMain.graph().(*configGraph),
 			args:    args{a},
 			wantErr: false,
 		},
 		{
 			name:    "new config",
-			fields:  testMain.ConfigGraph.(*configGraph),
+			fields:  testMain.graph().(*configGraph),
 			args:    args{NewContext(context_type.TypeConfig, "new.conf").(*Config)},
 			wantErr: false,
 		},
@@ -1647,21 +1699,24 @@ func Test_configGraph_setFatherFor(t *testing.T) {
 
 func Test_configHash(t *testing.T) {
 	// main config
-	testMain := NewContext(context_type.TypeMain, "C:\\test\\nginx.conf   ").
-		Insert(
-			NewContext(context_type.TypeHttp, "").
-				Insert(NewComment("test comment", true), 0).
-				Insert(
-					NewContext(context_type.TypeServer, "").
-						Insert(NewDirective("server_name", "testserver"), 0).
-						Insert(
-							NewContext(context_type.TypeLocation, "~ /test"),
-							1,
-						),
-					1,
-				),
-			0,
-		).(*Main)
+	testMain, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	testMain.Insert(
+		NewContext(context_type.TypeHttp, "").
+			Insert(NewComment("test comment", true), 0).
+			Insert(
+				NewContext(context_type.TypeServer, "").
+					Insert(NewDirective("server_name", "testserver"), 0).
+					Insert(
+						NewContext(context_type.TypeLocation, "~ /test"),
+						1,
+					),
+				1,
+			),
+		0,
+	)
 	type args struct {
 		t *Config
 	}
@@ -1696,8 +1751,11 @@ func Test_configHash(t *testing.T) {
 
 func Test_newConfigPath(t *testing.T) {
 	// main config
-	testMain := NewContext(context_type.TypeMain, "C:\\test\\nginx.conf").(*Main)
-	relPathMain := NewContext(context_type.TypeMain, "C:\\test\\nginx.conf").(*Main)
+	testMain, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	relPathMain, _ := NewMain("C:\\test\\nginx.conf")
 	relPathMain.MainConfig().ConfigPath = &context.RelConfigPath{}
 	absCP, _ := context.NewAbsConfigPath("D:\\test\\test.conf")
 	relCP, _ := context.NewRelConfigPath(testMain.MainConfig().ConfigPath.BaseDir(), "relative.conf")
@@ -1722,7 +1780,7 @@ func Test_newConfigPath(t *testing.T) {
 		{
 			name: "null new config path",
 			args: args{
-				configgraph:   relPathMain.ConfigGraph,
+				configgraph:   relPathMain.graph(),
 				newconfigpath: "",
 			},
 			wantErr: true,
@@ -1730,7 +1788,7 @@ func Test_newConfigPath(t *testing.T) {
 		{
 			name: "config paths are relative path in graph's main config and input",
 			args: args{
-				configgraph:   relPathMain.ConfigGraph,
+				configgraph:   relPathMain.graph(),
 				newconfigpath: "test.config",
 			},
 			wantErr: true,
@@ -1738,7 +1796,7 @@ func Test_newConfigPath(t *testing.T) {
 		{
 			name: "absolut path",
 			args: args{
-				configgraph:   testMain.ConfigGraph,
+				configgraph:   testMain.graph(),
 				newconfigpath: "D:\\test\\test.conf",
 			},
 			want: absCP,
@@ -1746,7 +1804,7 @@ func Test_newConfigPath(t *testing.T) {
 		{
 			name: "relative path",
 			args: args{
-				configgraph:   testMain.ConfigGraph,
+				configgraph:   testMain.graph(),
 				newconfigpath: "relative.conf",
 			},
 			want: relCP,
@@ -1761,68 +1819,6 @@ func Test_newConfigPath(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("newConfigPath() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func Test_newMain(t *testing.T) {
-	confpath, err := context.NewAbsConfigPath("C:\\test\\nginx.conf")
-	if err != nil {
-		t.Fatal(err)
-	}
-	testMainConfig := &Config{
-		BasicContext: newBasicContext(context_type.TypeConfig, nullHeadString, nullTailString),
-		ConfigPath:   confpath,
-	}
-	testMainConfig.self = testMainConfig
-	testMainConfig.ContextValue = "C:\\test\\nginx.conf"
-	mg, err := newConfigGraph(testMainConfig)
-	if err != nil {
-		t.Fatal(err)
-	}
-	testMain := &Main{mg}
-	testMain.MainConfig().father = testMain
-	type args struct {
-		abspath string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    *Main
-		wantErr bool
-	}{
-		{
-			name:    "not a absolute path",
-			args:    args{abspath: "not/absolute/path"},
-			want:    nil,
-			wantErr: true,
-		},
-		{
-			name:    "normal test",
-			args:    args{abspath: "C:\\test\\nginx.conf"},
-			want:    testMain,
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := newMain(tt.args.abspath)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("newMain() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			isSameFather := func(got, want *Config) bool {
-				return got.father.Type() == want.father.Type() && got.father.Value() == want.father.Value()
-			}
-			if (got == nil) != (tt.want == nil) ||
-				(got != nil &&
-					(!reflect.DeepEqual(got.MainConfig().ConfigPath, tt.want.MainConfig().ConfigPath) ||
-						!reflect.DeepEqual(got.MainConfig().BasicContext.ContextValue, tt.want.MainConfig().BasicContext.ContextValue) ||
-						!reflect.DeepEqual(got.MainConfig().BasicContext.ContextType, tt.want.MainConfig().BasicContext.ContextType) ||
-						!reflect.DeepEqual(got.MainConfig().BasicContext.Children, tt.want.MainConfig().BasicContext.Children) ||
-						!isSameFather(got.MainConfig(), tt.want.MainConfig()))) {
-				t.Errorf("newMain() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -1845,14 +1841,17 @@ func Test_registerConfigBuilder(t *testing.T) {
 }
 
 func Test_newConfigGraph(t *testing.T) {
-	testMain := NewContext(context_type.TypeMain, "C:\\test\\nginx.conf").(*Main)
+	testMain, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
 	cloneMain := testMain.Clone().(*Main)
 	cloneMain.MainConfig().ConfigPath = nil
 	cloneMain.ConfigGraph = &configGraph{mainConfig: cloneMain.MainConfig()}
 	newMainConf := NewContext(context_type.TypeConfig, "C:\\test\\newmain.conf").(*Config)
 	newMainConf.ConfigPath, _ = context.NewAbsConfigPath(newMainConf.Value())
 	newGraph := graph.New(configHash, graph.PreventCycles(), graph.Directed())
-	err := newGraph.AddVertex(newMainConf)
+	err = newGraph.AddVertex(newMainConf)
 	if err != nil {
 		t.Fatal(err)
 	}

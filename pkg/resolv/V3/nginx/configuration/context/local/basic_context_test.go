@@ -123,10 +123,13 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 	_3levelctx := NewContext(context_type.TypeHttp, "").Insert(NewContext(context_type.TypeServer, "").Insert(NewDirective("server_name", "testserver"), 0), 0)
 
 	includeCtx := NewContext(context_type.TypeInclude, "conf.d/*.conf").(*Include)
-	withIncludeCtx := NewContext(context_type.TypeMain, "C:\\test\\nginx.conf").
-		Insert(NewContext(context_type.TypeHttp, "").
-			Insert(includeCtx, 0),
-			0)
+	withIncludeCtx, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	withIncludeCtx.Insert(NewContext(context_type.TypeHttp, "").
+		Insert(includeCtx, 0),
+		0)
 	configPath, err := context.NewRelConfigPath("C:\\test", "conf.d\\server.conf")
 	if err != nil {
 		t.Fatal(err)
@@ -708,10 +711,10 @@ func TestBasicContext_Insert(t *testing.T) {
 				tailStringFunc: testCtx.(*Server).tailStringFunc,
 			},
 			args: args{
-				ctx: &Config{BasicContext: BasicContext{ContextType: context_type.TypeConfig}},
+				ctx: &Main{},
 				idx: 0,
 			},
-			want: context.ErrContext(errors.WithCode(code.ErrV3SetFatherContextFailed, "cannot set father for Config Context")),
+			want: context.ErrContext(errors.WithCode(code.ErrV3SetFatherContextFailed, "cannot set father for MainContext")),
 		},
 	}
 	for _, tt := range tests {
@@ -825,10 +828,10 @@ func TestBasicContext_Modify(t *testing.T) {
 			name:   "modify negative index",
 			fields: fields{Children: make([]context.Context, 0)},
 			args: args{
-				ctx: nil,
+				ctx: NewDirective("test", ""),
 				idx: -1,
 			},
-			want:         context.ErrContext(errors.WithCode(code.ErrV3ContextIndexOutOfRange, "index(%d) out of range", -1)),
+			want:         context.ErrContext(errors.WithCode(code.ErrV3ContextIndexOutOfRange, "index(%d) out of range", -1)).(*context.ErrorContext).AppendError(context.ErrInsertIntoErrorContext),
 			wantModified: false,
 		},
 		{
@@ -1019,7 +1022,7 @@ func TestBasicContext_QueryAllByKeyWords(t *testing.T) {
 				headStringFunc: testContext.headStringFunc,
 				tailStringFunc: testContext.tailStringFunc,
 			},
-			args: args{kw: context.NewKeyWords(context_type.TypeLocation).SetRegexMatchingValue("test")},
+			args: args{kw: context.NewKeyWords(context_type.TypeLocation).SetRegexpMatchingValue("test")},
 			want: []context.Pos{
 				context.SetPos(testFather, 0),
 				context.SetPos(testFather, 2),
@@ -1079,8 +1082,22 @@ func TestBasicContext_QueryByKeyWords(t *testing.T) {
 				headStringFunc: testContext.headStringFunc,
 				tailStringFunc: testContext.tailStringFunc,
 			},
-			args: args{kw: context.NewKeyWords(context_type.TypeLocation).SetRegexMatchingValue("test")},
+			args: args{kw: context.NewKeyWords(context_type.TypeLocation).SetRegexpMatchingValue("test")},
 			want: context.SetPos(testFather, 0),
+		},
+		{
+			name: "has not been matched context",
+			fields: fields{
+				ContextType:    testContext.ContextType,
+				ContextValue:   testContext.ContextValue,
+				Children:       testContext.Children,
+				father:         testContext.father,
+				self:           testContext.self,
+				headStringFunc: testContext.headStringFunc,
+				tailStringFunc: testContext.tailStringFunc,
+			},
+			args: args{kw: context.NewKeyWords(context_type.TypeComment)},
+			want: context.NotFoundPos(),
 		},
 	}
 	for _, tt := range tests {
@@ -1176,8 +1193,7 @@ func TestBasicContext_Remove(t *testing.T) {
 				idx: hasErrChildCtx.Len() - 1,
 			},
 			want: context.ErrContext(errors.WithCode(code.ErrV3SetFatherContextFailed, context.NullContext().(*context.ErrorContext).
-				AppendError(context.ErrSetFatherToErrorContext).Error().Error())).(*context.ErrorContext).
-				AppendError(context.ErrInsertIntoErrorContext),
+				AppendError(context.ErrSetFatherToErrorContext).Error().Error())),
 			wantRemovedCtx: hasErrChildCtx.Child(hasErrChildCtx.Len() - 1),
 		},
 	}

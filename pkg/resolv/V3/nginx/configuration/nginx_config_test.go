@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context/local"
-	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
 	"reflect"
 	"sync"
 	"testing"
@@ -64,7 +63,7 @@ func TestNewNginxConfigFromPath(t *testing.T) {
 
 func Test_dumpMainContext(t *testing.T) {
 	type args struct {
-		m *local.Main
+		m local.MainContext
 	}
 	tests := []struct {
 		name string
@@ -84,7 +83,7 @@ func Test_dumpMainContext(t *testing.T) {
 
 func Test_newNginxConfig(t *testing.T) {
 	type args struct {
-		maincontext *local.Main
+		m local.MainContext
 	}
 	tests := []struct {
 		name    string
@@ -96,7 +95,7 @@ func Test_newNginxConfig(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := newNginxConfig(tt.args.maincontext)
+			got, err := newNginxConfig(tt.args.m)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("newNginxConfig() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -110,7 +109,7 @@ func Test_newNginxConfig(t *testing.T) {
 
 func Test_nginxConfig_Dump(t *testing.T) {
 	type fields struct {
-		mainContext *local.Main
+		mainContext local.MainContext
 		rwLocker    *sync.RWMutex
 	}
 	tests := []struct {
@@ -135,7 +134,7 @@ func Test_nginxConfig_Dump(t *testing.T) {
 
 func Test_nginxConfig_Json(t *testing.T) {
 	type fields struct {
-		mainContext *local.Main
+		mainContext local.MainContext
 		rwLocker    *sync.RWMutex
 	}
 	tests := []struct {
@@ -160,7 +159,7 @@ func Test_nginxConfig_Json(t *testing.T) {
 
 func Test_nginxConfig_Main(t *testing.T) {
 	type fields struct {
-		mainContext *local.Main
+		mainContext local.MainContext
 		rwLocker    *sync.RWMutex
 	}
 	tests := []struct {
@@ -185,7 +184,7 @@ func Test_nginxConfig_Main(t *testing.T) {
 
 func Test_nginxConfig_TextLines(t *testing.T) {
 	type fields struct {
-		mainContext *local.Main
+		mainContext local.MainContext
 		rwLocker    *sync.RWMutex
 	}
 	tests := []struct {
@@ -209,8 +208,12 @@ func Test_nginxConfig_TextLines(t *testing.T) {
 }
 
 func Test_nginxConfig_UpdateFromJsonBytes(t *testing.T) {
+	testMain, err := local.NewMain("C:\\test\\test.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
 	type fields struct {
-		mainContext *local.Main
+		mainContext local.MainContext
 		rwLocker    *sync.RWMutex
 	}
 	type args struct {
@@ -225,7 +228,7 @@ func Test_nginxConfig_UpdateFromJsonBytes(t *testing.T) {
 		{
 			name: "normal test",
 			fields: fields{
-				mainContext: local.NewContext(context_type.TypeMain, "C:\\test\\test.conf").(*local.Main),
+				mainContext: testMain,
 				rwLocker:    new(sync.RWMutex),
 			},
 			args: args{data: []byte(
@@ -301,11 +304,11 @@ func Test_nginxConfig_UpdateFromJsonBytes(t *testing.T) {
 
 func Test_nginxConfig_renewMainContext(t *testing.T) {
 	type fields struct {
-		mainContext *local.Main
+		mainContext local.MainContext
 		rwLocker    *sync.RWMutex
 	}
 	type args struct {
-		m *local.Main
+		m local.MainContext
 	}
 	tests := []struct {
 		name    string

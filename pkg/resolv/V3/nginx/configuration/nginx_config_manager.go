@@ -85,7 +85,7 @@ func (m *nginxConfigManager) NginxConfig() NginxConfig {
 func (m *nginxConfigManager) ServerStatus() (state v1.State) {
 	state = v1.UnknownState
 	svrPidFilePath := filepath.Join("logs", "nginx.pid")
-	pidCtx := m.configuration.Main().QueryByKeyWords(context.NewKeyWords(context_type.TypeDirective).SetRegexMatchingValue(`pid\s+.*`)).Target()
+	pidCtx := m.configuration.Main().QueryByKeyWords(context.NewKeyWords(context_type.TypeDirective).SetRegexpMatchingValue(`pid\s+.*`)).Target()
 	if pidCtx.Error() == nil {
 		pidCtxKV := strings.Split(pidCtx.Value(), " ")
 		if len(pidCtxKV) == 2 {
@@ -135,7 +135,7 @@ func (m *nginxConfigManager) backup() error {
 	// 归档日期初始化
 	now := time.Now().In(m.backupOpts.backupTimeZone)
 	backupName := utilsV2.GetBackupFileName(m.backupOpts.backupPrefix, now)
-	archiveDir, err := filepath.Abs(m.NginxConfig().Main().(*local.Main).MainConfig().BaseDir())
+	archiveDir, err := filepath.Abs(m.NginxConfig().Main().MainConfig().BaseDir())
 	if err != nil {
 		return errors.Wrap(err, "failed to format archive directory")
 	}
@@ -166,7 +166,7 @@ func (m *nginxConfigManager) backup() error {
 	}
 
 	var configPaths []string
-	for _, config := range m.NginxConfig().Main().(*local.Main).Topology() {
+	for _, config := range m.NginxConfig().Main().Topology() {
 		configPaths = append(configPaths, config.FullPath())
 	}
 
@@ -218,7 +218,7 @@ func (m *nginxConfigManager) refresh() error {
 		err = m.saveWithCheck()
 		if err != nil { // 保存异常，则回退
 			var memConfigPaths []string
-			for _, config := range m.configuration.Main().(*local.Main).Topology() {
+			for _, config := range m.configuration.Main().Topology() {
 				memConfigPaths = append(memConfigPaths, config.FullPath())
 			}
 
@@ -268,7 +268,7 @@ func (m *nginxConfigManager) regularlyRefreshAndBackup(signalChan chan int) erro
 }
 
 func (m *nginxConfigManager) serverBinCMD(arg ...string) *exec.Cmd {
-	arg = append(arg, "-c", m.configuration.Main().(*local.Main).MainConfig().FullPath())
+	arg = append(arg, "-c", m.configuration.Main().MainConfig().FullPath())
 	return exec.Command(m.nginxBinFilePath, arg...)
 }
 
@@ -298,7 +298,7 @@ func (m *nginxConfigManager) saveWithCheck() error {
 	return m.check()
 }
 
-func (m *nginxConfigManager) load() (*local.Main, utilsV3.ConfigFingerprinter, error) {
+func (m *nginxConfigManager) load() (local.MainContext, utilsV3.ConfigFingerprinter, error) {
 	localMain, timestamp, err := loadMainContextFromFS(m.configuration.Main().Value())
 	if err != nil {
 		return nil, nil, err

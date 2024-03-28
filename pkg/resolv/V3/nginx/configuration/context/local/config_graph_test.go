@@ -6,7 +6,7 @@ import (
 )
 
 func TestModifyConfigPathInGraph(t *testing.T) {
-	testMain, err := newMain("C:\\test\\nginx.conf")
+	testMain, err := NewMain("C:\\test\\nginx.conf")
 	if err != nil {
 		t.Fatal(err)
 	}
