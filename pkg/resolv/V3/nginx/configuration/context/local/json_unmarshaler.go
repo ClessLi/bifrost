@@ -293,7 +293,7 @@ func registerUpstreamJsonUnmarshalerBuilder() error {
 
 type mainUnmarshaler struct {
 	unmarshalContext *jsonUnmarshalMain
-	completedMain    *Main
+	completedMain    MainContext
 }
 
 func (m *mainUnmarshaler) UnmarshalJSON(bytes []byte) error {
@@ -301,18 +301,14 @@ func (m *mainUnmarshaler) UnmarshalJSON(bytes []byte) error {
 	if err != nil {
 		return err
 	}
-	mainCtx := NewContext(context_type.TypeMain, m.unmarshalContext.MainConfig)
-	if err = mainCtx.Error(); err != nil {
+	main, err := NewMain(m.unmarshalContext.MainConfig)
+	if err != nil {
 		return err
-	}
-	main, ok := mainCtx.(*Main)
-	if !ok {
-		return errors.New("failed to build main context")
 	}
 
 	m.completedMain = main
 
-	toBeUnmarshalledConfigs := make(map[string]*jsonUnmarshalConfig, 0)
+	toBeUnmarshalledConfigs := make(map[string]*jsonUnmarshalConfig)
 	for value, rawMessages := range m.unmarshalContext.Configs {
 		var configHashString string
 		if value != m.unmarshalContext.MainConfig {
@@ -347,7 +343,7 @@ func (m *mainUnmarshaler) UnmarshalJSON(bytes []byte) error {
 		}
 		unmarshaler := &jsonUnmarshaler{
 			unmarshalContext: unmarshalConfig,
-			configGraph:      m.completedMain.ConfigGraph,
+			configGraph:      m.completedMain.graph(),
 			completedContext: cache,
 		}
 		for _, childRaw := range unmarshaler.unmarshalContext.GetChildren() {

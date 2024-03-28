@@ -6,12 +6,17 @@ import (
 	"strings"
 )
 
+const (
+	RegexpMatchingListenPortValue = `^listen\s*(\d+)\s*\S*$`
+	RegexpMatchingServerNameValue = `^server_name\s*(.+)$`
+)
+
 type KeyWords interface {
 	Match(ctx Context) bool
 	Cascaded() bool
 	SetCascaded(cascaded bool) KeyWords
 	SetStringMatchingValue(value string) KeyWords
-	SetRegexMatchingValue(value string) KeyWords
+	SetRegexpMatchingValue(value string) KeyWords
 }
 
 type keywords struct {
@@ -55,7 +60,7 @@ func (k *keywords) SetStringMatchingValue(value string) KeyWords {
 	return k
 }
 
-func (k *keywords) SetRegexMatchingValue(value string) KeyWords {
+func (k *keywords) SetRegexpMatchingValue(value string) KeyWords {
 	k.isRegex = true
 	k.matchingValue = value
 	return k

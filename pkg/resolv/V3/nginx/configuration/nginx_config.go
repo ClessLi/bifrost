@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
-	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context/local"
 	utilsV3 "github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/utils"
 	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
@@ -15,7 +14,7 @@ import (
 )
 
 type NginxConfig interface {
-	Main() context.Context
+	Main() local.MainContext
 	UpdateFromJsonBytes(data []byte) error
 	UpdatedTimestamp() time.Time
 	TextLines() []string
@@ -24,12 +23,12 @@ type NginxConfig interface {
 }
 
 type nginxConfig struct {
-	mainContext *local.Main
+	mainContext local.MainContext
 	timestamp   time.Time
 	rwLocker    *sync.RWMutex
 }
 
-func (n *nginxConfig) Main() context.Context {
+func (n *nginxConfig) Main() local.MainContext {
 	n.rwLocker.RLock()
 	defer n.rwLocker.RUnlock()
 	return n.mainContext
@@ -73,7 +72,7 @@ func (n *nginxConfig) Dump() map[string]*bytes.Buffer {
 	return dumpMainContext(n.mainContext)
 }
 
-func (n *nginxConfig) renewMainContext(m *local.Main) error {
+func (n *nginxConfig) renewMainContext(m local.MainContext) error {
 	oldFP := utilsV3.NewConfigFingerprinterWithTimestamp(n.Dump(), time.Time{})
 	newFP := utilsV3.NewConfigFingerprinterWithTimestamp(dumpMainContext(m), time.Time{})
 	n.rwLocker.Lock()
@@ -103,7 +102,7 @@ func NewNginxConfigFromFS(filepath string) (NginxConfig, error) {
 	return newNginxConfigWithTimestamp(m, t)
 }
 
-func loadMainContextFromFS(filepath string) (*local.Main, time.Time, error) {
+func loadMainContextFromFS(filepath string) (local.MainContext, time.Time, error) {
 	timestamp := time.UnixMicro(0)
 	m, err := local.FileLoader(filepath).Load()
 	if err != nil {
@@ -121,7 +120,7 @@ func loadMainContextFromFS(filepath string) (*local.Main, time.Time, error) {
 	return m, timestamp, nil
 }
 
-func dumpMainContext(m *local.Main) map[string]*bytes.Buffer {
+func dumpMainContext(m local.MainContext) map[string]*bytes.Buffer {
 	if m == nil {
 		return nil
 	}
@@ -140,17 +139,17 @@ func dumpMainContext(m *local.Main) map[string]*bytes.Buffer {
 	return dumps
 }
 
-func newNginxConfigWithTimestamp(maincontext *local.Main, timestamp time.Time) (NginxConfig, error) {
-	if maincontext == nil {
+func newNginxConfigWithTimestamp(m local.MainContext, timestamp time.Time) (NginxConfig, error) {
+	if m == nil {
 		return nil, errors.WithCode(code.ErrV3InvalidContext, "new nginx config with a nil main context")
 	}
 	return &nginxConfig{
-		mainContext: maincontext,
+		mainContext: m,
 		rwLocker:    new(sync.RWMutex),
 		timestamp:   timestamp,
 	}, nil
 }
 
-func newNginxConfig(maincontext *local.Main) (NginxConfig, error) {
-	return newNginxConfigWithTimestamp(maincontext, time.Now())
+func newNginxConfig(m local.MainContext) (NginxConfig, error) {
+	return newNginxConfigWithTimestamp(m, time.Now())
 }

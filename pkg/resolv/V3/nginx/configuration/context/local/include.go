@@ -47,8 +47,6 @@ func (i *Include) FatherConfig() (*Config, error) {
 			return nil, errors.WithCode(code.ErrV3InvalidContext, "found an Main context")
 		}
 
-		if fatherCtx.Type() == context_type.TypeErrContext {
-		}
 		fatherCtx = fatherCtx.Father()
 		fatherConfig, ok = fatherCtx.(*Config)
 	}
@@ -69,7 +67,7 @@ func (i *Include) InsertConfig(configs ...*Config) error {
 	if err != nil {
 		return err
 	}
-	fatherMain, ok := fatherConfig.Father().(*Main)
+	fatherMain, ok := fatherConfig.Father().(MainContext)
 	if !ok {
 		return errors.WithCode(code.ErrV3InvalidContext, "this include context is not bound to a main context")
 	}
@@ -81,7 +79,7 @@ func (i *Include) InsertConfig(configs ...*Config) error {
 		}
 		// match config path
 		if config.ConfigPath == nil {
-			config.ConfigPath, err = newConfigPath(fatherMain.ConfigGraph, config.Value())
+			config.ConfigPath, err = newConfigPath(fatherMain.graph(), config.Value())
 			if err != nil {
 				return err
 			}

@@ -184,11 +184,11 @@ func TestBifrostClientOperation(t *testing.T) {
 			QueryByKeyWords(nginx_ctx.NewKeyWords(context_type.TypeServer)).Target().
 			QueryAllByKeyWords(nginx_ctx.NewKeyWords(context_type.TypeDirective).SetStringMatchingValue("server_name test1.com")) {
 			server, _ := pos.Position()
-			if server.QueryByKeyWords(nginx_ctx.NewKeyWords(context_type.TypeDirective).SetRegexMatchingValue("^listen 80$")).Target().Error() != nil {
+			if server.QueryByKeyWords(nginx_ctx.NewKeyWords(context_type.TypeDirective).SetRegexpMatchingValue("^listen 80$")).Target().Error() != nil {
 				continue
 			}
-			ctx, idx := server.QueryByKeyWords(nginx_ctx.NewKeyWords(context_type.TypeLocation).SetRegexMatchingValue(`^/test1-location$`)).Target().
-				QueryByKeyWords(nginx_ctx.NewKeyWords(context_type.TypeIf).SetRegexMatchingValue(`^\(\$http_api_name != ''\)$`)).Target().
+			ctx, idx := server.QueryByKeyWords(nginx_ctx.NewKeyWords(context_type.TypeLocation).SetRegexpMatchingValue(`^/test1-location$`)).Target().
+				QueryByKeyWords(nginx_ctx.NewKeyWords(context_type.TypeIf).SetRegexpMatchingValue(`^\(\$http_api_name != ''\)$`)).Target().
 				QueryByKeyWords(nginx_ctx.NewKeyWords(context_type.TypeDirective).SetStringMatchingValue("proxy_pass")).Position()
 			err = ctx.Insert(local.NewComment(fmt.Sprintf("[%s]test comments", time.Now().String()), true), idx+1).Error()
 			if err != nil {

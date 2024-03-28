@@ -213,7 +213,10 @@ func Test_contextStack_push(t *testing.T) {
 }
 
 func Test_fileLoader_Load(t *testing.T) {
-	simpleMain := NewContext(context_type.TypeMain, filepath.Join(os.Getenv("GOPATH"), "src/bifrost", "test/config_test/simple_nginx.conf")).(*Main)
+	simpleMain, err := NewMain(filepath.Join(os.Getenv("GOPATH"), "src/bifrost", "test/config_test/simple_nginx.conf"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	simpleMain.
 		Insert(NewComment("user  nobody;", false), 0).
 		Insert(NewDirective("worker_processes", "1"), 1).
@@ -231,7 +234,7 @@ func Test_fileLoader_Load(t *testing.T) {
 	tests := []struct {
 		name    string
 		fields  fields
-		want    *Main
+		want    MainContext
 		wantErr bool
 	}{
 		{
@@ -302,7 +305,10 @@ func Test_fileLoader_load(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	includeMain := NewContext(context_type.TypeMain, filepath.Join(os.Getenv("GOPATH"), "src/bifrost", "test/config_test/include_nginx.conf")).(*Main)
+	includeMain, err := NewMain(filepath.Join(os.Getenv("GOPATH"), "src/bifrost", "test/config_test/include_nginx.conf"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	type fields struct {
 		mainConfigAbsPath string
 		configGraph       ConfigGraph
@@ -366,7 +372,10 @@ func Test_fileLoader_load(t *testing.T) {
 }
 
 func Test_fileLoader_loadInclude(t *testing.T) {
-	simpleMain := NewContext(context_type.TypeMain, filepath.Join(os.Getenv("GOPATH"), "src/bifrost", "test/config_test/simple_nginx.conf")).(*Main)
+	simpleMain, err := NewMain(filepath.Join(os.Getenv("GOPATH"), "src/bifrost", "test/config_test/simple_nginx.conf"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	type fields struct {
 		mainConfigAbsPath string
 		configGraph       ConfigGraph
@@ -396,7 +405,7 @@ func Test_fileLoader_loadInclude(t *testing.T) {
 			name: "absolute path include",
 			fields: fields{
 				mainConfigAbsPath: simpleMain.Value(),
-				configGraph:       simpleMain.ConfigGraph,
+				configGraph:       simpleMain.graph(),
 				contextStack:      newContextStack(),
 			},
 			args:    args{include: absPathInclude},
@@ -406,7 +415,7 @@ func Test_fileLoader_loadInclude(t *testing.T) {
 			name: "relative path include",
 			fields: fields{
 				mainConfigAbsPath: simpleMain.Value(),
-				configGraph:       simpleMain.ConfigGraph,
+				configGraph:       simpleMain.graph(),
 				contextStack:      newContextStack(),
 			},
 			args:    args{include: relPathInclude},
@@ -416,7 +425,7 @@ func Test_fileLoader_loadInclude(t *testing.T) {
 			name: "no match absolute path include",
 			fields: fields{
 				mainConfigAbsPath: simpleMain.Value(),
-				configGraph:       simpleMain.ConfigGraph,
+				configGraph:       simpleMain.graph(),
 				contextStack:      newContextStack(),
 			},
 			args:    args{include: NewContext(context_type.TypeInclude, noMatchAbsPath).(*Include)},
@@ -426,7 +435,7 @@ func Test_fileLoader_loadInclude(t *testing.T) {
 			name: "no match relative path include",
 			fields: fields{
 				mainConfigAbsPath: simpleMain.Value(),
-				configGraph:       simpleMain.ConfigGraph,
+				configGraph:       simpleMain.graph(),
 				contextStack:      newContextStack(),
 			},
 			args:    args{include: NewContext(context_type.TypeInclude, noMatchRelPath).(*Include)},
@@ -436,7 +445,7 @@ func Test_fileLoader_loadInclude(t *testing.T) {
 			name: "cycle include",
 			fields: fields{
 				mainConfigAbsPath: simpleMain.Value(),
-				configGraph:       simpleMain.ConfigGraph,
+				configGraph:       simpleMain.graph(),
 				contextStack:      newContextStack(),
 			},
 			args:    args{include: cycleInclude},
@@ -465,7 +474,7 @@ func Test_jsonLoader_Load(t *testing.T) {
 	tests := []struct {
 		name    string
 		fields  fields
-		want    *Main
+		want    MainContext
 		wantErr bool
 	}{
 		// TODO: Add test cases.

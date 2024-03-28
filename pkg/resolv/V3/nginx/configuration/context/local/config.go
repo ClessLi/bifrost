@@ -24,8 +24,8 @@ func (c *Config) isInGraph() bool {
 	if c.ConfigPath == nil {
 		return false
 	}
-	fatherMain, ok := c.Father().(*Main)
-	if !ok || fatherMain.ConfigGraph == nil {
+	fatherMain, ok := c.Father().(MainContext)
+	if !ok || fatherMain.graph() == nil {
 		return false
 	}
 	_, err := fatherMain.GetConfig(configHash(c))
@@ -52,7 +52,7 @@ func (c *Config) SetValue(v string) error {
 }
 
 func (c *Config) SetFather(ctx context.Context) error {
-	if _, ok := ctx.(*Main); !ok {
+	if _, ok := ctx.(MainContext); !ok {
 		return errors.WithCode(code.ErrV3InvalidOperation, "the set father is not Main Context")
 	}
 	c.father = ctx
@@ -89,8 +89,8 @@ func (c *Config) checkIncludedConfigs(configs []*Config) error {
 			" and other configs cannot be inserted into this config")
 	}
 
-	fatherMain, ok := c.Father().(*Main)
-	if !ok || fatherMain.ConfigGraph == nil {
+	fatherMain, ok := c.Father().(MainContext)
+	if !ok || fatherMain.graph() == nil {
 		return errors.WithCode(code.ErrV3InvalidOperation, "this config has not been added to a certain graph"+
 			" and other configs cannot be inserted into this config")
 	}
@@ -121,7 +121,7 @@ func (c *Config) includeConfig(configs ...*Config) ([]*Config, error) {
 	}
 
 	var errs []error
-	fatherMain := c.Father().(*Main)
+	fatherMain := c.Father().(MainContext)
 
 	for _, config := range configs {
 		if config.isInGraph() && config.Father() != fatherMain {
@@ -170,7 +170,7 @@ func (c *Config) removeIncludedConfig(configs ...*Config) ([]*Config, error) {
 	}
 
 	var errs []error
-	fatherMain := c.Father().(*Main)
+	fatherMain := c.Father().(MainContext)
 	for _, config := range configs {
 		// get cache from graph
 		cache, err := fatherMain.GetConfig(configHash(config))
@@ -189,7 +189,7 @@ func (c *Config) modifyPathInGraph(path string) error {
 	if !c.isInGraph() {
 		return nil
 	}
-	fatherMain := c.Father().(*Main)
+	fatherMain := c.Father().(MainContext)
 
 	targetConfigPath, err := newConfigPath(fatherMain, path)
 	if err != nil {
@@ -389,26 +389,6 @@ func (c *configGraph) RenewConfigPath(fullpath string) error {
 		}
 	}
 	return c.graph.RemoveVertex(fullpath)
-}
-
-func newMain(abspath string) (*Main, error) {
-	confpath, err := context.NewAbsConfigPath(abspath)
-	if err != nil {
-		return nil, err
-	}
-	config := &Config{
-		BasicContext: newBasicContext(context_type.TypeConfig, nullHeadString, nullTailString),
-		ConfigPath:   confpath,
-	}
-	config.self = config
-	config.ContextValue = abspath
-	g, err := newConfigGraph(config)
-	if err != nil { // Temporarily unable to be covered for testing
-		return nil, err
-	}
-	m := &Main{ConfigGraph: g}
-	m.MainConfig().father = m
-	return m, nil
 }
 
 func newConfigGraph(mainConfig *Config) (ConfigGraph, error) {

@@ -13,7 +13,7 @@ import (
 )
 
 type Loader interface {
-	Load() (*Main, error)
+	Load() (MainContext, error)
 }
 
 type parseFunc func(data []byte, idx *int) context.Context
@@ -23,7 +23,7 @@ type jsonLoader struct {
 	jsonBytes   []byte
 }
 
-func (j *jsonLoader) Load() (*Main, error) {
+func (j *jsonLoader) Load() (MainContext, error) {
 	err := json.Unmarshal(j.jsonBytes, j.unmarshaler)
 	if err != nil {
 		return nil, err
@@ -44,23 +44,17 @@ type fileLoader struct {
 	contextStack      *contextStack
 }
 
-func (f *fileLoader) Load() (*Main, error) {
+func (f *fileLoader) Load() (MainContext, error) {
 	if !filepath.IsAbs(f.mainConfigAbsPath) {
 		return nil, errors.Errorf("%s is not a absolute path", f.mainConfigAbsPath)
 	}
 
-	mainCtx := NewContext(context_type.TypeMain, f.mainConfigAbsPath)
-	err := mainCtx.Error()
+	main, err := NewMain(f.mainConfigAbsPath)
 	if err != nil {
 		return nil, err
 	}
 
-	main, ok := mainCtx.(*Main)
-	if !ok {
-		return nil, errors.New("failed to build main context")
-	}
-
-	f.configGraph = main.ConfigGraph
+	f.configGraph = main.graph()
 
 	err = f.load(main.MainConfig())
 

@@ -289,7 +289,10 @@ func TestInclude_Father(t *testing.T) {
 }
 
 func TestInclude_FatherConfig(t *testing.T) {
-	testMain := NewContext(context_type.TypeMain, "C:\\test\\nginx.conf").(*Main)
+	testMain, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
 	testInclude := NewContext(context_type.TypeInclude, "*.conf").(*Include)
 	testMain.Insert(
 		NewContext(context_type.TypeHttp, "").
@@ -328,7 +331,7 @@ func TestInclude_FatherConfig(t *testing.T) {
 		},
 		{
 			name:    "found a father main context",
-			fields:  fields{fatherContext: NewContext(context_type.TypeMain, "C:\\test\\test.conf")},
+			fields:  fields{fatherContext: testMain},
 			want:    nil,
 			wantErr: true,
 		},
@@ -423,7 +426,10 @@ func TestInclude_Insert(t *testing.T) {
 }
 
 func TestInclude_InsertConfig(t *testing.T) {
-	testMain := NewContext(context_type.TypeMain, "C:\\test\\nginx.conf").(*Main)
+	testMain, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
 	testInclude := NewContext(context_type.TypeInclude, "*.conf").(*Include)
 	testMain.Insert(
 		NewContext(context_type.TypeHttp, "").
@@ -628,7 +634,10 @@ func TestInclude_Modify(t *testing.T) {
 }
 
 func TestInclude_ModifyConfig(t *testing.T) {
-	testMain := NewContext(context_type.TypeMain, "C:\\test\\nginx.conf").(*Main)
+	testMain, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
 	testInclude := NewContext(context_type.TypeInclude, "*.conf").(*Include)
 	testMain.Insert(
 		NewContext(context_type.TypeHttp, "").
@@ -644,7 +653,7 @@ func TestInclude_ModifyConfig(t *testing.T) {
 	absConfig.ConfigPath, _ = newConfigPath(testMain, absConfig.ContextValue)
 	notMatchConfig := NewContext(context_type.TypeConfig, "test\\test.conf").(*Config)
 	notMatchConfig.ConfigPath, _ = newConfigPath(testMain, notMatchConfig.ContextValue)
-	err := testInclude.InsertConfig(relConfig, absConfig)
+	err = testInclude.InsertConfig(relConfig, absConfig)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -759,7 +768,10 @@ func TestInclude_ModifyConfig(t *testing.T) {
 }
 
 func TestInclude_QueryAllByKeyWords(t *testing.T) {
-	testMain := NewContext(context_type.TypeMain, "C:\\test\\nginx.conf").(*Main)
+	testMain, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
 	testInclude := NewContext(context_type.TypeInclude, "*.conf").(*Include)
 	testMain.Insert(
 		NewContext(context_type.TypeHttp, "").
@@ -773,7 +785,7 @@ func TestInclude_QueryAllByKeyWords(t *testing.T) {
 	aConfig.ConfigPath, _ = newConfigPath(testMain, aConfig.ContextValue)
 	bConfig := NewContext(context_type.TypeConfig, "C:\\test\\b.conf").(*Config)
 	bConfig.ConfigPath, _ = newConfigPath(testMain, bConfig.ContextValue)
-	err := testInclude.InsertConfig(aConfig, bConfig)
+	err = testInclude.InsertConfig(aConfig, bConfig)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -812,7 +824,7 @@ func TestInclude_QueryAllByKeyWords(t *testing.T) {
 				Configs:       testInclude.Configs,
 				fatherContext: testInclude.fatherContext,
 			},
-			args: args{kw: context.NewKeyWords(context_type.TypeLocation).SetRegexMatchingValue("test")},
+			args: args{kw: context.NewKeyWords(context_type.TypeLocation).SetRegexpMatchingValue("test")},
 			want: []context.Pos{
 				context.SetPos(aFather, 0),
 				context.SetPos(bFather, 1),
@@ -834,7 +846,10 @@ func TestInclude_QueryAllByKeyWords(t *testing.T) {
 }
 
 func TestInclude_QueryByKeyWords(t *testing.T) {
-	testMain := NewContext(context_type.TypeMain, "C:\\test\\nginx.conf").(*Main)
+	testMain, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
 	testInclude := NewContext(context_type.TypeInclude, "*.conf").(*Include)
 	testMain.Insert(
 		NewContext(context_type.TypeHttp, "").
@@ -848,7 +863,7 @@ func TestInclude_QueryByKeyWords(t *testing.T) {
 	aConfig.ConfigPath, _ = newConfigPath(testMain, aConfig.ContextValue)
 	bConfig := NewContext(context_type.TypeConfig, "C:\\test\\b.conf").(*Config)
 	bConfig.ConfigPath, _ = newConfigPath(testMain, bConfig.ContextValue)
-	err := testInclude.InsertConfig(aConfig, bConfig)
+	err = testInclude.InsertConfig(aConfig, bConfig)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -940,7 +955,10 @@ func TestInclude_Remove(t *testing.T) {
 }
 
 func TestInclude_RemoveConfig(t *testing.T) {
-	testMain := NewContext(context_type.TypeMain, "C:\\test\\nginx.conf").(*Main)
+	testMain, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
 	testInclude := NewContext(context_type.TypeInclude, "*.conf").(*Include)
 	testMain.Insert(
 		NewContext(context_type.TypeHttp, "").
@@ -956,7 +974,7 @@ func TestInclude_RemoveConfig(t *testing.T) {
 	absConfig.ConfigPath, _ = newConfigPath(testMain, absConfig.ContextValue)
 	notMatchConfig := NewContext(context_type.TypeConfig, "test\\test.conf").(*Config)
 	notMatchConfig.ConfigPath, _ = newConfigPath(testMain, notMatchConfig.ContextValue)
-	err := testInclude.InsertConfig(relConfig, absConfig)
+	err = testInclude.InsertConfig(relConfig, absConfig)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -323,25 +323,27 @@ func Test_jsonUnmarshalDirective_Type(t *testing.T) {
 
 func Test_jsonUnmarshaler_UnmarshalJSON(t *testing.T) {
 	testTargetFatherCtx := NewContext(context_type.TypeServer, "")
-	testMain := NewContext(context_type.TypeMain, "C:\\test\\test.conf").
-		Insert(
-			NewContext(context_type.TypeHttp, "").
-				Insert(NewComment("test comment", true), 0).
-				Insert(
-					NewContext(context_type.TypeServer, "").
-						Insert(NewDirective("server_name", "testserver"), 0).
-						Insert(
-							NewContext(context_type.TypeLocation, "~ /test"),
-							1,
-						),
-					1,
-				).
-				Insert(testTargetFatherCtx, 2),
-			0,
-		).(*Main)
+	testMain, err := NewMain("C:\\test\\test.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	testMain.Insert(
+		NewContext(context_type.TypeHttp, "").
+			Insert(NewComment("test comment", true), 0).
+			Insert(
+				NewContext(context_type.TypeServer, "").
+					Insert(NewDirective("server_name", "testserver"), 0).
+					Insert(
+						NewContext(context_type.TypeLocation, "~ /test"),
+						1,
+					),
+				1,
+			).
+			Insert(testTargetFatherCtx, 2),
+		0,
+	)
 	testIncludedConfig := NewContext(context_type.TypeConfig, "conf.d\\proxy.conf").(*Config)
-	var err error
-	testIncludedConfig.ConfigPath, err = newConfigPath(testMain.ConfigGraph, testIncludedConfig.Value())
+	testIncludedConfig.ConfigPath, err = newConfigPath(testMain.graph(), testIncludedConfig.Value())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -369,7 +371,7 @@ func Test_jsonUnmarshaler_UnmarshalJSON(t *testing.T) {
 			name: "normal test",
 			fields: fields{
 				unmarshalContext: &jsonUnmarshalLocation{jsonUnmarshalContext{contextType: context_type.TypeLocation}},
-				configGraph:      testMain.ConfigGraph,
+				configGraph:      testMain.graph(),
 				completedContext: context.NullContext(),
 				fatherContext:    testTargetFatherCtx,
 			},
@@ -479,7 +481,7 @@ func Test_jsonUnmarshaler_unmarshalInclude(t *testing.T) {
 func Test_mainUnmarshaler_UnmarshalJSON(t *testing.T) {
 	type fields struct {
 		unmarshalContext *jsonUnmarshalMain
-		completedMain    *Main
+		completedMain    MainContext
 	}
 	type args struct {
 		bytes []byte
