@@ -15,7 +15,7 @@ options:
 #        - test
 #        - ci
 #        - docs
-#        - chore
+        - chore
     sort_by: Scope
   commit_groups:
     group_by: Type
@@ -29,7 +29,7 @@ options:
 #      - test
 #      - ci
 #      - docs
-#      - chore
+      - chore
     title_maps:
       feat: Features
       fix: Bug Fixes
@@ -39,7 +39,7 @@ options:
 #      test: Test Code Changes
 #      ci: Deployment Related Changes
 #      docs: Documents Changes
-#      chore: Other Changes
+      chore: Other Changes
   header:
     pattern: "^(\\w*)(?:\\(([\\w\\$\\.\\-\\*\\s]*)\\))?\\:\\s(.*)$"
     pattern_maps:
