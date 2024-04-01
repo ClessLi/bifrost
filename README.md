@@ -7,7 +7,7 @@
 # 项目介绍
 
 **Bifrost**
-是基于golang语言开发的项目，它目前还处于测试阶段，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用版本为[v1.0.5](https://github.com/ClessLi/bifrost/tree/v1.0.5)
+是基于golang语言开发的项目，它目前还处于测试阶段，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用版本为[v1.0.9](https://github.com/ClessLi/bifrost/tree/v1.0.9)
 
 # 项目特点
 
@@ -81,9 +81,9 @@ web-server-configs:
       config-path: "/usr/local/nginx/conf/nginx.conf"  # WebServer 配置文件路径
       verify-exec-path: "/usr/local/nginx/sbin/nginx"  # WebServer 配置文件校验用可执行文件路径，目前仅支持 nginx 的应用运行二进制文件路径
       logs-dir-path: "/usr/local/nginx/logs"  # WebServer 日志存放路径
-      backup-dir: ""  # .WebServer 配置文件自动备份路径，为空时将使用`config-path`文件的目录路径作为备份目录路径
+      backup-dir: ""  # WebServer 配置文件自动备份路径，为空时将使用`config-path`文件的目录路径作为备份目录路径
       backup-cycle: 1  # WebServer 配置文件自动备份周期时长，单位（天），为0时不启用自动备份
-      backup-save-time: 7  # WebServer 配置文件自动备份归档保存时长，单位（天），为0时不启用自动备份
+      backups-retention-duration: 7  # WebServer 配置文件自动备份归档保存时长，单位（天），为0时不启用自动备份
 
 # 注册中心配置
 # RA:  # 注册中心地址配置
@@ -92,7 +92,34 @@ web-server-configs:
 
 # 日志配置
 log:
-  output-paths: "logs/bifrost.log"
+# 启用开发模式
+# development: false
+
+# 禁用日志输出
+# disable-caller: false
+
+# 禁用日志追踪
+# disable-stracktrace: false
+
+# 启用代色彩的日志记录
+# enable-color: false
+
+# 错误日志最低级别, 默认为“warn”
+# error-level: warn
+
+# 错误日志输出路径，默认为“logs/biforst-error.log”
+# error-output-paths:
+# - logs/bifrost-error.log
+
+# 日志输出格式，支持“console”，“json”，默认为“console”
+# format: console
+
+# Info日志最低级别，默认为“info”
+# info-level: info
+
+# Info日志输出路径，默认为“logs/bifrost.log”
+# info-output-paths:
+# - logs/bifrost.log
 ```
 
 ## 命令帮助
@@ -121,8 +148,8 @@ Generic flags:
 Secure serving flags:
 
       --secure.bind-address string
-                The IP address on which to listen for the --secure.bind-port port. The associated interface(s) must be reachable by the rest of the engine, and by CLI/web clients. If blank, all interfaces will be used (0.0.0.0 for all IPv4
-                interfaces and :: for all IPv6 interfaces). (default "0.0.0.0")
+                The IP address on which to listen for the --secure.bind-port port. The associated interface(s) must be reachable by the rest of the engine, and by CLI/web clients. If blank, all interfaces will be used (0.0.0.0 for all
+                IPv4 interfaces and :: for all IPv6 interfaces). (default "0.0.0.0")
       --secure.bind-port int
                 The port on which to serve 12421 with authentication and authorization. Set to zero to disable.
       --secure.tls.cert-dir string
@@ -182,12 +209,20 @@ Log flags:
                 Disable the log to record a stack trace for all messages at or above panic level.
       --log.enable-color
                 Enable output ansi colors in plain format logs.
+      --log.error-level LEVEL
+                Minimum Error log output LEVEL. (default "warn")
       --log.error-output-paths strings
-                Error output paths of log. (default [stderr])
+                Output paths of Error log. (default [logs\bifrost_error.log])
+      --log.format FORMAT
                 Log output FORMAT, support plain or json format. (default "console")
-                Minimum log output LEVEL. (default "info")
+      --log.info-level LEVEL
+                Minimum Info log output LEVEL. (default "info")
+      --log.info-output-paths strings
+                Output paths of Info log. (default [logs\bifrost.log])
+      --log.inner-error-output-paths strings
+                Inner Error output paths of log. (default [stderr])
+      --log.name string
                 The name of the logger.
-                Output paths of log. (default [stdout])
 
 Global flags:
 
@@ -203,7 +238,7 @@ Global flags:
 
 ### Nginx配置管理器
 
-Nginx配置管理器提供配置读取、更新、保存、备份及重载，方法详见其接口文档（[ConfigManager](pkg/resolv/V2/nginx/configuration/configuration_manager.go)）
+Nginx配置管理器提供配置读取、更新、保存、备份及重载，方法详见其接口文档（[NginxConfigManager](pkg/resolv/V3/nginx/configuration/nginx_config_manager.go)）
 
 实例化方法如下：
 
@@ -211,14 +246,78 @@ Nginx配置管理器提供配置读取、更新、保存、备份及重载，方
 package main
 
 import (
-    "github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration"
 )
 
-nginxConfFromPath, err := configuration.NewConfigurationFromPath(configAbsPath)
-nginxConfFromJsonBytes, err := configuration.NewConfigurationFromJsonBytes(configJsonBytes)
-...
+func main() {
+	nginxConfFromPath, err := configuration.NewNginxConfigFromFS(configAbsPath)
+	nginxConfFromJsonBytes, err := configuration.NewNginxConfigFromJsonBytes(configJsonBytes)
+	...
+}
 ```
 
+Nginx配置上下文对象检索与插入示例如下：
+
+```go
+package main
+
+import (
+	"fmt"
+
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context/local"
+)
+
+func main() {
+	conf, err := configuration.NewNginxConfigFromJsonBytes(jsondata)
+	if err != nil {
+		panic(err)
+	}
+	for _, pos := range conf.Main().QueryByKeyWords(context.NewKeyWords(context_type.TypeHttp)).Target().
+		QueryByKeyWords(context.NewKeyWords(context_type.TypeServer)).Target().
+		QueryAllByKeyWords(context.NewKeyWords(context_type.TypeDirective).SetStringMatchingValue("server_name test1.com")) { // query `server` context, its server name is "test1.com"
+		server, _ := pos.Position()
+		if server.QueryByKeyWords(context.NewKeyWords(context_type.TypeDirective).SetRegexpMatchingValue("^listen 80$")).Target().Error() != nil { // query `server` context, its listen port is 80
+			continue
+		}
+		// query the "proxy_pass" `directive` context, which is in `if` context(value: "($http_api_name != '')") and `location` context(value: "/test1-location")
+		ctx, idx := server.QueryByKeyWords(context.NewKeyWords(context_type.TypeLocation).SetRegexpMatchingValue(`^/test1-location$`)).Target().
+			QueryByKeyWords(context.NewKeyWords(context_type.TypeIf).SetRegexpMatchingValue(`^\(\$http_api_name != ''\)$`)).Target().
+			QueryByKeyWords(context.NewKeyWords(context_type.TypeDirective).SetStringMatchingValue("proxy_pass")).Position()
+		// insert an inline comment after the "proxy_pass" `directive` context
+		err = ctx.Insert(local.NewComment(fmt.Sprintf("[%s]test comments", time.Now().String()), true), idx+1).Error()
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+```
+
+Nginx配置上下文对象新建示例如下：
+
+```go
+package main
+
+import (
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context/local"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
+)
+
+func main() {
+	// new main context
+	newMainContext, err := local.NewMain("/usr/local/nginx/conf/nginx.conf")
+	// new directive context
+	newDirective := local.NewDirective("some_directive", "some params")
+	// new comment context
+	newComment := local.NewComment("some comments", false)
+	// new other context
+	newConfig := local.NewContext(context_type.TypeConfig, "conf.d/location.conf")
+	newInclude := local.NewContext(context_type.TypeInclude, "conf.d/*.conf")
+	newHttp := local.NewContext(context_type.TypeHttp, "")
+	...
+}
+```
 
 ## 接口文档
 
