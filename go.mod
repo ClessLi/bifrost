@@ -80,3 +80,7 @@ require (
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	k8s.io/klog v1.0.0 // indirect
 )
+
+retract (
+    [v1.0.9, v1.0.10] // version number contaminated
+)
