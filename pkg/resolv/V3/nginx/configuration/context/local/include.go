@@ -10,28 +10,25 @@ import (
 )
 
 type Include struct {
-	ContextValue string             `json:"value,omitempty"`
-	Configs      map[string]*Config `json:"param,omitempty"`
+	ContextValue string
+	Configs      map[string]*Config
 
 	fatherContext context.Context
 }
 
 func (i *Include) MarshalJSON() ([]byte, error) {
 	marshalCtx := struct {
-		Include struct {
-			Value  string   `json:"value,omitempty"`
-			Params []string `json:"params,omitempty"`
-		} `json:"include,omitempty"`
-	}{Include: struct {
-		Value  string   `json:"value,omitempty"`
-		Params []string `json:"params,omitempty"`
+		ContextType context_type.ContextType `json:"context-type"`
+		Value       string                   `json:"value,omitempty"`
+		Params      []string                 `json:"params,omitempty"`
 	}(struct {
-		Value  string
-		Params []string
-	}{Value: i.Value(), Params: make([]string, 0)})}
+		ContextType context_type.ContextType
+		Value       string
+		Params      []string
+	}{ContextType: context_type.TypeInclude, Value: i.ContextValue, Params: make([]string, 0)})
 
 	for _, config := range i.Configs {
-		marshalCtx.Include.Params = append(marshalCtx.Include.Params, config.Value())
+		marshalCtx.Params = append(marshalCtx.Params, config.Value())
 	}
 	return json.Marshal(marshalCtx)
 }
@@ -243,7 +240,7 @@ func (i *Include) matchConfigPath(path string) error {
 	return nil
 }
 
-func registerIncludeBuild() error {
+func registerIncludeBuilder() error {
 	builderMap[context_type.TypeInclude] = func(value string) context.Context {
 		return &Include{
 			ContextValue:  value,

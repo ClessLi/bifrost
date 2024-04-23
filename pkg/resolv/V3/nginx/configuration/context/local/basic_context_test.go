@@ -111,16 +111,16 @@ func TestBasicContext_Clone(t *testing.T) {
 
 func TestBasicContext_ConfigLines(t *testing.T) {
 	_2levelctx := NewContext(context_type.TypeHttp, "")
-	_2levelctx.Insert(NewComment("test comment", false), _2levelctx.Len())
+	_2levelctx.Insert(NewContext(context_type.TypeComment, "test comment"), _2levelctx.Len())
 
 	hasComments2levelctx := _2levelctx.Clone().
-		Insert(NewComment("the first inline comment", true), 0).
-		Insert(NewComment("inline comment after inline comment", true), 1).
-		Insert(NewComment("inline comment after comment", true), 3).
-		Insert(NewDirective("test_directive", "aaaa bbbb\n cccc"), 4).
-		Insert(NewComment("inline comment after other context", true), 5)
+		Insert(NewContext(context_type.TypeInlineComment, "the first inline comment"), 0).
+		Insert(NewContext(context_type.TypeInlineComment, "inline comment after inline comment"), 1).
+		Insert(NewContext(context_type.TypeInlineComment, "inline comment after comment"), 3).
+		Insert(NewContext(context_type.TypeDirective, "test_directive aaaa bbbb\n cccc"), 4).
+		Insert(NewContext(context_type.TypeInlineComment, "inline comment after other context"), 5)
 
-	_3levelctx := NewContext(context_type.TypeHttp, "").Insert(NewContext(context_type.TypeServer, "").Insert(NewDirective("server_name", "testserver"), 0), 0)
+	_3levelctx := NewContext(context_type.TypeHttp, "").Insert(NewContext(context_type.TypeServer, "").Insert(NewContext(context_type.TypeDirective, "server_name testserver"), 0), 0)
 
 	includeCtx := NewContext(context_type.TypeInclude, "conf.d/*.conf").(*Include)
 	withIncludeCtx, err := NewMain("C:\\test\\nginx.conf")
@@ -141,7 +141,7 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 	includeConfig.self = includeConfig
 	includeConfig.ContextValue = "conf.d\\server.conf"
 	includeConfig.Insert(NewContext(context_type.TypeServer, "").
-		Insert(NewDirective("server_name", "testserver"), 0).
+		Insert(NewContext(context_type.TypeDirective, "server_name testserver"), 0).
 		Insert(NewContext(context_type.TypeLocation, "~ /test"), 1),
 		0)
 	err = includeCtx.InsertConfig(includeConfig)
@@ -191,11 +191,11 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 			fields: fields{
 				ContextType:    _2levelctx.Type(),
 				ContextValue:   _2levelctx.Value(),
-				Children:       _2levelctx.(*Http).Children,
+				Children:       _2levelctx.(*BasicContext).Children,
 				father:         _2levelctx.Father(),
 				self:           _2levelctx,
-				headStringFunc: _2levelctx.(*Http).headStringFunc,
-				tailStringFunc: _2levelctx.(*Http).tailStringFunc,
+				headStringFunc: _2levelctx.(*BasicContext).headStringFunc,
+				tailStringFunc: _2levelctx.(*BasicContext).tailStringFunc,
 			},
 			args: args{isDumping: false},
 			want: []string{
@@ -210,11 +210,11 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 			fields: fields{
 				ContextType:    hasComments2levelctx.Type(),
 				ContextValue:   hasComments2levelctx.Value(),
-				Children:       hasComments2levelctx.(*Http).Children,
+				Children:       hasComments2levelctx.(*BasicContext).Children,
 				father:         hasComments2levelctx.Father(),
 				self:           hasComments2levelctx,
-				headStringFunc: hasComments2levelctx.(*Http).headStringFunc,
-				tailStringFunc: hasComments2levelctx.(*Http).tailStringFunc,
+				headStringFunc: hasComments2levelctx.(*BasicContext).headStringFunc,
+				tailStringFunc: hasComments2levelctx.(*BasicContext).tailStringFunc,
 			},
 			args: args{isDumping: false},
 			want: []string{
@@ -231,11 +231,11 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 			fields: fields{
 				ContextType:    _3levelctx.Type(),
 				ContextValue:   _3levelctx.Value(),
-				Children:       _3levelctx.(*Http).Children,
+				Children:       _3levelctx.(*BasicContext).Children,
 				father:         _3levelctx.Father(),
 				self:           _3levelctx,
-				headStringFunc: _3levelctx.(*Http).headStringFunc,
-				tailStringFunc: _3levelctx.(*Http).tailStringFunc,
+				headStringFunc: _3levelctx.(*BasicContext).headStringFunc,
+				tailStringFunc: _3levelctx.(*BasicContext).tailStringFunc,
 			},
 			args: args{isDumping: false},
 			want: []string{
@@ -251,11 +251,11 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 			fields: fields{
 				ContextType:    withIncludeCtx.Child(0).Type(),
 				ContextValue:   withIncludeCtx.Child(0).Value(),
-				Children:       withIncludeCtx.Child(0).(*Http).Children,
+				Children:       withIncludeCtx.Child(0).(*BasicContext).Children,
 				father:         withIncludeCtx.Child(0).Father(),
 				self:           withIncludeCtx.Child(0),
-				headStringFunc: withIncludeCtx.Child(0).(*Http).headStringFunc,
-				tailStringFunc: withIncludeCtx.Child(0).(*Http).tailStringFunc,
+				headStringFunc: withIncludeCtx.Child(0).(*BasicContext).headStringFunc,
+				tailStringFunc: withIncludeCtx.Child(0).(*BasicContext).tailStringFunc,
 			},
 			args: args{isDumping: false},
 			want: []string{
@@ -323,11 +323,11 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 			fields: fields{
 				ContextType:    _2levelctx.Type(),
 				ContextValue:   _2levelctx.Value(),
-				Children:       _2levelctx.(*Http).Children,
+				Children:       _2levelctx.(*BasicContext).Children,
 				father:         _2levelctx.Father(),
 				self:           _2levelctx,
-				headStringFunc: _2levelctx.(*Http).headStringFunc,
-				tailStringFunc: _2levelctx.(*Http).tailStringFunc,
+				headStringFunc: _2levelctx.(*BasicContext).headStringFunc,
+				tailStringFunc: _2levelctx.(*BasicContext).tailStringFunc,
 			},
 			args: args{isDumping: true},
 			want: []string{
@@ -342,11 +342,11 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 			fields: fields{
 				ContextType:    hasComments2levelctx.Type(),
 				ContextValue:   hasComments2levelctx.Value(),
-				Children:       hasComments2levelctx.(*Http).Children,
+				Children:       hasComments2levelctx.(*BasicContext).Children,
 				father:         hasComments2levelctx.Father(),
 				self:           hasComments2levelctx,
-				headStringFunc: hasComments2levelctx.(*Http).headStringFunc,
-				tailStringFunc: hasComments2levelctx.(*Http).tailStringFunc,
+				headStringFunc: hasComments2levelctx.(*BasicContext).headStringFunc,
+				tailStringFunc: hasComments2levelctx.(*BasicContext).tailStringFunc,
 			},
 			args: args{isDumping: true},
 			want: []string{
@@ -363,11 +363,11 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 			fields: fields{
 				ContextType:    _3levelctx.Type(),
 				ContextValue:   _3levelctx.Value(),
-				Children:       _3levelctx.(*Http).Children,
+				Children:       _3levelctx.(*BasicContext).Children,
 				father:         _3levelctx.Father(),
 				self:           _3levelctx,
-				headStringFunc: _3levelctx.(*Http).headStringFunc,
-				tailStringFunc: _3levelctx.(*Http).tailStringFunc,
+				headStringFunc: _3levelctx.(*BasicContext).headStringFunc,
+				tailStringFunc: _3levelctx.(*BasicContext).tailStringFunc,
 			},
 			args: args{isDumping: true},
 			want: []string{
@@ -383,11 +383,11 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 			fields: fields{
 				ContextType:    withIncludeCtx.Child(0).Type(),
 				ContextValue:   withIncludeCtx.Child(0).Value(),
-				Children:       withIncludeCtx.Child(0).(*Http).Children,
+				Children:       withIncludeCtx.Child(0).(*BasicContext).Children,
 				father:         withIncludeCtx.Child(0).Father(),
 				self:           withIncludeCtx.Child(0),
-				headStringFunc: withIncludeCtx.Child(0).(*Http).headStringFunc,
-				tailStringFunc: withIncludeCtx.Child(0).(*Http).tailStringFunc,
+				headStringFunc: withIncludeCtx.Child(0).(*BasicContext).headStringFunc,
+				tailStringFunc: withIncludeCtx.Child(0).(*BasicContext).tailStringFunc,
 			},
 			args: args{isDumping: true},
 			want: []string{
@@ -585,7 +585,7 @@ func TestBasicContext_HasChild(t *testing.T) {
 
 func TestBasicContext_Insert(t *testing.T) {
 	testCtx := NewContext(context_type.TypeServer, "").
-		Insert(NewDirective("server_name", "testserver"), 0).
+		Insert(NewContext(context_type.TypeDirective, "server_name testserver"), 0).
 		Insert(NewContext(context_type.TypeLocation, "~ /test"), 1)
 	type fields struct {
 		ContextType    context_type.ContextType
@@ -645,7 +645,7 @@ func TestBasicContext_Insert(t *testing.T) {
 			name:   "insert invalid error context",
 			fields: fields{Children: make([]context.Context, 0)},
 			args: args{
-				ctx: &Location{BasicContext{ContextType: context_type.TypeErrContext}},
+				ctx: &BasicContext{ContextType: context_type.TypeErrContext},
 				idx: 0,
 			},
 			want: context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "refuse to insert invalid context")),
@@ -663,7 +663,7 @@ func TestBasicContext_Insert(t *testing.T) {
 			name:   "insert invalid config context",
 			fields: fields{Children: make([]context.Context, 0)},
 			args: args{
-				ctx: &Http{BasicContext{ContextType: context_type.TypeConfig}},
+				ctx: &BasicContext{ContextType: context_type.TypeConfig},
 				idx: 0,
 			},
 			want: context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "refuse to insert invalid context")),
@@ -673,10 +673,10 @@ func TestBasicContext_Insert(t *testing.T) {
 			fields: fields{
 				ContextType:    testCtx.Type(),
 				ContextValue:   testCtx.Value(),
-				Children:       testCtx.(*Server).Children,
+				Children:       testCtx.(*BasicContext).Children,
 				father:         testCtx.Father(),
-				headStringFunc: testCtx.(*Server).headStringFunc,
-				tailStringFunc: testCtx.(*Server).tailStringFunc,
+				headStringFunc: testCtx.(*BasicContext).headStringFunc,
+				tailStringFunc: testCtx.(*BasicContext).tailStringFunc,
 			},
 			args: args{
 				ctx: NewContext(context_type.TypeLocation, "~ /test2"),
@@ -689,10 +689,10 @@ func TestBasicContext_Insert(t *testing.T) {
 			fields: fields{
 				ContextType:    testCtx.Type(),
 				ContextValue:   testCtx.Value(),
-				Children:       testCtx.(*Server).Children,
+				Children:       testCtx.(*BasicContext).Children,
 				father:         testCtx.Father(),
-				headStringFunc: testCtx.(*Server).headStringFunc,
-				tailStringFunc: testCtx.(*Server).tailStringFunc,
+				headStringFunc: testCtx.(*BasicContext).headStringFunc,
+				tailStringFunc: testCtx.(*BasicContext).tailStringFunc,
 			},
 			args: args{
 				ctx: NewContext(context_type.TypeLocation, "~ /test3"),
@@ -705,10 +705,10 @@ func TestBasicContext_Insert(t *testing.T) {
 			fields: fields{
 				ContextType:    testCtx.Type(),
 				ContextValue:   testCtx.Value(),
-				Children:       testCtx.(*Server).Children,
+				Children:       testCtx.(*BasicContext).Children,
 				father:         testCtx.Father(),
-				headStringFunc: testCtx.(*Server).headStringFunc,
-				tailStringFunc: testCtx.(*Server).tailStringFunc,
+				headStringFunc: testCtx.(*BasicContext).headStringFunc,
+				tailStringFunc: testCtx.(*BasicContext).tailStringFunc,
 			},
 			args: args{
 				ctx: &Main{},
@@ -800,11 +800,11 @@ func TestBasicContext_Len(t *testing.T) {
 
 func TestBasicContext_Modify(t *testing.T) {
 	testCtx := NewContext(context_type.TypeServer, "").
-		Insert(NewDirective("server_name", "testserver"), 0).
+		Insert(NewContext(context_type.TypeDirective, "server_name testserver"), 0).
 		Insert(NewContext(context_type.TypeLocation, "~ /test"), 1)
 	test2Ctx := testCtx.Clone()
 	hasErrChildCtx := testCtx.Clone()
-	hasErrChildCtx.(*Server).Children = append(hasErrChildCtx.(*Server).Children, context.NullContext())
+	hasErrChildCtx.(*BasicContext).Children = append(hasErrChildCtx.(*BasicContext).Children, context.NullContext())
 	type fields struct {
 		ContextType    context_type.ContextType
 		ContextValue   string
@@ -828,7 +828,7 @@ func TestBasicContext_Modify(t *testing.T) {
 			name:   "modify negative index",
 			fields: fields{Children: make([]context.Context, 0)},
 			args: args{
-				ctx: NewDirective("test", ""),
+				ctx: NewContext(context_type.TypeDirective, "test"),
 				idx: -1,
 			},
 			want:         context.ErrContext(errors.WithCode(code.ErrV3ContextIndexOutOfRange, "index(%d) out of range", -1)).(*context.ErrorContext).AppendError(context.ErrInsertIntoErrorContext),
@@ -869,7 +869,7 @@ func TestBasicContext_Modify(t *testing.T) {
 			name:   "modify to an invalid error context",
 			fields: fields{Children: make([]context.Context, 0)},
 			args: args{
-				ctx: &Location{BasicContext{ContextType: context_type.TypeErrContext}},
+				ctx: &BasicContext{ContextType: context_type.TypeErrContext},
 				idx: 0,
 			},
 			want:         context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "refuse to modify to invalid context")),
@@ -880,10 +880,10 @@ func TestBasicContext_Modify(t *testing.T) {
 			fields: fields{
 				ContextType:    testCtx.Type(),
 				ContextValue:   testCtx.Value(),
-				Children:       testCtx.(*Server).Children,
+				Children:       testCtx.(*BasicContext).Children,
 				father:         testCtx.Father(),
-				headStringFunc: testCtx.(*Server).headStringFunc,
-				tailStringFunc: testCtx.(*Server).tailStringFunc,
+				headStringFunc: testCtx.(*BasicContext).headStringFunc,
+				tailStringFunc: testCtx.(*BasicContext).tailStringFunc,
 			},
 			args: args{
 				ctx: NewContext(context_type.TypeLocation, "~ /test2"),
@@ -897,10 +897,10 @@ func TestBasicContext_Modify(t *testing.T) {
 			fields: fields{
 				ContextType:    testCtx.Type(),
 				ContextValue:   testCtx.Value(),
-				Children:       testCtx.(*Server).Children,
+				Children:       testCtx.(*BasicContext).Children,
 				father:         testCtx.Father(),
-				headStringFunc: testCtx.(*Server).headStringFunc,
-				tailStringFunc: testCtx.(*Server).tailStringFunc,
+				headStringFunc: testCtx.(*BasicContext).headStringFunc,
+				tailStringFunc: testCtx.(*BasicContext).tailStringFunc,
 			},
 			args: args{
 				ctx: NewContext(context_type.TypeLocation, "~ /test3"),
@@ -914,10 +914,10 @@ func TestBasicContext_Modify(t *testing.T) {
 			fields: fields{
 				ContextType:    hasErrChildCtx.Type(),
 				ContextValue:   hasErrChildCtx.Value(),
-				Children:       hasErrChildCtx.(*Server).Children,
+				Children:       hasErrChildCtx.(*BasicContext).Children,
 				father:         hasErrChildCtx.Father(),
-				headStringFunc: hasErrChildCtx.(*Server).headStringFunc,
-				tailStringFunc: hasErrChildCtx.(*Server).tailStringFunc,
+				headStringFunc: hasErrChildCtx.(*BasicContext).headStringFunc,
+				tailStringFunc: hasErrChildCtx.(*BasicContext).tailStringFunc,
 			},
 			args: args{
 				ctx: NewContext(context_type.TypeLocation, "~ /test4"),
@@ -933,10 +933,10 @@ func TestBasicContext_Modify(t *testing.T) {
 			fields: fields{
 				ContextType:    test2Ctx.Type(),
 				ContextValue:   test2Ctx.Value(),
-				Children:       test2Ctx.(*Server).Children,
+				Children:       test2Ctx.(*BasicContext).Children,
 				father:         test2Ctx.Father(),
-				headStringFunc: test2Ctx.(*Server).headStringFunc,
-				tailStringFunc: test2Ctx.(*Server).tailStringFunc,
+				headStringFunc: test2Ctx.(*BasicContext).headStringFunc,
+				tailStringFunc: test2Ctx.(*BasicContext).tailStringFunc,
 			},
 			args: args{
 				ctx: test2Ctx.Child(0),
@@ -992,7 +992,7 @@ func TestBasicContext_QueryAllByKeyWords(t *testing.T) {
 		Insert(NewContext(context_type.TypeLocation, "~ /test"), 0).
 		Insert(NewContext(context_type.TypeLocation, "/text"), 1).
 		Insert(NewContext(context_type.TypeLocation, "~ /test2"), 2)
-	testContext := NewContext(context_type.TypeHttp, "").Insert(testFather, 0).(*Http)
+	testContext := NewContext(context_type.TypeHttp, "").Insert(testFather, 0).(*BasicContext)
 	type fields struct {
 		ContextType    context_type.ContextType
 		ContextValue   string
@@ -1052,7 +1052,7 @@ func TestBasicContext_QueryByKeyWords(t *testing.T) {
 		Insert(NewContext(context_type.TypeLocation, "~ /test"), 0).
 		Insert(NewContext(context_type.TypeLocation, "/text"), 1).
 		Insert(NewContext(context_type.TypeLocation, "~ /test2"), 2)
-	testContext := NewContext(context_type.TypeHttp, "").Insert(testFather, 0).(*Http)
+	testContext := NewContext(context_type.TypeHttp, "").Insert(testFather, 0).(*BasicContext)
 	type fields struct {
 		ContextType    context_type.ContextType
 		ContextValue   string
@@ -1120,10 +1120,10 @@ func TestBasicContext_QueryByKeyWords(t *testing.T) {
 
 func TestBasicContext_Remove(t *testing.T) {
 	testCtx := NewContext(context_type.TypeServer, "").
-		Insert(NewDirective("server_name", "testserver"), 0).
+		Insert(NewContext(context_type.TypeDirective, "server_name testserver"), 0).
 		Insert(NewContext(context_type.TypeLocation, "~ /test"), 1)
 	hasErrChildCtx := testCtx.Clone()
-	hasErrChildCtx.(*Server).Children = append(hasErrChildCtx.(*Server).Children, context.NullContext())
+	hasErrChildCtx.(*BasicContext).Children = append(hasErrChildCtx.(*BasicContext).Children, context.NullContext())
 	type fields struct {
 		ContextType    context_type.ContextType
 		ContextValue   string
@@ -1156,10 +1156,10 @@ func TestBasicContext_Remove(t *testing.T) {
 			fields: fields{
 				ContextType:    testCtx.Type(),
 				ContextValue:   testCtx.Value(),
-				Children:       testCtx.(*Server).Children,
+				Children:       testCtx.(*BasicContext).Children,
 				father:         testCtx.Father(),
-				headStringFunc: testCtx.(*Server).headStringFunc,
-				tailStringFunc: testCtx.(*Server).tailStringFunc,
+				headStringFunc: testCtx.(*BasicContext).headStringFunc,
+				tailStringFunc: testCtx.(*BasicContext).tailStringFunc,
 			},
 			args:           args{idx: 0},
 			want:           testCtx,
@@ -1170,10 +1170,10 @@ func TestBasicContext_Remove(t *testing.T) {
 			fields: fields{
 				ContextType:    testCtx.Type(),
 				ContextValue:   testCtx.Value(),
-				Children:       testCtx.(*Server).Children,
+				Children:       testCtx.(*BasicContext).Children,
 				father:         testCtx.Father(),
-				headStringFunc: testCtx.(*Server).headStringFunc,
-				tailStringFunc: testCtx.(*Server).tailStringFunc,
+				headStringFunc: testCtx.(*BasicContext).headStringFunc,
+				tailStringFunc: testCtx.(*BasicContext).tailStringFunc,
 			},
 			args:           args{idx: testCtx.Len()},
 			want:           testCtx,
@@ -1184,10 +1184,10 @@ func TestBasicContext_Remove(t *testing.T) {
 			fields: fields{
 				ContextType:    hasErrChildCtx.Type(),
 				ContextValue:   hasErrChildCtx.Value(),
-				Children:       hasErrChildCtx.(*Server).Children,
+				Children:       hasErrChildCtx.(*BasicContext).Children,
 				father:         hasErrChildCtx.Father(),
-				headStringFunc: hasErrChildCtx.(*Server).headStringFunc,
-				tailStringFunc: hasErrChildCtx.(*Server).tailStringFunc,
+				headStringFunc: hasErrChildCtx.(*BasicContext).headStringFunc,
+				tailStringFunc: hasErrChildCtx.(*BasicContext).tailStringFunc,
 			},
 			args: args{
 				idx: hasErrChildCtx.Len() - 1,

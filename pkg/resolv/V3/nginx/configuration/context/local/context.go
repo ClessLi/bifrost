@@ -23,8 +23,8 @@ func OptsApplyTo(opts context.BuildOptions) (BuildBasicContextConfig, error) {
 	return buildConfig, nil
 }
 
-func (b BuildBasicContextConfig) BasicContext() BasicContext {
-	return BasicContext{
+func (b BuildBasicContextConfig) BasicContext() *BasicContext {
+	return &BasicContext{
 		ContextType:    b.ContextType,
 		Children:       make([]context.Context, 0),
 		father:         context.NullContext(),
@@ -33,7 +33,7 @@ func (b BuildBasicContextConfig) BasicContext() BasicContext {
 	}
 }
 
-type ContextBuilderRegistrar func(func() BasicContext) func(value string) context.Context
+type ContextBuilderRegistrar func(func() *BasicContext) func(value string) context.Context
 
 func hasValueBraceHeadString(ctxType context_type.ContextType, value string) string {
 	contextTitle := ctxType.String()
@@ -119,10 +119,6 @@ func buildHeadAndTailStringFuncs(options context.BuildOptions) (func(context_typ
 	return head, tail
 }
 
-type Events struct {
-	BasicContext `json:"events"`
-}
-
 func registerEventsBuilder() error {
 	return RegisterBuilder(
 		context.BuildOptions{
@@ -130,9 +126,9 @@ func registerEventsBuilder() error {
 			ParseType:   context.ParseContext,
 			HasValue:    false,
 		},
-		func(f func() BasicContext) func(value string) context.Context {
+		func(f func() *BasicContext) func(value string) context.Context {
 			return func(_ string) context.Context {
-				ctx := &Events{f()}
+				ctx := f()
 				ctx.self = ctx
 				return ctx
 			}
@@ -151,10 +147,6 @@ func registerEventsParseFunc() error {
 	)
 }
 
-type Geo struct {
-	BasicContext `json:"geo"`
-}
-
 func registerGeoBuilder() error {
 	return RegisterBuilder(
 		context.BuildOptions{
@@ -162,9 +154,9 @@ func registerGeoBuilder() error {
 			ParseType:   context.ParseContext,
 			HasValue:    true,
 		},
-		func(f func() BasicContext) func(value string) context.Context {
+		func(f func() *BasicContext) func(value string) context.Context {
 			return func(value string) context.Context {
-				ctx := &Geo{f()}
+				ctx := f()
 				ctx.ContextValue = value
 				ctx.self = ctx
 				return ctx
@@ -184,10 +176,6 @@ func registerGeoParseFunc() error {
 	)
 }
 
-type Http struct {
-	BasicContext `json:"http"`
-}
-
 func registerHttpBuilder() error {
 	return RegisterBuilder(
 		context.BuildOptions{
@@ -195,9 +183,9 @@ func registerHttpBuilder() error {
 			ParseType:   context.ParseContext,
 			HasValue:    false,
 		},
-		func(f func() BasicContext) func(value string) context.Context {
+		func(f func() *BasicContext) func(value string) context.Context {
 			return func(_ string) context.Context {
-				ctx := &Http{f()}
+				ctx := f()
 				ctx.self = ctx
 				return ctx
 			}
@@ -216,10 +204,6 @@ func registerHttpParseFunc() error {
 	)
 }
 
-type If struct {
-	BasicContext `json:"if"`
-}
-
 func registerIfBuilder() error {
 	return RegisterBuilder(
 		context.BuildOptions{
@@ -227,9 +211,9 @@ func registerIfBuilder() error {
 			ParseType:   context.ParseContext,
 			HasValue:    true,
 		},
-		func(f func() BasicContext) func(value string) context.Context {
+		func(f func() *BasicContext) func(value string) context.Context {
 			return func(value string) context.Context {
-				ctx := &If{f()}
+				ctx := f()
 				ctx.ContextValue = value
 				ctx.self = ctx
 				return ctx
@@ -249,10 +233,6 @@ func registerIfParseFunc() error {
 	)
 }
 
-type LimitExcept struct {
-	BasicContext `json:"limit_except"`
-}
-
 func registerLimitExceptBuilder() error {
 	return RegisterBuilder(
 		context.BuildOptions{
@@ -260,9 +240,9 @@ func registerLimitExceptBuilder() error {
 			ParseType:   context.ParseContext,
 			HasValue:    true,
 		},
-		func(f func() BasicContext) func(value string) context.Context {
+		func(f func() *BasicContext) func(value string) context.Context {
 			return func(value string) context.Context {
-				ctx := &LimitExcept{f()}
+				ctx := f()
 				ctx.ContextValue = value
 				ctx.self = ctx
 				return ctx
@@ -282,10 +262,6 @@ func registerLimitExceptParseFunc() error {
 	)
 }
 
-type Location struct {
-	BasicContext `json:"location"`
-}
-
 func registerLocationBuilder() error {
 	return RegisterBuilder(
 		context.BuildOptions{
@@ -293,9 +269,9 @@ func registerLocationBuilder() error {
 			ParseType:   context.ParseContext,
 			HasValue:    true,
 		},
-		func(f func() BasicContext) func(value string) context.Context {
+		func(f func() *BasicContext) func(value string) context.Context {
 			return func(value string) context.Context {
-				ctx := &Location{f()}
+				ctx := f()
 				ctx.ContextValue = value
 				ctx.self = ctx
 				return ctx
@@ -315,10 +291,6 @@ func registerLocationParseFunc() error {
 	)
 }
 
-type Map struct {
-	BasicContext `json:"map"`
-}
-
 func registerMapBuilder() error {
 	return RegisterBuilder(
 		context.BuildOptions{
@@ -326,9 +298,9 @@ func registerMapBuilder() error {
 			ParseType:   context.ParseContext,
 			HasValue:    true,
 		},
-		func(f func() BasicContext) func(value string) context.Context {
+		func(f func() *BasicContext) func(value string) context.Context {
 			return func(value string) context.Context {
-				ctx := &Map{f()}
+				ctx := f()
 				ctx.ContextValue = value
 				ctx.self = ctx
 				return ctx
@@ -348,10 +320,6 @@ func registerMapParseFunc() error {
 	)
 }
 
-type Server struct {
-	BasicContext `json:"server"`
-}
-
 func registerServerBuilder() error {
 	return RegisterBuilder(
 		context.BuildOptions{
@@ -359,9 +327,9 @@ func registerServerBuilder() error {
 			ParseType:   context.ParseContext,
 			HasValue:    false,
 		},
-		func(f func() BasicContext) func(value string) context.Context {
+		func(f func() *BasicContext) func(value string) context.Context {
 			return func(_ string) context.Context {
-				ctx := &Server{f()}
+				ctx := f()
 				ctx.self = ctx
 				return ctx
 			}
@@ -380,10 +348,6 @@ func registerServerParseFunc() error {
 	)
 }
 
-type Stream struct {
-	BasicContext `json:"stream"`
-}
-
 func registerStreamBuilder() error {
 	return RegisterBuilder(
 		context.BuildOptions{
@@ -391,9 +355,9 @@ func registerStreamBuilder() error {
 			ParseType:   context.ParseContext,
 			HasValue:    false,
 		},
-		func(f func() BasicContext) func(value string) context.Context {
+		func(f func() *BasicContext) func(value string) context.Context {
 			return func(_ string) context.Context {
-				ctx := &Stream{f()}
+				ctx := f()
 				ctx.self = ctx
 				return ctx
 			}
@@ -412,10 +376,6 @@ func registerStreamParseFunc() error {
 	)
 }
 
-type Types struct {
-	BasicContext `json:"types"`
-}
-
 func registerTypesBuilder() error {
 	return RegisterBuilder(
 		context.BuildOptions{
@@ -423,9 +383,9 @@ func registerTypesBuilder() error {
 			ParseType:   context.ParseContext,
 			HasValue:    false,
 		},
-		func(f func() BasicContext) func(value string) context.Context {
+		func(f func() *BasicContext) func(value string) context.Context {
 			return func(_ string) context.Context {
-				ctx := &Types{f()}
+				ctx := f()
 				ctx.self = ctx
 				return ctx
 			}
@@ -444,10 +404,6 @@ func registerTypesParseFunc() error {
 	)
 }
 
-type Upstream struct {
-	BasicContext `json:"upstream"`
-}
-
 func registerUpstreamBuilder() error {
 	return RegisterBuilder(
 		context.BuildOptions{
@@ -455,9 +411,9 @@ func registerUpstreamBuilder() error {
 			ParseType:   context.ParseContext,
 			HasValue:    true,
 		},
-		func(f func() BasicContext) func(value string) context.Context {
+		func(f func() *BasicContext) func(value string) context.Context {
 			return func(value string) context.Context {
-				ctx := &Upstream{f()}
+				ctx := f()
 				ctx.ContextValue = value
 				ctx.self = ctx
 				return ctx
@@ -488,8 +444,10 @@ func NewContext(contextType context_type.ContextType, value string) context.Cont
 func registerContextBuilders() error {
 	errs := make([]error, 0)
 	errs = append(errs,
+		registerCommentBuilder(),
 		registerConfigBuilder(),
-		registerIncludeBuild(),
+		registerDirectiveBuilder(),
+		registerIncludeBuilder(),
 		registerEventsBuilder(),
 		registerGeoBuilder(),
 		registerHttpBuilder(),

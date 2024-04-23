@@ -189,7 +189,7 @@ func TestMain_Insert(t *testing.T) {
 			name:   "return main context itself",
 			fields: testMain,
 			args: args{
-				ctx: NewDirective("test", ""),
+				ctx: NewContext(context_type.TypeDirective, "test"),
 				idx: 0,
 			},
 			want: testMain,
@@ -242,10 +242,10 @@ func TestMain_MarshalJSON(t *testing.T) {
 	}
 	testMain.Insert(
 		NewContext(context_type.TypeHttp, "").
-			Insert(NewComment("test comment", true), 0).
+			Insert(NewContext(context_type.TypeInlineComment, "test comment"), 0).
 			Insert(
 				NewContext(context_type.TypeServer, "").
-					Insert(NewDirective("server_name", "testserver"), 0).
+					Insert(NewContext(context_type.TypeDirective, "server_name testserver"), 0).
 					Insert(
 						NewContext(context_type.TypeLocation, "~ /test"),
 						1,
@@ -283,26 +283,14 @@ func TestMain_MarshalJSON(t *testing.T) {
 		{
 			name:    "empty main",
 			fields:  fields{ConfigGraph: emptyMain.graph()},
-			want:    []byte(`{"main-config":"C:\\test\\test.conf","configs":{"C:\\test\\test.conf":[]}}`),
+			want:    []byte(`{"main-config":"C:\\test\\test.conf","configs":{"C:\\test\\test.conf":{"context-type":"config","value":"C:\\test\\test.conf"}}}`),
 			wantErr: false,
 		},
 		{
 			name:   "normal test",
 			fields: fields{ConfigGraph: testMain.graph()},
 			want: []byte(
-				`{"main-config":"C:\\test\\test.conf",` +
-					`"configs":{"C:\\test\\test.conf":[{` +
-					`"http":{"params":[{"comments":"test comment","inline":true},` +
-					`{"server":{"params":[{"directive":"server_name","params":"testserver"},` +
-					`{"location":{"value":"~ /test"}},` +
-					`{"include":{"value":"conf.d\\include*conf","params":["conf.d\\include.location1.conf","conf.d\\include.location2.conf"]}}` +
-					`]}}` +
-					`]}` +
-					`}],` +
-					`"conf.d\\include.location1.conf":[{"location":{"value":"~ /test1"}}],` +
-					`"conf.d\\include.location2.conf":[{"location":{"value":"^~ /test2"}}]` +
-					`}` +
-					`}`,
+				`{"main-config":"C:\\test\\test.conf","configs":{"C:\\test\\test.conf":{"context-type":"config","value":"C:\\test\\test.conf","params":[{"context-type":"http","params":[{"context-type":"inline_comment","value":"test comment"},{"context-type":"server","params":[{"context-type":"directive","value":"server_name testserver"},{"context-type":"location","value":"~ /test"},{"context-type":"include","value":"conf.d\\include*conf","params":["conf.d\\include.location1.conf","conf.d\\include.location2.conf"]}]}]}]},"conf.d\\include.location1.conf":{"context-type":"config","value":"conf.d\\include.location1.conf","params":[{"context-type":"location","value":"~ /test1"}]},"conf.d\\include.location2.conf":{"context-type":"config","value":"conf.d\\include.location2.conf","params":[{"context-type":"location","value":"^~ /test2"}]}}}`,
 			),
 			wantErr: false,
 		},
@@ -352,7 +340,7 @@ func TestMain_Modify(t *testing.T) {
 			name:   "return main context itself",
 			fields: testMain,
 			args: args{
-				ctx: NewDirective("test", ""),
+				ctx: NewContext(context_type.TypeDirective, "test"),
 				idx: 0,
 			},
 			want: testMain,

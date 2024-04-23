@@ -33,7 +33,7 @@ func (j *jsonLoader) Load() (MainContext, error) {
 
 func JsonLoader(data []byte) Loader {
 	return &jsonLoader{
-		unmarshaler: &mainUnmarshaler{unmarshalContext: new(jsonUnmarshalMain)},
+		unmarshaler: &mainUnmarshaler{},
 		jsonBytes:   data,
 	}
 }

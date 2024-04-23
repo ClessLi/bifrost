@@ -237,52 +237,61 @@ func Test_nginxConfig_UpdateFromJsonBytes(t *testing.T) {
     "configs":
     {
         "C:\\test\\test.conf":
-        [
-            {
-                "http":
+        {
+            "context-type": "config",
+            "value": "C:\\test\\test.conf",
+            "params":
+            [
                 {
+                    "context-type": "http",
                     "params":
                     [
                         {
-                            "inline": true, "comments": "test comment"
+                            "context-type": "inline_comment", "value": "test comment"
                         },
                         {
-                            "server":
-                            {
-                                "params":
-                                [
-                                    {
-                                        "directive": "server_name", "params": "testserver"
-                                    },
-                                    {
-                                        "location": {"value": "~ /test"}
-                                    },
-                                    {
-                                        "include":
-                                        {
-                                            "value": "conf.d\\include*conf",
-                                            "params": ["conf.d\\include.location1.conf", "conf.d\\include.location2.conf"]
-                                        }
-                                    }
-                                ]
-                            }
+                            "context-type": "server",
+                            "params":
+                            [
+                                {
+                                    "context-type": "directive", "value": "server_name testserver"
+                                },
+                                {
+                                    "context-type": "location", "value": "~ /test"
+                                },
+                                {
+                                    "context-type": "include",
+                                    "value": "conf.d\\include*conf",
+                                    "params": ["conf.d\\include.location1.conf", "conf.d\\include.location2.conf"]
+                                }
+                            ]
                         }
                     ]
                 }
-            }
-        ],
+            ]
+        },
         "conf.d\\include.location1.conf":
-        [
-            {
-                "location": {"value": "~ /test1"}
-            }
-        ],
+        {
+            "context-type": "config",
+            "value": "conf.d\\include.location1.conf",
+            "params":
+            [
+                {
+                    "context-type": "location", "value": "~ /test1"
+                }
+            ]
+        },
         "conf.d\\include.location2.conf":
-        [
-            {
-                "location": {"value": "^~ /test2"}
-            }
-        ]
+        {
+            "context-type": "config",
+            "value": "conf.d\\include.location2.conf",
+            "params":
+            [
+                {
+                    "context-type": "location", "value": "^~ /test2"
+                }
+            ]
+        }
     }
 }`,
 			)},

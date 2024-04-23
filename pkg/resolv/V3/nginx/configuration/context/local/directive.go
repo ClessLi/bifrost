@@ -1,6 +1,7 @@
 package local
 
 import (
+	"encoding/json"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
@@ -9,10 +10,20 @@ import (
 )
 
 type Directive struct {
-	Name   string `json:"directive"`
-	Params string `json:"params,omitempty"`
+	Name   string
+	Params string
 
 	fatherContext context.Context
+}
+
+func (d *Directive) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		ContextType context_type.ContextType `json:"context-type"`
+		Value       string                   `json:"value"`
+	}{
+		ContextType: d.Type(),
+		Value:       d.Value(),
+	})
 }
 
 func (d *Directive) Insert(ctx context.Context, idx int) context.Context {
@@ -98,12 +109,22 @@ func (d *Directive) ConfigLines(isDumping bool) ([]string, error) {
 	return []string{d.Value() + ";"}, nil
 }
 
-func NewDirective(name, params string) *Directive {
-	return &Directive{
-		Name:          strings.TrimSpace(name),
-		Params:        strings.TrimSpace(params),
-		fatherContext: context.NullContext(),
+func registerDirectiveBuilder() error {
+	builderMap[context_type.TypeDirective] = func(value string) context.Context {
+		kv := strings.SplitN(strings.TrimSpace(value), " ", 2)
+		if len(strings.TrimSpace(kv[0])) == 0 {
+			return context.ErrContext(errors.New("null value"))
+		}
+		d := &Directive{
+			Name:          strings.TrimSpace(kv[0]),
+			fatherContext: context.NullContext(),
+		}
+		if len(kv) == 2 {
+			d.Params = strings.TrimSpace(kv[1])
+		}
+		return d
 	}
+	return nil
 }
 
 func registerDirectiveParseFunc() error {
@@ -112,7 +133,7 @@ func registerDirectiveParseFunc() error {
 			subMatch := RegDirectiveWithoutValue.FindSubmatch(data[*idx:])
 			*idx += matchIndexes[len(matchIndexes)-1]
 			key := string(subMatch[1])
-			return NewDirective(key, "")
+			return NewContext(context_type.TypeDirective, key)
 		}
 
 		if matchIndexes := RegDirectiveWithValue.FindIndex(data[*idx:]); matchIndexes != nil { //nolint:nestif
@@ -123,7 +144,7 @@ func registerDirectiveParseFunc() error {
 			if name == string(context_type.TypeInclude) {
 				return context.NullContext()
 			}
-			return NewDirective(name, value)
+			return NewContext(context_type.TypeDirective, name+" "+value)
 		}
 		return context.NullContext()
 	}

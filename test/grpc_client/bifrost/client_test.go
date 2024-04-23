@@ -190,7 +190,7 @@ func TestBifrostClientOperation(t *testing.T) {
 			ctx, idx := server.QueryByKeyWords(nginx_ctx.NewKeyWords(context_type.TypeLocation).SetRegexpMatchingValue(`^/test1-location$`)).Target().
 				QueryByKeyWords(nginx_ctx.NewKeyWords(context_type.TypeIf).SetRegexpMatchingValue(`^\(\$http_api_name != ''\)$`)).Target().
 				QueryByKeyWords(nginx_ctx.NewKeyWords(context_type.TypeDirective).SetStringMatchingValue("proxy_pass")).Position()
-			err = ctx.Insert(local.NewComment(fmt.Sprintf("[%s]test comments", time.Now().String()), true), idx+1).Error()
+			err = ctx.Insert(local.NewContext(context_type.TypeInlineComment, fmt.Sprintf("[%s]test comments", time.Now().String())), idx+1).Error()
 			if err != nil {
 				t.Fatal(err)
 			}

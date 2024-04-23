@@ -575,62 +575,6 @@ func TestComment_Value(t *testing.T) {
 	}
 }
 
-func TestNewComment(t *testing.T) {
-	type args struct {
-		comments string
-		isInline bool
-	}
-	tests := []struct {
-		name string
-		args args
-		want *Comment
-	}{
-		{
-			name: "null value comment",
-			args: args{
-				comments: "",
-				isInline: false,
-			},
-			want: &Comment{
-				Comments:      "",
-				Inline:        false,
-				fatherContext: context.NullContext(),
-			},
-		},
-		{
-			name: "some only space comment",
-			args: args{
-				comments: "    \t ",
-				isInline: true,
-			},
-			want: &Comment{
-				Comments:      "    \t ",
-				Inline:        true,
-				fatherContext: context.NullContext(),
-			},
-		},
-		{
-			name: "normal comment",
-			args: args{
-				comments: "  test comment",
-				isInline: true,
-			},
-			want: &Comment{
-				Comments:      "  test comment",
-				Inline:        true,
-				fatherContext: context.NullContext(),
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := NewComment(tt.args.comments, tt.args.isInline); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewComment() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func Test_registerCommentParseFunc(t *testing.T) {
 	tests := []struct {
 		name    string

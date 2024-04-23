@@ -1,6 +1,7 @@
 package local
 
 import (
+	"encoding/json"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
@@ -9,10 +10,20 @@ import (
 )
 
 type Comment struct {
-	Comments string `json:"comments"`
-	Inline   bool   `json:"inline,omitempty"`
+	Comments string
+	Inline   bool
 
 	fatherContext context.Context
+}
+
+func (c *Comment) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		ContextType context_type.ContextType `json:"context-type"`
+		Value       string                   `json:"value"`
+	}{
+		ContextType: c.Type(),
+		Value:       c.Value(),
+	})
 }
 
 func (c *Comment) Insert(ctx context.Context, idx int) context.Context {
@@ -91,22 +102,33 @@ func (c *Comment) ConfigLines(isDumping bool) ([]string, error) {
 	return []string{"# " + c.Value()}, nil
 }
 
-func NewComment(comments string, isInline bool) *Comment {
-	return &Comment{
-		Comments:      comments,
-		Inline:        isInline,
-		fatherContext: context.NullContext(),
+func registerCommentBuilder() error {
+	builderMap[context_type.TypeComment] = func(value string) context.Context {
+		return &Comment{
+			Comments:      value,
+			Inline:        false,
+			fatherContext: context.NullContext(),
+		}
 	}
+	builderMap[context_type.TypeInlineComment] = func(value string) context.Context {
+		return &Comment{
+			Comments:      value,
+			Inline:        true,
+			fatherContext: context.NullContext(),
+		}
+	}
+	return nil
 }
 
 func registerCommentParseFunc() error {
 	inStackParseFuncMap[context_type.TypeComment] = func(data []byte, idx *int) context.Context {
 		if subMatch := RegCommentHead.FindSubmatch(data[*idx:]); len(subMatch) == 3 { //nolint:nestif
 			matchIndexes := RegCommentHead.FindIndex(data[*idx:])
-			cmt := NewComment(
-				string(subMatch[2]),
-				!RegLineBreak.Match(subMatch[1]) && *idx != 0,
-			)
+			ct := context_type.TypeComment
+			if !RegLineBreak.Match(subMatch[1]) && *idx != 0 {
+				ct = context_type.TypeInlineComment
+			}
+			cmt := NewContext(ct, string(subMatch[2]))
 			*idx += matchIndexes[len(matchIndexes)-1] - 1
 
 			return cmt

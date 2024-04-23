@@ -10,7 +10,7 @@ import (
 const INDENT = "    "
 
 type BasicContext struct {
-	ContextType  context_type.ContextType `json:"-"`
+	ContextType  context_type.ContextType `json:"context-type"`
 	ContextValue string                   `json:"value,omitempty"`
 	Children     []context.Context        `json:"params,omitempty"`
 

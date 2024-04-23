@@ -49,7 +49,7 @@ func TestJsonLoader(t *testing.T) {
 			name: "normal test",
 			args: args{data: []byte("{\"testdata\": \"test\"}")},
 			want: &jsonLoader{
-				unmarshaler: &mainUnmarshaler{unmarshalContext: new(jsonUnmarshalMain)},
+				unmarshaler: &mainUnmarshaler{},
 				jsonBytes:   []byte("{\"testdata\": \"test\"}"),
 			},
 		},
@@ -218,12 +218,12 @@ func Test_fileLoader_Load(t *testing.T) {
 		t.Fatal(err)
 	}
 	simpleMain.
-		Insert(NewComment("user  nobody;", false), 0).
-		Insert(NewDirective("worker_processes", "1"), 1).
-		Insert(NewComment("inline comments", true), 2).
+		Insert(NewContext(context_type.TypeComment, "user  nobody;"), 0).
+		Insert(NewContext(context_type.TypeDirective, "worker_processes 1"), 1).
+		Insert(NewContext(context_type.TypeInlineComment, "inline comments"), 2).
 		Insert(
 			NewContext(context_type.TypeEvents, "").
-				Insert(NewDirective("worker_connections", "1024"), 0),
+				Insert(NewContext(context_type.TypeDirective, "worker_connections 1024"), 0),
 			3,
 		)
 	type fields struct {

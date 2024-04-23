@@ -182,13 +182,13 @@ func TestInclude_ConfigLines(t *testing.T) {
 										Insert(
 											NewContext(context_type.TypeLocation, "~ /test").
 												Insert(
-													NewDirective("proxy_pass", "https://www.baidu.com"),
+													NewContext(context_type.TypeDirective, "proxy_pass https://www.baidu.com"),
 													0,
 												),
 											0,
 										).
 										Insert(
-											NewDirective("server_name", "testserver.com"),
+											NewContext(context_type.TypeDirective, "server_name testserver.com"),
 											0,
 										),
 									0,
@@ -659,10 +659,10 @@ func TestInclude_ModifyConfig(t *testing.T) {
 	}
 	modifiedRelConfig := relConfig.Clone().(*Config)
 	modifiedRelConfig.ConfigPath, _ = newConfigPath(testMain, modifiedRelConfig.Value())
-	modifiedRelConfig.Insert(NewDirective("keepalive_timeout", "300s"), 0)
+	modifiedRelConfig.Insert(NewContext(context_type.TypeDirective, "keepalive_timeout 300s"), 0)
 	modifiedAbsConfig := absConfig.Clone().(*Config)
 	modifiedAbsConfig.ConfigPath, _ = newConfigPath(testMain, modifiedAbsConfig.Value())
-	modifiedAbsConfig.Insert(NewDirective("proxy_http_version", "1.1"), 0)
+	modifiedAbsConfig.Insert(NewContext(context_type.TypeDirective, "proxy_http_version 1.1"), 0)
 
 	unboundedConfig := NewContext(context_type.TypeConfig, "unbound.conf")
 	unboundedInclude := NewContext(context_type.TypeInclude, "unbound.*.conf").(*Include)
@@ -1264,8 +1264,8 @@ func Test_registerIncludeBuild(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := registerIncludeBuild(); (err != nil) != tt.wantErr {
-				t.Errorf("registerIncludeBuild() error = %v, wantErr %v", err, tt.wantErr)
+			if err := registerIncludeBuilder(); (err != nil) != tt.wantErr {
+				t.Errorf("registerIncludeBuilder() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
@@ -1282,6 +1282,71 @@ func Test_registerIncludeParseFunc(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := registerIncludeParseFunc(); (err != nil) != tt.wantErr {
 				t.Errorf("registerIncludeParseFunc() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestInclude_MarshalJSON(t *testing.T) {
+	testMain, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	testInclude := NewContext(context_type.TypeInclude, "*.conf").(*Include)
+	testMain.Insert(
+		NewContext(context_type.TypeHttp, "").
+			Insert(
+				testInclude,
+				0,
+			),
+		0,
+	)
+	relConfig := NewContext(context_type.TypeConfig, "relative.conf").(*Config)
+	relConfig.ConfigPath, _ = newConfigPath(testMain, relConfig.ContextValue)
+	absConfig := NewContext(context_type.TypeConfig, "C:\\test\\absolut.conf").(*Config)
+	absConfig.ConfigPath, _ = newConfigPath(testMain, absConfig.ContextValue)
+	notMatchConfig := NewContext(context_type.TypeConfig, "test\\test.conf").(*Config)
+	notMatchConfig.ConfigPath, _ = newConfigPath(testMain, notMatchConfig.ContextValue)
+	err = testInclude.InsertConfig(relConfig, absConfig)
+	if err != nil {
+		t.Fatal(err)
+	}
+	type fields struct {
+		ContextValue  string
+		Configs       map[string]*Config
+		fatherContext context.Context
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		want    []byte
+		wantErr bool
+	}{
+		{
+			name: "normal test",
+			fields: fields{
+				ContextValue:  testInclude.ContextValue,
+				Configs:       testInclude.Configs,
+				fatherContext: testInclude.fatherContext,
+			},
+			want:    []byte(`{"context-type":"include","value":"*.conf","params":["relative.conf","C:\\test\\absolut.conf"]}`),
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			i := &Include{
+				ContextValue:  tt.fields.ContextValue,
+				Configs:       tt.fields.Configs,
+				fatherContext: tt.fields.fatherContext,
+			}
+			got, err := i.MarshalJSON()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("MarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("MarshalJSON() got = %s, want %s", got, tt.want)
 			}
 		})
 	}

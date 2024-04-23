@@ -9,13 +9,4 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-
-	err = registerJsonRegMatchers()
-	if err != nil {
-		panic(err)
-	}
-	err = registerJsonUnmarshalerBuilders()
-	if err != nil {
-		panic(err)
-	}
 }

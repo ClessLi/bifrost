@@ -1,7 +1,6 @@
 package local
 
 import (
-	"encoding/json"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
@@ -13,11 +12,7 @@ import (
 
 type Config struct {
 	BasicContext
-	context.ConfigPath
-}
-
-func (c *Config) MarshalJSON() ([]byte, error) {
-	return json.Marshal(c.BasicContext.Children)
+	context.ConfigPath `json:"-"`
 }
 
 func (c *Config) isInGraph() bool {

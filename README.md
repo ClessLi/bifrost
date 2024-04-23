@@ -263,6 +263,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
 
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
@@ -286,7 +287,7 @@ func main() {
 			QueryByKeyWords(context.NewKeyWords(context_type.TypeIf).SetRegexpMatchingValue(`^\(\$http_api_name != ''\)$`)).Target().
 			QueryByKeyWords(context.NewKeyWords(context_type.TypeDirective).SetStringMatchingValue("proxy_pass")).Position()
 		// insert an inline comment after the "proxy_pass" `directive` context
-		err = ctx.Insert(local.NewComment(fmt.Sprintf("[%s]test comments", time.Now().String()), true), idx+1).Error()
+		err = ctx.Insert(local.NewContext(context_type.TypeInlineComment, fmt.Sprintf("[%s]test comments", time.Now().String())), idx+1).Error()
 		if err != nil {
 			panic(err)
 		}
@@ -308,9 +309,10 @@ func main() {
 	// new main context
 	newMainContext, err := local.NewMain("/usr/local/nginx/conf/nginx.conf")
 	// new directive context
-	newDirective := local.NewDirective("some_directive", "some params")
+	newDirective := local.NewContext(context_type.TypeDirective, "some_directive some params")
 	// new comment context
-	newComment := local.NewComment("some comments", false)
+	newComment := local.NewContext(context_type.TypeComment, "some comments")
+	newInlineComment := local.NewContext(context_type.TypeInlineComment, "some inline comments")
 	// new other context
 	newConfig := local.NewContext(context_type.TypeConfig, "conf.d/location.conf")
 	newInclude := local.NewContext(context_type.TypeInclude, "conf.d/*.conf")
