@@ -5,6 +5,7 @@ import (
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
+	"github.com/dominikbraun/graph"
 	"github.com/marmotedu/errors"
 	"os"
 	"path/filepath"
@@ -57,8 +58,10 @@ func (f *fileLoader) Load() (MainContext, error) {
 	f.configGraph = main.graph()
 
 	err = f.load(main.MainConfig())
-
-	return main, err
+	if err != nil {
+		return nil, err
+	}
+	return main, main.renderGraph()
 }
 
 func (f *fileLoader) load(config *Config) error {
@@ -190,36 +193,45 @@ func (f *fileLoader) loadInclude(include *Include) error {
 	}
 
 	// new configs
-	newconfigs := make([]*Config, 0)
+	//newconfigs := make([]*Config, 0)
 	for _, path := range paths {
 		newconfig := NewContext(context_type.TypeConfig, strings.TrimSpace(path)).(*Config)
 		newconfig.ConfigPath, err = newConfigPath(f.configGraph, newconfig.Value())
 		if err != nil {
 			return err
 		}
-		newconfigs = append(newconfigs, newconfig)
-	}
-
-	// include configs
-	err = include.InsertConfig(newconfigs...)
-	if err != nil {
-		return err
-	}
-	// load new configs
-	for _, config := range newconfigs {
-		if cache, err := include.ChildConfig(config.FullPath()); err != nil {
-			return err
-		} else {
-			if cache != config {
-				// the config is not newly created and does not require loading
+		// adding config into configGraph
+		err = f.configGraph.addVertex(newconfig)
+		if err != nil {
+			if errors.Is(err, graph.ErrVertexAlreadyExists) {
 				continue
 			}
+			return err
 		}
-		err = f.load(config)
+		// loading configs from file system
+		err = f.load(newconfig)
 		if err != nil {
 			return err
 		}
+		//newconfigs = append(newconfigs, newconfig)
 	}
+
+	// include configs
+	//err = include.load()
+	//if err != nil {
+	//	return err
+	//}
+	// load new configs
+	//for _, config := range newconfigs {
+	//	if cache, err := include.ChildConfig(config.FullPath()); err != nil {
+	//		return err
+	//	} else {
+	//		if cache != config {
+	//			// the config is not newly created and does not require loading
+	//			continue
+	//		}
+	//	}
+	//}
 	return nil
 }
 

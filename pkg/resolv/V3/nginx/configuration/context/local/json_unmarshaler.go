@@ -9,6 +9,7 @@ import (
 )
 
 type jsonUnmarshalContext struct {
+	Enabled     bool                     `json:"enabled,omitempty"`
 	ContextType context_type.ContextType `json:"context-type"`
 	Value       string                   `json:"value,omitempty"`
 	Children    []*json.RawMessage       `json:"params,omitempty"`
@@ -36,28 +37,23 @@ func (m *mainUnmarshaler) UnmarshalJSON(bytes []byte) error {
 
 	m.completedMain = main
 
-	// add configs into graph
-	for value := range unmarshalMain.Configs {
+	// add configs into graph, and unmarshal configs
+	for configpath, configRaw := range unmarshalMain.Configs {
 		//var configHashString string
-		if value != unmarshalMain.MainConfig {
-			config, ok := NewContext(context_type.TypeConfig, value).(*Config)
+		if configpath != unmarshalMain.MainConfig {
+			config, ok := NewContext(context_type.TypeConfig, configpath).(*Config)
 			if !ok {
-				return errors.Errorf("failed to build config '%v'", value)
+				return errors.Errorf("failed to build config '%v'", configpath)
 			}
-			config.ConfigPath, err = newConfigPath(m.completedMain, value)
+			config.ConfigPath, err = newConfigPath(m.completedMain, configpath)
 			if err != nil {
 				return err
 			}
-			err = m.completedMain.AddConfig(config)
+			err = m.completedMain.addVertex(config)
 			if err != nil {
 				return err
 			}
 		}
-
-	}
-
-	// unmarshal configs
-	for _, configRaw := range unmarshalMain.Configs {
 		configMarshaler := jsonUnmarshaler{
 			configGraph:      m.completedMain.graph(),
 			completedContext: context.NullContext(),
@@ -69,7 +65,7 @@ func (m *mainUnmarshaler) UnmarshalJSON(bytes []byte) error {
 		}
 	}
 
-	return nil
+	return main.rerenderGraph()
 }
 
 type jsonUnmarshaler struct {
@@ -92,9 +88,9 @@ func (u *jsonUnmarshaler) UnmarshalJSON(bytes []byte) error {
 		if err != nil {
 			return err
 		}
-	case context_type.TypeInclude:
-		// insert the include context to be unmarshalled into its father, and unmarshal itself
-		return u.unmarshalInclude(&unmarshalCtx)
+	//case context_type.TypeInclude:
+	//	// insert the include context to be unmarshalled into its father, and unmarshal itself
+	//	return u.unmarshalInclude(&unmarshalCtx)
 	default:
 		u.completedContext = NewContext(unmarshalCtx.ContextType, unmarshalCtx.Value)
 		if err = u.completedContext.Error(); err != nil {
@@ -138,39 +134,44 @@ func (u *jsonUnmarshaler) unmarshalConfig(unmashalctx *jsonUnmarshalContext) err
 	return nil
 }
 
-func (u *jsonUnmarshaler) unmarshalInclude(unmarshalctx *jsonUnmarshalContext) error {
-	u.completedContext = NewContext(unmarshalctx.ContextType, unmarshalctx.Value)
-	err := u.completedContext.Error()
-	if err != nil {
-		return err
-	}
-
-	// insert the Include context to be unmarshalled into its father
-	if err = u.fatherContext.Insert(u.completedContext, u.fatherContext.Len()).Error(); err != nil {
-		return err
-	}
-
-	// unmarshal included configs
-	configs := make([]*Config, 0)
-	for _, childRaw := range unmarshalctx.Children {
-		var path string
-		err := json.Unmarshal(*childRaw, &path)
-		if err != nil {
-			return err
-		}
-		configPath, err := newConfigPath(u.configGraph, path)
-		if err != nil {
-			return err
-		}
-
-		// get config cache
-		cache, err := u.configGraph.GetConfig(strings.TrimSpace(configPath.FullPath()))
-		if err != nil {
-			return err
-		}
-		configs = append(configs, cache)
-
-	}
-	// include configs
-	return u.completedContext.(*Include).InsertConfig(configs...)
-}
+//func (u *jsonUnmarshaler) unmarshalInclude(unmarshalctx *jsonUnmarshalContext) error {
+//	u.completedContext = NewContext(unmarshalctx.ContextType, unmarshalctx.Value)
+//	err := u.completedContext.Error()
+//	if err != nil {
+//		return err
+//	}
+//	if unmarshalctx.Enabled {
+//		u.completedContext.Enable()
+//	} else {
+//		u.completedContext.Disable()
+//	}
+//
+//	// insert the Include context to be unmarshalled into its father
+//	if err = u.fatherContext.Insert(u.completedContext, u.fatherContext.Len()).Error(); err != nil {
+//		return err
+//	}
+//
+//	// unmarshal included configs
+//	configs := make([]*Config, 0)
+//	for _, childRaw := range unmarshalctx.Children {
+//		var path string
+//		err := json.Unmarshal(*childRaw, &path)
+//		if err != nil {
+//			return err
+//		}
+//		configPath, err := newConfigPath(u.configGraph, path)
+//		if err != nil {
+//			return err
+//		}
+//
+//		// get config cache
+//		cache, err := u.configGraph.GetConfig(strings.TrimSpace(configPath.FullPath()))
+//		if err != nil {
+//			return err
+//		}
+//		configs = append(configs, cache)
+//
+//	}
+//	// include configs
+//	return u.completedContext.(*Include).InsertConfig(configs...)
+//}

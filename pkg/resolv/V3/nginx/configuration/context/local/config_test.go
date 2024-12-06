@@ -48,6 +48,7 @@ func TestConfig_Clone(t *testing.T) {
 			},
 			want: &Config{
 				BasicContext: BasicContext{
+					Enabled:        true,
 					ContextType:    context_type.TypeConfig,
 					ContextValue:   testMain.MainConfig().ContextValue,
 					Children:       testCloneChildren,
@@ -82,6 +83,7 @@ func TestConfig_Clone(t *testing.T) {
 				got.Father().Type() != tt.want.Father().Type() ||
 				got.Type() != tt.want.Type() ||
 				got.Value() != tt.want.Value() ||
+				got.IsEnabled() != tt.want.IsEnabled() ||
 				!reflect.DeepEqual(got.(*Config).ConfigPath, tt.want.(*Config).ConfigPath) {
 				t.Errorf("Clone() = %v, want %v", got, tt.want)
 			}
@@ -101,8 +103,20 @@ func TestConfig_ConfigLines(t *testing.T) {
 				NewContext(context_type.TypeServer, "").
 					Insert(NewContext(context_type.TypeDirective, "server_name testserver"), 0).
 					Insert(
-						NewContext(context_type.TypeLocation, "~ /test"),
+						NewContext(context_type.TypeLocation, "~ /test").
+							Insert(
+								NewContext(context_type.TypeInclude, "conf.d/test.*.conf"),
+								0,
+							),
 						1,
+					).
+					Insert(
+						NewContext(context_type.TypeLocation, "~ /disabled-location").Disable().
+							Insert(
+								NewContext(context_type.TypeInclude, "conf.d/disabled.included.conf").Disable(),
+								0,
+							),
+						2,
 					),
 				1,
 			),
@@ -123,7 +137,28 @@ func TestConfig_ConfigLines(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "normal test",
+			name: "normal test for dump",
+			fields: fields{
+				BasicContext: testMain.MainConfig().BasicContext,
+				ConfigPath:   testMain.MainConfig().ConfigPath,
+			},
+			args: args{isDumping: true},
+			want: []string{
+				"http {    # test comment",
+				"    server {",
+				"        server_name testserver;",
+				"        location ~ /test {",
+				"            include conf.d/test.*.conf;",
+				"        }",
+				"        # location ~ /disabled-location {",
+				"        #     # include conf.d/disabled.included.conf;",
+				"        # }",
+				"    }",
+				"}",
+			},
+		},
+		{
+			name: "normal test for view",
 			fields: fields{
 				BasicContext: testMain.MainConfig().BasicContext,
 				ConfigPath:   testMain.MainConfig().ConfigPath,
@@ -134,7 +169,11 @@ func TestConfig_ConfigLines(t *testing.T) {
 				"    server {",
 				"        server_name testserver;",
 				"        location ~ /test {",
+				"            # include <== conf.d/test.*.conf",
 				"        }",
+				"        # location ~ /disabled-location {",
+				"        #     # # include <== conf.d/disabled.included.conf",
+				"        # }",
 				"    }",
 				"}",
 			},
@@ -157,115 +196,6 @@ func TestConfig_ConfigLines(t *testing.T) {
 		})
 	}
 }
-
-func TestConfig_Father(t *testing.T) {
-	testMain, err := NewMain("C:\\test\\nginx.conf")
-	if err != nil {
-		t.Fatal(err)
-	}
-	type fields struct {
-		BasicContext BasicContext
-		ConfigPath   context.ConfigPath
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   context.Context
-	}{
-		{
-			name:   "new config",
-			fields: fields{BasicContext: BasicContext{father: context.NullContext()}},
-			want:   context.NullContext(),
-		},
-		{
-			name:   "has father",
-			fields: fields{BasicContext: BasicContext{father: testMain}},
-			want:   testMain,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := &Config{
-				BasicContext: tt.fields.BasicContext,
-				ConfigPath:   tt.fields.ConfigPath,
-			}
-			if got := c.Father(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Father() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestConfig_checkIncludedConfigs(t *testing.T) {
-	type fields struct {
-		BasicContext BasicContext
-		ConfigPath   context.ConfigPath
-	}
-	type args struct {
-		configs []*Config
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := &Config{
-				BasicContext: tt.fields.BasicContext,
-				ConfigPath:   tt.fields.ConfigPath,
-			}
-			if err := c.checkIncludedConfigs(tt.args.configs); (err != nil) != tt.wantErr {
-				t.Errorf("checkIncludedConfigs() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-//func TestConfig_MarshalJSON(t *testing.T) {
-//	type fields struct {
-//		BasicContext BasicContext
-//		ConfigPath   context.ConfigPath
-//	}
-//	tests := []struct {
-//		name    string
-//		fields  fields
-//		want    []byte
-//		wantErr bool
-//	}{
-//		{
-//			name:    "null children",
-//			fields:  fields{BasicContext: BasicContext{Children: make([]context.Context, 0)}},
-//			want:    []byte("[]"),
-//			wantErr: false,
-//		},
-//		{
-//			name: "normal test",
-//			fields: fields{BasicContext: BasicContext{Children: []context.Context{NewContext(context_type.TypeServer, "").
-//				Insert(NewDirective("server_name", "testserver.com"), 0)}}},
-//			want: []byte(`[{"server":{"params":[{"directive":"server_name","params":"testserver.com"}]}}]`),
-//		},
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			c := &Config{
-//				BasicContext: tt.fields.BasicContext,
-//				ConfigPath:   tt.fields.ConfigPath,
-//			}
-//			got, err := c.MarshalJSON()
-//			if (err != nil) != tt.wantErr {
-//				t.Errorf("MarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
-//				return
-//			}
-//			if !reflect.DeepEqual(got, tt.want) {
-//				t.Errorf("MarshalJSON() got = %s, want %s", got, tt.want)
-//			}
-//		})
-//	}
-//}
 
 func TestConfig_SetFather(t *testing.T) {
 	testMain, err := NewMain("C:\\test\\test.conf")
@@ -334,7 +264,7 @@ func TestConfig_SetValue(t *testing.T) {
 			),
 		0,
 	)
-	_, err = testMain.MainConfig().includeConfig(NewContext(context_type.TypeConfig, "a.conf").(*Config))
+	err = testMain.AddConfig(NewContext(context_type.TypeConfig, "a.conf").(*Config))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -391,267 +321,6 @@ func TestConfig_SetValue(t *testing.T) {
 	}
 }
 
-func TestConfig_includeConfig(t *testing.T) {
-	// main config
-	testMain, err := NewMain("C:\\test\\nginx.conf")
-	if err != nil {
-		t.Fatal(err)
-	}
-	testMain.Insert(
-		NewContext(context_type.TypeHttp, "").
-			Insert(NewContext(context_type.TypeInlineComment, "test comment"), 0).
-			Insert(
-				NewContext(context_type.TypeServer, "").
-					Insert(NewContext(context_type.TypeDirective, "server_name testserver"), 0).
-					Insert(
-						NewContext(context_type.TypeLocation, "~ /test"),
-						1,
-					),
-				1,
-			),
-		0,
-	)
-	_, err = testMain.MainConfig().includeConfig(
-		NewContext(context_type.TypeConfig, "C:\\test\\existing.conf").(*Config),
-		NewContext(context_type.TypeConfig, "a.conf").(*Config),
-		NewContext(context_type.TypeConfig, "b.conf").(*Config),
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-	existingConfig, err := testMain.GetConfig("C:\\test\\existing.conf")
-	if err != nil {
-		t.Fatal(err)
-	}
-	nullPathConfig := NewContext(context_type.TypeConfig, "").(*Config)
-	nullPathConfig.ConfigPath = &context.AbsConfigPath{}
-	err = testMain.graph().(*configGraph).graph.AddVertex(nullPathConfig)
-	if err != nil {
-		t.Fatal(err)
-	}
-	nullPathConfig.father = testMain
-	err = testMain.graph().(*configGraph).graph.AddEdge("", existingConfig.FullPath())
-	if err != nil {
-		t.Fatal(err)
-	}
-	// for cycles include
-	aConfig, err := testMain.GetConfig("C:\\test\\a.conf")
-	if err != nil {
-		t.Fatal(err)
-	}
-	bConfig, err := testMain.GetConfig("C:\\test\\b.conf")
-	if err != nil {
-		t.Fatal(err)
-	}
-	cConfig := NewContext(context_type.TypeConfig, "c.conf").(*Config)
-	_, err = aConfig.includeConfig(bConfig)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// different main config
-	diffTestMain, _ := NewMain("C:\\test2\\nginx.conf")
-	// main with invalid value
-	invalidTestMain, _ := NewMain("C:\\test\\nginx.conf")
-	invalidTestMainCP := invalidTestMain.MainConfig().ConfigPath
-	invalidTestMain.MainConfig().ConfigPath = nil
-	newcpFailedConfig := NewContext(context_type.TypeConfig, "test\\test2.conf").(*Config)
-	// different graph config
-	diffGraphConfig := NewContext(context_type.TypeConfig, "C:\\test\\test2.conf").(*Config)
-	_, err = diffTestMain.MainConfig().includeConfig(diffGraphConfig)
-	if err != nil {
-		t.Fatal(err)
-	}
-	diffGraphConfigPath, _ := newConfigPath(testMain, diffGraphConfig.Value())
-
-	// different base dir config
-	diffBaseDirConfig := NewContext(context_type.TypeConfig, "test.conf").(*Config)
-	diffBaseDirConfig.ConfigPath, _ = context.NewRelConfigPath("C:\\test2", "test.conf")
-	err = testMain.AddConfig(diffBaseDirConfig)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	type fields struct {
-		BasicContext BasicContext
-		ConfigPath   context.ConfigPath
-	}
-	type args struct {
-		configs []*Config
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    []*Config
-		wantErr bool
-	}{
-		{
-			name: "has not been added to a graph",
-			fields: fields{
-				BasicContext: BasicContext{},
-				ConfigPath:   testMain.MainConfig().ConfigPath,
-			},
-			want:    nil,
-			wantErr: true,
-		},
-		{
-			name: "has not been banded with a config path",
-			fields: fields{
-				BasicContext: BasicContext{},
-				ConfigPath:   nil,
-			},
-			want:    nil,
-			wantErr: true,
-		},
-		{
-			name: "insert nil",
-			fields: fields{
-				BasicContext: testMain.MainConfig().BasicContext,
-				ConfigPath:   testMain.MainConfig().ConfigPath,
-			},
-			args:    args{nil},
-			want:    nil,
-			wantErr: true,
-		},
-		{
-			name: "insert empty config list",
-			fields: fields{
-				BasicContext: testMain.MainConfig().BasicContext,
-				ConfigPath:   testMain.MainConfig().ConfigPath,
-			},
-			args:    args{make([]*Config, 0)},
-			want:    make([]*Config, 0),
-			wantErr: false,
-		},
-		{
-			name: "insert nil config",
-			fields: fields{
-				BasicContext: testMain.MainConfig().BasicContext,
-				ConfigPath:   testMain.MainConfig().ConfigPath,
-			},
-			args:    args{configs: []*Config{nil}},
-			want:    make([]*Config, 0),
-			wantErr: true,
-		},
-		{
-			name: "insert another graph config",
-			fields: fields{
-				BasicContext: testMain.MainConfig().BasicContext,
-				ConfigPath:   testMain.MainConfig().ConfigPath,
-			},
-			args: args{configs: []*Config{diffGraphConfig}},
-			want: []*Config{{
-				BasicContext: diffGraphConfig.BasicContext,
-				ConfigPath:   diffGraphConfigPath,
-			}},
-			wantErr: false,
-		},
-		{
-			name: "failed to build config path for included config",
-			fields: fields{
-				BasicContext: invalidTestMain.MainConfig().BasicContext,
-				ConfigPath:   invalidTestMainCP,
-			},
-			args:    args{configs: []*Config{newcpFailedConfig}},
-			want:    make([]*Config, 0),
-			wantErr: true,
-		},
-		{
-			name: "different base dir config path",
-			fields: fields{
-				BasicContext: testMain.MainConfig().BasicContext,
-				ConfigPath:   testMain.MainConfig().ConfigPath,
-			},
-			args:    args{configs: []*Config{diffBaseDirConfig}},
-			want:    make([]*Config, 0),
-			wantErr: true,
-		},
-		{
-			name: "include an existing config, but not the same config pointer",
-			fields: fields{
-				BasicContext: testMain.MainConfig().BasicContext,
-				ConfigPath:   testMain.MainConfig().ConfigPath,
-			},
-			args:    args{configs: []*Config{NewContext(context_type.TypeConfig, "existing.conf").(*Config)}},
-			want:    []*Config{existingConfig},
-			wantErr: false,
-		},
-		{
-			name: "add config edge error",
-			fields: fields{
-				BasicContext: nullPathConfig.BasicContext,
-				ConfigPath:   nullPathConfig.ConfigPath,
-			},
-			args:    args{configs: []*Config{existingConfig}},
-			want:    make([]*Config, 0),
-			wantErr: true,
-		},
-		{
-			name: "cycles include",
-			fields: fields{
-				BasicContext: bConfig.BasicContext,
-				ConfigPath:   bConfig.ConfigPath,
-			},
-			args:    args{configs: []*Config{aConfig}},
-			want:    make([]*Config, 0),
-			wantErr: true,
-		},
-		{
-			name: "include valid and invalid configs",
-			fields: fields{
-				BasicContext: bConfig.BasicContext,
-				ConfigPath:   bConfig.ConfigPath,
-			},
-			args:    args{configs: []*Config{aConfig, existingConfig}},
-			want:    []*Config{existingConfig},
-			wantErr: true,
-		},
-		{
-			name: "include valid configs",
-			fields: fields{
-				BasicContext: testMain.MainConfig().BasicContext,
-				ConfigPath:   testMain.MainConfig().ConfigPath,
-			},
-			args:    args{configs: []*Config{aConfig, bConfig, cConfig}},
-			want:    []*Config{aConfig, bConfig, cConfig},
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := &Config{
-				BasicContext: tt.fields.BasicContext,
-				ConfigPath:   tt.fields.ConfigPath,
-			}
-			isSame := func(got, want []*Config) bool {
-				if len(got) != len(want) {
-					return false
-				}
-				father, ok := c.Father().(MainContext)
-				if !ok && len(got) != 0 {
-					t.Errorf("father context is not main context")
-					return false
-				}
-				for i := range got {
-					if wantCache, _ := father.GetConfig(want[i].FullPath()); got[i] != want[i] && got[i] != wantCache {
-						return false
-					}
-				}
-				return true
-			}
-			got, err := c.includeConfig(tt.args.configs...)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("includeConfig() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !isSame(got, tt.want) {
-				t.Errorf("includeConfig() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestConfig_isInGraph(t *testing.T) {
 	// main config
 	testMain, err := NewMain("C:\\test\\nginx.conf")
@@ -689,7 +358,6 @@ func TestConfig_isInGraph(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
 	type fields struct {
 		BasicContext BasicContext
 		ConfigPath   context.ConfigPath
@@ -745,220 +413,18 @@ func TestConfig_isInGraph(t *testing.T) {
 	}
 }
 
-func TestConfig_modifyPathInGraph(t *testing.T) {
-	// main config
-	testMain, err := NewMain("C:\\test\\nginx.conf")
-	if err != nil {
-		t.Fatal(err)
-	}
-	testMain.Insert(
-		NewContext(context_type.TypeHttp, "").
-			Insert(NewContext(context_type.TypeInlineComment, "test comment"), 0).
-			Insert(
-				NewContext(context_type.TypeServer, "").
-					Insert(NewContext(context_type.TypeDirective, "server_name testserver"), 0).
-					Insert(
-						NewContext(context_type.TypeLocation, "~ /test"),
-						1,
-					),
-				1,
-			),
-		0,
-	)
-	_, err = testMain.MainConfig().includeConfig(
-		NewContext(context_type.TypeConfig, "a.conf").(*Config),
-		NewContext(context_type.TypeConfig, "b.conf").(*Config),
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-	aConfig, err := testMain.GetConfig("C:\\test\\a.conf")
-	if err != nil {
-		t.Fatal(err)
-	}
-	bConfig, err := testMain.GetConfig("C:\\test\\b.conf")
-	if err != nil {
-		t.Fatal(err)
-	}
-	type args struct {
-		path string
-	}
-	tests := []struct {
-		name    string
-		fields  *Config
-		args    args
-		wantErr bool
-	}{
-		{
-			name:    "config has not been added into a graph",
-			fields:  &Config{BasicContext: aConfig.BasicContext},
-			args:    args{path: "b.conf"},
-			wantErr: false,
-		},
-		{
-			name:    "modify to null string path",
-			fields:  aConfig,
-			args:    args{path: ""},
-			wantErr: true,
-		},
-		{
-			name:    "modify to same path",
-			fields:  aConfig,
-			args:    args{path: aConfig.Value()},
-			wantErr: false,
-		},
-		{
-			name:    "modify to another path already exist in graph",
-			fields:  aConfig,
-			args:    args{path: bConfig.Value()},
-			wantErr: true,
-		},
-		{
-			name: "modify same config, but different from cache in the graph",
-			fields: &Config{
-				BasicContext: aConfig.BasicContext,
-				ConfigPath:   aConfig.ConfigPath,
-			},
-			args:    args{path: "c.conf"},
-			wantErr: false,
-		},
-		{
-			name:    "modify config path",
-			fields:  aConfig,
-			args:    args{path: "c.conf"},
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := tt.fields
-			if err := c.modifyPathInGraph(tt.args.path); (err != nil) != tt.wantErr {
-				t.Errorf("modifyPathInGraph() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func TestConfig_removeIncludedConfig(t *testing.T) {
-	// main config
-	testMain, err := NewMain("C:\\test\\nginx.conf")
-	if err != nil {
-		t.Fatal(err)
-	}
-	testMain.Insert(
-		NewContext(context_type.TypeHttp, "").
-			Insert(NewContext(context_type.TypeInlineComment, "test comment"), 0).
-			Insert(
-				NewContext(context_type.TypeServer, "").
-					Insert(NewContext(context_type.TypeDirective, "server_name testserver"), 0).
-					Insert(
-						NewContext(context_type.TypeLocation, "~ /test"),
-						1,
-					),
-				1,
-			),
-		0,
-	)
-	_, err = testMain.MainConfig().includeConfig(
-		NewContext(context_type.TypeConfig, "C:\\test\\existing.conf").(*Config),
-		NewContext(context_type.TypeConfig, "a.conf").(*Config),
-		NewContext(context_type.TypeConfig, "b.conf").(*Config),
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-	existingConfig, err := testMain.GetConfig("C:\\test\\existing.conf")
-	if err != nil {
-		t.Fatal(err)
-	}
-	aConfig, err := testMain.GetConfig("C:\\test\\a.conf")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// different main config
-	diffTestMain, _ := NewMain("C:\\test2\\nginx.conf")
-	// different graph config
-	diffGraphConfig := NewContext(context_type.TypeConfig, "C:\\test\\test2.conf").(*Config)
-	_, err = diffTestMain.MainConfig().includeConfig(diffGraphConfig)
-	if err != nil {
-		t.Fatal(err)
-	}
-	//diffGraphConfigPath, _ := newConfigPath(testMain, diffGraphConfig.Value())
-
+func TestConfig_mainContext(t *testing.T) {
 	type fields struct {
 		BasicContext BasicContext
 		ConfigPath   context.ConfigPath
 	}
-	type args struct {
-		configs []*Config
-	}
 	tests := []struct {
 		name    string
 		fields  fields
-		args    args
-		want    []*Config
+		want    MainContext
 		wantErr bool
 	}{
-		{
-			name: "nil configs",
-			fields: fields{
-				BasicContext: testMain.MainConfig().BasicContext,
-				ConfigPath:   testMain.MainConfig().ConfigPath,
-			},
-			want:    []*Config{},
-			wantErr: true,
-		},
-		{
-			name: "remove invalid config",
-			fields: fields{
-				BasicContext: testMain.MainConfig().BasicContext,
-				ConfigPath:   testMain.MainConfig().ConfigPath,
-			},
-			args:    args{configs: []*Config{nil}},
-			want:    []*Config{},
-			wantErr: true,
-		},
-		{
-			name: "removed config is in the other graph",
-			fields: fields{
-				BasicContext: testMain.MainConfig().BasicContext,
-				ConfigPath:   testMain.MainConfig().ConfigPath,
-			},
-			args:    args{configs: []*Config{diffGraphConfig}},
-			want:    []*Config{diffGraphConfig},
-			wantErr: true,
-		},
-		{
-			name: "removed existing config",
-			fields: fields{
-				BasicContext: testMain.MainConfig().BasicContext,
-				ConfigPath:   testMain.MainConfig().ConfigPath,
-			},
-			args:    args{configs: []*Config{existingConfig}},
-			want:    []*Config{existingConfig},
-			wantErr: false,
-		},
-		{
-			name: "removed configs with some invalid configs",
-			fields: fields{
-				BasicContext: testMain.MainConfig().BasicContext,
-				ConfigPath:   testMain.MainConfig().ConfigPath,
-			},
-			args:    args{configs: []*Config{nil, aConfig, diffGraphConfig}},
-			want:    []*Config{},
-			wantErr: true,
-		},
-		{
-			name: "removed configs with unbound config",
-			fields: fields{
-				BasicContext: testMain.MainConfig().BasicContext,
-				ConfigPath:   testMain.MainConfig().ConfigPath,
-			},
-			args:    args{configs: []*Config{aConfig, diffGraphConfig}},
-			want:    []*Config{aConfig, diffGraphConfig},
-			wantErr: true,
-		},
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -966,13 +432,13 @@ func TestConfig_removeIncludedConfig(t *testing.T) {
 				BasicContext: tt.fields.BasicContext,
 				ConfigPath:   tt.fields.ConfigPath,
 			}
-			got, err := c.removeIncludedConfig(tt.args.configs...)
+			got, err := c.mainContext()
 			if (err != nil) != tt.wantErr {
-				t.Errorf("removeIncludedConfig() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("mainContext() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("removeIncludedConfig() got = %v, want %v", got, tt.want)
+				t.Errorf("mainContext() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -998,7 +464,7 @@ func Test_configGraph_AddConfig(t *testing.T) {
 			),
 		0,
 	)
-	_, err = testMain.MainConfig().includeConfig(NewContext(context_type.TypeConfig, "a.conf").(*Config))
+	err = testMain.AddConfig(NewContext(context_type.TypeConfig, "a.conf").(*Config))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1067,8 +533,13 @@ func Test_configGraph_AddEdge(t *testing.T) {
 			),
 		0,
 	)
-	_, err = testMain.MainConfig().includeConfig(
+	err = testMain.AddConfig(
 		NewContext(context_type.TypeConfig, "a.conf").(*Config),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = testMain.AddConfig(
 		NewContext(context_type.TypeConfig, "b.conf").(*Config),
 	)
 	if err != nil {
@@ -1084,7 +555,7 @@ func Test_configGraph_AddEdge(t *testing.T) {
 	}
 
 	otherMain, _ := NewMain("C:\\test1\\nginx.conf")
-	_, err = otherMain.MainConfig().includeConfig(
+	err = otherMain.AddConfig(
 		NewContext(context_type.TypeConfig, "other.conf").(*Config),
 	)
 	if err != nil {
@@ -1223,7 +694,7 @@ func Test_configGraph_GetConfig(t *testing.T) {
 			),
 		0,
 	)
-	_, err = testMain.MainConfig().includeConfig(
+	err = testMain.AddConfig(
 		NewContext(context_type.TypeConfig, "a.conf").(*Config),
 	)
 	if err != nil {
@@ -1273,6 +744,31 @@ func Test_configGraph_GetConfig(t *testing.T) {
 	}
 }
 
+func Test_configGraph_ListConfigs(t *testing.T) {
+	type fields struct {
+		graph      graph.Graph[string, *Config]
+		mainConfig *Config
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   []*Config
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &configGraph{
+				graph:      tt.fields.graph,
+				mainConfig: tt.fields.mainConfig,
+			}
+			if got := c.ListConfigs(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ListConfigs() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func Test_configGraph_MainConfig(t *testing.T) {
 	type fields struct {
 		graph      graph.Graph[string, *Config]
@@ -1298,6 +794,103 @@ func Test_configGraph_MainConfig(t *testing.T) {
 	}
 }
 
+func Test_configGraph_RemoveConfig(t *testing.T) {
+	// main config
+	testMain, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	testMain.Insert(
+		NewContext(context_type.TypeHttp, "").
+			Insert(NewContext(context_type.TypeInlineComment, "test comment"), 0).
+			Insert(
+				NewContext(context_type.TypeServer, "").
+					Insert(NewContext(context_type.TypeDirective, "server_name testserver"), 0).
+					Insert(
+						NewContext(context_type.TypeLocation, "~ /test"),
+						1,
+					).
+					Insert(
+						NewContext(context_type.TypeInclude, "test.conf"),
+						2,
+					),
+				1,
+			),
+		0,
+	)
+	err = testMain.AddConfig(
+		NewContext(context_type.TypeConfig, "a.conf").(*Config),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = testMain.AddConfig(
+		NewContext(context_type.TypeConfig, "2exist.conf").(*Config),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = testMain.AddConfig(
+		NewContext(context_type.TypeConfig, "inedge.conf").Insert(NewContext(context_type.TypeInclude, "test.conf"), 0).(*Config),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = testMain.AddConfig(
+		NewContext(context_type.TypeConfig, "test.conf").Insert(NewContext(context_type.TypeInclude, "outedge.conf"), 0).(*Config),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	nonexistentConfig := NewContext(context_type.TypeConfig, "C:\\test\\nonexistent_config.conf").(*Config)
+	nonexistentConfig.ConfigPath, err = newConfigPath(testMain, nonexistentConfig.ContextValue)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testConfig, err := testMain.GetConfig("C:\\test\\test.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	type args struct {
+		config *Config
+	}
+	tests := []struct {
+		name    string
+		fields  ConfigGraph
+		args    args
+		wantErr bool
+	}{
+		{
+			name:    "remove config does not exist",
+			fields:  testMain.graph(),
+			args:    args{config: nonexistentConfig},
+			wantErr: true,
+		},
+		{
+			name:    "remove main config",
+			fields:  testMain.graph(),
+			args:    args{config: testMain.MainConfig()},
+			wantErr: true,
+		},
+		{
+			name:    "normal test",
+			fields:  testMain.graph(),
+			args:    args{config: testConfig},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := tt.fields
+			if err := c.RemoveConfig(tt.args.config); (err != nil) != tt.wantErr {
+				t.Errorf("RemoveConfig() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
 func Test_configGraph_RemoveEdge(t *testing.T) {
 	// main config
 	testMain, err := NewMain("C:\\test\\nginx.conf")
@@ -1318,16 +911,43 @@ func Test_configGraph_RemoveEdge(t *testing.T) {
 			),
 		0,
 	)
-	testMain.MainConfig().includeConfig(NewContext(context_type.TypeConfig, "a.conf").(*Config))
-	a, _ := testMain.GetConfig("C:\\test\\a.conf")
-	a.includeConfig(NewContext(context_type.TypeConfig, "b.conf").(*Config))
-	b, _ := testMain.GetConfig("C:\\test\\b.conf")
-	b.includeConfig(NewContext(context_type.TypeConfig, "c.conf").(*Config))
-	c, _ := testMain.GetConfig("C:\\test\\c.conf")
+	err = testMain.addVertex(NewContext(context_type.TypeConfig, "a.conf").(*Config))
+	if err != nil {
+		t.Fatal(err)
+	}
+	a, err := testMain.GetConfig("C:\\test\\a.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = testMain.addVertex(NewContext(context_type.TypeConfig, "b.conf").(*Config))
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, err := testMain.GetConfig("C:\\test\\b.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = testMain.AddEdge(a, b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = testMain.addVertex(NewContext(context_type.TypeConfig, "c.conf").(*Config))
+	if err != nil {
+		t.Fatal(err)
+	}
+	c, err := testMain.GetConfig("C:\\test\\c.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = testMain.AddEdge(b, c)
+	if err != nil {
+		t.Fatal(err)
+	}
 	notInGraphConfig := NewContext(context_type.TypeConfig, "notingraph.conf").(*Config)
 	type args struct {
-		src *Config
-		dst *Config
+		src     *Config
+		dst     *Config
+		keepDst bool
 	}
 	tests := []struct {
 		name    string
@@ -1366,14 +986,14 @@ func Test_configGraph_RemoveEdge(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := tt.fields
-			if err := c.RemoveEdge(tt.args.src, tt.args.dst); (err != nil) != tt.wantErr {
+			if err := c.RemoveEdge(tt.args.src, tt.args.dst, tt.args.keepDst); (err != nil) != tt.wantErr {
 				t.Errorf("RemoveEdge() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
 }
 
-func Test_configGraph_RenewConfigPath(t *testing.T) {
+func Test_configGraph_RenameConfig(t *testing.T) {
 	// main config
 	testMain, err := NewMain("C:\\test\\nginx.conf")
 	if err != nil {
@@ -1388,16 +1008,35 @@ func Test_configGraph_RenewConfigPath(t *testing.T) {
 					Insert(
 						NewContext(context_type.TypeLocation, "~ /test"),
 						1,
+					).
+					Insert(
+						NewContext(context_type.TypeInclude, "test.conf"),
+						2,
 					),
 				1,
 			),
 		0,
 	)
-	_, err = testMain.MainConfig().includeConfig(
+	err = testMain.AddConfig(
 		NewContext(context_type.TypeConfig, "a.conf").(*Config),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = testMain.AddConfig(
 		NewContext(context_type.TypeConfig, "2exist.conf").(*Config),
-		NewContext(context_type.TypeConfig, "inedge.conf").(*Config),
-		NewContext(context_type.TypeConfig, "test.conf").(*Config),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = testMain.AddConfig(
+		NewContext(context_type.TypeConfig, "inedge.conf").Insert(NewContext(context_type.TypeInclude, "test.conf"), 0).(*Config),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = testMain.AddConfig(
+		NewContext(context_type.TypeConfig, "test.conf").Insert(NewContext(context_type.TypeInclude, "outedge.conf"), 0).(*Config),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -1412,24 +1051,23 @@ func Test_configGraph_RenewConfigPath(t *testing.T) {
 	}
 	renew2existConfig.ConfigPath = aConfig.ConfigPath
 
-	inEdgeConfig, err := testMain.GetConfig("C:\\test\\inedge.conf")
-	if err != nil {
-		t.Fatal(err)
-	}
+	//inEdgeConfig, err := testMain.GetConfig("C:\\test\\inedge.conf")
+	//if err != nil {
+	//	t.Fatal(err)
+	//}
 
 	testConfig, err := testMain.GetConfig("C:\\test\\test.conf")
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, _ = inEdgeConfig.includeConfig(testConfig)
-	_, _ = testConfig.includeConfig(NewContext(context_type.TypeConfig, "outedge.conf").(*Config))
-	testConfig.ConfigPath, err = newConfigPath(testMain, "modified.conf")
-	if err != nil {
-		t.Fatal(err)
-	}
+	//testMain.AddEdge(inEdgeConfig, testConfig)
+	//testMain.AddEdge(testConfig, NewContext(context_type.TypeConfig, "outedge.conf").(*Config))
+	test2Main := testMain.Clone().(MainContext)
+	test3Main := testMain.Clone().(MainContext)
 
 	type args struct {
-		fullpath string
+		oldFullPath string
+		newPath     string
 	}
 	tests := []struct {
 		name    string
@@ -1438,35 +1076,83 @@ func Test_configGraph_RenewConfigPath(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "not exist config",
-			fields:  testMain.graph(),
-			args:    args{fullpath: "notexist.conf"},
+			name:   "not exist config",
+			fields: testMain.graph(),
+			args: args{
+				oldFullPath: "notexist.conf",
+				newPath:     "test.conf",
+			},
 			wantErr: true,
 		},
 		{
-			name:    "need not renew config",
-			fields:  testMain.graph(),
-			args:    args{fullpath: configHash(testMain.MainConfig())},
+			name:   "need not renew config",
+			fields: testMain.graph(),
+			args: args{
+				oldFullPath: configHash(testMain.MainConfig()),
+				newPath:     configHash(testMain.MainConfig()),
+			},
 			wantErr: false,
 		},
 		{
-			name:    "renew to exist config",
-			fields:  testMain.graph(),
-			args:    args{fullpath: "C:\\test\\2exist.conf"},
+			name:   "renew to exist config",
+			fields: testMain.graph(),
+			args: args{
+				oldFullPath: configHash(aConfig),
+				newPath:     "2exist.conf",
+			},
 			wantErr: true,
 		},
 		{
-			name:    "normal test",
-			fields:  testMain.graph(),
-			args:    args{fullpath: "C:\\test\\test.conf"},
+			name:   "normal test",
+			fields: testMain.graph(),
+			args: args{
+				oldFullPath: configHash(testConfig),
+				newPath:     "modified.conf",
+			},
 			wantErr: false,
+		},
+		{
+			name:   "rename main config(relative path)",
+			fields: testMain.graph(),
+			args: args{
+				oldFullPath: configHash(testMain.MainConfig()),
+				newPath:     "modified_nginx.conf",
+			},
+			wantErr: false,
+		},
+		{
+			name:   "rename main config(absolut path)",
+			fields: test2Main.graph(),
+			args: args{
+				oldFullPath: configHash(test2Main.MainConfig()),
+				newPath:     "C:\\test\\another_modified_nginx.conf",
+			},
+			wantErr: false,
+		},
+		{
+			name:   "rename main config to another dir(relative path)",
+			fields: test3Main.graph(),
+			args: args{
+				oldFullPath: configHash(test3Main.MainConfig()),
+				newPath:     "../another_dir/modified_nginx.conf",
+			},
+			wantErr: true,
+		},
+		{
+			name:   "rename main config to another dir(absolut path)",
+			fields: test3Main.graph(),
+			args: args{
+				oldFullPath: configHash(test3Main.MainConfig()),
+				newPath:     "D:\\another_dir\\modified_nginx.conf",
+			},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := tt.fields
-			if err := c.RenewConfigPath(tt.args.fullpath); (err != nil) != tt.wantErr {
-				t.Errorf("RenewConfigPath() error = %v, wantErr %v", err, tt.wantErr)
+			if err := c.RenameConfig(tt.args.oldFullPath, tt.args.newPath); (err != nil) != tt.wantErr {
+				t.Errorf("RenameConfig() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
@@ -1487,33 +1173,36 @@ func Test_configGraph_Topology(t *testing.T) {
 					Insert(
 						NewContext(context_type.TypeLocation, "~ /test"),
 						1,
+					).
+					Insert(
+						NewContext(context_type.TypeInclude, "a.conf"),
+						2,
 					),
 				1,
 			),
 		0,
 	)
-	testMain.MainConfig().includeConfig(NewContext(context_type.TypeConfig, "a.conf").(*Config))
-	a, _ := testMain.GetConfig("C:\\test\\a.conf")
-	a.includeConfig(NewContext(context_type.TypeConfig, "b.conf").(*Config))
-	b, _ := testMain.GetConfig("C:\\test\\b.conf")
-	b.includeConfig(NewContext(context_type.TypeConfig, "c.conf").(*Config))
-	c, _ := testMain.GetConfig("C:\\test\\c.conf")
-	c.includeConfig(NewContext(context_type.TypeConfig, "d.conf").(*Config))
-	d, _ := testMain.GetConfig("C:\\test\\d.conf")
-	e := NewContext(context_type.TypeConfig, "e.conf").(*Config)
-	e.ConfigPath, _ = newConfigPath(testMain, e.Value())
-	err = testMain.AddConfig(e)
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = e.includeConfig(
-		a,
-		NewContext(context_type.TypeConfig, "f.conf").(*Config),
-		NewContext(context_type.TypeConfig, "g.conf").(*Config),
+	testMain.AddConfig(NewContext(context_type.TypeConfig, "a.conf").Insert(NewContext(context_type.TypeInclude, "b.conf"), 0).(*Config))
+	testMain.AddConfig(NewContext(context_type.TypeConfig, "b.conf").Insert(NewContext(context_type.TypeInclude, "c.conf"), 0).(*Config))
+	testMain.AddConfig(NewContext(context_type.TypeConfig, "c.conf").Insert(NewContext(context_type.TypeInclude, "d.conf"), 0).(*Config))
+	testMain.AddConfig(NewContext(context_type.TypeConfig, "d.conf").(*Config))
+	testMain.AddConfig(
+		NewContext(context_type.TypeConfig, "e.conf").
+			Insert(
+				NewContext(context_type.TypeInclude, "f.conf"),
+				0,
+			).
+			Insert(
+				NewContext(context_type.TypeInclude, "g.conf"),
+				1,
+			).(*Config),
 	)
-	if err != nil {
-		t.Fatal(err)
-	}
+	testMain.AddConfig(NewContext(context_type.TypeConfig, "f.conf").(*Config))
+	testMain.AddConfig(NewContext(context_type.TypeConfig, "g.conf").(*Config))
+	a, _ := testMain.GetConfig("C:\\test\\a.conf")
+	b, _ := testMain.GetConfig("C:\\test\\b.conf")
+	c, _ := testMain.GetConfig("C:\\test\\c.conf")
+	d, _ := testMain.GetConfig("C:\\test\\d.conf")
 
 	tests := []struct {
 		name   string
@@ -1536,7 +1225,90 @@ func Test_configGraph_Topology(t *testing.T) {
 	}
 }
 
-func Test_configGraph_removeConfig(t *testing.T) {
+func Test_configGraph_addVertex(t *testing.T) {
+	type fields struct {
+		graph      graph.Graph[string, *Config]
+		mainConfig *Config
+	}
+	type args struct {
+		v *Config
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &configGraph{
+				graph:      tt.fields.graph,
+				mainConfig: tt.fields.mainConfig,
+			}
+			if err := c.addVertex(tt.args.v); (err != nil) != tt.wantErr {
+				t.Errorf("addVertex() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_configGraph_checkOperatedVertex(t *testing.T) {
+	type fields struct {
+		graph      graph.Graph[string, *Config]
+		mainConfig *Config
+	}
+	type args struct {
+		v *Config
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &configGraph{
+				graph:      tt.fields.graph,
+				mainConfig: tt.fields.mainConfig,
+			}
+			if err := c.checkOperatedVertex(tt.args.v); (err != nil) != tt.wantErr {
+				t.Errorf("checkOperatedVertex() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_configGraph_cleanupGraph(t *testing.T) {
+	type fields struct {
+		graph      graph.Graph[string, *Config]
+		mainConfig *Config
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &configGraph{
+				graph:      tt.fields.graph,
+				mainConfig: tt.fields.mainConfig,
+			}
+			if err := c.cleanupGraph(); (err != nil) != tt.wantErr {
+				t.Errorf("cleanupGraph() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_configGraph_removeVertex(t *testing.T) {
 	// main config
 	testMain, err := NewMain("C:\\test\\nginx.conf")
 	if err != nil {
@@ -1551,34 +1323,42 @@ func Test_configGraph_removeConfig(t *testing.T) {
 					Insert(
 						NewContext(context_type.TypeLocation, "~ /test"),
 						1,
+					).
+					Insert(
+						NewContext(context_type.TypeInclude, "a.conf"),
+						2,
 					),
 				1,
 			),
 		0,
 	)
-	testMain.MainConfig().includeConfig(NewContext(context_type.TypeConfig, "a.conf").(*Config))
-	a, _ := testMain.GetConfig("C:\\test\\a.conf")
-	a.includeConfig(NewContext(context_type.TypeConfig, "b.conf").(*Config))
-	b, _ := testMain.GetConfig("C:\\test\\b.conf")
-	b.includeConfig(NewContext(context_type.TypeConfig, "c.conf").(*Config))
-	c, _ := testMain.GetConfig("C:\\test\\c.conf")
-	c.includeConfig(NewContext(context_type.TypeConfig, "d.conf").(*Config))
-	d, _ := testMain.GetConfig("C:\\test\\d.conf")
-	err = testMain.graph().(*configGraph).graph.RemoveEdge(configHash(c), configHash(d))
-	if err != nil {
-		t.Fatal(err)
-	}
-	e := NewContext(context_type.TypeConfig, "e.conf").(*Config)
-	e.ConfigPath, _ = newConfigPath(testMain, e.Value())
-	err = testMain.AddConfig(e)
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = e.includeConfig(
-		a,
-		NewContext(context_type.TypeConfig, "f.conf").(*Config),
-		NewContext(context_type.TypeConfig, "g.conf").(*Config),
+	testMain.AddConfig(NewContext(context_type.TypeConfig, "a.conf").Insert(NewContext(context_type.TypeInclude, "b.conf"), 0).(*Config))
+	testMain.AddConfig(NewContext(context_type.TypeConfig, "b.conf").Insert(NewContext(context_type.TypeInclude, "c.conf"), 0).(*Config))
+	testMain.AddConfig(NewContext(context_type.TypeConfig, "c.conf").Insert(NewContext(context_type.TypeInclude, "d.conf"), 0).(*Config))
+	testMain.AddConfig(NewContext(context_type.TypeConfig, "d.conf").(*Config))
+	testMain.AddConfig(
+		NewContext(context_type.TypeConfig, "e.conf").
+			Insert(
+				NewContext(context_type.TypeInclude, "a.conf"),
+				0,
+			).
+			Insert(
+				NewContext(context_type.TypeInclude, "f.conf"),
+				1,
+			).
+			Insert(
+				NewContext(context_type.TypeInclude, "g.conf"),
+				2,
+			).(*Config),
 	)
+	testMain.AddConfig(NewContext(context_type.TypeConfig, "f.conf").(*Config))
+	testMain.AddConfig(NewContext(context_type.TypeConfig, "g.conf").(*Config))
+	a, _ := testMain.GetConfig("C:\\test\\a.conf")
+	c, _ := testMain.GetConfig("C:\\test\\c.conf")
+	d, _ := testMain.GetConfig("C:\\test\\d.conf")
+	e, _ := testMain.GetConfig("C:\\test\\e.conf")
+	e.Child(0).(*Include).load()
+	err = testMain.graph().(*configGraph).graph.RemoveEdge(configHash(c), configHash(d))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1613,8 +1393,58 @@ func Test_configGraph_removeConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := tt.fields
-			if err := c.removeConfig(tt.args.config); (err != nil) != tt.wantErr {
-				t.Errorf("removeConfig() error = %v, wantErr %v", err, tt.wantErr)
+			if err := c.removeVertex(tt.args.config); (err != nil) != tt.wantErr {
+				t.Errorf("removeVertex() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_configGraph_renderGraph(t *testing.T) {
+	type fields struct {
+		graph      graph.Graph[string, *Config]
+		mainConfig *Config
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &configGraph{
+				graph:      tt.fields.graph,
+				mainConfig: tt.fields.mainConfig,
+			}
+			if err := c.renderGraph(); (err != nil) != tt.wantErr {
+				t.Errorf("renderGraph() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_configGraph_rerenderGraph(t *testing.T) {
+	type fields struct {
+		graph      graph.Graph[string, *Config]
+		mainConfig *Config
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &configGraph{
+				graph:      tt.fields.graph,
+				mainConfig: tt.fields.mainConfig,
+			}
+			if err := c.rerenderGraph(); (err != nil) != tt.wantErr {
+				t.Errorf("rerenderGraph() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
@@ -1640,11 +1470,13 @@ func Test_configGraph_setFatherFor(t *testing.T) {
 			),
 		0,
 	)
-	testMain.MainConfig().includeConfig(NewContext(context_type.TypeConfig, "a.conf").(*Config))
+	testMain.AddConfig(NewContext(context_type.TypeConfig, "a.conf").(*Config))
 	a, _ := testMain.GetConfig("C:\\test\\a.conf")
+	absolutPathConfig := NewContext(context_type.TypeConfig, "D:\\absolut_path\\a.conf").(*Config)
+	absolutPathConfig.ConfigPath, _ = context.NewAbsConfigPath("D:\\absolut_path\\a.conf")
 	diffMain, _ := NewMain("C:\\test2\\nginx.conf")
 	diffGraphConfig := NewContext(context_type.TypeConfig, "different_graph.conf").(*Config)
-	_, err = diffMain.MainConfig().includeConfig(diffGraphConfig)
+	err = diffMain.AddConfig(diffGraphConfig)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1684,6 +1516,12 @@ func Test_configGraph_setFatherFor(t *testing.T) {
 			name:    "new config",
 			fields:  testMain.graph().(*configGraph),
 			args:    args{NewContext(context_type.TypeConfig, "new.conf").(*Config)},
+			wantErr: false,
+		},
+		{
+			name:    "absolut path config",
+			fields:  testMain.graph().(*configGraph),
+			args:    args{absolutPathConfig},
 			wantErr: false,
 		},
 	}
@@ -1744,6 +1582,32 @@ func Test_configHash(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := configHash(tt.args.t); got != tt.want {
 				t.Errorf("configHash() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_newConfigGraph(t *testing.T) {
+	type args struct {
+		mainConfig *Config
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    ConfigGraph
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := newConfigGraph(tt.args.mainConfig)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("newConfigGraph() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("newConfigGraph() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -1835,66 +1699,6 @@ func Test_registerConfigBuilder(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := registerConfigBuilder(); (err != nil) != tt.wantErr {
 				t.Errorf("registerConfigBuilder() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func Test_newConfigGraph(t *testing.T) {
-	testMain, err := NewMain("C:\\test\\nginx.conf")
-	if err != nil {
-		t.Fatal(err)
-	}
-	cloneMain := testMain.Clone().(*Main)
-	cloneMain.MainConfig().ConfigPath = nil
-	cloneMain.ConfigGraph = &configGraph{mainConfig: cloneMain.MainConfig()}
-	newMainConf := NewContext(context_type.TypeConfig, "C:\\test\\newmain.conf").(*Config)
-	newMainConf.ConfigPath, _ = context.NewAbsConfigPath(newMainConf.Value())
-	newGraph := graph.New(configHash, graph.PreventCycles(), graph.Directed())
-	err = newGraph.AddVertex(newMainConf)
-	if err != nil {
-		t.Fatal(err)
-	}
-	type args struct {
-		mainConfig *Config
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    ConfigGraph
-		wantErr bool
-	}{
-		{
-			name:    "set config graph for main config already exist",
-			args:    args{mainConfig: testMain.MainConfig()},
-			wantErr: true,
-		},
-		{
-			name:    "main config is in another graph",
-			args:    args{cloneMain.MainConfig()},
-			wantErr: true,
-		},
-		{
-			name: "normal test",
-			args: args{mainConfig: newMainConf},
-			want: &configGraph{
-				graph:      newGraph,
-				mainConfig: newMainConf,
-			},
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := newConfigGraph(tt.args.mainConfig)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("newConfigGraph() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if got != nil && tt.want != nil &&
-				(!reflect.DeepEqual(got.MainConfig(), tt.want.MainConfig()) ||
-					!reflect.DeepEqual(got.Topology(), tt.want.Topology())) {
-				t.Errorf("newConfigGraph() got = %v, want %v", got, tt.want)
 			}
 		})
 	}

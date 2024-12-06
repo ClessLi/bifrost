@@ -267,7 +267,11 @@ func TestMain_MarshalJSON(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = testIncludes.InsertConfig(location1conf, location2conf)
+	err = testMain.AddConfig(location1conf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = testMain.AddConfig(location2conf)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -133,7 +133,12 @@ func (m *Main) Clone() context.Context {
 	if err != nil {
 		return context.ErrContext(err)
 	}
-	return &Main{ConfigGraph: g}
+	clone := &Main{ConfigGraph: g}
+	err = cloneConfig.SetFather(clone)
+	if err != nil {
+		return context.ErrContext(err)
+	}
+	return clone
 }
 
 func NewMain(abspath string) (MainContext, error) {
@@ -158,4 +163,18 @@ func NewMain(abspath string) (MainContext, error) {
 
 func (m *Main) Type() context_type.ContextType {
 	return context_type.TypeMain
+}
+
+func (m *Main) IsEnabled() bool {
+	return m.MainConfig().IsEnabled()
+}
+
+func (m *Main) Enable() context.Context {
+	m.MainConfig().Enable()
+	return m
+}
+
+func (m *Main) Disable() context.Context {
+	m.MainConfig().Disable()
+	return m
 }

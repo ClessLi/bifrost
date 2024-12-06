@@ -30,4 +30,9 @@ type Context interface {
 
 	// dump
 	ConfigLines(isDumping bool) ([]string, error)
+
+	// Enable/disable conversion methods
+	IsEnabled() bool
+	Enable() Context
+	Disable() Context
 }

@@ -28,6 +28,18 @@ type ErrorContext struct {
 	errors []error
 }
 
+func (e *ErrorContext) IsEnabled() bool {
+	return true
+}
+
+func (e *ErrorContext) Enable() Context {
+	return e
+}
+
+func (e *ErrorContext) Disable() Context {
+	return e
+}
+
 func ErrContext(errs ...error) Context {
 	return errContext(errs)
 }

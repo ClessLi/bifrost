@@ -12,7 +12,7 @@ func TestModifyConfigPathInGraph(t *testing.T) {
 	}
 	childConfig := NewContext(context_type.TypeConfig, "test.conf").(*Config)
 
-	_, err = testMain.MainConfig().includeConfig(childConfig)
+	err = testMain.AddConfig(childConfig)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -102,6 +102,18 @@ func (c *Comment) ConfigLines(isDumping bool) ([]string, error) {
 	return []string{"# " + c.Value()}, nil
 }
 
+func (c *Comment) IsEnabled() bool {
+	return true
+}
+
+func (c *Comment) Enable() context.Context {
+	return c
+}
+
+func (c *Comment) Disable() context.Context {
+	return c
+}
+
 func registerCommentBuilder() error {
 	builderMap[context_type.TypeComment] = func(value string) context.Context {
 		return &Comment{

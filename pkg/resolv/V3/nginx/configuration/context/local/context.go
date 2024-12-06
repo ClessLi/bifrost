@@ -25,6 +25,7 @@ func OptsApplyTo(opts context.BuildOptions) (BuildBasicContextConfig, error) {
 
 func (b BuildBasicContextConfig) BasicContext() *BasicContext {
 	return &BasicContext{
+		Enabled:        true,
 		ContextType:    b.ContextType,
 		Children:       make([]context.Context, 0),
 		father:         context.NullContext(),

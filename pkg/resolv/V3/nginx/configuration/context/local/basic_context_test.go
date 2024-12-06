@@ -144,12 +144,13 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 		Insert(NewContext(context_type.TypeDirective, "server_name testserver"), 0).
 		Insert(NewContext(context_type.TypeLocation, "~ /test"), 1),
 		0)
-	err = includeCtx.InsertConfig(includeConfig)
+	err = withIncludeCtx.AddConfig(includeConfig)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	type fields struct {
+		Enabled        bool
 		ContextType    context_type.ContextType
 		ContextValue   string
 		Children       []context.Context
@@ -171,6 +172,7 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 		{
 			name: "1 level context, not for dumping",
 			fields: fields{
+				Enabled:        true,
 				ContextType:    context_type.TypeStream,
 				ContextValue:   "",
 				Children:       make([]context.Context, 0),
@@ -189,6 +191,7 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 		{
 			name: "2 level context, not for dumping",
 			fields: fields{
+				Enabled:        true,
 				ContextType:    _2levelctx.Type(),
 				ContextValue:   _2levelctx.Value(),
 				Children:       _2levelctx.(*BasicContext).Children,
@@ -208,6 +211,7 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 		{
 			name: "comments children context, not for dumping",
 			fields: fields{
+				Enabled:        true,
 				ContextType:    hasComments2levelctx.Type(),
 				ContextValue:   hasComments2levelctx.Value(),
 				Children:       hasComments2levelctx.(*BasicContext).Children,
@@ -229,6 +233,7 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 		{
 			name: "3 level context, not for dumping",
 			fields: fields{
+				Enabled:        true,
 				ContextType:    _3levelctx.Type(),
 				ContextValue:   _3levelctx.Value(),
 				Children:       _3levelctx.(*BasicContext).Children,
@@ -249,6 +254,7 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 		{
 			name: "with include context, not for dumping",
 			fields: fields{
+				Enabled:        true,
 				ContextType:    withIncludeCtx.Child(0).Type(),
 				ContextValue:   withIncludeCtx.Child(0).Value(),
 				Children:       withIncludeCtx.Child(0).(*BasicContext).Children,
@@ -273,6 +279,7 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 		{
 			name: "child ConfigLines() return error, not for dumping",
 			fields: fields{
+				Enabled:        true,
 				ContextType:    context_type.TypeHttp,
 				ContextValue:   "",
 				Children:       []context.Context{context.NullContext()},
@@ -288,6 +295,7 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 		{
 			name: "child is nil, not for dumping",
 			fields: fields{
+				Enabled:        true,
 				ContextType:    context_type.TypeHttp,
 				ContextValue:   "",
 				Children:       []context.Context{nil},
@@ -303,6 +311,7 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 		{
 			name: "1 level context, for dumping",
 			fields: fields{
+				Enabled:        true,
 				ContextType:    context_type.TypeStream,
 				ContextValue:   "",
 				Children:       make([]context.Context, 0),
@@ -321,6 +330,7 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 		{
 			name: "2 level context, for dumping",
 			fields: fields{
+				Enabled:        true,
 				ContextType:    _2levelctx.Type(),
 				ContextValue:   _2levelctx.Value(),
 				Children:       _2levelctx.(*BasicContext).Children,
@@ -340,6 +350,7 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 		{
 			name: "comments children context, for dumping",
 			fields: fields{
+				Enabled:        true,
 				ContextType:    hasComments2levelctx.Type(),
 				ContextValue:   hasComments2levelctx.Value(),
 				Children:       hasComments2levelctx.(*BasicContext).Children,
@@ -361,6 +372,7 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 		{
 			name: "3 level context, for dumping",
 			fields: fields{
+				Enabled:        true,
 				ContextType:    _3levelctx.Type(),
 				ContextValue:   _3levelctx.Value(),
 				Children:       _3levelctx.(*BasicContext).Children,
@@ -381,6 +393,7 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 		{
 			name: "with include context, for dumping",
 			fields: fields{
+				Enabled:        true,
 				ContextType:    withIncludeCtx.Child(0).Type(),
 				ContextValue:   withIncludeCtx.Child(0).Value(),
 				Children:       withIncludeCtx.Child(0).(*BasicContext).Children,
@@ -400,6 +413,7 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 		{
 			name: "child ConfigLines() return error, for dumping",
 			fields: fields{
+				Enabled:        true,
 				ContextType:    context_type.TypeHttp,
 				ContextValue:   "",
 				Children:       []context.Context{context.NullContext()},
@@ -415,6 +429,7 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 		{
 			name: "child is nil, for dumping",
 			fields: fields{
+				Enabled:        true,
 				ContextType:    context_type.TypeHttp,
 				ContextValue:   "",
 				Children:       []context.Context{nil},
@@ -431,6 +446,7 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			b := &BasicContext{
+				Enabled:        tt.fields.Enabled,
 				ContextType:    tt.fields.ContextType,
 				ContextValue:   tt.fields.ContextValue,
 				Children:       tt.fields.Children,

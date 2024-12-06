@@ -10,6 +10,7 @@ import (
 const INDENT = "    "
 
 type BasicContext struct {
+	Enabled      bool                     `json:"enabled,omitempty"`
 	ContextType  context_type.ContextType `json:"context-type"`
 	ContextValue string                   `json:"value,omitempty"`
 	Children     []context.Context        `json:"params,omitempty"`
@@ -105,7 +106,7 @@ func (b *BasicContext) Modify(ctx context.Context, idx int) context.Context {
 		return b.self
 	}
 
-	return b.Remove(idx).Insert(ctx, idx)
+	return b.self.Remove(idx).Insert(ctx, idx)
 }
 
 func (b *BasicContext) Father() context.Context {
@@ -159,6 +160,9 @@ func (b *BasicContext) QueryAllByKeyWords(kw context.KeyWords) []context.Pos {
 
 func (b *BasicContext) Clone() context.Context {
 	clone := NewContext(b.Type(), b.Value())
+	if !b.Enabled {
+		clone.Disable()
+	}
 	for i, child := range b.Children {
 		clone.Insert(child.Clone(), i)
 	}
@@ -170,9 +174,50 @@ func (b *BasicContext) SetValue(v string) error {
 	return nil
 }
 
-func (b *BasicContext) SetFather(ctx context.Context) error {
-	b.father = ctx
+func (b *BasicContext) operateIncludes(handle func(include *Include) error) error {
+	var errs []error
+	// call include context unload
+	includePoses := b.self.QueryAllByKeyWords(context.NewKeyWords(context_type.TypeInclude).SetCascaded(true))
+	for _, pos := range includePoses {
+		include, ok := pos.Target().(*Include)
+		if !ok {
+			errs = append(errs, errors.WithCode(code.ErrV3InvalidContext, "[%v] is not an Include context", pos.Target()))
+			continue
+		}
+		errs = append(errs, handle(include))
+	}
+	err := errors.NewAggregate(errs)
+	if err != nil {
+		return err
+	}
 	return nil
+}
+
+func (b *BasicContext) unloadIncludes() error {
+	return b.operateIncludes(func(include *Include) error {
+		return include.unload()
+	})
+}
+
+func (b *BasicContext) loadIncludes() error {
+	return b.operateIncludes(func(include *Include) error {
+		return include.load()
+	})
+}
+
+func (b *BasicContext) reloadIncludes() error {
+	return b.operateIncludes(func(include *Include) error {
+		return include.reload()
+	})
+}
+
+func (b *BasicContext) SetFather(ctx context.Context) error {
+	err := b.unloadIncludes()
+	if err != nil {
+		return err
+	}
+	b.father = ctx
+	return b.loadIncludes()
 }
 
 func (b *BasicContext) HasChild() bool {
@@ -228,11 +273,40 @@ func (b *BasicContext) ConfigLines(isDumping bool) ([]string, error) {
 		lines = append(lines, tail)
 	}
 
+	if !b.IsEnabled() && len(lines) > 0 {
+		for i := range lines {
+			lines[i] = "# " + lines[i]
+		}
+	}
+
 	return lines, nil
+}
+
+func (b *BasicContext) IsEnabled() bool {
+	return b.Enabled
+}
+
+func (b *BasicContext) Enable() context.Context {
+	b.Enabled = true
+	err := b.reloadIncludes()
+	if err != nil {
+		return context.ErrContext(err)
+	}
+	return b.self
+}
+
+func (b *BasicContext) Disable() context.Context {
+	b.Enabled = false
+	err := b.reloadIncludes()
+	if err != nil {
+		return context.ErrContext(err)
+	}
+	return b.self
 }
 
 func newBasicContext(ctxType context_type.ContextType, head func(context_type.ContextType, string) string, tail func() string) BasicContext {
 	return BasicContext{
+		Enabled:        true,
 		ContextType:    ctxType,
 		Children:       make([]context.Context, 0),
 		father:         context.NullContext(),

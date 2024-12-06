@@ -10,17 +10,20 @@ import (
 )
 
 type Directive struct {
-	Name   string
-	Params string
+	enabled bool
+	Name    string
+	Params  string
 
 	fatherContext context.Context
 }
 
 func (d *Directive) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
+		Enabled     bool                     `json:"enabled,omitempty"`
 		ContextType context_type.ContextType `json:"context-type"`
 		Value       string                   `json:"value"`
 	}{
+		Enabled:     d.IsEnabled(),
 		ContextType: d.Type(),
 		Value:       d.Value(),
 	})
@@ -56,6 +59,7 @@ func (d *Directive) QueryAllByKeyWords(kw context.KeyWords) []context.Pos {
 
 func (d *Directive) Clone() context.Context {
 	return &Directive{
+		enabled:       d.enabled,
 		Name:          d.Name,
 		Params:        d.Params,
 		fatherContext: d.fatherContext,
@@ -106,7 +110,25 @@ func (d *Directive) Error() error {
 }
 
 func (d *Directive) ConfigLines(isDumping bool) ([]string, error) {
-	return []string{d.Value() + ";"}, nil
+	line := d.Value() + ";"
+	if !d.IsEnabled() {
+		line = "# " + line
+	}
+	return []string{line}, nil
+}
+
+func (d *Directive) IsEnabled() bool {
+	return d.enabled
+}
+
+func (d *Directive) Enable() context.Context {
+	d.enabled = true
+	return d
+}
+
+func (d *Directive) Disable() context.Context {
+	d.enabled = false
+	return d
 }
 
 func registerDirectiveBuilder() error {
@@ -116,6 +138,7 @@ func registerDirectiveBuilder() error {
 			return context.ErrContext(errors.New("null value"))
 		}
 		d := &Directive{
+			enabled:       true,
 			Name:          strings.TrimSpace(kv[0]),
 			fatherContext: context.NullContext(),
 		}
