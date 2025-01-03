@@ -9,7 +9,7 @@ require (
 	github.com/dominikbraun/graph v0.23.0
 	github.com/go-kit/kit v0.13.0
 	github.com/go-sql-driver/mysql v1.7.1
-	github.com/golang-jwt/jwt/v4 v4.5.0
+	github.com/golang-jwt/jwt/v4 v4.5.1
 	github.com/golang/protobuf v1.5.3
 	github.com/hpcloud/tail v1.0.0
 	github.com/marmotedu/component-base v1.6.2
@@ -22,8 +22,8 @@ require (
 	github.com/spf13/viper v1.18.2
 	github.com/wxnacy/wgo v1.0.4
 	go.uber.org/zap v1.26.0
-	golang.org/x/net v0.21.0
-	golang.org/x/sync v0.6.0
+	golang.org/x/net v0.33.0
+	golang.org/x/sync v0.10.0
 	google.golang.org/grpc v1.61.1
 	google.golang.org/protobuf v1.33.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -72,8 +72,8 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20240213143201-ec583247a57a // indirect
-	golang.org/x/sys v0.17.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/text v0.21.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240213162025-012b6fc9bca9 // indirect
 	gopkg.in/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
@@ -81,6 +81,4 @@ require (
 	k8s.io/klog v1.0.0 // indirect
 )
 
-retract (
-    [v1.0.9, v1.0.10] // version number contaminated
-)
+retract [v1.0.9, v1.0.10] // version number contaminated
