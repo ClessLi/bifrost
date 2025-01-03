@@ -216,19 +216,30 @@ func (i *Include) load() error {
 	}
 	var errs []error
 	for _, includedConfig := range snapshot.includedConfigs {
-		errs = append(errs, snapshot.mainContext.AddEdge(snapshot.fatherConfig, includedConfig))
+		err = snapshot.mainContext.AddEdge(snapshot.fatherConfig, includedConfig)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
 		// call includes context loading, which is located in included configs
-		for _, pos := range includedConfig.QueryAllByKeyWords(context.NewKeyWords(context_type.TypeInclude).SetCascaded(true)) {
+		includeKeyWords := context.NewKeyWords(context_type.TypeInclude).
+			SetCascaded(true).
+			SetSkipQueryFilter(func(targetCtx context.Context) bool {
+				// skip the include context of indirect connections
+				targetInclude, ok := targetCtx.(*Include)
+				if !ok {
+					return false
+				}
+				_, subFatherConfig, _ := targetInclude.fatherConfig()
+				return subFatherConfig != includedConfig
+			}).SetSkipQueryFilter(func(targetCtx context.Context) bool {
+			// skip self
+			return targetCtx == i
+		})
+		for _, pos := range includedConfig.QueryAllByKeyWords(includeKeyWords) {
 			include, ok := pos.Target().(*Include)
 			if !ok {
 				errs = append(errs, errors.WithCode(code.ErrV3InvalidContext, "[%v] is not an Include context", pos.Target()))
-				continue
-			}
-
-			// skip the include context of indirect connections
-			// TODO: leave the `skip` logic to the `keyword` filtering function for processing
-			_, subFatherConfig, _ := include.fatherConfig()
-			if subFatherConfig != includedConfig {
 				continue
 			}
 
@@ -245,19 +256,30 @@ func (i *Include) unload() error {
 	}
 	var errs []error
 	for _, includedConfig := range snapshot.includedConfigs {
-		errs = append(errs, snapshot.mainContext.RemoveEdge(snapshot.fatherConfig, includedConfig, true))
+		err = snapshot.mainContext.RemoveEdge(snapshot.fatherConfig, includedConfig, true)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
 		// call includes context unloading, which is located in included configs
-		for _, pos := range includedConfig.QueryAllByKeyWords(context.NewKeyWords(context_type.TypeInclude).SetCascaded(true)) {
+		includeKeyWords := context.NewKeyWords(context_type.TypeInclude).
+			SetCascaded(true).
+			SetSkipQueryFilter(func(targetCtx context.Context) bool {
+				// skip the include context of indirect connections
+				targetInclude, ok := targetCtx.(*Include)
+				if !ok {
+					return false
+				}
+				_, subFatherConfig, _ := targetInclude.fatherConfig()
+				return subFatherConfig != includedConfig
+			}).SetSkipQueryFilter(func(targetCtx context.Context) bool {
+			// skip self
+			return targetCtx == i
+		})
+		for _, pos := range includedConfig.QueryAllByKeyWords(includeKeyWords) {
 			include, ok := pos.Target().(*Include)
 			if !ok {
 				errs = append(errs, errors.WithCode(code.ErrV3InvalidContext, "[%v] is not an Include context", pos.Target()))
-				continue
-			}
-
-			// skip the include context of indirect connections
-			// TODO: leave the `skip` logic to the `keyword` filtering function for processing
-			_, subFatherConfig, _ := include.fatherConfig()
-			if subFatherConfig != includedConfig {
 				continue
 			}
 
@@ -381,22 +403,6 @@ func registerIncludeBuilder() error {
 			loadLocker:    new(sync.RWMutex),
 			fatherContext: context.NullContext(),
 		}
-	}
-	return nil
-}
-
-func registerIncludeParseFunc() error {
-	pushStackParseFuncMap[context_type.TypeInclude] = func(data []byte, idx *int) context.Context {
-		if matchIndexes := RegDirectiveWithValue.FindIndex(data[*idx:]); matchIndexes != nil { //nolint:nestif
-			subMatch := RegDirectiveWithValue.FindSubmatch(data[*idx:])
-			key := string(subMatch[1])
-			value := string(subMatch[2])
-			if key == string(context_type.TypeInclude) {
-				*idx += matchIndexes[len(matchIndexes)-1]
-				return NewContext(context_type.TypeInclude, value)
-			}
-		}
-		return context.NullContext()
 	}
 	return nil
 }

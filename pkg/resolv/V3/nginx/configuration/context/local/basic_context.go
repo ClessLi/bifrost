@@ -122,6 +122,10 @@ func (b *BasicContext) Child(idx int) context.Context {
 
 func (b *BasicContext) QueryByKeyWords(kw context.KeyWords) context.Pos {
 	for idx, child := range b.Children {
+		if kw.SkipQueryThisContext(child) {
+			continue
+		}
+
 		if kw.Match(child) {
 			return context.SetPos(b.self, idx)
 		}
@@ -142,6 +146,10 @@ func (b *BasicContext) QueryByKeyWords(kw context.KeyWords) context.Pos {
 func (b *BasicContext) QueryAllByKeyWords(kw context.KeyWords) []context.Pos {
 	poses := make([]context.Pos, 0)
 	for idx, child := range b.Children {
+		if kw.SkipQueryThisContext(child) {
+			continue
+		}
+
 		if kw.Match(child) {
 			poses = append(poses, context.SetPos(b.self, idx))
 		}
@@ -175,8 +183,11 @@ func (b *BasicContext) SetValue(v string) error {
 }
 
 func (b *BasicContext) operateIncludes(handle func(include *Include) error) error {
+	if b == nil || b.self == nil {
+		return nil
+	}
 	var errs []error
-	// call include context unload
+	// call include context handle some task
 	includePoses := b.self.QueryAllByKeyWords(context.NewKeyWords(context_type.TypeInclude).SetCascaded(true))
 	for _, pos := range includePoses {
 		include, ok := pos.Target().(*Include)
@@ -287,6 +298,9 @@ func (b *BasicContext) IsEnabled() bool {
 }
 
 func (b *BasicContext) Enable() context.Context {
+	if b.Enabled {
+		return b.self
+	}
 	b.Enabled = true
 	err := b.reloadIncludes()
 	if err != nil {
@@ -296,6 +310,9 @@ func (b *BasicContext) Enable() context.Context {
 }
 
 func (b *BasicContext) Disable() context.Context {
+	if !b.Enabled {
+		return b.self
+	}
 	b.Enabled = false
 	err := b.reloadIncludes()
 	if err != nil {

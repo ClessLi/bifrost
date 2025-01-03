@@ -52,6 +52,7 @@ func init() {
 	register(ErrV3InvalidContext, 500, "Invalid Context")
 	register(ErrV3InvalidOperation, 500, "Invalid operation")
 	register(ErrV3ContextNotFound, 500, "Queried context not found")
+	register(ErrV3ConversionToContextFailed, 500, "Conversion to context failed")
 	register(ErrStopMonitoringTimeout, 500, "Stop monitoring timeout")
 	register(ErrMonitoringServiceSuspension, 500, "Monitoring service suspension")
 	register(ErrMonitoringStarted, 500, "Monitoring is already started")

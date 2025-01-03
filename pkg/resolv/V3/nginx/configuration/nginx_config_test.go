@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context/local"
+	"os"
+	"path/filepath"
 	"reflect"
 	"sync"
 	"testing"
@@ -132,6 +134,47 @@ func Test_nginxConfig_Dump(t *testing.T) {
 	}
 }
 
+func Test_nginxConfig_LoadAndDump(t *testing.T) {
+	type fields struct {
+		configPath string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+	}{
+		{
+			name:   "normal test",
+			fields: fields{configPath: filepath.Join(os.Getenv("GOPATH"), "src/bifrost", "test/config_test/include_nginx.conf")},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			firstTimeN, err := NewNginxConfigFromFS(tt.fields.configPath)
+			if err != nil {
+				t.Errorf("init failed for test: %v", err)
+				return
+			}
+			firstTimeD := firstTimeN.Dump()
+			for file, dumpbuff := range firstTimeD {
+				err := os.WriteFile(file, dumpbuff.Bytes(), 0600)
+				if err != nil {
+					t.Errorf("dumping failed for test, at first time: %++v", err)
+					return
+				}
+			}
+			secondTimeN, err := NewNginxConfigFromFS(tt.fields.configPath)
+			if err != nil {
+				t.Errorf("loading failed for test, at second time: %++v", err)
+				return
+			}
+			secondTimeD := secondTimeN.Dump()
+			if !reflect.DeepEqual(firstTimeD, secondTimeD) {
+				t.Errorf("Load and Dump is different, first load: %v, second load: %v", string(firstTimeN.Json()), string(secondTimeN.Json()))
+			}
+		})
+	}
+}
+
 func Test_nginxConfig_Json(t *testing.T) {
 	type fields struct {
 		mainContext local.MainContext
@@ -238,11 +281,13 @@ func Test_nginxConfig_UpdateFromJsonBytes(t *testing.T) {
     {
         "C:\\test\\test.conf":
         {
+            "enabled": true,
             "context-type": "config",
             "value": "C:\\test\\test.conf",
             "params":
             [
                 {
+                    "enabled": true,
                     "context-type": "http",
                     "params":
                     [
@@ -250,19 +295,20 @@ func Test_nginxConfig_UpdateFromJsonBytes(t *testing.T) {
                             "context-type": "inline_comment", "value": "test comment"
                         },
                         {
+                            "enabled": true,
                             "context-type": "server",
                             "params":
                             [
                                 {
-                                    "context-type": "directive", "value": "server_name testserver"
+                                    "enabled": true,"context-type": "directive", "value": "server_name testserver"
                                 },
                                 {
-                                    "context-type": "location", "value": "~ /test"
+                                    "enabled": true,"context-type": "location", "value": "~ /test"
                                 },
                                 {
+                                    "enabled": true,
                                     "context-type": "include",
-                                    "value": "conf.d\\include*conf",
-                                    "params": ["conf.d\\include.location1.conf", "conf.d\\include.location2.conf"]
+                                    "value": "conf.d\\include*conf"
                                 }
                             ]
                         }
@@ -272,23 +318,25 @@ func Test_nginxConfig_UpdateFromJsonBytes(t *testing.T) {
         },
         "conf.d\\include.location1.conf":
         {
+            "enabled": true,
             "context-type": "config",
             "value": "conf.d\\include.location1.conf",
             "params":
             [
                 {
-                    "context-type": "location", "value": "~ /test1"
+                    "enabled": true, "context-type": "location", "value": "~ /test1"
                 }
             ]
         },
         "conf.d\\include.location2.conf":
         {
+            "enabled": true,
             "context-type": "config",
             "value": "conf.d\\include.location2.conf",
             "params":
             [
                 {
-                    "context-type": "location", "value": "^~ /test2"
+                    "enabled": true, "context-type": "location", "value": "^~ /test2"
                 }
             ]
         }

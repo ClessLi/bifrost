@@ -110,11 +110,16 @@ func (d *Directive) Error() error {
 }
 
 func (d *Directive) ConfigLines(isDumping bool) ([]string, error) {
-	line := d.Value() + ";"
+	value := d.Value() + ";"
 	if !d.IsEnabled() {
-		line = "# " + line
+		// !!disabled `directive` context will have their line breaks replaced with space characters when dumped!!
+		if !isDumping {
+			value = "# " + strings.ReplaceAll(value, "\n", "\n# ")
+			return strings.Split(value, "\n"), nil
+		}
+		value = "# " + strings.ReplaceAll(value, "\n", " ")
 	}
-	return []string{line}, nil
+	return []string{value}, nil
 }
 
 func (d *Directive) IsEnabled() bool {
@@ -165,7 +170,7 @@ func registerDirectiveParseFunc() error {
 			name := string(subMatch[1])
 			value := string(subMatch[2])
 			if name == string(context_type.TypeInclude) {
-				return context.NullContext()
+				return NewContext(context_type.TypeInclude, value)
 			}
 			return NewContext(context_type.TypeDirective, name+" "+value)
 		}

@@ -20,7 +20,7 @@ type Loader interface {
 type parseFunc func(data []byte, idx *int) context.Context
 
 type jsonLoader struct {
-	unmarshaler *mainUnmarshaler
+	unmarshaler *mainUnmarshaller
 	jsonBytes   []byte
 }
 
@@ -34,7 +34,7 @@ func (j *jsonLoader) Load() (MainContext, error) {
 
 func JsonLoader(data []byte) Loader {
 	return &jsonLoader{
-		unmarshaler: &mainUnmarshaler{},
+		unmarshaler: &mainUnmarshaller{},
 		jsonBytes:   data,
 	}
 }
@@ -70,6 +70,8 @@ func (f *fileLoader) load(config *Config) error {
 		return errors.Wrap(err, "read file failed")
 	}
 
+	// TODO: Optimize the matching mechanism for comments with no line breaks at the end
+	data = append(data, []byte("\n")...) // avoid missing line breaks at the end of comments that prevent proper matching
 	idx := 0
 	stackIdx := len(f.contextStack.contexts)
 	err = f.contextStack.push(config)
@@ -114,17 +116,6 @@ func (f *fileLoader) load(config *Config) error {
 					return errors.Wrap(err, "push context to stack failed")
 				}
 				isParsed = true
-				// load include configs
-				if ctx.Type() == context_type.TypeInclude {
-					err = f.loadInclude(ctx.(*Include))
-					if err != nil {
-						return errors.Wrap(err, "load include configs failed")
-					}
-					_, err = f.contextStack.pop()
-					if err != nil {
-						return errors.Wrap(err, "quit context from stack failed")
-					}
-				}
 				break
 			}
 		}
@@ -161,6 +152,19 @@ func (f *fileLoader) load(config *Config) error {
 		return errors.WithCode(code.ErrParseFailed, "context stack is not empty")
 	}
 
+	if e := new(commentsToContextConverter).Convert(config).Error(); e != nil {
+		return e
+	}
+	for _, pos := range config.QueryAllByKeyWords(context.NewKeyWords(context_type.TypeInclude).SetCascaded(true)) {
+		// load include configs
+		if pos.Target().Type() == context_type.TypeInclude {
+			err = f.loadInclude(pos.Target().(*Include))
+			if err != nil {
+				return errors.Wrap(err, "load include configs failed")
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -193,7 +197,6 @@ func (f *fileLoader) loadInclude(include *Include) error {
 	}
 
 	// new configs
-	//newconfigs := make([]*Config, 0)
 	for _, path := range paths {
 		newconfig := NewContext(context_type.TypeConfig, strings.TrimSpace(path)).(*Config)
 		newconfig.ConfigPath, err = newConfigPath(f.configGraph, newconfig.Value())
@@ -201,7 +204,7 @@ func (f *fileLoader) loadInclude(include *Include) error {
 			return err
 		}
 		// adding config into configGraph
-		err = f.configGraph.addVertex(newconfig)
+		err = f.configGraph.AddConfig(newconfig)
 		if err != nil {
 			if errors.Is(err, graph.ErrVertexAlreadyExists) {
 				continue
@@ -213,25 +216,8 @@ func (f *fileLoader) loadInclude(include *Include) error {
 		if err != nil {
 			return err
 		}
-		//newconfigs = append(newconfigs, newconfig)
 	}
 
-	// include configs
-	//err = include.load()
-	//if err != nil {
-	//	return err
-	//}
-	// load new configs
-	//for _, config := range newconfigs {
-	//	if cache, err := include.ChildConfig(config.FullPath()); err != nil {
-	//		return err
-	//	} else {
-	//		if cache != config {
-	//			// the config is not newly created and does not require loading
-	//			continue
-	//		}
-	//	}
-	//}
 	return nil
 }
 

@@ -13,17 +13,20 @@ const (
 
 type KeyWords interface {
 	Match(ctx Context) bool
+	SkipQueryThisContext(ctx Context) bool
 	Cascaded() bool
 	SetCascaded(cascaded bool) KeyWords
 	SetStringMatchingValue(value string) KeyWords
 	SetRegexpMatchingValue(value string) KeyWords
+	SetSkipQueryFilter(filterFunc func(targetCtx Context) bool) KeyWords
 }
 
 type keywords struct {
-	matchingType  context_type.ContextType
-	matchingValue string
-	isRegex       bool
-	isCascaded    bool
+	matchingType         context_type.ContextType
+	matchingValue        string
+	isRegex              bool
+	isCascaded           bool
+	skipQueryFilterFuncs []func(targetCtx Context) bool
 }
 
 func (k *keywords) Match(ctx Context) bool {
@@ -43,6 +46,15 @@ func (k *keywords) Match(ctx Context) bool {
 		}
 	}
 	return matched
+}
+
+func (k *keywords) SkipQueryThisContext(ctx Context) bool {
+	for _, filterFunc := range k.skipQueryFilterFuncs {
+		if filterFunc(ctx) {
+			return true
+		}
+	}
+	return false
 }
 
 func (k *keywords) Cascaded() bool {
@@ -66,10 +78,16 @@ func (k *keywords) SetRegexpMatchingValue(value string) KeyWords {
 	return k
 }
 
+func (k *keywords) SetSkipQueryFilter(filterFunc func(targetCtx Context) bool) KeyWords {
+	k.skipQueryFilterFuncs = append(k.skipQueryFilterFuncs, filterFunc)
+	return k
+}
+
 func NewKeyWords(ctxtype context_type.ContextType) KeyWords {
 	return &keywords{
-		matchingType: ctxtype,
-		isRegex:      false,
-		isCascaded:   true,
+		matchingType:         ctxtype,
+		isRegex:              false,
+		isCascaded:           true,
+		skipQueryFilterFuncs: make([]func(targetCtx Context) bool, 0),
 	}
 }

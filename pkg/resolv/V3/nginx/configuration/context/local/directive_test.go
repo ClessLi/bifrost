@@ -11,6 +11,7 @@ import (
 
 func TestDirective_Child(t *testing.T) {
 	type fields struct {
+		enabled       bool
 		Name          string
 		Params        string
 		fatherContext context.Context
@@ -43,8 +44,38 @@ func TestDirective_Child(t *testing.T) {
 	}
 }
 
+func TestDirective_Clone(t *testing.T) {
+	type fields struct {
+		enabled       bool
+		Name          string
+		Params        string
+		fatherContext context.Context
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   context.Context
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d := &Directive{
+				enabled:       tt.fields.enabled,
+				Name:          tt.fields.Name,
+				Params:        tt.fields.Params,
+				fatherContext: tt.fields.fatherContext,
+			}
+			if got := d.Clone(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Clone() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestDirective_ConfigLines(t *testing.T) {
 	type fields struct {
+		enabled       bool
 		Name          string
 		Params        string
 		fatherContext context.Context
@@ -62,6 +93,7 @@ func TestDirective_ConfigLines(t *testing.T) {
 		{
 			name: "view directive without params, not for dumping",
 			fields: fields{
+				enabled:       true,
 				Name:          "   test_directive",
 				Params:        "",
 				fatherContext: context.NullContext(),
@@ -73,6 +105,7 @@ func TestDirective_ConfigLines(t *testing.T) {
 		{
 			name: "view directive with params, not for dumping",
 			fields: fields{
+				enabled:       true,
 				Name:          "  test_directive  ",
 				Params:        "'  test_param1\n   test_param2'    ",
 				fatherContext: context.NullContext(),
@@ -84,6 +117,7 @@ func TestDirective_ConfigLines(t *testing.T) {
 		{
 			name: "view directive without params, for dumping",
 			fields: fields{
+				enabled:       true,
 				Name:          "test_directive",
 				Params:        "",
 				fatherContext: context.NullContext(),
@@ -95,6 +129,7 @@ func TestDirective_ConfigLines(t *testing.T) {
 		{
 			name: "view directive with params, for dumping",
 			fields: fields{
+				enabled:       true,
 				Name:          "  test_directive",
 				Params:        "test_param1\n   test_param2  ",
 				fatherContext: context.NullContext(),
@@ -103,10 +138,62 @@ func TestDirective_ConfigLines(t *testing.T) {
 			want:    []string{"test_directive test_param1\n   test_param2;"},
 			wantErr: false,
 		},
+		{
+			name: "view disabled directive without params, not for dumping",
+			fields: fields{
+				enabled:       false,
+				Name:          "   test_directive",
+				Params:        "",
+				fatherContext: context.NullContext(),
+			},
+			args:    args{isDumping: false},
+			want:    []string{"# test_directive;"},
+			wantErr: false,
+		},
+		{
+			name: "view disabled directive with params, not for dumping",
+			fields: fields{
+				enabled:       false,
+				Name:          "  test_directive  ",
+				Params:        "'  test_param1\n   test_param2'    ",
+				fatherContext: context.NullContext(),
+			},
+			args: args{isDumping: false},
+			want: []string{
+				"# test_directive '  test_param1",
+				"#    test_param2';",
+			},
+			wantErr: false,
+		},
+		{
+			name: "view disabled directive without params, for dumping",
+			fields: fields{
+				enabled:       false,
+				Name:          "test_directive",
+				Params:        "",
+				fatherContext: context.NullContext(),
+			},
+			args:    args{isDumping: true},
+			want:    []string{"# test_directive;"},
+			wantErr: false,
+		},
+		{
+			name: "view disabled directive with params, for dumping",
+			fields: fields{
+				enabled:       false,
+				Name:          "  test_directive",
+				Params:        "test_param1\n   test_param2  ",
+				fatherContext: context.NullContext(),
+			},
+			args:    args{isDumping: true},
+			want:    []string{"# test_directive test_param1    test_param2;"},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			d := &Directive{
+				enabled:       tt.fields.enabled,
 				Name:          tt.fields.Name,
 				Params:        tt.fields.Params,
 				fatherContext: tt.fields.fatherContext,
@@ -123,8 +210,67 @@ func TestDirective_ConfigLines(t *testing.T) {
 	}
 }
 
+func TestDirective_Disable(t *testing.T) {
+	type fields struct {
+		enabled       bool
+		Name          string
+		Params        string
+		fatherContext context.Context
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   context.Context
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d := &Directive{
+				enabled:       tt.fields.enabled,
+				Name:          tt.fields.Name,
+				Params:        tt.fields.Params,
+				fatherContext: tt.fields.fatherContext,
+			}
+			if got := d.Disable(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Disable() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDirective_Enable(t *testing.T) {
+	type fields struct {
+		enabled       bool
+		Name          string
+		Params        string
+		fatherContext context.Context
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   context.Context
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d := &Directive{
+				enabled:       tt.fields.enabled,
+				Name:          tt.fields.Name,
+				Params:        tt.fields.Params,
+				fatherContext: tt.fields.fatherContext,
+			}
+			if got := d.Enable(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Enable() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestDirective_Error(t *testing.T) {
 	type fields struct {
+		enabled       bool
 		Name          string
 		Params        string
 		fatherContext context.Context
@@ -142,6 +288,7 @@ func TestDirective_Error(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			d := &Directive{
+				enabled:       tt.fields.enabled,
 				Name:          tt.fields.Name,
 				Params:        tt.fields.Params,
 				fatherContext: tt.fields.fatherContext,
@@ -156,6 +303,7 @@ func TestDirective_Error(t *testing.T) {
 func TestDirective_Father(t *testing.T) {
 	testFatherLocation := NewContext(context_type.TypeLocation, "~ /test")
 	type fields struct {
+		enabled       bool
 		Name          string
 		Params        string
 		fatherContext context.Context
@@ -173,6 +321,7 @@ func TestDirective_Father(t *testing.T) {
 		{
 			name: "test father location",
 			fields: fields{
+				enabled:       true,
 				Name:          "test_directive",
 				Params:        "param1",
 				fatherContext: testFatherLocation,
@@ -183,6 +332,7 @@ func TestDirective_Father(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			d := &Directive{
+				enabled:       tt.fields.enabled,
 				Name:          tt.fields.Name,
 				Params:        tt.fields.Params,
 				fatherContext: tt.fields.fatherContext,
@@ -196,6 +346,7 @@ func TestDirective_Father(t *testing.T) {
 
 func TestDirective_HasChild(t *testing.T) {
 	type fields struct {
+		enabled       bool
 		Name          string
 		Params        string
 		fatherContext context.Context
@@ -213,6 +364,7 @@ func TestDirective_HasChild(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			d := &Directive{
+				enabled:       tt.fields.enabled,
 				Name:          tt.fields.Name,
 				Params:        tt.fields.Params,
 				fatherContext: tt.fields.fatherContext,
@@ -226,6 +378,7 @@ func TestDirective_HasChild(t *testing.T) {
 
 func TestDirective_Insert(t *testing.T) {
 	type fields struct {
+		enabled       bool
 		Name          string
 		Params        string
 		fatherContext context.Context
@@ -248,6 +401,7 @@ func TestDirective_Insert(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			d := &Directive{
+				enabled:       tt.fields.enabled,
 				Name:          tt.fields.Name,
 				Params:        tt.fields.Params,
 				fatherContext: tt.fields.fatherContext,
@@ -259,8 +413,38 @@ func TestDirective_Insert(t *testing.T) {
 	}
 }
 
+func TestDirective_IsEnabled(t *testing.T) {
+	type fields struct {
+		enabled       bool
+		Name          string
+		Params        string
+		fatherContext context.Context
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d := &Directive{
+				enabled:       tt.fields.enabled,
+				Name:          tt.fields.Name,
+				Params:        tt.fields.Params,
+				fatherContext: tt.fields.fatherContext,
+			}
+			if got := d.IsEnabled(); got != tt.want {
+				t.Errorf("IsEnabled() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestDirective_Len(t *testing.T) {
 	type fields struct {
+		enabled       bool
 		Name          string
 		Params        string
 		fatherContext context.Context
@@ -278,6 +462,7 @@ func TestDirective_Len(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			d := &Directive{
+				enabled:       tt.fields.enabled,
 				Name:          tt.fields.Name,
 				Params:        tt.fields.Params,
 				fatherContext: tt.fields.fatherContext,
@@ -289,8 +474,44 @@ func TestDirective_Len(t *testing.T) {
 	}
 }
 
+func TestDirective_MarshalJSON(t *testing.T) {
+	type fields struct {
+		enabled       bool
+		Name          string
+		Params        string
+		fatherContext context.Context
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		want    []byte
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d := &Directive{
+				enabled:       tt.fields.enabled,
+				Name:          tt.fields.Name,
+				Params:        tt.fields.Params,
+				fatherContext: tt.fields.fatherContext,
+			}
+			got, err := d.MarshalJSON()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("MarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("MarshalJSON() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestDirective_Modify(t *testing.T) {
 	type fields struct {
+		enabled       bool
 		Name          string
 		Params        string
 		fatherContext context.Context
@@ -313,6 +534,7 @@ func TestDirective_Modify(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			d := &Directive{
+				enabled:       tt.fields.enabled,
 				Name:          tt.fields.Name,
 				Params:        tt.fields.Params,
 				fatherContext: tt.fields.fatherContext,
@@ -326,6 +548,7 @@ func TestDirective_Modify(t *testing.T) {
 
 func TestDirective_QueryAllByKeyWords(t *testing.T) {
 	type fields struct {
+		enabled       bool
 		Name          string
 		Params        string
 		fatherContext context.Context
@@ -347,6 +570,7 @@ func TestDirective_QueryAllByKeyWords(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			d := &Directive{
+				enabled:       tt.fields.enabled,
 				Name:          tt.fields.Name,
 				Params:        tt.fields.Params,
 				fatherContext: tt.fields.fatherContext,
@@ -360,6 +584,7 @@ func TestDirective_QueryAllByKeyWords(t *testing.T) {
 
 func TestDirective_QueryByKeyWords(t *testing.T) {
 	type fields struct {
+		enabled       bool
 		Name          string
 		Params        string
 		fatherContext context.Context
@@ -381,6 +606,7 @@ func TestDirective_QueryByKeyWords(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			d := &Directive{
+				enabled:       tt.fields.enabled,
 				Name:          tt.fields.Name,
 				Params:        tt.fields.Params,
 				fatherContext: tt.fields.fatherContext,
@@ -394,6 +620,7 @@ func TestDirective_QueryByKeyWords(t *testing.T) {
 
 func TestDirective_Remove(t *testing.T) {
 	type fields struct {
+		enabled       bool
 		Name          string
 		Params        string
 		fatherContext context.Context
@@ -415,6 +642,7 @@ func TestDirective_Remove(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			d := &Directive{
+				enabled:       tt.fields.enabled,
 				Name:          tt.fields.Name,
 				Params:        tt.fields.Params,
 				fatherContext: tt.fields.fatherContext,
@@ -429,6 +657,7 @@ func TestDirective_Remove(t *testing.T) {
 func TestDirective_SetFather(t *testing.T) {
 	testFatherLocation := NewContext(context_type.TypeLocation, "~ /test")
 	type fields struct {
+		enabled       bool
 		Name          string
 		Params        string
 		fatherContext context.Context
@@ -445,6 +674,7 @@ func TestDirective_SetFather(t *testing.T) {
 		{
 			name: "set null context father",
 			fields: fields{
+				enabled:       true,
 				Name:          "test_directive",
 				Params:        "",
 				fatherContext: testFatherLocation,
@@ -455,6 +685,7 @@ func TestDirective_SetFather(t *testing.T) {
 		{
 			name: "set test father location",
 			fields: fields{
+				enabled:       true,
 				Name:          "test_directive",
 				Params:        "",
 				fatherContext: context.NullContext(),
@@ -466,6 +697,7 @@ func TestDirective_SetFather(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			d := &Directive{
+				enabled:       tt.fields.enabled,
 				Name:          tt.fields.Name,
 				Params:        tt.fields.Params,
 				fatherContext: tt.fields.fatherContext,
@@ -479,6 +711,7 @@ func TestDirective_SetFather(t *testing.T) {
 
 func TestDirective_SetValue(t *testing.T) {
 	type fields struct {
+		enabled       bool
 		Name          string
 		Params        string
 		fatherContext context.Context
@@ -496,12 +729,14 @@ func TestDirective_SetValue(t *testing.T) {
 		{
 			name: "null value",
 			fields: fields{
+				enabled:       true,
 				Name:          "test_directive",
 				Params:        "param1",
 				fatherContext: context.NullContext(),
 			},
 			args: args{v: "    "},
 			want: fields{
+				enabled:       true,
 				Name:          "test_directive",
 				Params:        "param1",
 				fatherContext: context.NullContext(),
@@ -511,12 +746,14 @@ func TestDirective_SetValue(t *testing.T) {
 		{
 			name: "has param",
 			fields: fields{
+				enabled:       true,
 				Name:          "test_directive",
 				Params:        "",
 				fatherContext: context.NullContext(),
 			},
 			args: args{v: "  test_directive_2    aaa   bbb\n ccc  "},
 			want: fields{
+				enabled:       true,
 				Name:          "test_directive_2",
 				Params:        "aaa   bbb\n ccc",
 				fatherContext: context.NullContext(),
@@ -526,12 +763,14 @@ func TestDirective_SetValue(t *testing.T) {
 		{
 			name: "has not param",
 			fields: fields{
+				enabled:       true,
 				Name:          "test_directive",
 				Params:        "aaa",
 				fatherContext: context.NullContext(),
 			},
 			args: args{v: "test_directive_3   "},
 			want: fields{
+				enabled:       true,
 				Name:          "test_directive_3",
 				Params:        "",
 				fatherContext: context.NullContext(),
@@ -542,6 +781,7 @@ func TestDirective_SetValue(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			d := &Directive{
+				enabled:       tt.fields.enabled,
 				Name:          tt.fields.Name,
 				Params:        tt.fields.Params,
 				fatherContext: tt.fields.fatherContext,
@@ -550,6 +790,7 @@ func TestDirective_SetValue(t *testing.T) {
 				t.Errorf("SetValue() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			got := fields{
+				enabled:       d.enabled,
 				Name:          d.Name,
 				Params:        d.Params,
 				fatherContext: d.fatherContext,
@@ -563,6 +804,7 @@ func TestDirective_SetValue(t *testing.T) {
 
 func TestDirective_Type(t *testing.T) {
 	type fields struct {
+		enabled       bool
 		Name          string
 		Params        string
 		fatherContext context.Context
@@ -580,6 +822,7 @@ func TestDirective_Type(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			d := &Directive{
+				enabled:       tt.fields.enabled,
 				Name:          tt.fields.Name,
 				Params:        tt.fields.Params,
 				fatherContext: tt.fields.fatherContext,
@@ -593,6 +836,7 @@ func TestDirective_Type(t *testing.T) {
 
 func TestDirective_Value(t *testing.T) {
 	type fields struct {
+		enabled       bool
 		Name          string
 		Params        string
 		fatherContext context.Context
@@ -605,6 +849,7 @@ func TestDirective_Value(t *testing.T) {
 		{
 			name: "without params",
 			fields: fields{
+				enabled:       true,
 				Name:          "   test_directive",
 				Params:        "",
 				fatherContext: context.NullContext(),
@@ -614,6 +859,7 @@ func TestDirective_Value(t *testing.T) {
 		{
 			name: "with params",
 			fields: fields{
+				enabled:       true,
 				Name:          "  test_directive  ",
 				Params:        "  test_param1\n   test_param2    ",
 				fatherContext: context.NullContext(),
@@ -624,12 +870,45 @@ func TestDirective_Value(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			d := &Directive{
+				enabled:       tt.fields.enabled,
 				Name:          tt.fields.Name,
 				Params:        tt.fields.Params,
 				fatherContext: tt.fields.fatherContext,
 			}
 			if got := d.Value(); got != tt.want {
 				t.Errorf("Value() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_registerDirectiveBuilder(t *testing.T) {
+	tests := []struct {
+		name    string
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := registerDirectiveBuilder(); (err != nil) != tt.wantErr {
+				t.Errorf("registerDirectiveBuilder() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_registerDirectiveParseFunc(t *testing.T) {
+	tests := []struct {
+		name    string
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := registerDirectiveParseFunc(); (err != nil) != tt.wantErr {
+				t.Errorf("registerDirectiveParseFunc() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

@@ -28,31 +28,13 @@ var (
 	RegErrorHeed             = regexp.MustCompile(Abnormal)
 	RegLineBreak             = regexp.MustCompile(LineBreak)
 
-	// json unmarshal regexps
-	JsonUnmarshalRegCommentHead     = regexp.MustCompile(`^\s*{[^{]*"comments"\s*:\s*"`)
-	JsonUnmarshalRegEventsHead      = regexp.MustCompile(`^\s*{\s*"events"\s*:\s*{`)
-	JsonUnmarshalRegGeoHead         = regexp.MustCompile(`^\s*{\s*"geo"\s*:\s*{`)
-	JsonUnmarshalRegHttpHead        = regexp.MustCompile(`^\s*{\s*"http"\s*:\s*{`)
-	JsonUnmarshalRegIfHead          = regexp.MustCompile(`^\s*{\s*"if"\s*:\s*{`)
-	JsonUnmarshalRegIncludeHead     = regexp.MustCompile(`^\s*{\s*"include"\s*:\s*{`)
-	JsonUnmarshalRegLimitExceptHead = regexp.MustCompile(`^\s*{\s*"limit_except"\s*:\s*{`)
-	JsonUnmarshalRegLocationHead    = regexp.MustCompile(`^\s*{\s*"location"\s*:\s*{`)
-	JsonUnmarshalRegMapHead         = regexp.MustCompile(`^\s*{\s*"map"\s*:\s*{`)
-	JsonUnmarshalRegServerHead      = regexp.MustCompile(`^\s*{\s*"server"\s*:\s*{`)
-	JsonUnmarshalRegStreamHead      = regexp.MustCompile(`^\s*{\s*"stream"\s*:\s*{`)
-	JsonUnmarshalRegTypesHead       = regexp.MustCompile(`^\s*{\s*"types"\s*:\s*{`)
-	JsonUnmarshalRegUpstreamHead    = regexp.MustCompile(`^\s*{\s*"upstream"\s*:\s*{`)
-
 	// parse config function maps
 	pushStackParseFuncMap = make(map[context_type.ContextType]parseFunc)
 	inStackParseFuncMap   = make(map[context_type.ContextType]parseFunc)
 
+	// commentsToContexts convertor parsing function map
+	convertorPushStackParseFuncMap = make(map[context_type.ContextType]func(comment *Comment) bool)
+
 	// context builder map
 	builderMap = make(map[context_type.ContextType]func(value string) context.Context)
-
-	// json unmarshal regexp matcher map
-	jsonUnmarshalRegMatcherMap = make(map[context_type.ContextType]func(jsonraw []byte) bool)
-
-	// json unmarshaler builder map
-	jsonUnmarshalerBuilderMap = make(map[context_type.ContextType]func(graph ConfigGraph, father context.Context) *jsonUnmarshaler)
 )

@@ -54,6 +54,9 @@ const (
 
 	// ErrV3ContextNotFound - 500: Queried context not found.
 	ErrV3ContextNotFound
+
+	// ErrV3ConversionToContextFailed - 500: Conversion to context failed.
+	ErrV3ConversionToContextFailed
 )
 
 // bifrost: statistics errors.

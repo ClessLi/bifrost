@@ -173,12 +173,16 @@ func (c *configGraph) AddEdge(src, dst *Config) error {
 		return err
 	}
 
-	return c.graph.AddEdge(configHash(src), configHash(dst))
+	err = c.graph.AddEdge(configHash(src), configHash(dst))
+	if err != nil && !errors.Is(err, graph.ErrEdgeAlreadyExists) { // allow repeated addition of edges
+		return err
+	}
+	return nil
 }
 
 func (c *configGraph) RemoveEdge(src, dst *Config, keepDst bool) error {
 	err := c.graph.RemoveEdge(configHash(src), configHash(dst))
-	if err != nil {
+	if err != nil && !errors.Is(err, graph.ErrEdgeNotFound) { // allow repeated deletion of edges
 		return err
 	}
 	if keepDst {

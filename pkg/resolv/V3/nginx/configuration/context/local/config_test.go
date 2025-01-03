@@ -5,6 +5,7 @@ import (
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
 	"github.com/dominikbraun/graph"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -97,31 +98,125 @@ func TestConfig_ConfigLines(t *testing.T) {
 		t.Fatal(err)
 	}
 	testMain.Insert(
-		NewContext(context_type.TypeHttp, "").
-			Insert(NewContext(context_type.TypeInlineComment, "test comment"), 0).
-			Insert(
-				NewContext(context_type.TypeServer, "").
-					Insert(NewContext(context_type.TypeDirective, "server_name testserver"), 0).
-					Insert(
-						NewContext(context_type.TypeLocation, "~ /test").
-							Insert(
-								NewContext(context_type.TypeInclude, "conf.d/test.*.conf"),
-								0,
-							),
-						1,
-					).
-					Insert(
-						NewContext(context_type.TypeLocation, "~ /disabled-location").Disable().
-							Insert(
-								NewContext(context_type.TypeInclude, "conf.d/disabled.included.conf").Disable(),
-								0,
-							),
-						2,
-					),
+		NewContext(context_type.TypeHttp, "").Insert(
+			NewContext(context_type.TypeServer, "").Insert(
+				NewContext(context_type.TypeDirective, "listen 80"),
+				0,
+			).Insert(
+				NewContext(context_type.TypeDirective, "server_name example.com"),
 				1,
+			).Insert(
+				NewContext(context_type.TypeInclude, "conf.d/disabled_location.conf"),
+				2,
+			).Insert(
+				NewContext(context_type.TypeInclude, "conf.d/strange_location.conf"),
+				3,
 			),
+			0,
+		).Insert(
+			NewContext(context_type.TypeComment, "disabled server context"),
+			1,
+		).Insert(
+			NewContext(context_type.TypeServer, "").Disable().Insert(
+				NewContext(context_type.TypeInlineComment, "disabled server"),
+				0,
+			).Insert(
+				NewContext(context_type.TypeDirective, "listen 8080"),
+				1,
+			).Insert(
+				NewContext(context_type.TypeDirective, "server_name example.com"),
+				2,
+			).Insert(
+				NewContext(context_type.TypeLocation, "~ /disabled-location").Disable().Insert(
+					NewContext(context_type.TypeDirective, "proxy_pass http://disabled-url"),
+					0,
+				),
+				3,
+			).Insert(
+				NewContext(context_type.TypeInclude, "conf.d/disabled_location.conf"),
+				4,
+			).Insert(
+				NewContext(context_type.TypeInclude, "conf.d/strange_location.conf"),
+				5,
+			),
+			2,
+		),
 		0,
 	)
+	err = testMain.AddConfig(
+		NewContext(context_type.TypeConfig, "conf.d/disabled_location.conf").Disable().Insert(
+			NewContext(context_type.TypeComment, "disabled config"),
+			0,
+		).Insert(
+			NewContext(context_type.TypeLocation, "~ /test").Insert(
+				NewContext(context_type.TypeDirective, "return 404"),
+				0,
+			),
+			1,
+		).Insert(
+			NewContext(context_type.TypeLocation, "~ /has-disabled-ctx").Insert(
+				NewContext(context_type.TypeComment, "disabled if ctx"),
+				0,
+			).Insert(
+				NewContext(context_type.TypeIf, "($is_enabled ~* false)").Disable().Insert(
+					NewContext(context_type.TypeDirective, "set $is_enabled true").Disable(),
+					0,
+				).Insert(
+					NewContext(context_type.TypeDirective, "return 404"),
+					1,
+				),
+				1,
+			),
+			2,
+		).Insert(
+			NewContext(context_type.TypeComment, "}"),
+			3,
+		).Insert(
+			NewContext(context_type.TypeComment, "}"),
+			4,
+		).(*Config),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = testMain.AddConfig(
+		NewContext(context_type.TypeConfig, "conf.d/strange_location.conf").Insert(
+			NewContext(context_type.TypeComment, "strange config"),
+			0,
+		).Insert(
+			NewContext(context_type.TypeLocation, "~ /normal-loc").Insert(
+				NewContext(context_type.TypeDirective, "return 200"),
+				0,
+			),
+			1,
+		).Insert(
+			NewContext(context_type.TypeComment, "location ~ /strange-loc {"),
+			2,
+		).Insert(
+			NewContext(context_type.TypeComment, "    if ($strange ~* this_is_a_strange_if_ctx) {"),
+			3,
+		).Insert(
+			NewContext(context_type.TypeComment, "        return 404;"),
+			4,
+		).Insert(
+			NewContext(context_type.TypeComment, "    proxy_pass http://strange_url;"),
+			5,
+		).Insert(
+			NewContext(context_type.TypeComment, "}"),
+			6,
+		).(*Config),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	disabledConfig, err := testMain.GetConfig("C:\\test\\conf.d\\disabled_location.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	strangeConfig, err := testMain.GetConfig("C:\\test\\conf.d\\strange_location.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
 	type fields struct {
 		BasicContext BasicContext
 		ConfigPath   context.ConfigPath
@@ -144,17 +239,66 @@ func TestConfig_ConfigLines(t *testing.T) {
 			},
 			args: args{isDumping: true},
 			want: []string{
-				"http {    # test comment",
+				"http {",
 				"    server {",
-				"        server_name testserver;",
-				"        location ~ /test {",
-				"            include conf.d/test.*.conf;",
-				"        }",
-				"        # location ~ /disabled-location {",
-				"        #     # include conf.d/disabled.included.conf;",
-				"        # }",
+				"        listen 80;",
+				"        server_name example.com;",
+				"        include conf.d/disabled_location.conf;",
+				"        include conf.d/strange_location.conf;",
 				"    }",
+				"    # disabled server context",
+				"    # server {    # disabled server",
+				"    #     listen 8080;",
+				"    #     server_name example.com;",
+				"    #     # location ~ /disabled-location {",
+				"    #     #     proxy_pass http://disabled-url;",
+				"    #     # }",
+				"    #     include conf.d/disabled_location.conf;",
+				"    #     include conf.d/strange_location.conf;",
+				"    # }",
 				"}",
+			},
+		},
+		{
+			name: "dumping for the disabled config",
+			fields: fields{
+				BasicContext: disabledConfig.BasicContext,
+				ConfigPath:   disabledConfig.ConfigPath,
+			},
+			args: args{isDumping: true},
+			want: []string{
+				"# # disabled config",
+				"# location ~ /test {",
+				"#     return 404;",
+				"# }",
+				"# location ~ /has-disabled-ctx {",
+				"#     # disabled if ctx",
+				"#     # if ($is_enabled ~* false) {",
+				"#     #     # set $is_enabled true;",
+				"#     #     return 404;",
+				"#     # }",
+				"# }",
+				"# # }",
+				"# # }",
+			},
+		},
+		{
+			name: "dumping for the strange config",
+			fields: fields{
+				BasicContext: strangeConfig.BasicContext,
+				ConfigPath:   strangeConfig.ConfigPath,
+			},
+			args: args{isDumping: true},
+			want: []string{
+				"# strange config",
+				"location ~ /normal-loc {",
+				"    return 200;",
+				"}",
+				"# location ~ /strange-loc {",
+				"#     if ($strange ~* this_is_a_strange_if_ctx) {",
+				"#         return 404;",
+				"#     proxy_pass http://strange_url;",
+				"# }",
 			},
 		},
 		{
@@ -165,16 +309,67 @@ func TestConfig_ConfigLines(t *testing.T) {
 			},
 			args: args{isDumping: false},
 			want: []string{
-				"http {    # test comment",
+				"http {",
 				"    server {",
-				"        server_name testserver;",
-				"        location ~ /test {",
-				"            # include <== conf.d/test.*.conf",
+				"        listen 80;",
+				"        server_name example.com;",
+				"        # include <== conf.d/disabled_location.conf",
+				"        # # disabled config",
+				"        # location ~ /test {",
+				"        #     return 404;",
+				"        # }",
+				"        # location ~ /has-disabled-ctx {",
+				"        #     # disabled if ctx",
+				"        #     # if ($is_enabled ~* false) {",
+				"        #     #     # set $is_enabled true;",
+				"        #     #     return 404;",
+				"        #     # }",
+				"        # }",
+				"        # # }",
+				"        # # }",
+				"        # include <== conf.d/strange_location.conf",
+				"        # strange config",
+				"        location ~ /normal-loc {",
+				"            return 200;",
 				"        }",
-				"        # location ~ /disabled-location {",
-				"        #     # # include <== conf.d/disabled.included.conf",
+				"        # location ~ /strange-loc {",
+				"        #     if ($strange ~* this_is_a_strange_if_ctx) {",
+				"        #         return 404;",
+				"        #     proxy_pass http://strange_url;",
 				"        # }",
 				"    }",
+				"    # disabled server context",
+				"    # server {    # disabled server",
+				"    #     listen 8080;",
+				"    #     server_name example.com;",
+				"    #     # location ~ /disabled-location {",
+				"    #     #     proxy_pass http://disabled-url;",
+				"    #     # }",
+				"    #     # include <== conf.d/disabled_location.conf",
+				"    #     # # disabled config",
+				"    #     # location ~ /test {",
+				"    #     #     return 404;",
+				"    #     # }",
+				"    #     # location ~ /has-disabled-ctx {",
+				"    #     #     # disabled if ctx",
+				"    #     #     # if ($is_enabled ~* false) {",
+				"    #     #     #     # set $is_enabled true;",
+				"    #     #     #     return 404;",
+				"    #     #     # }",
+				"    #     # }",
+				"    #     # # }",
+				"    #     # # }",
+				"    #     # include <== conf.d/strange_location.conf",
+				"    #     # strange config",
+				"    #     location ~ /normal-loc {",
+				"    #         return 200;",
+				"    #     }",
+				"    #     # location ~ /strange-loc {",
+				"    #     #     if ($strange ~* this_is_a_strange_if_ctx) {",
+				"    #     #         return 404;",
+				"    #     #     proxy_pass http://strange_url;",
+				"    #     # }",
+				"    # }",
 				"}",
 			},
 		},
@@ -191,7 +386,7 @@ func TestConfig_ConfigLines(t *testing.T) {
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ConfigLines() got = %v, want %v", got, tt.want)
+				t.Errorf("ConfigLines() got = %v, want %v", strings.Join(got, "\n"), strings.Join(tt.want, "\n"))
 			}
 		})
 	}

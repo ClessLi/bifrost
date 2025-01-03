@@ -231,47 +231,115 @@ func TestMain_Len(t *testing.T) {
 }
 
 func TestMain_MarshalJSON(t *testing.T) {
-	testIncludes := NewContext(context_type.TypeInclude, "conf.d\\include*conf").(*Include)
 	emptyMain, err := NewMain("C:\\test\\test.conf")
 	if err != nil {
 		t.Fatal(err)
 	}
-	testMain, err := NewMain("C:\\test\\test.conf")
+
+	// enabled/disabled contexts test data
+	testMain, err := NewMain("C:\\test\\nginx.conf")
 	if err != nil {
 		t.Fatal(err)
 	}
 	testMain.Insert(
 		NewContext(context_type.TypeHttp, "").
-			Insert(NewContext(context_type.TypeInlineComment, "test comment"), 0).
 			Insert(
 				NewContext(context_type.TypeServer, "").
-					Insert(NewContext(context_type.TypeDirective, "server_name testserver"), 0).
 					Insert(
-						NewContext(context_type.TypeLocation, "~ /test"),
-						1,
+						NewContext(context_type.TypeInlineComment, "enabled server with enabled children configs"),
+						0,
 					).
-					Insert(testIncludes, 2),
+					Insert(
+						NewContext(context_type.TypeInclude, "conf.d/enabled.conf"),
+						1,
+					),
+				0,
+			).
+			Insert(
+				NewContext(context_type.TypeServer, "").
+					Insert(
+						NewContext(context_type.TypeInlineComment, "enabled server with disabled children configs"),
+						0,
+					).
+					Insert(
+						NewContext(context_type.TypeInclude, "conf.d/disabled.conf"),
+						1,
+					),
 				1,
+			).
+			Insert(
+				NewContext(context_type.TypeServer, "").
+					Insert(
+						NewContext(context_type.TypeInlineComment, "enabled server with disabled include context"),
+						0,
+					).
+					Insert(
+						NewContext(context_type.TypeInclude, "conf.d/enabled.conf").Disable(),
+						1,
+					),
+				2,
+			).
+			Insert(
+				NewContext(context_type.TypeServer, "").Disable().
+					Insert(
+						NewContext(context_type.TypeInlineComment, "disabled server with enabled children configs"),
+						0,
+					).
+					Insert(
+						NewContext(context_type.TypeInclude, "conf.d/enabled.conf"),
+						1,
+					),
+				3,
+			).
+			Insert(
+				NewContext(context_type.TypeServer, "").Disable().
+					Insert(
+						NewContext(context_type.TypeInlineComment, "disabled server with disabled children configs"),
+						0,
+					).
+					Insert(
+						NewContext(context_type.TypeInclude, "conf.d/disabled.conf"),
+						1,
+					),
+				4,
+			).
+			Insert(
+				NewContext(context_type.TypeServer, "").Disable().
+					Insert(
+						NewContext(context_type.TypeInlineComment, "disabled server with disabled include context"),
+						0,
+					).
+					Insert(
+						NewContext(context_type.TypeInclude, "conf.d/enabled.conf").Disable(),
+						1,
+					),
+				5,
 			),
 		0,
 	)
-	location1conf := NewContext(context_type.TypeConfig, "conf.d\\include.location1.conf").
-		Insert(NewContext(context_type.TypeLocation, "~ /test1"), 0).(*Config)
-	location1conf.ConfigPath, err = newConfigPath(testMain.graph(), location1conf.Value())
+	err = testMain.AddConfig(
+		NewContext(context_type.TypeConfig, "conf.d/enabled.conf").
+			Insert(
+				NewContext(context_type.TypeLocation, "~ /test").
+					Insert(NewContext(context_type.TypeDirective, "return 200 'test'"), 0),
+				0,
+			).(*Config),
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
-	location2conf := NewContext(context_type.TypeConfig, "conf.d\\include.location2.conf").
-		Insert(NewContext(context_type.TypeLocation, "^~ /test2"), 0).(*Config)
-	location2conf.ConfigPath, err = newConfigPath(testMain.graph(), location1conf.Value())
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = testMain.AddConfig(location1conf)
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = testMain.AddConfig(location2conf)
+	err = testMain.AddConfig(
+		NewContext(context_type.TypeConfig, "conf.d/disabled.conf").Disable().
+			Insert(
+				NewContext(context_type.TypeComment, "disabled config"),
+				0,
+			).
+			Insert(
+				NewContext(context_type.TypeLocation, "~ /test").
+					Insert(NewContext(context_type.TypeDirective, "return 404"), 0),
+				1,
+			).(*Config),
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -287,14 +355,14 @@ func TestMain_MarshalJSON(t *testing.T) {
 		{
 			name:    "empty main",
 			fields:  fields{ConfigGraph: emptyMain.graph()},
-			want:    []byte(`{"main-config":"C:\\test\\test.conf","configs":{"C:\\test\\test.conf":{"context-type":"config","value":"C:\\test\\test.conf"}}}`),
+			want:    []byte(`{"main-config":"C:\\test\\test.conf","configs":{"C:\\test\\test.conf":{"enabled":true,"context-type":"config","value":"C:\\test\\test.conf"}}}`),
 			wantErr: false,
 		},
 		{
 			name:   "normal test",
 			fields: fields{ConfigGraph: testMain.graph()},
 			want: []byte(
-				`{"main-config":"C:\\test\\test.conf","configs":{"C:\\test\\test.conf":{"context-type":"config","value":"C:\\test\\test.conf","params":[{"context-type":"http","params":[{"context-type":"inline_comment","value":"test comment"},{"context-type":"server","params":[{"context-type":"directive","value":"server_name testserver"},{"context-type":"location","value":"~ /test"},{"context-type":"include","value":"conf.d\\include*conf","params":["conf.d\\include.location1.conf","conf.d\\include.location2.conf"]}]}]}]},"conf.d\\include.location1.conf":{"context-type":"config","value":"conf.d\\include.location1.conf","params":[{"context-type":"location","value":"~ /test1"}]},"conf.d\\include.location2.conf":{"context-type":"config","value":"conf.d\\include.location2.conf","params":[{"context-type":"location","value":"^~ /test2"}]}}}`,
+				`{"main-config":"C:\\test\\nginx.conf","configs":{"C:\\test\\nginx.conf":{"enabled":true,"context-type":"config","value":"C:\\test\\nginx.conf","params":[{"enabled":true,"context-type":"http","params":[{"enabled":true,"context-type":"server","params":[{"context-type":"inline_comment","value":"enabled server with enabled children configs"},{"enabled":true,"context-type":"include","value":"conf.d/enabled.conf"}]},{"enabled":true,"context-type":"server","params":[{"context-type":"inline_comment","value":"enabled server with disabled children configs"},{"enabled":true,"context-type":"include","value":"conf.d/disabled.conf"}]},{"enabled":true,"context-type":"server","params":[{"context-type":"inline_comment","value":"enabled server with disabled include context"},{"context-type":"include","value":"conf.d/enabled.conf"}]},{"context-type":"server","params":[{"context-type":"inline_comment","value":"disabled server with enabled children configs"},{"enabled":true,"context-type":"include","value":"conf.d/enabled.conf"}]},{"context-type":"server","params":[{"context-type":"inline_comment","value":"disabled server with disabled children configs"},{"enabled":true,"context-type":"include","value":"conf.d/disabled.conf"}]},{"context-type":"server","params":[{"context-type":"inline_comment","value":"disabled server with disabled include context"},{"context-type":"include","value":"conf.d/enabled.conf"}]}]}]},"conf.d/disabled.conf":{"context-type":"config","value":"conf.d/disabled.conf","params":[{"context-type":"comment","value":"disabled config"},{"enabled":true,"context-type":"location","value":"~ /test","params":[{"enabled":true,"context-type":"directive","value":"return 404"}]}]},"conf.d/enabled.conf":{"enabled":true,"context-type":"config","value":"conf.d/enabled.conf","params":[{"enabled":true,"context-type":"location","value":"~ /test","params":[{"enabled":true,"context-type":"directive","value":"return 200 'test'"}]}]}}}`,
 			),
 			wantErr: false,
 		},

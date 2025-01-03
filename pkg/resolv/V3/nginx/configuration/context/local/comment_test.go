@@ -1,9 +1,12 @@
 package local
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -586,6 +589,332 @@ func Test_registerCommentParseFunc(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := registerCommentParseFunc(); (err != nil) != tt.wantErr {
 				t.Errorf("registerCommentParseFunc() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_commentsToContextConverter_Convert(t *testing.T) {
+	testMain, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	testMain.Insert(
+		NewContext(context_type.TypeHttp, "").Insert(
+			NewContext(context_type.TypeServer, "").Insert(
+				NewContext(context_type.TypeDirective, "listen 80"),
+				0,
+			).Insert(
+				NewContext(context_type.TypeDirective, "server_name example.com"),
+				1,
+			).Insert(
+				NewContext(context_type.TypeInclude, "conf.d/disabled_location.conf"),
+				2,
+			).Insert(
+				NewContext(context_type.TypeInclude, "conf.d/strange_location.conf"),
+				3,
+			),
+			0,
+		).Insert(
+			NewContext(context_type.TypeComment, "disabled server context"),
+			1,
+		).Insert(
+			NewContext(context_type.TypeServer, "").Disable().Insert(
+				NewContext(context_type.TypeInlineComment, "disabled server"),
+				0,
+			).Insert(
+				NewContext(context_type.TypeDirective, "listen 8080"),
+				1,
+			).Insert(
+				NewContext(context_type.TypeDirective, "server_name example.com"),
+				2,
+			).Insert(
+				NewContext(context_type.TypeLocation, "~ /disabled-location").Disable().Insert(
+					NewContext(context_type.TypeDirective, "proxy_pass http://disabled-url"),
+					0,
+				),
+				3,
+			).Insert(
+				NewContext(context_type.TypeInclude, "conf.d/disabled_location.conf"),
+				4,
+			).Insert(
+				NewContext(context_type.TypeInclude, "conf.d/strange_location.conf"),
+				5,
+			),
+			2,
+		),
+		0,
+	)
+	err = testMain.AddConfig(
+		NewContext(context_type.TypeConfig, "conf.d/disabled_location.conf").Disable().Insert(
+			NewContext(context_type.TypeComment, "disabled config"),
+			0,
+		).Insert(
+			NewContext(context_type.TypeLocation, "~ /test").Insert(
+				NewContext(context_type.TypeDirective, "return 404"),
+				0,
+			),
+			1,
+		).Insert(
+			NewContext(context_type.TypeLocation, "~ /has-disabled-ctx").Insert(
+				NewContext(context_type.TypeComment, "disabled if ctx"),
+				0,
+			).Insert(
+				NewContext(context_type.TypeIf, "($is_enabled ~* false)").Disable().Insert(
+					NewContext(context_type.TypeDirective, "set $is_enabled true").Disable(),
+					0,
+				).Insert(
+					NewContext(context_type.TypeDirective, "return 404"),
+					1,
+				),
+				1,
+			),
+			2,
+		).Insert(
+			NewContext(context_type.TypeComment, "}"),
+			3,
+		).Insert(
+			NewContext(context_type.TypeComment, "}"),
+			4,
+		).(*Config),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = testMain.AddConfig(
+		NewContext(context_type.TypeConfig, "conf.d/strange_location.conf").Insert(
+			NewContext(context_type.TypeComment, "strange config"),
+			0,
+		).Insert(
+			NewContext(context_type.TypeLocation, "~ /normal-loc").Insert(
+				NewContext(context_type.TypeDirective, "return 200"),
+				0,
+			),
+			1,
+		).Insert(
+			NewContext(context_type.TypeComment, "location ~ /strange-loc {"),
+			2,
+		).Insert(
+			NewContext(context_type.TypeComment, "    if ($strange ~* this_is_a_strange_if_ctx) {"),
+			3,
+		).Insert(
+			NewContext(context_type.TypeComment, "        return 404;"),
+			4,
+		).Insert(
+			NewContext(context_type.TypeComment, "    proxy_pass http://strange_url;"),
+			5,
+		).Insert(
+			NewContext(context_type.TypeComment, "}"),
+			6,
+		).(*Config),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	lines, err := testMain.ConfigLines(false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(strings.Join(lines, "\n"))
+
+	toBeConvertingMain, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	toBeConvertingMain.Insert(
+		NewContext(context_type.TypeHttp, "").Insert(
+			NewContext(context_type.TypeServer, "").Insert(
+				NewContext(context_type.TypeDirective, "listen 80"),
+				0,
+			).Insert(
+				NewContext(context_type.TypeDirective, "server_name example.com"),
+				1,
+			).Insert(
+				NewContext(context_type.TypeInclude, "conf.d/disabled_location.conf"),
+				2,
+			).Insert(
+				NewContext(context_type.TypeInclude, "conf.d/strange_location.conf"),
+				3,
+			),
+			0,
+		).Insert(
+			NewContext(context_type.TypeComment, "disabled server context"),
+			1,
+		).Insert(
+			NewContext(context_type.TypeComment, "server {    # disabled server"),
+			2,
+		).Insert(
+			NewContext(context_type.TypeComment, "    listen 8080;"),
+			3,
+		).Insert(
+			NewContext(context_type.TypeComment, "    server_name example.com;"),
+			4,
+		).Insert(
+			NewContext(context_type.TypeComment, "    # location ~ /disabled-location {"),
+			5,
+		).Insert(
+			NewContext(context_type.TypeComment, "    #     proxy_pass http://disabled-url;"),
+			6,
+		).Insert(
+			NewContext(context_type.TypeComment, "    # }"),
+			7,
+		).Insert(
+			NewContext(context_type.TypeComment, "    include conf.d/disabled_location.conf;"),
+			8,
+		).Insert(
+			NewContext(context_type.TypeComment, "    include conf.d/strange_location.conf;"),
+			9,
+		).Insert(
+			NewContext(context_type.TypeComment, "}"),
+			10,
+		),
+		0,
+	)
+
+	err = toBeConvertingMain.AddConfig(
+		NewContext(context_type.TypeConfig, "conf.d/disabled_location.conf").Insert(
+			NewContext(context_type.TypeComment, "# disabled config"),
+			0,
+		).Insert(
+			NewContext(context_type.TypeComment, "location ~ /test {"),
+			1,
+		).Insert(
+			NewContext(context_type.TypeComment, "return 404;"),
+			2,
+		).Insert(
+			NewContext(context_type.TypeComment, "}"),
+			3,
+		).Insert(
+			NewContext(context_type.TypeComment, "location ~ /has-disabled-ctx {"),
+			4,
+		).Insert(
+			NewContext(context_type.TypeComment, "# disabled if ctx"),
+			5,
+		).Insert(
+			NewContext(context_type.TypeComment, "# if ($is_enabled ~* false) {"),
+			6,
+		).Insert(
+			NewContext(context_type.TypeComment, "# # set $is_enabled true;"),
+			7,
+		).Insert(
+			NewContext(context_type.TypeComment, "# return 404;"),
+			8,
+		).Insert(
+			NewContext(context_type.TypeComment, "# }"),
+			9,
+		).Insert(
+			NewContext(context_type.TypeComment, "}"),
+			10,
+		).Insert(
+			NewContext(context_type.TypeComment, "# }"),
+			11,
+		).Insert(
+			NewContext(context_type.TypeComment, "}"),
+			12,
+		).(*Config),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = toBeConvertingMain.AddConfig(
+		NewContext(context_type.TypeConfig, "conf.d/strange_location.conf").Insert(
+			NewContext(context_type.TypeComment, "strange config"),
+			0,
+		).Insert(
+			NewContext(context_type.TypeLocation, "~ /normal-loc").Insert(
+				NewContext(context_type.TypeDirective, "return 200"),
+				0,
+			),
+			1,
+		).Insert(
+			NewContext(context_type.TypeComment, "location ~ /strange-loc {"),
+			2,
+		).Insert(
+			NewContext(context_type.TypeComment, "    if ($strange ~* this_is_a_strange_if_ctx) {"),
+			3,
+		).Insert(
+			NewContext(context_type.TypeComment, "        return 404;"),
+			4,
+		).Insert(
+			NewContext(context_type.TypeComment, "    proxy_pass http://strange_url;"),
+			5,
+		).Insert(
+			NewContext(context_type.TypeComment, "}"),
+			6,
+		).(*Config),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	lines2, err := toBeConvertingMain.ConfigLines(false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(strings.Join(lines2, "\n"))
+	j, _ := json.Marshal(testMain)
+	fmt.Println(string(j))
+	type args struct {
+		ctx context.Context
+	}
+	tests := []struct {
+		name string
+		args args
+		want context.Context
+	}{
+		{
+			name: "normal test",
+			args: args{ctx: toBeConvertingMain},
+			want: testMain,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := commentsToContextConverter{}
+			got, gotMarshalErr := json.Marshal(c.Convert(tt.args.ctx))
+			if gotMarshalErr != nil {
+				t.Fatal(gotMarshalErr)
+			}
+			want, wantMarshalErr := json.Marshal(tt.want)
+			if wantMarshalErr != nil {
+				t.Fatal(wantMarshalErr)
+			}
+			if !reflect.DeepEqual(got, want) {
+				t.Errorf("Convert() ==> jsonMarshal = %v, want %v", string(got), string(want))
+			}
+		})
+	}
+}
+
+func Test_commentsToContextConverter_sliceContinuousIndexes(t *testing.T) {
+	type args struct {
+		indexes []int
+	}
+	tests := []struct {
+		name string
+		args args
+		want [][]int
+	}{
+		{
+			name: "[ 1 ]",
+			args: args{indexes: []int{1}},
+			want: [][]int{{1}},
+		},
+		{
+			name: "[ 1, 2 ]",
+			args: args{indexes: []int{1, 2}},
+			want: [][]int{{1, 2}},
+		},
+		{
+			name: "[1, 3, 4, 6, 7 ,8, 11 ]",
+			args: args{indexes: []int{1, 3, 4, 6, 7, 8, 11}},
+			want: [][]int{{1}, {3, 4}, {6, 7, 8}, {11}},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := commentsToContextConverter{}
+			if got := c.sliceContinuousIndexes(tt.args.indexes); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("sliceContinuousIndexes() = %v, want %v", got, tt.want)
 			}
 		})
 	}

@@ -20,11 +20,11 @@ type jsonUnmarshalMain struct {
 	Configs    map[string]*json.RawMessage `json:"configs,omitempty"`
 }
 
-type mainUnmarshaler struct {
+type mainUnmarshaller struct {
 	completedMain MainContext
 }
 
-func (m *mainUnmarshaler) UnmarshalJSON(bytes []byte) error {
+func (m *mainUnmarshaller) UnmarshalJSON(bytes []byte) error {
 	var unmarshalMain jsonUnmarshalMain
 	err := json.Unmarshal(bytes, &unmarshalMain)
 	if err != nil {
@@ -54,12 +54,12 @@ func (m *mainUnmarshaler) UnmarshalJSON(bytes []byte) error {
 				return err
 			}
 		}
-		configMarshaler := jsonUnmarshaler{
+		configUnmarshaller := jsonUnmarshaller{
 			configGraph:      m.completedMain.graph(),
 			completedContext: context.NullContext(),
 			fatherContext:    m.completedMain,
 		}
-		err = configMarshaler.UnmarshalJSON(*configRaw)
+		err = configUnmarshaller.UnmarshalJSON(*configRaw)
 		if err != nil {
 			return err
 		}
@@ -68,13 +68,13 @@ func (m *mainUnmarshaler) UnmarshalJSON(bytes []byte) error {
 	return main.rerenderGraph()
 }
 
-type jsonUnmarshaler struct {
+type jsonUnmarshaller struct {
 	configGraph      ConfigGraph
 	completedContext context.Context
 	fatherContext    context.Context
 }
 
-func (u *jsonUnmarshaler) UnmarshalJSON(bytes []byte) error {
+func (u *jsonUnmarshaller) UnmarshalJSON(bytes []byte) error {
 	var unmarshalCtx jsonUnmarshalContext
 	// unmarshal context, it's self
 	err := json.Unmarshal(bytes, &unmarshalCtx)
@@ -103,9 +103,19 @@ func (u *jsonUnmarshaler) UnmarshalJSON(bytes []byte) error {
 		}
 	}
 
+	// set enabled/disabled to completed context
+	if unmarshalCtx.Enabled {
+		err = u.completedContext.Enable().Error()
+	} else {
+		err = u.completedContext.Disable().Error()
+	}
+	if err != nil {
+		return err
+	}
+
 	// unmarshal context's children
 	for _, childRaw := range unmarshalCtx.Children {
-		err = u.nextUnmarshaler().UnmarshalJSON(*childRaw)
+		err = u.nextUnmarshaller().UnmarshalJSON(*childRaw)
 		if err != nil {
 			return err
 		}
@@ -113,15 +123,15 @@ func (u *jsonUnmarshaler) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-func (u *jsonUnmarshaler) nextUnmarshaler() *jsonUnmarshaler {
-	return &jsonUnmarshaler{
+func (u *jsonUnmarshaller) nextUnmarshaller() *jsonUnmarshaller {
+	return &jsonUnmarshaller{
 		configGraph:      u.configGraph,
 		completedContext: context.NullContext(),
 		fatherContext:    u.completedContext,
 	}
 }
 
-func (u *jsonUnmarshaler) unmarshalConfig(unmashalctx *jsonUnmarshalContext) error {
+func (u *jsonUnmarshaller) unmarshalConfig(unmashalctx *jsonUnmarshalContext) error {
 	configPath, err := newConfigPath(u.configGraph, unmashalctx.Value)
 	if err != nil {
 		return err
@@ -130,11 +140,12 @@ func (u *jsonUnmarshaler) unmarshalConfig(unmashalctx *jsonUnmarshalContext) err
 	if err != nil {
 		return err
 	}
+
 	u.completedContext = cache
 	return nil
 }
 
-//func (u *jsonUnmarshaler) unmarshalInclude(unmarshalctx *jsonUnmarshalContext) error {
+//func (u *jsonUnmarshaller) unmarshalInclude(unmarshalctx *jsonUnmarshalContext) error {
 //	u.completedContext = NewContext(unmarshalctx.ContextType, unmarshalctx.Value)
 //	err := u.completedContext.Error()
 //	if err != nil {

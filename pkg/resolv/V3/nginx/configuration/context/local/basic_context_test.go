@@ -1,6 +1,8 @@
 package local
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
@@ -149,6 +151,118 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// enabled/disabled contexts test data
+	testMain, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testMain.Insert(
+		NewContext(context_type.TypeHttp, "").
+			Insert(
+				NewContext(context_type.TypeServer, "").
+					Insert(
+						NewContext(context_type.TypeInlineComment, "enabled server with enabled children configs"),
+						0,
+					).
+					Insert(
+						NewContext(context_type.TypeInclude, "conf.d/enabled.conf"),
+						1,
+					),
+				0,
+			).
+			Insert(
+				NewContext(context_type.TypeServer, "").
+					Insert(
+						NewContext(context_type.TypeInlineComment, "enabled server with disabled children configs"),
+						0,
+					).
+					Insert(
+						NewContext(context_type.TypeInclude, "conf.d/disabled.conf"),
+						1,
+					),
+				1,
+			).
+			Insert(
+				NewContext(context_type.TypeServer, "").
+					Insert(
+						NewContext(context_type.TypeInlineComment, "enabled server with disabled include context"),
+						0,
+					).
+					Insert(
+						NewContext(context_type.TypeInclude, "conf.d/enabled.conf").Disable(),
+						1,
+					),
+				2,
+			).
+			Insert(
+				NewContext(context_type.TypeServer, "").Disable().
+					Insert(
+						NewContext(context_type.TypeInlineComment, "disabled server with enabled children configs"),
+						0,
+					).
+					Insert(
+						NewContext(context_type.TypeInclude, "conf.d/enabled.conf"),
+						1,
+					),
+				3,
+			).
+			Insert(
+				NewContext(context_type.TypeServer, "").Disable().
+					Insert(
+						NewContext(context_type.TypeInlineComment, "disabled server with disabled children configs"),
+						0,
+					).
+					Insert(
+						NewContext(context_type.TypeInclude, "conf.d/disabled.conf"),
+						1,
+					),
+				4,
+			).
+			Insert(
+				NewContext(context_type.TypeServer, "").Disable().
+					Insert(
+						NewContext(context_type.TypeInlineComment, "disabled server with disabled include context"),
+						0,
+					).
+					Insert(
+						NewContext(context_type.TypeInclude, "conf.d/enabled.conf").Disable(),
+						1,
+					),
+				5,
+			),
+		0,
+	)
+	err = testMain.AddConfig(
+		NewContext(context_type.TypeConfig, "conf.d/enabled.conf").
+			Insert(
+				NewContext(context_type.TypeLocation, "~ /test").
+					Insert(NewContext(context_type.TypeDirective, "return 200 'test'"), 0),
+				0,
+			).(*Config),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = testMain.AddConfig(
+		NewContext(context_type.TypeConfig, "conf.d/disabled.conf").Disable().
+			Insert(
+				NewContext(context_type.TypeComment, "disabled config"),
+				0,
+			).
+			Insert(
+				NewContext(context_type.TypeLocation, "~ /test").
+					Insert(NewContext(context_type.TypeDirective, "return 404"), 0),
+				1,
+			).(*Config),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	testHttp := testMain.MainConfig().Child(0).(*BasicContext)
+
+	jsondata, err := json.Marshal(testMain)
+	fmt.Println(string(jsondata))
 	type fields struct {
 		Enabled        bool
 		ContextType    context_type.ContextType
@@ -442,6 +556,94 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 			want:    nil,
 			wantErr: true,
 		},
+		{
+			name: "enabled/disabled children contexts",
+			fields: fields{
+				Enabled:        true,
+				ContextType:    context_type.TypeHttp,
+				ContextValue:   testHttp.ContextValue,
+				Children:       testHttp.Children,
+				father:         testHttp.father,
+				self:           testHttp.self,
+				headStringFunc: testHttp.headStringFunc,
+				tailStringFunc: testHttp.tailStringFunc,
+			},
+			args: args{isDumping: false},
+			want: []string{
+				"http {",
+				"    server {    # enabled server with enabled children configs",
+				"        # include <== conf.d/enabled.conf",
+				"        location ~ /test {",
+				"            return 200 'test';",
+				"        }",
+				"    }",
+				"    server {    # enabled server with disabled children configs",
+				"        # include <== conf.d/disabled.conf",
+				"        # # disabled config",
+				"        # location ~ /test {",
+				"        #     return 404;",
+				"        # }",
+				"    }",
+				"    server {    # enabled server with disabled include context",
+				"        # # include <== conf.d/enabled.conf",
+				"    }",
+				"    # server {    # disabled server with enabled children configs",
+				"    #     # include <== conf.d/enabled.conf",
+				"    #     location ~ /test {",
+				"    #         return 200 'test';",
+				"    #     }",
+				"    # }",
+				"    # server {    # disabled server with disabled children configs",
+				"    #     # include <== conf.d/disabled.conf",
+				"    #     # # disabled config",
+				"    #     # location ~ /test {",
+				"    #     #     return 404;",
+				"    #     # }",
+				"    # }",
+				"    # server {    # disabled server with disabled include context",
+				"    #     # # include <== conf.d/enabled.conf",
+				"    # }",
+				"}",
+			},
+			wantErr: false,
+		},
+		{
+			name: "enabled/disabled children contexts for dumping",
+			fields: fields{
+				Enabled:        true,
+				ContextType:    context_type.TypeHttp,
+				ContextValue:   testHttp.ContextValue,
+				Children:       testHttp.Children,
+				father:         testHttp.father,
+				self:           testHttp.self,
+				headStringFunc: testHttp.headStringFunc,
+				tailStringFunc: testHttp.tailStringFunc,
+			},
+			args: args{isDumping: true},
+			want: []string{
+				"http {",
+				"    server {    # enabled server with enabled children configs",
+				"        include conf.d/enabled.conf;",
+				"    }",
+				"    server {    # enabled server with disabled children configs",
+				"        include conf.d/disabled.conf;",
+				"    }",
+				"    server {    # enabled server with disabled include context",
+				"        # include conf.d/enabled.conf;",
+				"    }",
+				"    # server {    # disabled server with enabled children configs",
+				"    #     include conf.d/enabled.conf;",
+				"    # }",
+				"    # server {    # disabled server with disabled children configs",
+				"    #     include conf.d/disabled.conf;",
+				"    # }",
+				"    # server {    # disabled server with disabled include context",
+				"    #     # include conf.d/enabled.conf;",
+				"    # }",
+				"}",
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -462,6 +664,322 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ConfigLines() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestBasicContext_Disable(t *testing.T) {
+	testMain, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testMain.Insert(
+		NewContext(context_type.TypeHttp, "").
+			Insert(
+				NewContext(context_type.TypeServer, "").
+					Insert(
+						NewContext(context_type.TypeInlineComment, "enabled server with enabled children configs"),
+						0,
+					).
+					Insert(
+						NewContext(context_type.TypeInclude, "conf.d/enabled.conf"),
+						1,
+					),
+				0,
+			).
+			Insert(
+				NewContext(context_type.TypeServer, "").
+					Insert(
+						NewContext(context_type.TypeInlineComment, "enabled server with disabled children configs"),
+						0,
+					).
+					Insert(
+						NewContext(context_type.TypeInclude, "conf.d/disabled.conf"),
+						1,
+					),
+				1,
+			).
+			Insert(
+				NewContext(context_type.TypeServer, "").
+					Insert(
+						NewContext(context_type.TypeInlineComment, "enabled server with disabled include context"),
+						0,
+					).
+					Insert(
+						NewContext(context_type.TypeInclude, "conf.d/enabled.conf").Disable(),
+						1,
+					),
+				2,
+			).
+			Insert(
+				NewContext(context_type.TypeServer, "").Disable().
+					Insert(
+						NewContext(context_type.TypeInlineComment, "disabled server with enabled children configs"),
+						0,
+					).
+					Insert(
+						NewContext(context_type.TypeInclude, "conf.d/enabled.conf"),
+						1,
+					),
+				3,
+			).
+			Insert(
+				NewContext(context_type.TypeServer, "").Disable().
+					Insert(
+						NewContext(context_type.TypeInlineComment, "disabled server with disabled children configs"),
+						0,
+					).
+					Insert(
+						NewContext(context_type.TypeInclude, "conf.d/disabled.conf"),
+						1,
+					),
+				4,
+			).
+			Insert(
+				NewContext(context_type.TypeServer, "").Disable().
+					Insert(
+						NewContext(context_type.TypeInlineComment, "disabled server with disabled include context"),
+						0,
+					).
+					Insert(
+						NewContext(context_type.TypeInclude, "conf.d/enabled.conf").Disable(),
+						1,
+					),
+				5,
+			),
+		0,
+	)
+	err = testMain.AddConfig(
+		NewContext(context_type.TypeConfig, "conf.d/enabled.conf").
+			Insert(
+				NewContext(context_type.TypeLocation, "~ /test").
+					Insert(NewContext(context_type.TypeDirective, "return 200 'test'"), 0),
+				0,
+			).(*Config),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = testMain.AddConfig(
+		NewContext(context_type.TypeConfig, "conf.d/disabled.conf").Disable().
+			Insert(
+				NewContext(context_type.TypeComment, "disabled config"),
+				0,
+			).
+			Insert(
+				NewContext(context_type.TypeLocation, "~ /test").
+					Insert(NewContext(context_type.TypeDirective, "return 404"), 0),
+				1,
+			).(*Config),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	testHttp := testMain.MainConfig().Child(0).(*BasicContext)
+	type fields struct {
+		Enabled        bool
+		ContextType    context_type.ContextType
+		ContextValue   string
+		Children       []context.Context
+		father         context.Context
+		self           context.Context
+		headStringFunc func(ctxType context_type.ContextType, value string) string
+		tailStringFunc func() string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   context.Context
+	}{
+		{
+			name: "normal test",
+			fields: fields{
+				Enabled:        testHttp.Enabled,
+				ContextType:    testHttp.ContextType,
+				ContextValue:   testHttp.ContextValue,
+				Children:       testHttp.Children,
+				father:         testHttp.father,
+				self:           testHttp.self,
+				headStringFunc: testHttp.headStringFunc,
+				tailStringFunc: testHttp.tailStringFunc,
+			},
+			want: testHttp,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := &BasicContext{
+				Enabled:        tt.fields.Enabled,
+				ContextType:    tt.fields.ContextType,
+				ContextValue:   tt.fields.ContextValue,
+				Children:       tt.fields.Children,
+				father:         tt.fields.father,
+				self:           tt.fields.self,
+				headStringFunc: tt.fields.headStringFunc,
+				tailStringFunc: tt.fields.tailStringFunc,
+			}
+			if got := b.Disable(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Disable() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestBasicContext_Enable(t *testing.T) {
+	testMain, err := NewMain("C:\\test\\nginx.conf")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testMain.Insert(
+		NewContext(context_type.TypeHttp, "").Disable().
+			Insert(
+				NewContext(context_type.TypeServer, "").
+					Insert(
+						NewContext(context_type.TypeInlineComment, "enabled server with enabled children configs"),
+						0,
+					).
+					Insert(
+						NewContext(context_type.TypeInclude, "conf.d/enabled.conf"),
+						1,
+					),
+				0,
+			).
+			Insert(
+				NewContext(context_type.TypeServer, "").
+					Insert(
+						NewContext(context_type.TypeInlineComment, "enabled server with disabled children configs"),
+						0,
+					).
+					Insert(
+						NewContext(context_type.TypeInclude, "conf.d/disabled.conf"),
+						1,
+					),
+				1,
+			).
+			Insert(
+				NewContext(context_type.TypeServer, "").
+					Insert(
+						NewContext(context_type.TypeInlineComment, "enabled server with disabled include context"),
+						0,
+					).
+					Insert(
+						NewContext(context_type.TypeInclude, "conf.d/enabled.conf").Disable(),
+						1,
+					),
+				2,
+			).
+			Insert(
+				NewContext(context_type.TypeServer, "").Disable().
+					Insert(
+						NewContext(context_type.TypeInlineComment, "disabled server with enabled children configs"),
+						0,
+					).
+					Insert(
+						NewContext(context_type.TypeInclude, "conf.d/enabled.conf"),
+						1,
+					),
+				3,
+			).
+			Insert(
+				NewContext(context_type.TypeServer, "").Disable().
+					Insert(
+						NewContext(context_type.TypeInlineComment, "disabled server with disabled children configs"),
+						0,
+					).
+					Insert(
+						NewContext(context_type.TypeInclude, "conf.d/disabled.conf"),
+						1,
+					),
+				4,
+			).
+			Insert(
+				NewContext(context_type.TypeServer, "").Disable().
+					Insert(
+						NewContext(context_type.TypeInlineComment, "disabled server with disabled include context"),
+						0,
+					).
+					Insert(
+						NewContext(context_type.TypeInclude, "conf.d/enabled.conf").Disable(),
+						1,
+					),
+				5,
+			),
+		0,
+	)
+	err = testMain.AddConfig(
+		NewContext(context_type.TypeConfig, "conf.d/enabled.conf").
+			Insert(
+				NewContext(context_type.TypeLocation, "~ /test").
+					Insert(NewContext(context_type.TypeDirective, "return 200 'test'"), 0),
+				0,
+			).(*Config),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = testMain.AddConfig(
+		NewContext(context_type.TypeConfig, "conf.d/disabled.conf").Disable().
+			Insert(
+				NewContext(context_type.TypeComment, "disabled config"),
+				0,
+			).
+			Insert(
+				NewContext(context_type.TypeLocation, "~ /test").
+					Insert(NewContext(context_type.TypeDirective, "return 404"), 0),
+				1,
+			).(*Config),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	testHttp := testMain.MainConfig().Child(0).(*BasicContext)
+	type fields struct {
+		Enabled        bool
+		ContextType    context_type.ContextType
+		ContextValue   string
+		Children       []context.Context
+		father         context.Context
+		self           context.Context
+		headStringFunc func(ctxType context_type.ContextType, value string) string
+		tailStringFunc func() string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   context.Context
+	}{
+		{
+			name: "normal test",
+			fields: fields{
+				Enabled:        testHttp.Enabled,
+				ContextType:    testHttp.ContextType,
+				ContextValue:   testHttp.ContextValue,
+				Children:       testHttp.Children,
+				father:         testHttp.father,
+				self:           testHttp.self,
+				headStringFunc: testHttp.headStringFunc,
+				tailStringFunc: testHttp.tailStringFunc,
+			},
+			want: testHttp,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := &BasicContext{
+				Enabled:        tt.fields.Enabled,
+				ContextType:    tt.fields.ContextType,
+				ContextValue:   tt.fields.ContextValue,
+				Children:       tt.fields.Children,
+				father:         tt.fields.father,
+				self:           tt.fields.self,
+				headStringFunc: tt.fields.headStringFunc,
+				tailStringFunc: tt.fields.tailStringFunc,
+			}
+			if got := b.Enable(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Enable() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -756,6 +1274,71 @@ func TestBasicContext_Insert(t *testing.T) {
 			}
 			if got.Type() != context_type.TypeErrContext && !reflect.DeepEqual(got.Child(actualIdx), tt.args.ctx) {
 				t.Errorf("Insert() context into corresponding index(%d) is %v, want %v", actualIdx, got.Child(actualIdx), tt.args.ctx)
+			}
+		})
+	}
+}
+
+func TestBasicContext_IsEnabled(t *testing.T) {
+	enabledHttp := NewContext(context_type.TypeHttp, "").(*BasicContext)
+	disabledHttp := NewContext(context_type.TypeHttp, "").Disable().(*BasicContext)
+	type fields struct {
+		Enabled        bool
+		ContextType    context_type.ContextType
+		ContextValue   string
+		Children       []context.Context
+		father         context.Context
+		self           context.Context
+		headStringFunc func(ctxType context_type.ContextType, value string) string
+		tailStringFunc func() string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   bool
+	}{
+		{
+			name: "enabled context",
+			fields: fields{
+				Enabled:        enabledHttp.Enabled,
+				ContextType:    enabledHttp.ContextType,
+				ContextValue:   enabledHttp.ContextValue,
+				Children:       enabledHttp.Children,
+				father:         enabledHttp.father,
+				self:           enabledHttp.self,
+				headStringFunc: enabledHttp.headStringFunc,
+				tailStringFunc: enabledHttp.tailStringFunc,
+			},
+			want: true,
+		},
+		{
+			name: "disabled context",
+			fields: fields{
+				Enabled:        disabledHttp.Enabled,
+				ContextType:    disabledHttp.ContextType,
+				ContextValue:   disabledHttp.ContextValue,
+				Children:       disabledHttp.Children,
+				father:         disabledHttp.father,
+				self:           disabledHttp.self,
+				headStringFunc: disabledHttp.headStringFunc,
+				tailStringFunc: disabledHttp.tailStringFunc,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := &BasicContext{
+				Enabled:        tt.fields.Enabled,
+				ContextType:    tt.fields.ContextType,
+				ContextValue:   tt.fields.ContextValue,
+				Children:       tt.fields.Children,
+				father:         tt.fields.father,
+				self:           tt.fields.self,
+				headStringFunc: tt.fields.headStringFunc,
+				tailStringFunc: tt.fields.tailStringFunc,
+			}
+			if got := b.IsEnabled(); got != tt.want {
+				t.Errorf("IsEnabled() = %v, want %v", got, tt.want)
 			}
 		})
 	}

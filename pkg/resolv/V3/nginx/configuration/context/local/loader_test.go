@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -49,7 +50,7 @@ func TestJsonLoader(t *testing.T) {
 			name: "normal test",
 			args: args{data: []byte("{\"testdata\": \"test\"}")},
 			want: &jsonLoader{
-				unmarshaler: &mainUnmarshaler{},
+				unmarshaler: &mainUnmarshaller{},
 				jsonBytes:   []byte("{\"testdata\": \"test\"}"),
 			},
 		},
@@ -218,7 +219,7 @@ func Test_fileLoader_Load(t *testing.T) {
 		t.Fatal(err)
 	}
 	simpleMain.
-		Insert(NewContext(context_type.TypeComment, "user  nobody;"), 0).
+		Insert(NewContext(context_type.TypeDirective, "user  nobody").Disable(), 0).
 		Insert(NewContext(context_type.TypeDirective, "worker_processes 1"), 1).
 		Insert(NewContext(context_type.TypeInlineComment, "inline comments"), 2).
 		Insert(
@@ -282,7 +283,7 @@ func Test_fileLoader_Load(t *testing.T) {
 				t.Fatal(err)
 			}
 			if !reflect.DeepEqual(gotLines, wantLines) {
-				t.Errorf("Load() got = %v, want %v", got, tt.want)
+				t.Errorf("Load() got = %v, want %v", strings.Join(gotLines, "\n"), strings.Join(wantLines, "\n"))
 			}
 		})
 	}
@@ -468,7 +469,7 @@ func Test_fileLoader_loadInclude(t *testing.T) {
 
 func Test_jsonLoader_Load(t *testing.T) {
 	type fields struct {
-		unmarshaler *mainUnmarshaler
+		unmarshaler *mainUnmarshaller
 		jsonBytes   []byte
 	}
 	tests := []struct {
