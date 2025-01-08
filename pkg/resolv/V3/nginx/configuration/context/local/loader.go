@@ -155,9 +155,19 @@ func (f *fileLoader) load(config *Config) error {
 	if e := new(commentsToContextConverter).Convert(config).Error(); e != nil {
 		return e
 	}
-	for _, pos := range config.QueryAllByKeyWords(context.NewKeyWords(context_type.TypeInclude).SetCascaded(true)) {
+	for _, pos := range config.QueryAllByKeyWords(context.NewKeyWords(context_type.TypeInclude).SetCascaded(true).SetSkipQueryFilter(func(targetCtx context.Context) bool {
+		return !targetCtx.IsEnabled() || targetCtx.Type() == context_type.TypeConfig // loading without the disabled context, and skipping the child config context
+	})) {
 		// load include configs
 		if pos.Target().Type() == context_type.TypeInclude {
+			include := pos.Target().(*Include)
+			_, _, isEnabledInclude, _, err := include.parsePatternPath()
+			if err != nil {
+				return errors.Wrap(err, "load include configs failed")
+			}
+			if !isEnabledInclude { // skipping the disabled context
+				continue
+			}
 			err = f.loadInclude(pos.Target().(*Include))
 			if err != nil {
 				return errors.Wrap(err, "load include configs failed")

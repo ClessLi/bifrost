@@ -175,8 +175,14 @@ func (i *Include) QueryByKeyWords(kw context.KeyWords) context.Pos {
 	if !i.enabled { // Avoid loop queries
 		return context.NotFoundPos()
 	}
-	for _, child := range i.Configs() {
-		pos := child.QueryByKeyWords(kw)
+	if !kw.Cascaded() {
+		return context.NotFoundPos()
+	}
+	for _, config := range i.Configs() {
+		if kw.SkipQueryThisContext(config) {
+			continue
+		}
+		pos := config.QueryByKeyWords(kw)
 		if pos != context.NotFoundPos() {
 			return pos
 		}
@@ -191,7 +197,13 @@ func (i *Include) QueryAllByKeyWords(kw context.KeyWords) []context.Pos {
 	if !i.enabled { // Avoid loop queries
 		return poses
 	}
+	if !kw.Cascaded() {
+		return poses
+	}
 	for _, config := range i.Configs() {
+		if kw.SkipQueryThisContext(config) {
+			continue
+		}
 		poses = append(poses, config.QueryAllByKeyWords(kw)...)
 	}
 	return poses

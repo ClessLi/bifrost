@@ -166,7 +166,7 @@ func (m *nginxConfigManager) backup() error {
 	}
 
 	var configPaths []string
-	for _, config := range m.NginxConfig().Main().Topology() {
+	for _, config := range m.NginxConfig().Main().ListConfigs() {
 		configPaths = append(configPaths, config.FullPath())
 	}
 
@@ -204,7 +204,7 @@ func (m *nginxConfigManager) refresh() error {
 			return err
 		}
 	} else {
-		// 清理本地磁盘上配置
+		// 仅清理本地磁盘上拓扑图中的配置
 		var fsConfigPaths []string
 		for _, config := range fsMain.Topology() {
 			fsConfigPaths = append(fsConfigPaths, config.FullPath())
@@ -217,6 +217,7 @@ func (m *nginxConfigManager) refresh() error {
 		// 回写内存配置到本地磁盘
 		err = m.saveWithCheck()
 		if err != nil { // 保存异常，则回退
+			// 仅清理内存中在拓扑图中的配置
 			var memConfigPaths []string
 			for _, config := range m.configuration.Main().Topology() {
 				memConfigPaths = append(memConfigPaths, config.FullPath())

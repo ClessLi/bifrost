@@ -34,7 +34,7 @@ func (m *Main) MarshalJSON() ([]byte, error) {
 		Configs:    make(map[string]*Config),
 	}
 
-	for _, config := range m.ConfigGraph.Topology() {
+	for _, config := range m.ConfigGraph.ListConfigs() {
 		marshalCtx.Configs[config.Value()] = config
 	}
 
@@ -50,7 +50,7 @@ func (m *Main) Child(idx int) context.Context {
 }
 
 func (m *Main) SetValue(v string) error {
-	if len(m.Topology()) > 1 {
+	if len(m.ListConfigs()) > 1 {
 		return errors.New("cannot set value for MainContext with non empty graph")
 	}
 	return m.MainConfig().SetValue(v)
