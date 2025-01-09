@@ -108,7 +108,7 @@ func loadMainContextFromFS(filepath string) (local.MainContext, time.Time, error
 	if err != nil {
 		return nil, timestamp, err
 	}
-	for _, config := range m.Topology() {
+	for _, config := range m.ListConfigs() {
 		tt, err := utilsV3.FileModifyTime(config.FullPath())
 		if err != nil {
 			return nil, timestamp, err
@@ -125,7 +125,7 @@ func dumpMainContext(m local.MainContext) map[string]*bytes.Buffer {
 		return nil
 	}
 	dumps := make(map[string]*bytes.Buffer)
-	for _, config := range m.Topology() {
+	for _, config := range m.ListConfigs() {
 		lines, err := config.ConfigLines(true)
 		if err != nil {
 			return nil

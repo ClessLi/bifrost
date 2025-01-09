@@ -166,7 +166,7 @@ func (m *nginxConfigManager) backup() error {
 	}
 
 	var configPaths []string
-	for _, config := range m.NginxConfig().Main().Topology() {
+	for _, config := range m.NginxConfig().Main().ListConfigs() {
 		configPaths = append(configPaths, config.FullPath())
 	}
 
@@ -204,28 +204,31 @@ func (m *nginxConfigManager) refresh() error {
 			return err
 		}
 	} else {
-		// 清理本地磁盘上配置
-		var fsConfigPaths []string
-		for _, config := range fsMain.Topology() {
-			fsConfigPaths = append(fsConfigPaths, config.FullPath())
-		}
-		err = utilsV2.RemoveFiles(fsConfigPaths)
-		if err != nil {
-			return err
-		}
+		// TODO: 配置文件删除功能独立出来
+		// // 仅清理本地磁盘上拓扑图中的配置
+		// var fsConfigPaths []string
+		// for _, config := range fsMain.Topology() {
+		// 	fsConfigPaths = append(fsConfigPaths, config.FullPath())
+		// }
+		// err = utilsV2.RemoveFiles(fsConfigPaths)
+		// if err != nil {
+		// 	return err
+		// }
 
 		// 回写内存配置到本地磁盘
 		err = m.saveWithCheck()
 		if err != nil { // 保存异常，则回退
-			var memConfigPaths []string
-			for _, config := range m.configuration.Main().Topology() {
-				memConfigPaths = append(memConfigPaths, config.FullPath())
-			}
+			// TODO: 配置文件删除功能独立出来
+			// // 仅清理内存中在拓扑图中的配置
+			// var memConfigPaths []string
+			// for _, config := range m.configuration.Main().Topology() {
+			// 	memConfigPaths = append(memConfigPaths, config.FullPath())
+			// }
 
-			err = utilsV2.RemoveFiles(memConfigPaths)
-			if err != nil {
-				logV1.Errorf("remove failure update configs failed. %+v", err)
-			}
+			// err = utilsV2.RemoveFiles(memConfigPaths)
+			// if err != nil {
+			// 	logV1.Errorf("remove failure update configs failed. %+v", err)
+			// }
 
 			// 回退为原本地磁盘上配置
 			err = m.configuration.(*nginxConfig).renewMainContext(fsMain)
