@@ -13,6 +13,7 @@ import (
 
 type includeSnapshot struct {
 	isEnabled          bool
+	isInTopology       bool
 	mainContext        MainContext
 	fatherConfig       *Config
 	includePatternPath string
@@ -61,33 +62,33 @@ func (i *Include) MarshalJSON() ([]byte, error) {
 	return json.Marshal(marshalCtx)
 }
 
-func (i *Include) parsePatternPath() (main MainContext, fatherConfig *Config, isEnabled bool, pattern string, err error) {
-	isEnabled, fatherConfig, err = i.fatherConfig()
+func (i *Include) parsePatternPath() (main MainContext, fatherConfig *Config, isEnabled, isInTopology bool, pattern string, err error) {
+	isEnabled, isInTopology, fatherConfig, err = i.fatherConfig()
 	if !i.enabled {
 		isEnabled = false
 	}
 	if err != nil {
-		return nil, fatherConfig, isEnabled, "", err
+		return nil, fatherConfig, isEnabled, isInTopology, "", err
 	}
 	mainCtx, ok := fatherConfig.Father().(MainContext)
 	if !ok {
-		return nil, fatherConfig, isEnabled, "", errors.WithCode(code.ErrV3InvalidContext, "this include context is not bound to a main context")
+		return nil, fatherConfig, isEnabled, isInTopology, "", errors.WithCode(code.ErrV3InvalidContext, "this include context is not bound to a main context")
 	}
 	if filepath.IsAbs(i.Value()) {
-		return mainCtx, fatherConfig, isEnabled, i.Value(), nil
+		return mainCtx, fatherConfig, isEnabled, isInTopology, i.Value(), nil
 	}
-	return mainCtx, fatherConfig, isEnabled, filepath.Join(mainCtx.MainConfig().BaseDir(), i.Value()), nil
+	return mainCtx, fatherConfig, isEnabled, isInTopology, filepath.Join(mainCtx.MainConfig().BaseDir(), i.Value()), nil
 }
 
 func (i *Include) PatternPath() string {
 	i.loadLocker.RLock()
 	defer i.loadLocker.RUnlock()
-	_, _, _, pattern, _ := i.parsePatternPath()
+	_, _, _, _, pattern, _ := i.parsePatternPath()
 	return pattern
 }
 
 func (i *Include) parseSnapshot() (*includeSnapshot, error) {
-	mainCtx, fatherConfig, isEnabled, pattern, err := i.parsePatternPath()
+	mainCtx, fatherConfig, isEnabled, isInTopology, pattern, err := i.parsePatternPath()
 	if err != nil {
 		return nil, err
 	}
@@ -102,6 +103,7 @@ func (i *Include) parseSnapshot() (*includeSnapshot, error) {
 	}
 	return &includeSnapshot{
 		isEnabled:          isEnabled,
+		isInTopology:       isInTopology,
 		mainContext:        mainCtx,
 		fatherConfig:       fatherConfig,
 		includePatternPath: pattern,
@@ -119,16 +121,16 @@ func (i *Include) Configs() []*Config {
 	return snapshot.includedConfigs
 }
 
-func (i *Include) fatherConfig() (bool, *Config, error) {
+func (i *Include) fatherConfig() (isEnabled, isInTopology bool, fatherConfig *Config, err error) {
 	fatherCtx := i.fatherContext
-	isEnabled := fatherCtx.IsEnabled()
+	isEnabled = fatherCtx.IsEnabled()
 	fatherConfig, ok := fatherCtx.(*Config)
 	for !ok {
 		switch fatherCtx.Type() {
 		case context_type.TypeErrContext:
-			return isEnabled, nil, fatherCtx.(*context.ErrorContext).AppendError(errors.WithCode(code.ErrV3InvalidContext, "found an error config context")).Error()
+			return isEnabled, false, fatherConfig, fatherCtx.(*context.ErrorContext).AppendError(errors.WithCode(code.ErrV3InvalidContext, "found an error config context")).Error()
 		case context_type.TypeMain:
-			return isEnabled, nil, errors.WithCode(code.ErrV3InvalidContext, "found an Main context")
+			return isEnabled, false, fatherConfig, errors.WithCode(code.ErrV3InvalidContext, "found an Main context")
 		}
 
 		fatherCtx = fatherCtx.Father()
@@ -137,13 +139,22 @@ func (i *Include) fatherConfig() (bool, *Config, error) {
 		}
 		fatherConfig, ok = fatherCtx.(*Config)
 	}
-	return isEnabled, fatherConfig, nil
+	mainCtx, err := fatherConfig.mainContext()
+	if err != nil {
+		return isEnabled, false, fatherConfig, nil
+	}
+	for _, config := range mainCtx.Topology() {
+		if fatherConfig == config {
+			return isEnabled, true, fatherConfig, nil
+		}
+	}
+	return isEnabled, false, fatherConfig, nil
 }
 
 func (i *Include) FatherConfig() (*Config, error) {
 	i.loadLocker.RLock()
 	defer i.loadLocker.RUnlock()
-	_, fc, err := i.fatherConfig()
+	_, _, fc, err := i.fatherConfig()
 	return fc, err
 }
 
@@ -172,7 +183,9 @@ func (i *Include) Child(idx int) context.Context {
 func (i *Include) QueryByKeyWords(kw context.KeyWords) context.Pos {
 	i.loadLocker.RLock()
 	defer i.loadLocker.RUnlock()
-	if !i.enabled { // Avoid loop queries
+	// Avoid loop queries
+	snapshot, err := i.parseSnapshot()
+	if err != nil || !snapshot.isEnabled || !snapshot.isInTopology { // If the snapshot is not resolved, disabled or not in the topology, there is no need to load includes
 		return context.NotFoundPos()
 	}
 	if !kw.Cascaded() {
@@ -194,7 +207,9 @@ func (i *Include) QueryAllByKeyWords(kw context.KeyWords) []context.Pos {
 	i.loadLocker.RLock()
 	defer i.loadLocker.RUnlock()
 	poses := make([]context.Pos, 0)
-	if !i.enabled { // Avoid loop queries
+	// Avoid loop queries
+	snapshot, err := i.parseSnapshot()
+	if err != nil || !snapshot.isEnabled || !snapshot.isInTopology { // If the snapshot is not resolved, disabled or not in the topology, there is no need to load includes
 		return poses
 	}
 	if !kw.Cascaded() {
@@ -223,7 +238,7 @@ func (i *Include) SetValue(v string) error {
 
 func (i *Include) load() error {
 	snapshot, err := i.parseSnapshot()
-	if err != nil || !snapshot.isEnabled { // If the snapshot is not resolved or not enabled, there is no need to load includes
+	if err != nil || !snapshot.isEnabled || !snapshot.isInTopology { // If the snapshot is not resolved, disabled or not in the topology, there is no need to load includes
 		return nil
 	}
 	var errs []error
@@ -242,7 +257,7 @@ func (i *Include) load() error {
 				if !ok {
 					return false
 				}
-				_, subFatherConfig, _ := targetInclude.fatherConfig()
+				_, _, subFatherConfig, _ := targetInclude.fatherConfig()
 				return subFatherConfig != includedConfig
 			}).SetSkipQueryFilter(func(targetCtx context.Context) bool {
 			// skip self
@@ -282,7 +297,7 @@ func (i *Include) unload() error {
 				if !ok {
 					return false
 				}
-				_, subFatherConfig, _ := targetInclude.fatherConfig()
+				_, _, subFatherConfig, _ := targetInclude.fatherConfig()
 				return subFatherConfig != includedConfig
 			}).SetSkipQueryFilter(func(targetCtx context.Context) bool {
 			// skip self

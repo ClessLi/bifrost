@@ -1572,12 +1572,13 @@ func Test_configGraph_removeVertex(t *testing.T) {
 			args:    args{d},
 			wantErr: false,
 		},
-		{
-			name:    "config has no in edge but out edges",
-			fields:  testMain.graph().(*configGraph),
-			args:    args{e},
-			wantErr: true,
-		},
+		// Sub objects that are not in the topology will no longer be loaded, and this use case will not exist
+		//{
+		//	name:    "config has no in edge but out edges",
+		//	fields:  testMain.graph().(*configGraph),
+		//	args:    args{e},
+		//	wantErr: true,
+		//},
 		{
 			name:    "config has edges",
 			fields:  testMain.graph().(*configGraph),

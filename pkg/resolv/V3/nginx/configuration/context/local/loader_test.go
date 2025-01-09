@@ -391,8 +391,12 @@ func Test_fileLoader_loadInclude(t *testing.T) {
 	absPathInclude.fatherContext = simpleMain.MainConfig()
 	relPathInclude := NewContext(context_type.TypeInclude, relPath).(*Include)
 	relPathInclude.fatherContext = simpleMain.MainConfig()
+	cycleIncludeMain, err := NewMain(filepath.Join(os.Getenv("GOPATH"), "src/bifrost", "test/config_test/cycle_nginx.conf"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	cycleInclude := NewContext(context_type.TypeInclude, "conf.d/cycle1.conf").(*Include)
-	cycleInclude.fatherContext = simpleMain.MainConfig()
+	cycleIncludeMain.MainConfig().Insert(cycleInclude, 0)
 	type args struct {
 		include *Include
 	}
@@ -445,8 +449,8 @@ func Test_fileLoader_loadInclude(t *testing.T) {
 		{
 			name: "cycle include",
 			fields: fields{
-				mainConfigAbsPath: simpleMain.Value(),
-				configGraph:       simpleMain.graph(),
+				mainConfigAbsPath: cycleIncludeMain.Value(),
+				configGraph:       cycleIncludeMain.graph(),
 				contextStack:      newContextStack(),
 			},
 			args:    args{include: cycleInclude},
