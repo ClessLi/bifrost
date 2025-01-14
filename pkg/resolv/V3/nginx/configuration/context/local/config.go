@@ -8,6 +8,7 @@ import (
 	"github.com/marmotedu/errors"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
 type Config struct {
@@ -148,6 +149,9 @@ type ConfigGraph interface {
 type configGraph struct {
 	graph      graph.Graph[string, *Config]
 	mainConfig *Config
+
+	snapshotOperateLocker *sync.Mutex
+	topologySnapshot      []*Config
 }
 
 func configHash(t *Config) string {
@@ -161,6 +165,10 @@ func configHash(t *Config) string {
 }
 
 func (c *configGraph) AddEdge(src, dst *Config) error {
+	c.snapshotOperateLocker.Lock()
+	defer c.snapshotOperateLocker.Unlock()
+	c.topologySnapshot = nil // fresh topology
+
 	if src == nil || dst == nil || configHash(src) == "" || configHash(dst) == "" {
 		return errors.WithCode(code.ErrV3InvalidContext, "source or destination config is nil")
 	}
@@ -181,6 +189,10 @@ func (c *configGraph) AddEdge(src, dst *Config) error {
 }
 
 func (c *configGraph) RemoveEdge(src, dst *Config, keepDst bool) error {
+	c.snapshotOperateLocker.Lock()
+	defer c.snapshotOperateLocker.Unlock()
+	c.topologySnapshot = nil // fresh topology
+
 	err := c.graph.RemoveEdge(configHash(src), configHash(dst))
 	if err != nil && !errors.Is(err, graph.ErrEdgeNotFound) { // allow repeated deletion of edges
 		return err
@@ -310,6 +322,11 @@ func (c *configGraph) setFatherFor(config *Config) error {
 }
 
 func (c *configGraph) Topology() []*Config {
+	c.snapshotOperateLocker.Lock()
+	defer c.snapshotOperateLocker.Unlock()
+	if c.topologySnapshot != nil {
+		return c.topologySnapshot
+	}
 	topoHashList, err := graph.TopologicalSort(c.graph)
 	if err != nil { // Temporarily unable to be covered for testing
 		return nil
@@ -327,6 +344,7 @@ func (c *configGraph) Topology() []*Config {
 		}
 		topo = append(topo, t)
 	}
+	c.topologySnapshot = topo
 	return topo
 }
 
@@ -421,7 +439,8 @@ func newConfigGraph(mainConfig *Config) (ConfigGraph, error) {
 		return nil, err
 	}
 	return &configGraph{
-		graph:      g,
-		mainConfig: mainConfig,
+		graph:                 g,
+		mainConfig:            mainConfig,
+		snapshotOperateLocker: new(sync.Mutex),
 	}, nil
 }
