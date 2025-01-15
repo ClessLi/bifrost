@@ -158,6 +158,25 @@ func TestBifrostClient(t *testing.T) {
 	wg.Wait()
 }
 
+func BenchmarkBifrostClientGet(b *testing.B) {
+	client, err := bifrost_cliv1.New(serverAddress(), grpc.WithInsecure(), grpc.WithTimeout(time.Second))
+	if err != nil {
+		b.Fatalf(err.Error())
+	}
+
+	defer client.Close()
+	for i := 0; i < b.N; i++ {
+		jsondata, err := client.WebServerConfig().Get("example test")
+		if err != nil {
+			b.Fatalf(err.Error())
+		}
+		_, err = configuration.NewNginxConfigFromJsonBytes(jsondata)
+		if err != nil {
+			b.Fatalf(err.Error())
+		}
+	}
+}
+
 func TestBifrostClientOperation(t *testing.T) {
 	client, err := bifrost_cliv1.New(serverAddress(), grpc.WithInsecure(), grpc.WithTimeout(time.Second))
 	if err != nil {
