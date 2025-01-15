@@ -98,10 +98,20 @@ func (i *Include) parseSnapshot() (*includeSnapshot, error) {
 		return nil, err
 	}
 	var isInTopology = false
-	for _, config := range mainCtx.Topology() {
-		if fatherConfig == config {
-			isInTopology = true
-			break
+
+	// the `include` snapshot is located in the topology, if its father config has an in-edge in the config graph
+	edges, err := mainCtx.graph().(*configGraph).graph.Edges()
+	if err != nil {
+		return nil, err
+	}
+	if mainCtx.MainConfig() == fatherConfig {
+		isInTopology = true
+	} else {
+		for _, edge := range edges {
+			if fatherConfig.FullPath() == edge.Target {
+				isInTopology = true
+				break
+			}
 		}
 	}
 
@@ -200,6 +210,9 @@ func (i *Include) QueryByKeyWords(kw context.KeyWords) context.Pos {
 		if kw.SkipQueryThisContext(config) {
 			continue
 		}
+
+		// do not match included config, cased by the included configs map is not a list
+
 		pos := config.QueryByKeyWords(kw)
 		if pos != context.NotFoundPos() {
 			return pos
@@ -224,6 +237,9 @@ func (i *Include) QueryAllByKeyWords(kw context.KeyWords) []context.Pos {
 		if kw.SkipQueryThisContext(config) {
 			continue
 		}
+
+		// do not match included config, cased by the included configs map is not a list
+
 		poses = append(poses, config.QueryAllByKeyWords(kw)...)
 	}
 	return poses
