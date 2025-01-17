@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"github.com/ClessLi/bifrost/internal/bifrost/endpoint/v1/web_server_bin_cmd"
 	"github.com/ClessLi/bifrost/internal/bifrost/endpoint/v1/web_server_config"
 	"github.com/ClessLi/bifrost/internal/bifrost/endpoint/v1/web_server_log_watcher"
 	"github.com/ClessLi/bifrost/internal/bifrost/endpoint/v1/web_server_statistics"
@@ -13,6 +14,7 @@ type EndpointsFactory interface {
 	WebServerStatistics() WebServerStatisticsEndpoints
 	WebServerStatus() WebServerStatusEndpoints
 	WebServerLogWatcher() WebServerLogWatcherEndpoints
+	WebServerBinCMD() WebServerBinCMDEndpoints
 }
 
 var _ EndpointsFactory = &endpoints{}
@@ -39,4 +41,8 @@ func (e *endpoints) WebServerStatus() WebServerStatusEndpoints {
 
 func (e *endpoints) WebServerLogWatcher() WebServerLogWatcherEndpoints {
 	return web_server_log_watcher.NewWebServerLogWatcherEndpoints(e.svc)
+}
+
+func (e *endpoints) WebServerBinCMD() WebServerBinCMDEndpoints {
+	return web_server_bin_cmd.NewWebServerBinCMDEndpoints(e.svc)
 }

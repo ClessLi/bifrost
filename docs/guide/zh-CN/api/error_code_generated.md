@@ -46,18 +46,20 @@ Bifrost 系统支持的错误码列表如下：
 | ErrSameConfigFingerprints      | 110003 | 500       | Same config fingerprint between files and configuration          |
 | ErrConfigManagerIsRunning      | 110004 | 500       | Config manager is running                                        |
 | ErrConfigManagerIsNotRunning   | 110005 | 500       | Config manager is not running                                    |
-| ErrConfigurationNotFound       | 110006 | 400       | Web server configuration not found                               |
-| ErrParserNotFound              | 110007 | 500       | Parser not found                                                 |
-| ErrUnknownKeywordString        | 110008 | 500       | Unknown keyword string                                           |
-| ErrInvalidConfig               | 110009 | 500       | Invalid parser.Config                                            |
-| ErrParseFailed                 | 110010 | 500       | Config parse failed                                              |
-| ErrV3ContextIndexOutOfRange    | 110011 | 500       | Index of the Context's children is out of range                  |
-| ErrV3NullContextPosition       | 110012 | 500       | Null Context position                                            |
-| ErrV3SetFatherContextFailed    | 110013 | 500       | Set father Context failed                                        |
-| ErrV3OperationOnErrorContext   | 110014 | 500       | Performing operations on Error Context                           |
-| ErrV3InvalidContext            | 110015 | 500       | Invalid Context                                                  |
-| ErrV3InvalidOperation          | 110016 | 500       | Invalid operation                                                |
-| ErrV3ContextNotFound           | 110017 | 500       | Queried context not found                                        |
+| ErrWebServerNotFound           | 110006 | 400       | Web server not found                                             |
+| ErrConfigurationNotFound       | 110007 | 400       | Web server configuration not found                               |
+| ErrParserNotFound              | 110008 | 500       | Parser not found                                                 |
+| ErrUnknownKeywordString        | 110009 | 500       | Unknown keyword string                                           |
+| ErrInvalidConfig               | 110010 | 500       | Invalid parser.Config                                            |
+| ErrParseFailed                 | 110011 | 500       | Config parse failed                                              |
+| ErrV3ContextIndexOutOfRange    | 110012 | 500       | Index of the Context's children is out of range                  |
+| ErrV3NullContextPosition       | 110013 | 500       | Null Context position                                            |
+| ErrV3SetFatherContextFailed    | 110014 | 500       | Set father Context failed                                        |
+| ErrV3OperationOnErrorContext   | 110015 | 500       | Performing operations on Error Context                           |
+| ErrV3InvalidContext            | 110016 | 500       | Invalid Context                                                  |
+| ErrV3InvalidOperation          | 110017 | 500       | Invalid operation                                                |
+| ErrV3ContextNotFound           | 110018 | 500       | Queried context not found                                        |
+| ErrV3ConversionToContextFailed | 110019 | 500       | Conversion to context failed                                     |
 | ErrStopMonitoringTimeout       | 110201 | 500       | Stop monitoring timeout                                          |
 | ErrMonitoringServiceSuspension | 110202 | 500       | Monitoring service suspension                                    |
 | ErrMonitoringStarted           | 110203 | 500       | Monitoring is already started                                    |

@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"github.com/ClessLi/bifrost/internal/bifrost/service/v1/web_server_bin_cmd"
 	"github.com/ClessLi/bifrost/internal/bifrost/service/v1/web_server_config"
 	"github.com/ClessLi/bifrost/internal/bifrost/service/v1/web_server_log_watcher"
 	"github.com/ClessLi/bifrost/internal/bifrost/service/v1/web_server_statistics"
@@ -13,6 +14,7 @@ type ServiceFactory interface {
 	WebServerStatistics() WebServerStatisticsService
 	WebServerStatus() WebServerStatusService
 	WebServerLogWatcher() WebServerLogWatcherService
+	WebServerBinCMD() WebServerBinCMDService
 }
 
 var _ ServiceFactory = &serviceFactory{}
@@ -35,6 +37,10 @@ func (s *serviceFactory) WebServerStatus() WebServerStatusService {
 
 func (s *serviceFactory) WebServerLogWatcher() WebServerLogWatcherService {
 	return web_server_log_watcher.NewWebServerLogWatcherService(s.store)
+}
+
+func (s *serviceFactory) WebServerBinCMD() WebServerBinCMDService {
+	return web_server_bin_cmd.NewWebServerBinCMDService(s.store)
 }
 
 func NewServiceFactory(store storev1.StoreFactory) ServiceFactory {

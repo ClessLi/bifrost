@@ -6,6 +6,6 @@ import (
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 )
 
-type WebServerLogWatcher interface {
+type WebServerLogWatcherStore interface {
 	Watch(ctx context.Context, request *v1.WebServerLogWatchRequest) (*v1.WebServerLog, error)
 }

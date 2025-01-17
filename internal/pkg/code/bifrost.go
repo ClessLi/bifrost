@@ -19,6 +19,9 @@ const (
 	// ErrConfigManagerIsNotRunning - 500: Config manager is not running.
 	ErrConfigManagerIsNotRunning
 
+	// ErrWebServerNotFound - 400: Web server not found.
+	ErrWebServerNotFound
+
 	// ErrConfigurationNotFound - 400: Web server configuration not found.
 	ErrConfigurationNotFound
 

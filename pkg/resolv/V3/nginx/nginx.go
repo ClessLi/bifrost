@@ -4,6 +4,7 @@ import (
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration"
 	"github.com/marmotedu/errors"
+	"os/exec"
 	"time"
 )
 
@@ -12,11 +13,14 @@ type ConfigsManager interface {
 	Stop(timeout time.Duration) error
 	GetConfigs() map[string]configuration.NginxConfig
 	GetServerInfos() []*v1.WebServerInfo
+	GetServersBinCMD() map[string]func(arg ...string) *exec.Cmd
 }
 
 type configsManager struct {
 	managerMap map[string]configuration.NginxConfigManager
 }
+
+var _ ConfigsManager = &configsManager{}
 
 func (m *configsManager) Start() error {
 	var errs []error
@@ -52,4 +56,14 @@ func (m *configsManager) GetServerInfos() (infos []*v1.WebServerInfo) {
 		})
 	}
 	return
+}
+
+func (m *configsManager) GetServersBinCMD() map[string]func(arg ...string) *exec.Cmd {
+	cmds := make(map[string]func(arg ...string) *exec.Cmd)
+	for svrname, manager := range m.managerMap {
+		cmds[svrname] = func(arg ...string) *exec.Cmd {
+			return manager.ServerBinCMD(arg...)
+		}
+	}
+	return cmds
 }

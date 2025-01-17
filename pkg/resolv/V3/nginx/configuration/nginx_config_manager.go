@@ -25,6 +25,7 @@ type NginxConfigManager interface {
 	NginxConfig() NginxConfig
 	ServerStatus() v1.State
 	ServerVersion() string
+	ServerBinCMD(arg ...string) *exec.Cmd
 }
 
 type nginxConfigManager struct {
@@ -113,21 +114,19 @@ func (m *nginxConfigManager) ServerStatus() (state v1.State) {
 
 func (m *nginxConfigManager) ServerVersion() (version string) {
 	version = "unknown"
-	cmd := m.serverBinCMD("-v")
-	stdoutPipe, err := cmd.StderrPipe()
+	cmd := m.ServerBinCMD("-v")
+	var stdout bytes.Buffer
+	cmd.Stdout = &stdout
+	err := cmd.Run()
 	if err != nil {
 		return
 	}
-	err = cmd.Run()
-	if err != nil {
-		return
-	}
-	buff := bytes.NewBuffer([]byte{})
-	_, err = buff.ReadFrom(stdoutPipe)
-	if err != nil {
-		return
-	}
-	return strings.TrimRight(buff.String(), "\n")
+	return strings.TrimRight(stdout.String(), "\n")
+}
+
+func (m *nginxConfigManager) ServerBinCMD(arg ...string) *exec.Cmd {
+	arg = append(arg, "-c", m.configuration.Main().MainConfig().FullPath())
+	return exec.Command(m.nginxBinFilePath, arg...)
 }
 
 func (m *nginxConfigManager) backup() error {
@@ -270,11 +269,6 @@ func (m *nginxConfigManager) regularlyRefreshAndBackup(signalChan chan int) erro
 	}
 }
 
-func (m *nginxConfigManager) serverBinCMD(arg ...string) *exec.Cmd {
-	arg = append(arg, "-c", m.configuration.Main().MainConfig().FullPath())
-	return exec.Command(m.nginxBinFilePath, arg...)
-}
-
 func (m *nginxConfigManager) save() error {
 	dumps := m.configuration.Dump()
 	for file, dumpbuff := range dumps {
@@ -287,7 +281,7 @@ func (m *nginxConfigManager) save() error {
 }
 
 func (m *nginxConfigManager) check() error {
-	cmd := m.serverBinCMD("-t")
+	cmd := m.ServerBinCMD("-t")
 	cmd.Stderr = os.Stderr
 
 	return cmd.Run()

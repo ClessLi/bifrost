@@ -14,6 +14,7 @@ type HandlersFactory interface {
 	WebServerStatistics() WebServerStatisticsHandlers
 	WebServerStatus() WebServerStatusHandlers
 	WebServerLogWatcher() WebServerLogWatcherHandlers
+	WebServerBinCMD() WebServerBinCMDHandlers
 }
 
 type handlersFactory struct {
@@ -40,6 +41,10 @@ func (h *handlersFactory) WebServerStatus() WebServerStatusHandlers {
 
 func (h *handlersFactory) WebServerLogWatcher() WebServerLogWatcherHandlers {
 	return NewWebServerLogWatcherHandlers(h.eps)
+}
+
+func (h *handlersFactory) WebServerBinCMD() WebServerBinCMDHandlers {
+	return NewWebServerBinCMDHandlers(h.eps)
 }
 
 func NewHandler(ep endpoint.Endpoint, decoder decoder.Decoder, encoder encoder.Encoder) grpc.Handler {

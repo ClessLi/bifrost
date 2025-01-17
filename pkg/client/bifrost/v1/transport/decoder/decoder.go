@@ -12,6 +12,7 @@ type Factory interface {
 	WebServerStatistics() Decoder
 	WebServerStatus() Decoder
 	WebServerLogWatcher() Decoder
+	WebServerBinCMD() Decoder
 }
 
 type factory struct{}
@@ -30,6 +31,10 @@ func (f factory) WebServerStatus() Decoder {
 
 func (f factory) WebServerLogWatcher() Decoder {
 	return new(webServerLogWatcher)
+}
+
+func (f factory) WebServerBinCMD() Decoder {
+	return new(webServerBinCMD)
 }
 
 var _ Factory = factory{}

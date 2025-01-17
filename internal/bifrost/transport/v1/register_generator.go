@@ -57,6 +57,15 @@ func (b *bifrostServiceRegister) Generate() map[string]service_register.ServiceR
 			}
 			pbv1.RegisterWebServerLogWatcherServer(server, b.factory.WebServerLogWatcher())
 		},
+		b.instancePrefixName + ".bifrostpb.WebServerBinCMD": func(server *grpc.Server, healthzSvr *health.Server) {
+			if healthzSvr != nil {
+				healthzSvr.SetServingStatus(
+					b.instancePrefixName+".bifrostpb.WebServerBinCMD",
+					grpc_health_v1.HealthCheckResponse_NOT_SERVING,
+				)
+			}
+			pbv1.RegisterWebServerBinCMDServer(server, b.factory.WebServerBinCMD())
+		},
 	}
 }
 

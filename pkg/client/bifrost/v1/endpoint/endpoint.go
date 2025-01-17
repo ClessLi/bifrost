@@ -10,6 +10,7 @@ type Factory interface {
 	WebServerStatistics() epv1.WebServerStatisticsEndpoints
 	WebServerStatus() epv1.WebServerStatusEndpoints
 	WebServerLogWatcher() epv1.WebServerLogWatcherEndpoints
+	WebServerBinCMD() epv1.WebServerBinCMDEndpoints
 }
 
 type factory struct {
@@ -30,6 +31,10 @@ func (f *factory) WebServerStatus() epv1.WebServerStatusEndpoints {
 
 func (f *factory) WebServerLogWatcher() epv1.WebServerLogWatcherEndpoints {
 	return newWebServerLogWatcherEndpoints(f)
+}
+
+func (f *factory) WebServerBinCMD() epv1.WebServerBinCMDEndpoints {
+	return newWebServerBinCMDEndpoints(f)
 }
 
 func New(transport txpclient.Factory) Factory {

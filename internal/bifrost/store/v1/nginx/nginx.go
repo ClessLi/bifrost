@@ -38,8 +38,12 @@ func (w *webServerStore) WebServerStatistics() storev1.WebServerStatisticsStore 
 	return newNginxStatisticsStore(w)
 }
 
-func (w *webServerStore) WebServerLogWatcher() storev1.WebServerLogWatcher {
+func (w *webServerStore) WebServerLogWatcher() storev1.WebServerLogWatcherStore {
 	return newWebServerLogWatcherStore(w)
+}
+
+func (w *webServerStore) WebServerBinCMD() storev1.WebServerBinCMDStore {
+	return newNginxBinCMDStore(w)
 }
 
 func (w *webServerStore) Close() error {

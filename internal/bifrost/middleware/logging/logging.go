@@ -35,6 +35,10 @@ func (l *loggingService) WebServerLogWatcher() svcv1.WebServerLogWatcherService 
 	return newWebServerLogWatcherMiddleware(l.svc)
 }
 
+func (l *loggingService) WebServerBinCMD() svcv1.WebServerBinCMDService {
+	return newWebServerBinCMDMiddleware(l.svc)
+}
+
 func New(svc svcv1.ServiceFactory) svcv1.ServiceFactory {
 	once.Do(func() {
 		logger = logV1.K()

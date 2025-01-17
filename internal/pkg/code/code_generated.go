@@ -40,6 +40,7 @@ func init() {
 	register(ErrSameConfigFingerprints, 500, "Same config fingerprint between files and configuration")
 	register(ErrConfigManagerIsRunning, 500, "Config manager is running")
 	register(ErrConfigManagerIsNotRunning, 500, "Config manager is not running")
+	register(ErrWebServerNotFound, 400, "Web server not found")
 	register(ErrConfigurationNotFound, 400, "Web server configuration not found")
 	register(ErrParserNotFound, 500, "Parser not found")
 	register(ErrUnknownKeywordString, 500, "Unknown keyword string")

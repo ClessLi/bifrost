@@ -34,6 +34,7 @@ type Factory interface {
 	WebServerStatistics() WebServerStatisticsTransport
 	WebServerStatus() WebServerStatusTransport
 	WebServerLogWatcher() WebServerLogWatcherTransport
+	WebServerBinCMD() WebServerBinCMDTransport
 }
 
 var _ Factory = &transport{}
@@ -43,14 +44,16 @@ type transport struct {
 	decoderFactory decoder.Factory
 	encoderFactory encoder.Factory
 
-	onceWebServerConfig     sync.Once
-	onceWebServerStatistics sync.Once
-	onceWebServerStatus     sync.Once
-	onceWebServerLogWatcher sync.Once
-	singletonWSCTXP         WebServerConfigTransport
-	singletonWSSTXP         WebServerStatisticsTransport
-	singletonWSStatusTXP    WebServerStatusTransport
-	singletonWSLWTXP        WebServerLogWatcherTransport
+	onceWebServerConfig        sync.Once
+	onceWebServerStatistics    sync.Once
+	onceWebServerStatus        sync.Once
+	onceWebServerLogWatcher    sync.Once
+	onceWebServerBinCMDWatcher sync.Once
+	singletonWSCTXP            WebServerConfigTransport
+	singletonWSSTXP            WebServerStatisticsTransport
+	singletonWSStatusTXP       WebServerStatusTransport
+	singletonWSLWTXP           WebServerLogWatcherTransport
+	singletonWSBCTXP           WebServerBinCMDTransport
 }
 
 func (t *transport) WebServerConfig() WebServerConfigTransport {
@@ -113,14 +116,30 @@ func (t *transport) WebServerLogWatcher() WebServerLogWatcherTransport {
 	return t.singletonWSLWTXP
 }
 
+func (t *transport) WebServerBinCMD() WebServerBinCMDTransport {
+	t.onceWebServerBinCMDWatcher.Do(func() {
+		if t.singletonWSBCTXP == nil {
+			t.singletonWSBCTXP = newWebServerBinCMDTransport(t)
+		}
+	})
+	if t.singletonWSBCTXP == nil {
+		logV1.Fatal("web server binary command transport client is nil")
+
+		return nil
+	}
+
+	return t.singletonWSBCTXP
+}
+
 func New(conn *grpc.ClientConn) Factory {
 	return &transport{
-		conn:                    conn,
-		decoderFactory:          decoder.New(),
-		encoderFactory:          encoder.New(),
-		onceWebServerConfig:     sync.Once{},
-		onceWebServerStatistics: sync.Once{},
-		onceWebServerStatus:     sync.Once{},
-		onceWebServerLogWatcher: sync.Once{},
+		conn:                       conn,
+		decoderFactory:             decoder.New(),
+		encoderFactory:             encoder.New(),
+		onceWebServerConfig:        sync.Once{},
+		onceWebServerStatistics:    sync.Once{},
+		onceWebServerStatus:        sync.Once{},
+		onceWebServerLogWatcher:    sync.Once{},
+		onceWebServerBinCMDWatcher: sync.Once{},
 	}
 }

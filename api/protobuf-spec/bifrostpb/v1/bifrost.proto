@@ -21,6 +21,10 @@ service WebServerLogWatcher {
   rpc Watch(LogWatchRequest) returns (stream Response) {}
 }
 
+service WebServerBinCMD {
+  rpc Exec(ExecuteRequest) returns (ExecuteResponse) {}
+}
+
 message Null {}
 
 message ServerNames {
@@ -52,4 +56,15 @@ message LogWatchRequest {
   string ServerName = 1;
   string LogName = 2;
   string FilterRule =3;
+}
+
+message ExecuteRequest {
+  string ServerName = 1;
+  repeated string Args = 2;
+}
+
+message ExecuteResponse {
+  bool Successful = 1;
+  bytes Stdout = 2;
+  bytes Stderr = 3;
 }

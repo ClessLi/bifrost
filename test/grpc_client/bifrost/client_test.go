@@ -220,3 +220,40 @@ func TestBifrostClientOperation(t *testing.T) {
 		}
 	}
 }
+
+func TestBifrostClientExecServerBinCMD(t *testing.T) {
+	client, err := bifrost_cliv1.New(serverAddress(), grpc.WithInsecure(), grpc.WithTimeout(time.Second))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer client.Close()
+
+	servernames, err := client.WebServerConfig().GetServerNames()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, servername := range servernames {
+		// nil args
+		s1, out1, err1, err := client.WebServerBinCMD().Exec(servername)
+		if err != nil {
+			t.Errorf("[nil args] server name: %s, error: %v", servername, err)
+		}
+		t.Logf("[nil args] server name: %s, exec successful: %v, result stdout: %s, result stderr: %s", servername, s1, out1, err1)
+
+		// one arg
+		s2, out2, err2, err := client.WebServerBinCMD().Exec(servername, "-t")
+		if err != nil {
+			t.Errorf("[one arg] server name: %s, error: %v", servername, err)
+		}
+		t.Logf("[one arg] server name: %s, exec successful: %v, result stdout: %s, result stderr: %s", servername, s2, out2, err2)
+
+		// two args
+		s3, out3, err3, err := client.WebServerBinCMD().Exec(servername, "-s", "reload")
+		if err != nil {
+			t.Errorf("[two args] server name: %s, error: %v", servername, err)
+		}
+		t.Logf("[two args] server name: %s, exec successful: %v, result stdout: %s, result stderr: %s", servername, s3, out3, err3)
+	}
+}
