@@ -2,6 +2,7 @@ package nginx
 
 import (
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration"
 	"github.com/marmotedu/errors"
 	"os/exec"
@@ -13,7 +14,7 @@ type ConfigsManager interface {
 	Stop(timeout time.Duration) error
 	GetConfigs() map[string]configuration.NginxConfig
 	GetServerInfos() []*v1.WebServerInfo
-	GetServersBinCMD() map[string]func(arg ...string) *exec.Cmd
+	GenServerBinCMD(servername string, arg ...string) (*exec.Cmd, error)
 }
 
 type configsManager struct {
@@ -58,12 +59,14 @@ func (m *configsManager) GetServerInfos() (infos []*v1.WebServerInfo) {
 	return
 }
 
-func (m *configsManager) GetServersBinCMD() map[string]func(arg ...string) *exec.Cmd {
-	cmds := make(map[string]func(arg ...string) *exec.Cmd)
-	for svrname, manager := range m.managerMap {
-		cmds[svrname] = func(arg ...string) *exec.Cmd {
-			return manager.ServerBinCMD(arg...)
+func (m *configsManager) GenServerBinCMD(servername string, arg ...string) (*exec.Cmd, error) {
+	for svrname := range m.managerMap {
+		if svrname == servername {
+			return m.managerMap[svrname].ServerBinCMD(arg...), nil
 		}
 	}
-	return cmds
+	return nil, errors.WithCode(code.ErrWebServerNotFound, "nginx server '%v' not found", servername)
+}
+
+type WebServer struct {
 }
