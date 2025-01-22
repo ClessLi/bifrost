@@ -1,7 +1,6 @@
 package configuration
 
 import (
-	"bytes"
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	utilsV2 "github.com/ClessLi/bifrost/pkg/resolv/V2/utils"
@@ -115,13 +114,11 @@ func (m *nginxConfigManager) ServerStatus() (state v1.State) {
 func (m *nginxConfigManager) ServerVersion() (version string) {
 	version = "unknown"
 	cmd := m.ServerBinCMD("-v")
-	var stdout bytes.Buffer
-	cmd.Stdout = &stdout
-	err := cmd.Run()
+	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return
 	}
-	return strings.TrimRight(stdout.String(), "\n")
+	return strings.TrimRight(string(output), "\n")
 }
 
 func (m *nginxConfigManager) ServerBinCMD(arg ...string) *exec.Cmd {
