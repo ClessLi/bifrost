@@ -67,6 +67,3 @@ func (m *configsManager) GenServerBinCMD(servername string, arg ...string) (*exe
 	}
 	return nil, errors.WithCode(code.ErrWebServerNotFound, "nginx server '%v' not found", servername)
 }
-
-type WebServer struct {
-}
