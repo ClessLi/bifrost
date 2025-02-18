@@ -20,18 +20,38 @@ type includeSnapshot struct {
 	includedConfigs    []*Config
 }
 
-func (i includeSnapshot) matchConfig(config *Config) error {
-	if config == nil {
-		return errors.WithCode(code.ErrV3InvalidContext, "pattern(%s) cannot match nil", i.includePatternPath)
+type includedConfigPos struct {
+	mainCtx  MainContext
+	father   *Config
+	included *Config
+}
+
+func (i *includedConfigPos) Position() (context.Context, int) {
+	return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "undefined position for included config")), -1
+}
+
+func (i *includedConfigPos) Target() context.Context {
+	return i.included
+}
+
+func (i *includedConfigPos) QueryOne(kw context.KeyWords) context.Pos {
+	return i.included.ChildrenPosSet().QueryOne(kw)
+}
+
+func (i *includedConfigPos) QueryAll(kw context.KeyWords) context.PosSet {
+	return i.included.ChildrenPosSet().QueryAll(kw)
+}
+
+func newIncludedConfigsPosSet(main MainContext, father *Config, included ...*Config) context.PosSet {
+	set := context.NewPosSet()
+	for _, c := range included {
+		set.Append(&includedConfigPos{
+			mainCtx:  main,
+			father:   father,
+			included: c,
+		})
 	}
-	isMatch, err := filepath.Match(i.includePatternPath, config.FullPath())
-	if err != nil {
-		return errors.WithCode(code.ErrV3InvalidContext, "pattern(%s) match included config(%s) failed, cased by: %v", i.includePatternPath, config.FullPath(), err)
-	}
-	if !isMatch {
-		return errors.WithCode(code.ErrV3InvalidContext, "pattern(%s) cannot match included config(%s)", i.includePatternPath, config.FullPath())
-	}
-	return nil
+	return set
 }
 
 type Include struct {
@@ -195,54 +215,19 @@ func (i *Include) Child(idx int) context.Context {
 	return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "include cannot get child config by index"))
 }
 
-func (i *Include) QueryByKeyWords(kw context.KeyWords) context.Pos {
-	i.loadLocker.RLock()
-	defer i.loadLocker.RUnlock()
+func (i *Include) childrenPosSet() context.PosSet {
 	// Avoid loop queries
 	snapshot, err := i.parseSnapshot()
 	if err != nil || !snapshot.isEnabled || !snapshot.isInTopology { // If the snapshot is not resolved, disabled or not in the topology, there is no need to load includes
-		return context.NotFoundPos()
+		return context.NewPosSet()
 	}
-	if !kw.Cascaded() {
-		return context.NotFoundPos()
-	}
-	for _, config := range i.Configs() {
-		if kw.SkipQueryThisContext(config) {
-			continue
-		}
-
-		// do not match included config, cased by the included configs map is not a list
-
-		pos := config.QueryByKeyWords(kw)
-		if pos != context.NotFoundPos() {
-			return pos
-		}
-	}
-	return context.NotFoundPos()
+	return newIncludedConfigsPosSet(snapshot.mainContext, snapshot.fatherConfig, snapshot.includedConfigs...)
 }
 
-func (i *Include) QueryAllByKeyWords(kw context.KeyWords) []context.Pos {
+func (i *Include) ChildrenPosSet() context.PosSet {
 	i.loadLocker.RLock()
 	defer i.loadLocker.RUnlock()
-	poses := make([]context.Pos, 0)
-	// Avoid loop queries
-	snapshot, err := i.parseSnapshot()
-	if err != nil || !snapshot.isEnabled || !snapshot.isInTopology { // If the snapshot is not resolved, disabled or not in the topology, there is no need to load includes
-		return poses
-	}
-	if !kw.Cascaded() {
-		return poses
-	}
-	for _, config := range i.Configs() {
-		if kw.SkipQueryThisContext(config) {
-			continue
-		}
-
-		// do not match included config, cased by the included configs map is not a list
-
-		poses = append(poses, config.QueryAllByKeyWords(kw)...)
-	}
-	return poses
+	return i.childrenPosSet()
 }
 
 func (i *Include) Clone() context.Context {
@@ -259,86 +244,72 @@ func (i *Include) SetValue(v string) error {
 
 func (i *Include) load() error {
 	i.snapshot = nil // fresh snapshot
-	snapshot, err := i.parseSnapshot()
-	if err != nil || !snapshot.isEnabled || !snapshot.isInTopology { // If the snapshot is not resolved, disabled or not in the topology, there is no need to load includes
-		return nil
-	}
-	var errs []error
-	for _, includedConfig := range snapshot.includedConfigs {
-		err = snapshot.mainContext.AddEdge(snapshot.fatherConfig, includedConfig)
-		if err != nil {
-			errs = append(errs, err)
-			continue
-		}
-		// call includes context loading, which is located in included configs
-		includeKeyWords := context.NewKeyWords(context_type.TypeInclude).
-			SetCascaded(true).
-			SetSkipQueryFilter(func(targetCtx context.Context) bool {
-				// skip the include context of indirect connections
-				targetInclude, ok := targetCtx.(*Include)
-				if !ok {
-					return false
-				}
-				_, subFatherConfig, _ := targetInclude.fatherConfig()
-				return subFatherConfig != includedConfig
-			}).SetSkipQueryFilter(func(targetCtx context.Context) bool {
-			// skip self
-			return targetCtx == i
-		})
-		for _, pos := range includedConfig.QueryAllByKeyWords(includeKeyWords) {
-			include, ok := pos.Target().(*Include)
-			if !ok {
-				errs = append(errs, errors.WithCode(code.ErrV3InvalidContext, "[%v] is not an Include context", pos.Target()))
-				continue
-			}
-
-			errs = append(errs, include.load())
-		}
-	}
-	return errors.NewAggregate(errs)
+	return i.childrenPosSet().
+		Filter(func(pos context.Pos) bool { _, ok := pos.(*includedConfigPos); return ok }).
+		Map( // add edges from father config to included configs
+			func(pos context.Pos) (context.Pos, error) {
+				includedPos := pos.(*includedConfigPos)
+				return includedPos, includedPos.mainCtx.AddEdge(includedPos.father, includedPos.included)
+			},
+		).
+		Map( // call included Include Contexts to load
+			func(pos context.Pos) (context.Pos, error) {
+				return pos, pos.QueryAll(context.NewKeyWords(context_type.TypeInclude).
+					SetCascaded(true).
+					SetSkipQueryFilter(
+						func(targetCtx context.Context) bool {
+							// skip the include context of indirect connections
+							targetInclude, ok := targetCtx.(*Include)
+							if !ok {
+								return false
+							}
+							_, subFatherConfig, _ := targetInclude.fatherConfig()
+							return subFatherConfig != pos.Target()
+						},
+					).
+					// skip self
+					SetSkipQueryFilter(func(targetCtx context.Context) bool { return targetCtx == i })).
+					Filter(func(pos context.Pos) bool { _, ok := pos.Target().(*Include); return ok }).
+					Map(func(pos context.Pos) (context.Pos, error) { return pos, pos.Target().(*Include).load() }).
+					Error()
+			},
+		).Error()
 }
 
 func (i *Include) unload() error {
 	defer func() { // release snapshot
 		i.snapshot = nil
 	}()
-	snapshot, err := i.parseSnapshot()
-	if err != nil { // If the snapshot is not resolved, there is no need to unload includes
-		return nil
-	}
-	var errs []error
-	for _, includedConfig := range snapshot.includedConfigs {
-		err = snapshot.mainContext.RemoveEdge(snapshot.fatherConfig, includedConfig, true)
-		if err != nil {
-			errs = append(errs, err)
-			continue
-		}
-		// call includes context unloading, which is located in included configs
-		includeKeyWords := context.NewKeyWords(context_type.TypeInclude).
-			SetCascaded(true).
-			SetSkipQueryFilter(func(targetCtx context.Context) bool {
-				// skip the include context of indirect connections
-				targetInclude, ok := targetCtx.(*Include)
-				if !ok {
-					return false
-				}
-				_, subFatherConfig, _ := targetInclude.fatherConfig()
-				return subFatherConfig != includedConfig
-			}).SetSkipQueryFilter(func(targetCtx context.Context) bool {
-			// skip self
-			return targetCtx == i
-		})
-		for _, pos := range includedConfig.QueryAllByKeyWords(includeKeyWords) {
-			include, ok := pos.Target().(*Include)
-			if !ok {
-				errs = append(errs, errors.WithCode(code.ErrV3InvalidContext, "[%v] is not an Include context", pos.Target()))
-				continue
-			}
-
-			errs = append(errs, include.unload())
-		}
-	}
-	return errors.NewAggregate(errs)
+	return i.childrenPosSet().
+		Filter(func(pos context.Pos) bool { _, ok := pos.(*includedConfigPos); return ok }).
+		Map( // remove edges from father config to included configs
+			func(pos context.Pos) (context.Pos, error) {
+				includedPos := pos.(*includedConfigPos)
+				return includedPos, includedPos.mainCtx.RemoveEdge(includedPos.father, includedPos.included, true)
+			},
+		).
+		Map( // call included Include Contexts to unload
+			func(pos context.Pos) (context.Pos, error) {
+				return pos, pos.QueryAll(context.NewKeyWords(context_type.TypeInclude).
+					SetCascaded(true).
+					SetSkipQueryFilter(
+						func(targetCtx context.Context) bool {
+							// skip the include context of indirect connections
+							targetInclude, ok := targetCtx.(*Include)
+							if !ok {
+								return false
+							}
+							_, subFatherConfig, _ := targetInclude.fatherConfig()
+							return subFatherConfig != pos.Target()
+						},
+					).
+					// skip self
+					SetSkipQueryFilter(func(targetCtx context.Context) bool { return targetCtx == i })).
+					Filter(func(pos context.Pos) bool { _, ok := pos.Target().(*Include); return ok }).
+					Map(func(pos context.Pos) (context.Pos, error) { return pos, pos.Target().(*Include).unload() }).
+					Error()
+			},
+		).Error()
 }
 
 func (i *Include) reload() error {

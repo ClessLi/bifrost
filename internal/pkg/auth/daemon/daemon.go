@@ -16,7 +16,8 @@ import (
 
 // Start, 守护进程 start 方法函数
 // 返回值:
-//     错误
+//
+//	错误
 func Start() (err error) {
 	// 判断当前进程是子进程还是主进程
 	if isMain() { // 主进程时
@@ -91,7 +92,8 @@ func Start() (err error) {
 
 // Stop, 守护进程 stop 方法函数
 // 返回值:
-//     错误
+//
+//	错误
 func Stop() error {
 	// 判断bifrost进程是否存在
 	process, procErr := getProc(pidFile)
@@ -117,7 +119,8 @@ func Stop() error {
 
 // Restart, 守护进程 restart 方法函数
 // 返回值:
-//     错误
+//
+//	错误
 func Restart() error {
 	// 判断当前进程是主进程还是子进程
 	if isMain() { // 主进程时
@@ -146,7 +149,8 @@ func Restart() error {
 
 // Status, 守护进程 status 方法函数
 // 返回值:
-//     错误
+//
+//	错误
 func Status() (int, error) {
 	pid, pidErr := getPid(pidFile)
 	if pidErr != nil {
@@ -158,7 +162,8 @@ func Status() (int, error) {
 
 // isMain, 判断当前进程是否为主进程
 // 返回值:
-//     true: 是主进程; false: 是子进程
+//
+//	true: 是主进程; false: 是子进程
 func isMain() bool {
 	return os.Getppid() != 1
 }

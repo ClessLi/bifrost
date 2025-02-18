@@ -12,6 +12,6 @@ func (w webServerBinCMD) Exec(ctx context.Context, request *pbv1.ExecuteRequest)
 	logV1.Infof("web server binary command excuting...")
 	return &pbv1.ExecuteResponse{
 		Successful: true,
-		Msg:        []byte("success\n"),
+		Stdout:     []byte("success\n"),
 	}, nil
 }

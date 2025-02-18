@@ -15,14 +15,17 @@ import (
 // Backup, 文件归档函数
 //
 // 参数:
-//     config: nginx配置文件对象指针
-//     name: 归档文件前缀名
-//     saveTime: 归档文件保存时间，单位天
-//     bakCycle: 归档操作周期，单位天
-//     backupDir: 可选参数，备份目录
+//
+//	config: nginx配置文件对象指针
+//	name: 归档文件前缀名
+//	saveTime: 归档文件保存时间，单位天
+//	bakCycle: 归档操作周期，单位天
+//	backupDir: 可选参数，备份目录
+//
 // 返回值:
-//     bakPath: 归档文件路径
-//     err: 错误
+//
+//	bakPath: 归档文件路径
+//	err: 错误
 func Backup(config *Config, name string, saveTime, bakCycle int, backupDir ...string) (bakPath string, err error) {
 	// 归档文件名修饰
 	if name != "" {
@@ -87,14 +90,17 @@ func Backup(config *Config, name string, saveTime, bakCycle int, backupDir ...st
 // checkBackups, 检查归档目录下归档文件是否需要清理及是否可以进行归档操作的函数
 //
 // 参数:
-//     name: 归档文件前缀名
-//     dir: 归档文件目录路径
-//     saveTime: 归档文件保存时间，单位天
-//     cycle: 归档操作周期，单位天
-//     now: 当前检查时间
+//
+//	name: 归档文件前缀名
+//	dir: 归档文件目录路径
+//	saveTime: 归档文件保存时间，单位天
+//	cycle: 归档操作周期，单位天
+//	now: 当前检查时间
+//
 // 返回值:
-//     true: 需要归档操作; false: 不需要归档
-//     错误
+//
+//	true: 需要归档操作; false: 不需要归档
+//	错误
 func checkBackups(name, dir string, saveTime, cycle int, now time.Time) (bool, error) {
 	needBackup := true
 	saveDate := now.Add(-24 * time.Hour * time.Duration(saveTime))
@@ -139,11 +145,14 @@ func checkBackups(name, dir string, saveTime, cycle int, now time.Time) (bool, e
 // tgz, 归档操作函数
 //
 // 参数:
-//     dest: 归档文件路径
-//     caches: 配置文件对象缓存
-//     list: 被归档（仅）文件（非目录）切片
+//
+//	dest: 归档文件路径
+//	caches: 配置文件对象缓存
+//	list: 被归档（仅）文件（非目录）切片
+//
 // 返回值:
-//     错误
+//
+//	错误
 func tgz(dest string, caches Caches) (err error) {
 	// 归档目录
 	destDir := filepath.Dir(dest)
@@ -180,11 +189,14 @@ func tgz(dest string, caches Caches) (err error) {
 // compress, 归档压缩子函数
 //
 // 参数:
-//     fd: 被归档文件的系统文件对象指针
-//     prefix: 被归档文件的目录路径
-//     tgzw: tar文件对象指针
+//
+//	fd: 被归档文件的系统文件对象指针
+//	prefix: 被归档文件的目录路径
+//	tgzw: tar文件对象指针
+//
 // 返回值:
-//     错误
+//
+//	错误
 func compress(fd *os.File, prefix string, tgzw *tar.Writer) error {
 	defer fd.Close()
 

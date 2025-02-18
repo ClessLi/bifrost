@@ -5,86 +5,10 @@ import (
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
 	"github.com/marmotedu/errors"
-	"path/filepath"
 	"reflect"
 	"sync"
 	"testing"
 )
-
-func Test_includeSnapshot_matchConfig(t *testing.T) {
-	testMain, err := NewMain("C:\\test\\nginx.conf")
-	if err != nil {
-		t.Fatal(err)
-	}
-	notMatchedConf := NewContext(context_type.TypeConfig, "not_matched.conf").(*Config)
-	notMatchedConf.ConfigPath, err = newConfigPath(testMain, notMatchedConf.ContextValue)
-	if err != nil {
-		t.Fatal(err)
-	}
-	relativePathConf := NewContext(context_type.TypeConfig, "../aaa/relative_path.conf").(*Config)
-	relativePathConf.ConfigPath, err = newConfigPath(testMain, relativePathConf.ContextValue)
-	if err != nil {
-		t.Fatal(err)
-	}
-	absolutPathConf := NewContext(context_type.TypeConfig, "C:\\aaa\\absolut_path.conf").(*Config)
-	absolutPathConf.ConfigPath, err = newConfigPath(testMain, absolutPathConf.ContextValue)
-	if err != nil {
-		t.Fatal(err)
-	}
-	type fields struct {
-		mainContext        MainContext
-		fatherConfig       *Config
-		includePatternPath string
-		includedConfigs    []*Config
-	}
-	type args struct {
-		config *Config
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
-	}{
-		{
-			name:    "malformed include patten value",
-			fields:  fields{includePatternPath: "][a"},
-			args:    args{config: notMatchedConf},
-			wantErr: true,
-		},
-		{
-			name:    "path is not matched",
-			fields:  fields{includePatternPath: "C:\\aaa\\*.conf"},
-			args:    args{config: notMatchedConf},
-			wantErr: true,
-		},
-		{
-			name:    "match relative path",
-			fields:  fields{includePatternPath: filepath.Join(testMain.MainConfig().BaseDir(), "..\\aaa\\*.conf")},
-			args:    args{config: relativePathConf},
-			wantErr: false,
-		},
-		{
-			name:    "match absolut path",
-			fields:  fields{includePatternPath: "C:\\aaa\\*.conf"},
-			args:    args{config: absolutPathConf},
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			i := includeSnapshot{
-				mainContext:        tt.fields.mainContext,
-				fatherConfig:       tt.fields.fatherConfig,
-				includePatternPath: tt.fields.includePatternPath,
-				includedConfigs:    tt.fields.includedConfigs,
-			}
-			if err := i.matchConfig(tt.args.config); (err != nil) != tt.wantErr {
-				t.Errorf("matchConfig() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
 
 func TestInclude_Child(t *testing.T) {
 	type fields struct {
@@ -901,167 +825,6 @@ func TestInclude_Modify(t *testing.T) {
 	}
 }
 
-//func TestInclude_ModifyConfig(t *testing.T) {
-//	testMain, err := NewMain("C:\\test\\nginx.conf")
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-//	testInclude := NewContext(context_type.TypeInclude, "conf.d/*.conf").(*Include)
-//	disabledInclude := NewContext(context_type.TypeInclude, "conf.d/*.conf").Disable().(*Include)
-//	testMain.Insert(
-//		NewContext(context_type.TypeHttp, "").
-//			Insert(
-//				testInclude,
-//				0,
-//			).
-//			Insert(
-//				disabledInclude,
-//				1,
-//			),
-//		0,
-//	)
-//	relConfig := NewContext(context_type.TypeConfig, "conf.d/relative.conf").(*Config)
-//	relConfig.ConfigPath, _ = newConfigPath(testMain, relConfig.ContextValue)
-//	absConfig := NewContext(context_type.TypeConfig, "C:\\test\\conf.d\\absolut.conf").(*Config)
-//	absConfig.ConfigPath, _ = newConfigPath(testMain, absConfig.ContextValue)
-//	notMatchConfig := NewContext(context_type.TypeConfig, "conf.d\\test\\test.conf").(*Config)
-//	notMatchConfig.ConfigPath, _ = newConfigPath(testMain, notMatchConfig.ContextValue)
-//	err = testInclude.InsertConfig(relConfig, absConfig)
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-//	modifiedRelConfig := relConfig.Clone().(*Config)
-//	modifiedRelConfig.ConfigPath, _ = newConfigPath(testMain, modifiedRelConfig.Value())
-//	modifiedRelConfig.Insert(NewContext(context_type.TypeDirective, "keepalive_timeout 300s"), 0)
-//	modifiedAbsConfig := absConfig.Clone().(*Config)
-//	modifiedAbsConfig.ConfigPath, _ = newConfigPath(testMain, modifiedAbsConfig.Value())
-//	modifiedAbsConfig.Insert(NewContext(context_type.TypeDirective, "proxy_http_version 1.1"), 0)
-//
-//	unboundedConfig := NewContext(context_type.TypeConfig, "unbound.conf")
-//	unboundedInclude := NewContext(context_type.TypeInclude, "unbound.*.conf").(*Include)
-//	unboundedConfig.Insert(unboundedInclude, 0)
-//	type fields struct {
-//		enabled       bool
-//		ContextValue  string
-//		fatherContext context.Context
-//		loadLocker    *sync.RWMutex
-//	}
-//	type args struct {
-//		configs []*Config
-//	}
-//	tests := []struct {
-//		name    string
-//		fields  fields
-//		args    args
-//		wantErr bool
-//	}{
-//		{
-//			name:    "nil configs",
-//			wantErr: true,
-//		},
-//		{
-//			name: "a nil in configs",
-//			fields: fields{
-//				enabled:       testInclude.enabled,
-//				ContextValue:  testInclude.ContextValue,
-//				fatherContext: testInclude.fatherContext,
-//				loadLocker:    testInclude.loadLocker,
-//			},
-//			args:    args{configs: []*Config{nil}},
-//			wantErr: true,
-//		},
-//		{
-//			name: "Include context has no father main",
-//			fields: fields{
-//				enabled:       unboundedInclude.enabled,
-//				ContextValue:  unboundedInclude.ContextValue,
-//				fatherContext: unboundedInclude.fatherContext,
-//				loadLocker:    unboundedInclude.loadLocker,
-//			},
-//			args:    args{configs: []*Config{NewContext(context_type.TypeConfig, "conf.d/test.conf").(*Config)}},
-//			wantErr: true,
-//		},
-//		{
-//			name: "config has no config path",
-//			fields: fields{
-//				enabled:       testInclude.enabled,
-//				ContextValue:  testInclude.ContextValue,
-//				fatherContext: testInclude.fatherContext,
-//				loadLocker:    testInclude.loadLocker,
-//			},
-//			args:    args{configs: []*Config{NewContext(context_type.TypeConfig, "conf.d/test.conf").(*Config)}},
-//			wantErr: false,
-//		},
-//		{
-//			name: "the modified config has no config path, and not matched up",
-//			fields: fields{
-//				enabled:       testInclude.enabled,
-//				ContextValue:  testInclude.ContextValue,
-//				fatherContext: testInclude.fatherContext,
-//				loadLocker:    testInclude.loadLocker,
-//			},
-//			args:    args{configs: []*Config{NewContext(context_type.TypeConfig, "conf.d\\test\\test.conf").(*Config)}},
-//			wantErr: true,
-//		},
-//		{
-//			name: "has no matched config",
-//			fields: fields{
-//				enabled:       testInclude.enabled,
-//				ContextValue:  testInclude.ContextValue,
-//				fatherContext: testInclude.fatherContext,
-//				loadLocker:    testInclude.loadLocker,
-//			},
-//			args: args{configs: []*Config{
-//				relConfig,
-//				absConfig,
-//				notMatchConfig,
-//			}},
-//			wantErr: true,
-//		},
-//		{
-//			name: "normal test",
-//			fields: fields{
-//				enabled:       testInclude.enabled,
-//				ContextValue:  testInclude.ContextValue,
-//				fatherContext: testInclude.fatherContext,
-//				loadLocker:    testInclude.loadLocker,
-//			},
-//			args: args{configs: []*Config{
-//				modifiedRelConfig,
-//				modifiedAbsConfig,
-//			}},
-//			wantErr: false,
-//		},
-//		{
-//			name: "test disabled include context",
-//			fields: fields{
-//				enabled:       disabledInclude.enabled,
-//				ContextValue:  disabledInclude.ContextValue,
-//				fatherContext: disabledInclude.fatherContext,
-//				loadLocker:    disabledInclude.loadLocker,
-//			},
-//			args: args{configs: []*Config{
-//				modifiedRelConfig,
-//				modifiedAbsConfig,
-//			}},
-//			wantErr: false,
-//		},
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			i := &Include{
-//				enabled:       tt.fields.enabled,
-//				ContextValue:  tt.fields.ContextValue,
-//				fatherContext: tt.fields.fatherContext,
-//				loadLocker:    tt.fields.loadLocker,
-//			}
-//			if err := i.ModifyConfig(tt.args.configs...); (err != nil) != tt.wantErr {
-//				t.Errorf("ModifyConfig() error = %v, wantErr %v", err, tt.wantErr)
-//			}
-//		})
-//	}
-//}
-
 func TestInclude_QueryAllByKeyWords(t *testing.T) {
 	testMain, err := NewMain("C:\\test\\nginx.conf")
 	if err != nil {
@@ -1121,7 +884,7 @@ func TestInclude_QueryAllByKeyWords(t *testing.T) {
 		name   string
 		fields fields
 		args   args
-		want   []context.Pos
+		want   context.PosSet
 	}{
 		{
 			name: "normal test",
@@ -1132,10 +895,10 @@ func TestInclude_QueryAllByKeyWords(t *testing.T) {
 				loadLocker:    testInclude.loadLocker,
 			},
 			args: args{kw: context.NewKeyWords(context_type.TypeLocation).SetRegexpMatchingValue("test")},
-			want: []context.Pos{
+			want: context.NewPosSet().Append(
 				context.SetPos(aFather, 0),
 				context.SetPos(bFather, 1),
-			},
+			),
 		},
 		{
 			name: "test disabled include context",
@@ -1146,7 +909,7 @@ func TestInclude_QueryAllByKeyWords(t *testing.T) {
 				loadLocker:    disabledInclude.loadLocker,
 			},
 			args: args{kw: context.NewKeyWords(context_type.TypeLocation).SetRegexpMatchingValue("test")},
-			want: []context.Pos{},
+			want: context.NewPosSet(),
 		},
 	}
 	for _, tt := range tests {
@@ -1157,7 +920,7 @@ func TestInclude_QueryAllByKeyWords(t *testing.T) {
 				fatherContext: tt.fields.fatherContext,
 				loadLocker:    tt.fields.loadLocker,
 			}
-			if got := i.QueryAllByKeyWords(tt.args.kw); !reflect.DeepEqual(got, tt.want) {
+			if got := i.ChildrenPosSet().QueryAll(tt.args.kw); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("QueryAllByKeyWords() = %v, want %v", got, tt.want)
 			}
 		})
@@ -1256,7 +1019,7 @@ func TestInclude_QueryByKeyWords(t *testing.T) {
 				fatherContext: tt.fields.fatherContext,
 				loadLocker:    tt.fields.loadLocker,
 			}
-			if got := i.QueryByKeyWords(tt.args.kw); !reflect.DeepEqual(got, tt.want) {
+			if got := i.ChildrenPosSet().QueryOne(tt.args.kw); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("QueryByKeyWords() = %v, want %v", got, tt.want)
 			}
 		})

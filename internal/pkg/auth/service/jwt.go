@@ -25,10 +25,13 @@ var ExpireTime = 3600 // token有效期
 
 // getToken, token生成函数，根据jwt断言对象编码为token
 // 参数:
-//     claims: 用户jwt断言对象指针
+//
+//	claims: 用户jwt断言对象指针
+//
 // 返回值:
-//     token字符串
-//     错误
+//
+//	token字符串
+//	错误
 func (c *JWTClaims) getToken() (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, c)
 	signedToken, err := token.SignedString([]byte(password.Secret))
@@ -41,10 +44,13 @@ func (c *JWTClaims) getToken() (string, error) {
 
 // verifyAction, 认证token有效性函数
 // 参数:
-//     strToken: token字符串
+//
+//	strToken: token字符串
+//
 // 返回值:
-//     用户jwt断言对象指针
-//     错误
+//
+//	用户jwt断言对象指针
+//	错误
 func (s *AuthService) verifyAction(strToken string) (*JWTClaims, error) {
 	// 解析token
 	token, err := jwt.ParseWithClaims(strToken, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
@@ -79,9 +85,12 @@ func (s *AuthService) verifyAction(strToken string) (*JWTClaims, error) {
 
 // validUser, 用户认证函数，判断用户是否有效
 // 参数:
-//     claims: 用户jwt断言对象指针
+//
+//	claims: 用户jwt断言对象指针
+//
 // 返回值:
-//     用户是否有效
+//
+//	用户是否有效
 func (s *AuthService) validUser(claims *JWTClaims) bool {
 	if s.AuthDBConfig == nil {
 		if s.AuthConfig != nil {
@@ -111,10 +120,13 @@ func (s *AuthService) validUser(claims *JWTClaims) bool {
 
 // getPasswd, 用户密码查询函数
 // 参数:
-//     sqlStr: 查询语句
+//
+//	sqlStr: 查询语句
+//
 // 返回值:
-//     用户加密密码
-//     错误
+//
+//	用户加密密码
+//	错误
 func (s *AuthService) getPasswd(sqlStr string) (string, error) {
 	mysqlUrl := fmt.Sprintf(
 		"%s:%s@%s(%s:%d)/%s?charset=utf8",

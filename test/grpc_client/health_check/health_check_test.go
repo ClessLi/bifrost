@@ -14,13 +14,13 @@ import (
 	clientv1 "github.com/ClessLi/bifrost/pkg/client/grpc_health_v1"
 )
 
-//func TestHealthCheck(t *testing.T) {
-//	conn, _ := grpc.Dial(bifrostSvrAddr, grpc.WithInsecure())
-//	defer conn.Close()
-//	c := grpc_health_v1.NewHealthClient(conn)
-//	reply, _ := c.Check(context.Background(), &grpc_health_v1.HealthCheckRequest{})
-//	t.Log(reply.Status)
-//}
+//	func TestHealthCheck(t *testing.T) {
+//		conn, _ := grpc.Dial(bifrostSvrAddr, grpc.WithInsecure())
+//		defer conn.Close()
+//		c := grpc_health_v1.NewHealthClient(conn)
+//		reply, _ := c.Check(context.Background(), &grpc_health_v1.HealthCheckRequest{})
+//		t.Log(reply.Status)
+//	}
 func testGRPCServer() (*grpc.Server, *health.Server) {
 	server := grpc.NewServer()
 	pbv1.RegisterWebServerConfigServer(server, fake.New().WebServerConfig())

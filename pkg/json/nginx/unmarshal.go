@@ -361,6 +361,7 @@ func unmarshal(b []byte, p unmarshaler, caches *nginx.Caches) (nginx.Parser, err
 }
 
 // unmarshalChildren, 解析并反序列化子json串切片对象的内部函数.
+//
 //nolint:funlen,gocognit,gocyclo
 func unmarshalChildren(bytes []*json.RawMessage, caches *nginx.Caches) (children []nginx.Parser, err error) {
 	// parseContext, 用于解析json串归属于哪类需反序列化对象的匿名函数

@@ -85,7 +85,12 @@ func (m *nginxConfigManager) NginxConfig() NginxConfig {
 func (m *nginxConfigManager) ServerStatus() (state v1.State) {
 	state = v1.UnknownState
 	svrPidFilePath := filepath.Join("logs", "nginx.pid")
-	pidCtx := m.configuration.Main().QueryByKeyWords(context.NewKeyWords(context_type.TypeDirective).SetRegexpMatchingValue(`pid\s+.*`)).Target()
+	pidCtx := m.configuration.Main().
+		ChildrenPosSet().
+		QueryOne(context.NewKeyWords(context_type.TypeDirective).
+			SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc).
+			SetRegexpMatchingValue(`pid\s+.*`)).
+		Target()
 	if pidCtx.Error() == nil {
 		pidCtxKV := strings.Split(pidCtx.Value(), " ")
 		if len(pidCtxKV) == 2 {

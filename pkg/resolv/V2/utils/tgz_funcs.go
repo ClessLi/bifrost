@@ -12,10 +12,13 @@ import (
 // TarGZ, 归档操作函数
 //
 // 参数:
-//     dest: 归档文件路径
-//     filenames: 配置文件路径切片
+//
+//	dest: 归档文件路径
+//	filenames: 配置文件路径切片
+//
 // 返回值:
-//     错误
+//
+//	错误
 func TarGZ(dest string, filenames []string) (err error) {
 	if filenames == nil || len(filenames) < 1 {
 		return errors.New("filename list is null")
@@ -59,11 +62,14 @@ func TarGZ(dest string, filenames []string) (err error) {
 // compress, 归档压缩子函数
 //
 // 参数:
-//     fd: 被归档文件的系统文件对象指针
-//     prefix: 被归档文件的目录路径
-//     tgzw: tar文件对象指针
+//
+//	fd: 被归档文件的系统文件对象指针
+//	prefix: 被归档文件的目录路径
+//	tgzw: tar文件对象指针
+//
 // 返回值:
-//     错误
+//
+//	错误
 func compress(fd *os.File, prefix string, tgzw *tar.Writer) error {
 
 	// 加载被归档文件信息

@@ -241,16 +241,21 @@ func (c *configGraph) cleanupGraph() error {
 }
 
 func (c *configGraph) renderGraph() error {
-	var errs []error
-	for _, pos := range c.MainConfig().QueryAllByKeyWords(context.NewKeyWords(context_type.TypeInclude).SetCascaded(true)) {
-		include, ok := pos.Target().(*Include)
-		if !ok {
-			errs = append(errs, errors.WithCode(code.ErrV3InvalidContext, "[%v] is not an Include context", pos.Target()))
-			continue
-		}
-		errs = append(errs, include.load())
-	}
-	return errors.NewAggregate(errs)
+	return c.MainConfig().
+		ChildrenPosSet().
+		QueryAll(context.NewKeyWords(context_type.TypeInclude).SetCascaded(true)).
+		Filter(
+			func(pos context.Pos) bool {
+				_, ok := pos.Target().(*Include)
+				return ok
+			},
+		).
+		Map( // TODO: reduce for aggregate errors
+			func(pos context.Pos) (context.Pos, error) {
+				return pos, pos.Target().(*Include).load()
+			},
+		).
+		Error()
 }
 
 func (c *configGraph) rerenderGraph() error {

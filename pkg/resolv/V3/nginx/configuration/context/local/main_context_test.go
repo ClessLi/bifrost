@@ -430,60 +430,6 @@ func TestMain_Modify(t *testing.T) {
 	}
 }
 
-func TestMain_QueryAllByKeyWords(t *testing.T) {
-	type fields struct {
-		ConfigGraph ConfigGraph
-	}
-	type args struct {
-		kw context.KeyWords
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   []context.Pos
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			m := &Main{
-				ConfigGraph: tt.fields.ConfigGraph,
-			}
-			if got := m.QueryAllByKeyWords(tt.args.kw); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("QueryAllByKeyWords() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestMain_QueryByKeyWords(t *testing.T) {
-	type fields struct {
-		ConfigGraph ConfigGraph
-	}
-	type args struct {
-		kw context.KeyWords
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   context.Pos
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			m := &Main{
-				ConfigGraph: tt.fields.ConfigGraph,
-			}
-			if got := m.QueryByKeyWords(tt.args.kw); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("QueryByKeyWords() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestMain_Remove(t *testing.T) {
 	testMain, err := NewMain("C:\\test\\test.conf")
 	if err != nil {

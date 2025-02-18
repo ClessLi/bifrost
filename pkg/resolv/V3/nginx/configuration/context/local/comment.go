@@ -47,12 +47,8 @@ func (c *Comment) Child(idx int) context.Context {
 	return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "comment has no context"))
 }
 
-func (c *Comment) QueryByKeyWords(kw context.KeyWords) context.Pos {
-	return context.NullPos()
-}
-
-func (c *Comment) QueryAllByKeyWords(kw context.KeyWords) []context.Pos {
-	return nil
+func (c *Comment) ChildrenPosSet() context.PosSet {
+	return context.NewPosSet()
 }
 
 func (c *Comment) Clone() context.Context {
@@ -160,14 +156,16 @@ type commentsToContextConverter struct {
 
 func (c commentsToContextConverter) queryComments(ctx context.Context) (map[context.Context]sort.IntSlice, error) {
 	store := make(map[context.Context]sort.IntSlice)
-	for _, pos := range ctx.QueryAllByKeyWords(context.NewKeyWords(context_type.TypeComment).SetCascaded(true)) {
-		if err := pos.Target().Error(); err != nil {
-			return nil, err
-		}
-		father, idx := pos.Position()
-		store[father] = append(store[father], idx)
-	}
-	return store, nil
+	return store, ctx.ChildrenPosSet().QueryAll(context.NewKeyWords(context_type.TypeComment).SetCascaded(true)).Map(
+		func(pos context.Pos) (context.Pos, error) {
+			if err := pos.Target().Error(); err != nil {
+				return pos, err
+			}
+			father, idx := pos.Position()
+			store[father] = append(store[father], idx)
+			return pos, nil
+		},
+	).Error()
 }
 
 func (c commentsToContextConverter) convertSubPoses(fatherCtx context.Context, subIdxes []int) error {

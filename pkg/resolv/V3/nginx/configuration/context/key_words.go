@@ -11,6 +11,10 @@ const (
 	RegexpMatchingServerNameValue = `^server_name\s*(.+)$`
 )
 
+var (
+	SkipDisabledCtxFilterFunc = func(targetCtx Context) bool { return !targetCtx.IsEnabled() }
+)
+
 type KeyWords interface {
 	Match(ctx Context) bool
 	SkipQueryThisContext(ctx Context) bool

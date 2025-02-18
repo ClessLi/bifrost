@@ -12,9 +12,7 @@ type Context interface {
 	// read `Context` methods
 	Father() Context
 	Child(idx int) Context
-
-	QueryByKeyWords(kw KeyWords) Pos
-	QueryAllByKeyWords(kw KeyWords) []Pos
+	ChildrenPosSet() PosSet
 
 	Clone() Context
 

@@ -83,12 +83,8 @@ func (e *ErrorContext) Child(idx int) Context {
 	return e.AppendError(ErrGetChildFromErrorContext)
 }
 
-func (e *ErrorContext) QueryByKeyWords(kw KeyWords) Pos {
-	return nullPos
-}
-
-func (e *ErrorContext) QueryAllByKeyWords(kw KeyWords) []Pos {
-	return nil
+func (e *ErrorContext) ChildrenPosSet() PosSet {
+	return ErrPosSet(e.AppendError(ErrGetChildFromErrorContext).Error())
 }
 
 func (e *ErrorContext) Clone() Context {

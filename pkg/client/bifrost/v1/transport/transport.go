@@ -44,16 +44,16 @@ type transport struct {
 	decoderFactory decoder.Factory
 	encoderFactory encoder.Factory
 
-	onceWebServerConfig        sync.Once
-	onceWebServerStatistics    sync.Once
-	onceWebServerStatus        sync.Once
-	onceWebServerLogWatcher    sync.Once
-	onceWebServerBinCMDWatcher sync.Once
-	singletonWSCTXP            WebServerConfigTransport
-	singletonWSSTXP            WebServerStatisticsTransport
-	singletonWSStatusTXP       WebServerStatusTransport
-	singletonWSLWTXP           WebServerLogWatcherTransport
-	singletonWSBCTXP           WebServerBinCMDTransport
+	onceWebServerConfig     sync.Once
+	onceWebServerStatistics sync.Once
+	onceWebServerStatus     sync.Once
+	onceWebServerLogWatcher sync.Once
+	onceWebServerBinCMD     sync.Once
+	singletonWSCTXP         WebServerConfigTransport
+	singletonWSSTXP         WebServerStatisticsTransport
+	singletonWSStatusTXP    WebServerStatusTransport
+	singletonWSLWTXP        WebServerLogWatcherTransport
+	singletonWSBCTXP        WebServerBinCMDTransport
 }
 
 func (t *transport) WebServerConfig() WebServerConfigTransport {
@@ -117,7 +117,7 @@ func (t *transport) WebServerLogWatcher() WebServerLogWatcherTransport {
 }
 
 func (t *transport) WebServerBinCMD() WebServerBinCMDTransport {
-	t.onceWebServerBinCMDWatcher.Do(func() {
+	t.onceWebServerBinCMD.Do(func() {
 		if t.singletonWSBCTXP == nil {
 			t.singletonWSBCTXP = newWebServerBinCMDTransport(t)
 		}
@@ -133,13 +133,13 @@ func (t *transport) WebServerBinCMD() WebServerBinCMDTransport {
 
 func New(conn *grpc.ClientConn) Factory {
 	return &transport{
-		conn:                       conn,
-		decoderFactory:             decoder.New(),
-		encoderFactory:             encoder.New(),
-		onceWebServerConfig:        sync.Once{},
-		onceWebServerStatistics:    sync.Once{},
-		onceWebServerStatus:        sync.Once{},
-		onceWebServerLogWatcher:    sync.Once{},
-		onceWebServerBinCMDWatcher: sync.Once{},
+		conn:                    conn,
+		decoderFactory:          decoder.New(),
+		encoderFactory:          encoder.New(),
+		onceWebServerConfig:     sync.Once{},
+		onceWebServerStatistics: sync.Once{},
+		onceWebServerStatus:     sync.Once{},
+		onceWebServerLogWatcher: sync.Once{},
+		onceWebServerBinCMD:     sync.Once{},
 	}
 }

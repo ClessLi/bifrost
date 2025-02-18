@@ -68,7 +68,11 @@ func NewStatistician(c NginxConfig) Statistician {
 }
 
 func Port(ctx context.Context) int {
-	portDirective := ctx.QueryByKeyWords(context.NewKeyWords(context_type.TypeDirective).SetRegexpMatchingValue(context.RegexpMatchingListenPortValue)).Target()
+	portDirective := ctx.ChildrenPosSet().
+		QueryOne(context.NewKeyWords(context_type.TypeDirective).
+			SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc).
+			SetRegexpMatchingValue(context.RegexpMatchingListenPortValue)).
+		Target()
 	if portDirective.Error() != nil {
 		return -1
 	}
@@ -93,53 +97,55 @@ func Ports(contexts []context.Context) []int {
 }
 
 func HttpPorts(ctx context.Context) []int {
-	httpServerPoses := ctx.
-		QueryByKeyWords(context.NewKeyWords(context_type.TypeHttp)).Target().
-		QueryAllByKeyWords(context.NewKeyWords(context_type.TypeServer))
-	httpServers := make([]context.Context, 0)
-	for _, pos := range httpServerPoses {
-		httpServers = append(httpServers, pos.Target())
-	}
+	return Ports(
+		ctx.ChildrenPosSet().
+			QueryOne(context.NewKeyWords(context_type.TypeHttp).SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc)).
+			QueryAll(context.NewKeyWords(context_type.TypeServer).SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc)).
+			Targets(),
+	)
 
-	return Ports(httpServers)
 }
 
 func HttpServers(ctx context.Context) (int, map[string][]int) {
 	serverCount := 0
-	httpServerPoses := ctx.
-		QueryByKeyWords(context.NewKeyWords(context_type.TypeHttp)).Target().
-		QueryAllByKeyWords(context.NewKeyWords(context_type.TypeServer))
-
 	serverPortCount := make(map[string][]int)
-	for _, pos := range httpServerPoses {
-		serverCount++
-		servernameDirective := pos.Target().QueryByKeyWords(context.NewKeyWords(context_type.TypeDirective).SetRegexpMatchingValue(context.RegexpMatchingServerNameValue)).Target()
-		if servernameDirective.Error() != nil {
-			if !errors.IsCode(servernameDirective.Error(), code.ErrV3ContextNotFound) {
-				return 0, nil
-			}
-
-			continue
-		}
-		servername := servernameDirective.(*local.Directive).Params
-		serverport := Port(pos.Target().Father())
-		if serverport > 0 {
-			serverPortCount[servername] = append(serverPortCount[servername], serverport)
-		}
+	err := ctx.ChildrenPosSet().
+		QueryOne(context.NewKeyWords(context_type.TypeHttp).SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc)).
+		QueryAll(context.NewKeyWords(context_type.TypeServer).SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc)).
+		Map(
+			func(pos context.Pos) (context.Pos, error) {
+				serverCount++
+				servernameDirective := pos.QueryOne(
+					context.NewKeyWords(context_type.TypeDirective).
+						SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc).
+						SetRegexpMatchingValue(context.RegexpMatchingServerNameValue),
+				).Target()
+				if servernameDirective.Error() != nil {
+					if !errors.IsCode(servernameDirective.Error(), code.ErrV3ContextNotFound) {
+						return pos, servernameDirective.Error()
+					}
+					return pos, nil
+				}
+				servername := servernameDirective.(*local.Directive).Params
+				serverport := Port(pos.Target())
+				if serverport > 0 {
+					serverPortCount[servername] = append(serverPortCount[servername], serverport)
+				}
+				return pos, nil
+			},
+		).
+		Error()
+	if err != nil {
+		return 0, nil
 	}
-
 	return serverCount, serverPortCount
 }
 
 func StreamServers(ctx context.Context) []int {
-	streamServerPoses := ctx.
-		QueryByKeyWords(context.NewKeyWords(context_type.TypeStream)).Target().
-		QueryAllByKeyWords(context.NewKeyWords(context_type.TypeServer))
-
-	streamServers := make([]context.Context, 0)
-	for _, pos := range streamServerPoses {
-		streamServers = append(streamServers, pos.Target())
-	}
-
-	return Ports(streamServers)
+	return Ports(
+		ctx.ChildrenPosSet().
+			QueryOne(context.NewKeyWords(context_type.TypeStream).SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc)).
+			QueryAll(context.NewKeyWords(context_type.TypeServer).SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc)).
+			Targets(),
+	)
 }

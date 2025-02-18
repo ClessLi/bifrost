@@ -13,10 +13,10 @@ import (
 // keyword string: <parser type>[':sep: <value string>', ':sep: :reg: <value regexp>']
 //
 // e.g. for Nginx Config keyword string:
-//     1) server
-//     2) location:sep: :reg: \^\~\s+\/
-//     3) key:sep: server_name test1\.com
-//     4) comment:sep: :reg: .*
+//  1. server
+//  2. location:sep: :reg: \^\~\s+\/
+//  3. key:sep: server_name test1\.com
+//  4. comment:sep: :reg: .*
 type Querier interface {
 	// keyword string: <parser type>[':sep: <value string>', ':sep: :reg: <value regexp>']
 	//

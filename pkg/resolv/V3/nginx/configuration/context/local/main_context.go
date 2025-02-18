@@ -49,6 +49,17 @@ func (m *Main) Child(idx int) context.Context {
 	return m.MainConfig().Child(idx)
 }
 
+func (m *Main) ChildrenPosSet() context.PosSet {
+	return m.MainConfig().ChildrenPosSet().Map(
+		func(pos context.Pos) (context.Pos, error) {
+			if f, idx := pos.Position(); f == m.MainConfig().self {
+				return context.SetPos(m, idx), nil
+			}
+			return pos, nil
+		},
+	)
+}
+
 func (m *Main) SetValue(v string) error {
 	if len(m.ListConfigs()) > 1 {
 		return errors.New("cannot set value for MainContext with non empty graph")
@@ -102,24 +113,6 @@ func (m *Main) Modify(ctx context.Context, idx int) context.Context {
 	} else {
 		return got
 	}
-}
-
-func (m *Main) QueryByKeyWords(kw context.KeyWords) context.Pos {
-	gotPos := m.MainConfig().QueryByKeyWords(kw)
-	if got, idx := gotPos.Position(); got == m.MainConfig().self {
-		return context.SetPos(m, idx)
-	}
-	return gotPos
-}
-
-func (m *Main) QueryAllByKeyWords(kw context.KeyWords) []context.Pos {
-	gotPoses := m.MainConfig().QueryAllByKeyWords(kw)
-	for i, pos := range gotPoses {
-		if got, idx := pos.Position(); got == m.MainConfig().self {
-			gotPoses[i] = context.SetPos(m, idx)
-		}
-	}
-	return gotPoses
 }
 
 func (m *Main) Clone() context.Context {

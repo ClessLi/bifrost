@@ -49,12 +49,8 @@ func (d *Directive) Child(idx int) context.Context {
 	return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "directive has no child context"))
 }
 
-func (d *Directive) QueryByKeyWords(kw context.KeyWords) context.Pos {
-	return context.NullPos()
-}
-
-func (d *Directive) QueryAllByKeyWords(kw context.KeyWords) []context.Pos {
-	return nil
+func (d *Directive) ChildrenPosSet() context.PosSet {
+	return context.NewPosSet()
 }
 
 func (d *Directive) Clone() context.Context {

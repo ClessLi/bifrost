@@ -73,10 +73,13 @@ func (c *BasicContext) Insert(indexParser Parser, pType parserType, values ...st
 // InsertByParser, BasicContext 类插入对象的方法， Context.InsertByParser(indexParser Parser, insertParsers ...Parser) error 的实现
 //
 // 参数:
-//     indexParser: 基准索引子对象
-//     insertParsers: 待插入子对象集
+//
+//	indexParser: 基准索引子对象
+//	insertParsers: 待插入子对象集
+//
 // 返回值:
-//     错误
+//
+//	错误
 func (c *BasicContext) InsertByParser(indexParser Parser, contents ...Parser) error {
 	for i, child := range c.Children {
 		if indexParser != child {

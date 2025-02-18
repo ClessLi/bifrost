@@ -199,20 +199,42 @@ func TestBifrostClientOperation(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		for _, pos := range conf.Main().QueryByKeyWords(nginx_ctx.NewKeyWords(context_type.TypeHttp)).Target().
-			QueryByKeyWords(nginx_ctx.NewKeyWords(context_type.TypeServer)).Target().
-			QueryAllByKeyWords(nginx_ctx.NewKeyWords(context_type.TypeDirective).SetStringMatchingValue("server_name test1.com")) {
-			server, _ := pos.Position()
-			if server.QueryByKeyWords(nginx_ctx.NewKeyWords(context_type.TypeDirective).SetRegexpMatchingValue("^listen 80$")).Target().Error() != nil {
-				continue
-			}
-			ctx, idx := server.QueryByKeyWords(nginx_ctx.NewKeyWords(context_type.TypeLocation).SetRegexpMatchingValue(`^/test1-location$`)).Target().
-				QueryByKeyWords(nginx_ctx.NewKeyWords(context_type.TypeIf).SetRegexpMatchingValue(`^\(\$http_api_name != ''\)$`)).Target().
-				QueryByKeyWords(nginx_ctx.NewKeyWords(context_type.TypeDirective).SetStringMatchingValue("proxy_pass")).Position()
-			err = ctx.Insert(local.NewContext(context_type.TypeInlineComment, fmt.Sprintf("[%s]test comments", time.Now().String())), idx+1).Error()
-			if err != nil {
-				t.Fatal(err)
-			}
+		ctx, idx := conf.Main().ChildrenPosSet().
+			QueryOne(nginx_ctx.NewKeyWords(context_type.TypeHttp).
+				SetSkipQueryFilter(nginx_ctx.SkipDisabledCtxFilterFunc)).
+			QueryAll(nginx_ctx.NewKeyWords(context_type.TypeServer).
+				SetSkipQueryFilter(nginx_ctx.SkipDisabledCtxFilterFunc)).
+			Filter(
+				func(pos nginx_ctx.Pos) bool {
+					return pos.QueryOne(nginx_ctx.NewKeyWords(context_type.TypeDirective).
+						SetCascaded(false).
+						SetStringMatchingValue("server_name test1.com").
+						SetSkipQueryFilter(nginx_ctx.SkipDisabledCtxFilterFunc)).
+						Target().Error() == nil
+				},
+			).
+			Filter(
+				func(pos nginx_ctx.Pos) bool {
+					return pos.QueryOne(nginx_ctx.NewKeyWords(context_type.TypeDirective).
+						SetCascaded(false).
+						SetRegexpMatchingValue("^listen 80$").
+						SetSkipQueryFilter(nginx_ctx.SkipDisabledCtxFilterFunc)).
+						Target().Error() == nil
+				},
+			).
+			QueryOne(nginx_ctx.NewKeyWords(context_type.TypeLocation).
+				SetRegexpMatchingValue(`^/test1-location$`).
+				SetSkipQueryFilter(nginx_ctx.SkipDisabledCtxFilterFunc)).
+			QueryOne(nginx_ctx.NewKeyWords(context_type.TypeIf).
+				SetRegexpMatchingValue(`^\(\$http_api_name != ''\)$`).
+				SetSkipQueryFilter(nginx_ctx.SkipDisabledCtxFilterFunc)).
+			QueryOne(nginx_ctx.NewKeyWords(context_type.TypeDirective).
+				SetStringMatchingValue("proxy_pass").
+				SetSkipQueryFilter(nginx_ctx.SkipDisabledCtxFilterFunc)).
+			Position()
+		err = ctx.Insert(local.NewContext(context_type.TypeInlineComment, fmt.Sprintf("[%s]test comments", time.Now().String())), idx+1).Error()
+		if err != nil {
+			t.Fatal(err)
 		}
 		err = client.WebServerConfig().Update(servername, conf.Json())
 		if err != nil {

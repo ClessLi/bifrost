@@ -120,50 +120,12 @@ func (b *BasicContext) Child(idx int) context.Context {
 	return b.Children[idx]
 }
 
-func (b *BasicContext) QueryByKeyWords(kw context.KeyWords) context.Pos {
-	for idx, child := range b.Children {
-		if kw.SkipQueryThisContext(child) {
-			continue
-		}
-
-		if kw.Match(child) {
-			return context.SetPos(b.self, idx)
-		}
-
-		// if query with non-cascaded KeyWords,
-		// only the children of the current context will be used for retrieval matching.
-		if kw.Cascaded() {
-			pos := child.QueryByKeyWords(kw)
-			c, _ := pos.Position()
-			if c.Error() == nil {
-				return pos
-			}
-		}
+func (b *BasicContext) ChildrenPosSet() context.PosSet {
+	childrenPoses := context.NewPosSet()
+	for i := 0; i < b.Len(); i++ {
+		childrenPoses.Append(context.SetPos(b, i))
 	}
-	return context.NotFoundPos()
-}
-
-func (b *BasicContext) QueryAllByKeyWords(kw context.KeyWords) []context.Pos {
-	poses := make([]context.Pos, 0)
-	for idx, child := range b.Children {
-		if kw.SkipQueryThisContext(child) {
-			continue
-		}
-
-		if kw.Match(child) {
-			poses = append(poses, context.SetPos(b.self, idx))
-		}
-
-		// if query with non-cascaded KeyWords,
-		// only the children of the current context will be used for retrieval matching.
-		if kw.Cascaded() {
-			childPoses := child.QueryAllByKeyWords(kw)
-			if len(childPoses) > 0 {
-				poses = append(poses, childPoses...)
-			}
-		}
-	}
-	return poses
+	return childrenPoses
 }
 
 func (b *BasicContext) Clone() context.Context {
@@ -186,22 +148,12 @@ func (b *BasicContext) operateIncludes(handle func(include *Include) error) erro
 	if b == nil || b.self == nil {
 		return nil
 	}
-	var errs []error
 	// call include context handle some task
-	includePoses := b.self.QueryAllByKeyWords(context.NewKeyWords(context_type.TypeInclude).SetCascaded(true))
-	for _, pos := range includePoses {
-		include, ok := pos.Target().(*Include)
-		if !ok {
-			errs = append(errs, errors.WithCode(code.ErrV3InvalidContext, "[%v] is not an Include context", pos.Target()))
-			continue
-		}
-		errs = append(errs, handle(include))
-	}
-	err := errors.NewAggregate(errs)
-	if err != nil {
-		return err
-	}
-	return nil
+	return b.self.ChildrenPosSet().
+		QueryAll(context.NewKeyWords(context_type.TypeInclude).SetCascaded(true)).
+		Filter(func(pos context.Pos) bool { _, ok := pos.Target().(*Include); return ok }).
+		Map(func(pos context.Pos) (context.Pos, error) { return pos, handle(pos.Target().(*Include)) }).
+		Error()
 }
 
 func (b *BasicContext) unloadIncludes() error {

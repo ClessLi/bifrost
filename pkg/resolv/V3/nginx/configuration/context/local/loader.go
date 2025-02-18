@@ -155,19 +155,31 @@ func (f *fileLoader) load(config *Config) error {
 	if e := new(commentsToContextConverter).Convert(config).Error(); e != nil {
 		return e
 	}
-	for _, pos := range config.QueryAllByKeyWords(context.NewKeyWords(context_type.TypeInclude).SetCascaded(true).SetSkipQueryFilter(func(targetCtx context.Context) bool {
-		return targetCtx.Type() == context_type.TypeConfig // skipping the child config context
-	})) {
-		// load include configs
-		if pos.Target().Type() == context_type.TypeInclude {
-			err = f.loadInclude(pos.Target().(*Include))
-			if err != nil {
-				return errors.Wrap(err, "load include configs failed")
-			}
-		}
-	}
 
-	return nil
+	return config.ChildrenPosSet().
+		QueryAll(context.NewKeyWords(context_type.TypeInclude).
+			SetCascaded(true).
+			SetSkipQueryFilter(
+				func(targetCtx context.Context) bool {
+					return targetCtx.Type() == context_type.TypeConfig // skipping the child config context
+				},
+			)).
+		Filter(
+			func(pos context.Pos) bool {
+				_, ok := pos.Target().(*Include)
+				return ok
+			},
+		).
+		Map(
+			func(pos context.Pos) (context.Pos, error) {
+				// load include configs
+				if err := f.loadInclude(pos.Target().(*Include)); err != nil {
+					return pos, errors.Wrap(err, "load include configs failed")
+				}
+				return pos, nil
+			},
+		).
+		Error()
 }
 
 func (f *fileLoader) loadInclude(include *Include) error {

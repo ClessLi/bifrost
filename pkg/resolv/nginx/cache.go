@@ -63,10 +63,13 @@ func newCache(config *Config, file ...interface{}) (cache, error) {
 
 // getHash, 计算文件hash值函数
 // 参数:
-//     config: Config对象指针
+//
+//	config: Config对象指针
+//
 // 返回值:
-//     文件哈希基准值
-//     错误
+//
+//	文件哈希基准值
+//	错误
 func getHash(path string, file ...interface{}) (hash string, err error) {
 	hash256 := sha256.New()
 	// fmt.Println("------------getHash func------------")

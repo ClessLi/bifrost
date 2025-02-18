@@ -88,9 +88,6 @@ func (u *jsonUnmarshaller) UnmarshalJSON(bytes []byte) error {
 		if err != nil {
 			return err
 		}
-	//case context_type.TypeInclude:
-	//	// insert the include context to be unmarshalled into its father, and unmarshal itself
-	//	return u.unmarshalInclude(&unmarshalCtx)
 	default:
 		u.completedContext = NewContext(unmarshalCtx.ContextType, unmarshalCtx.Value)
 		if err = u.completedContext.Error(); err != nil {

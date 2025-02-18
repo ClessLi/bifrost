@@ -1608,7 +1608,7 @@ func TestBasicContext_QueryAllByKeyWords(t *testing.T) {
 		name   string
 		fields fields
 		args   args
-		want   []context.Pos
+		want   context.PosSet
 	}{
 		{
 			name: "normal test",
@@ -1622,10 +1622,10 @@ func TestBasicContext_QueryAllByKeyWords(t *testing.T) {
 				tailStringFunc: testContext.tailStringFunc,
 			},
 			args: args{kw: context.NewKeyWords(context_type.TypeLocation).SetRegexpMatchingValue("test")},
-			want: []context.Pos{
+			want: context.NewPosSet().Append(
 				context.SetPos(testFather, 0),
 				context.SetPos(testFather, 2),
-			},
+			),
 		},
 	}
 	for _, tt := range tests {
@@ -1639,7 +1639,7 @@ func TestBasicContext_QueryAllByKeyWords(t *testing.T) {
 				headStringFunc: tt.fields.headStringFunc,
 				tailStringFunc: tt.fields.tailStringFunc,
 			}
-			if got := b.QueryAllByKeyWords(tt.args.kw); !reflect.DeepEqual(got, tt.want) {
+			if got := b.ChildrenPosSet().QueryAll(tt.args.kw); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("QueryAllByKeyWords() = %v, want %v", got, tt.want)
 			}
 		})
@@ -1710,7 +1710,7 @@ func TestBasicContext_QueryByKeyWords(t *testing.T) {
 				headStringFunc: tt.fields.headStringFunc,
 				tailStringFunc: tt.fields.tailStringFunc,
 			}
-			if got := b.QueryByKeyWords(tt.args.kw); !reflect.DeepEqual(got, tt.want) {
+			if got := b.ChildrenPosSet().QueryOne(tt.args.kw); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("QueryByKeyWords() = %v, want %v", got, tt.want)
 			}
 		})

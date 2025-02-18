@@ -334,11 +334,11 @@ func TestComment_QueryAllByKeyWords(t *testing.T) {
 		name   string
 		fields fields
 		args   args
-		want   []context.Pos
+		want   context.PosSet
 	}{
 		{
 			name: "has no children",
-			want: nil,
+			want: context.NewPosSet(),
 		},
 	}
 	for _, tt := range tests {
@@ -348,7 +348,7 @@ func TestComment_QueryAllByKeyWords(t *testing.T) {
 				Inline:        tt.fields.Inline,
 				fatherContext: tt.fields.fatherContext,
 			}
-			if got := c.QueryAllByKeyWords(tt.args.kw); !reflect.DeepEqual(got, tt.want) {
+			if got := c.ChildrenPosSet().QueryAll(tt.args.kw); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("QueryAllByKeyWords() = %v, want %v", got, tt.want)
 			}
 		})
@@ -372,7 +372,7 @@ func TestComment_QueryByKeyWords(t *testing.T) {
 	}{
 		{
 			name: "has no children",
-			want: context.NullPos(),
+			want: context.NotFoundPos(),
 		},
 	}
 	for _, tt := range tests {
@@ -382,7 +382,7 @@ func TestComment_QueryByKeyWords(t *testing.T) {
 				Inline:        tt.fields.Inline,
 				fatherContext: tt.fields.fatherContext,
 			}
-			if got := c.QueryByKeyWords(tt.args.kw); !reflect.DeepEqual(got, tt.want) {
+			if got := c.ChildrenPosSet().QueryOne(tt.args.kw); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("QueryByKeyWords() = %v, want %v", got, tt.want)
 			}
 		})

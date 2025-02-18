@@ -560,11 +560,11 @@ func TestDirective_QueryAllByKeyWords(t *testing.T) {
 		name   string
 		fields fields
 		args   args
-		want   []context.Pos
+		want   context.PosSet
 	}{
 		{
 			name: "has no children",
-			want: nil,
+			want: context.NewPosSet(),
 		},
 	}
 	for _, tt := range tests {
@@ -575,7 +575,7 @@ func TestDirective_QueryAllByKeyWords(t *testing.T) {
 				Params:        tt.fields.Params,
 				fatherContext: tt.fields.fatherContext,
 			}
-			if got := d.QueryAllByKeyWords(tt.args.kw); !reflect.DeepEqual(got, tt.want) {
+			if got := d.ChildrenPosSet().QueryAll(tt.args.kw); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("QueryAllByKeyWords() = %v, want %v", got, tt.want)
 			}
 		})
@@ -600,7 +600,7 @@ func TestDirective_QueryByKeyWords(t *testing.T) {
 	}{
 		{
 			name: "has no children",
-			want: context.NullPos(),
+			want: context.NotFoundPos(),
 		},
 	}
 	for _, tt := range tests {
@@ -611,7 +611,7 @@ func TestDirective_QueryByKeyWords(t *testing.T) {
 				Params:        tt.fields.Params,
 				fatherContext: tt.fields.fatherContext,
 			}
-			if got := d.QueryByKeyWords(tt.args.kw); !reflect.DeepEqual(got, tt.want) {
+			if got := d.ChildrenPosSet().QueryOne(tt.args.kw); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("QueryByKeyWords() = %v, want %v", got, tt.want)
 			}
 		})
