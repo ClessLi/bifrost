@@ -38,6 +38,7 @@ message ServerName {
 message ServerConfig {
   string ServerName = 1;
   bytes JsonData = 2;
+  bytes OriginalFingerprints = 3;
 }
 
 message Response {

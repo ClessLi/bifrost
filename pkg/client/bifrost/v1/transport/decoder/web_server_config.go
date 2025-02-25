@@ -22,8 +22,9 @@ func (w webConfigServer) DecodeResponse(ctx context.Context, resp interface{}) (
 		return &servernames, nil
 	case *pbv1.ServerConfig: // decode `Get` response
 		return &v1.WebServerConfig{
-			ServerName: &v1.ServerName{Name: resp.GetServerName()},
-			JsonData:   resp.GetJsonData(),
+			ServerName:           &v1.ServerName{Name: resp.GetServerName()},
+			JsonData:             resp.GetJsonData(),
+			OriginalFingerprints: resp.GetOriginalFingerprints(),
 		}, nil
 	case *pbv1.Response: // decode `Update` response
 		return &v1.Response{Message: resp.String()}, nil

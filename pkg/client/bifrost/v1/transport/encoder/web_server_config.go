@@ -19,8 +19,9 @@ func (w webServerConfig) EncodeRequest(ctx context.Context, req interface{}) (in
 		return &pbv1.ServerName{Name: req.Name}, nil
 	case *v1.WebServerConfig: // encode `Update` request
 		return &pbv1.ServerConfig{
-			ServerName: req.ServerName.Name,
-			JsonData:   req.JsonData,
+			ServerName:           req.ServerName.Name,
+			JsonData:             req.JsonData,
+			OriginalFingerprints: req.OriginalFingerprints,
 		}, nil
 	default:
 		return nil, errors.Errorf("invalid web server config request: %v", req)

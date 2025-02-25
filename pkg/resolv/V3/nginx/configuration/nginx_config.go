@@ -77,7 +77,7 @@ func (n *nginxConfig) renewMainContext(m local.MainContext) error {
 	newFP := utilsV3.NewConfigFingerprinterWithTimestamp(dumpMainContext(m), time.Time{})
 	n.rwLocker.Lock()
 	defer n.rwLocker.Unlock()
-	if !oldFP.Diff(newFP) {
+	if !oldFP.Diff(newFP.Fingerprints()) {
 		return errors.WithCode(code.ErrSameConfigFingerprint, "same config fingerprint")
 	}
 	n.mainContext = m

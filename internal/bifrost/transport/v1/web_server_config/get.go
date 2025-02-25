@@ -24,12 +24,17 @@ func (w *webServerConfigServer) Get(r *pbv1.ServerName, stream pbv1.WebServerCon
 	}
 
 	response := resp.(*pbv1.ServerConfig)
+	// send config data
 	err = utils.StreamSendMsg(stream, response.GetJsonData(), w.options.ChunkSize, func(msg []byte) interface{} {
 		return &pbv1.ServerConfig{JsonData: msg}
 	})
 	if err != nil {
 		return err
 	}
+	// send config fingerprints
+	err = utils.StreamSendMsg(stream, response.GetOriginalFingerprints(), w.options.ChunkSize, func(msg []byte) interface{} {
+		return &pbv1.ServerConfig{OriginalFingerprints: msg}
+	})
 
 	return stream.Send(&pbv1.ServerConfig{ServerName: response.GetServerName()})
 	// return nil

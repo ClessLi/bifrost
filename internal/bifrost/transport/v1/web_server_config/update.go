@@ -12,8 +12,10 @@ import (
 )
 
 func (w *webServerConfigServer) Update(stream pbv1.WebServerConfig_UpdateServer) error {
-	buffer := bytes.NewBuffer(make([]byte, 0, w.options.ChunkSize))
-	defer buffer.Reset()
+	dataBuffer := bytes.NewBuffer(make([]byte, 0, w.options.ChunkSize))
+	defer dataBuffer.Reset()
+	ofpBuffer := bytes.NewBuffer(make([]byte, 0, w.options.ChunkSize))
+	defer ofpBuffer.Reset()
 	var (
 		in            *pbv1.ServerConfig
 		err           error
@@ -45,7 +47,8 @@ func (w *webServerConfigServer) Update(stream pbv1.WebServerConfig_UpdateServer)
 			}
 		}
 
-		buffer.Write(in.GetJsonData())
+		dataBuffer.Write(in.GetJsonData())
+		ofpBuffer.Write(in.GetOriginalFingerprints())
 	}
 
 	if isTimeout {
@@ -56,7 +59,8 @@ func (w *webServerConfigServer) Update(stream pbv1.WebServerConfig_UpdateServer)
 		return errors.WithCode(code.ErrValidation, "update web server config is nil")
 	}
 
-	req.JsonData = buffer.Bytes()
+	req.JsonData = dataBuffer.Bytes()
+	req.OriginalFingerprints = ofpBuffer.Bytes()
 	_, resp, err := w.handler.HandlerUpdate().ServeGRPC(stream.Context(), req)
 	if err != nil {
 		return errors.Wrapf(

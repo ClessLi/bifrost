@@ -8,21 +8,24 @@ import (
 	"time"
 )
 
+type ConfigFingerprints map[string]string
+
 type ConfigFingerprinter interface {
-	Diff(fingerprinter ConfigFingerprinter) bool
+	Diff(fingerprints ConfigFingerprints) bool
 	NewerThan(timestamp time.Time) bool
-	Renew(fingerprinter ConfigFingerprinter)
+	Renew(fingerprints ConfigFingerprints)
+	Fingerprints() ConfigFingerprints
 }
 
 type configFingerprinter struct {
-	fingerprints map[string]string
+	fingerprints ConfigFingerprints
 	timestamp    time.Time
 	locker       *sync.Mutex
 }
 
-func (f *configFingerprinter) Diff(fingerprinter ConfigFingerprinter) bool {
-	if fp, is := fingerprinter.(*configFingerprinter); is && len(fp.fingerprints) == len(f.fingerprints) {
-		for filename, fingerprint := range fp.fingerprints {
+func (f *configFingerprinter) Diff(fingerprints ConfigFingerprints) bool {
+	if len(fingerprints) == len(f.fingerprints) {
+		for filename, fingerprint := range fingerprints {
 			if localFingerprint, ok := f.fingerprints[filename]; ok &&
 				localFingerprint == fingerprint {
 				continue
@@ -38,8 +41,8 @@ func (f *configFingerprinter) NewerThan(timestamp time.Time) bool {
 	return f.timestamp.After(timestamp)
 }
 
-func (f *configFingerprinter) Renew(fingerprinter ConfigFingerprinter) {
-	if !f.Diff(fingerprinter) {
+func (f *configFingerprinter) Renew(fingerprints ConfigFingerprints) {
+	if !f.Diff(fingerprints) {
 		return
 	}
 	f.locker.Lock()
@@ -47,13 +50,18 @@ func (f *configFingerprinter) Renew(fingerprinter ConfigFingerprinter) {
 	defer func() {
 		f.timestamp = time.Now()
 	}()
-	if fp, is := fingerprinter.(*configFingerprinter); is {
-		f.fingerprints = make(map[string]string)
-
-		for name, fingerprint := range fp.fingerprints {
-			f.fingerprints[name] = fingerprint
-		}
+	f.fingerprints = make(ConfigFingerprints)
+	for name, fingerprint := range fingerprints {
+		f.fingerprints[name] = fingerprint
 	}
+}
+
+func (f *configFingerprinter) Fingerprints() ConfigFingerprints {
+	fp := make(ConfigFingerprints)
+	for s := range f.fingerprints {
+		fp[s] = f.fingerprints[s]
+	}
+	return fp
 }
 
 func (f *configFingerprinter) setFingerprint(filename string, data []byte) {
@@ -68,7 +76,7 @@ func NewConfigFingerprinter(buffMap map[string]*bytes.Buffer) ConfigFingerprinte
 
 func NewConfigFingerprinterWithTimestamp(buffMap map[string]*bytes.Buffer, timestamp time.Time) ConfigFingerprinter {
 	cf := &configFingerprinter{
-		fingerprints: make(map[string]string),
+		fingerprints: make(ConfigFingerprints),
 		locker:       new(sync.Mutex),
 		timestamp:    timestamp,
 	}
@@ -76,4 +84,12 @@ func NewConfigFingerprinterWithTimestamp(buffMap map[string]*bytes.Buffer, times
 		cf.setFingerprint(s, buff.Bytes())
 	}
 	return cf
+}
+
+func SimpleConfigFingerprinter(fingerprints ConfigFingerprints) ConfigFingerprinter {
+	return &configFingerprinter{
+		fingerprints: fingerprints,
+		timestamp:    time.Now(),
+		locker:       new(sync.Mutex),
+	}
 }

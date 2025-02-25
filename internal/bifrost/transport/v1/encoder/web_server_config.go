@@ -25,8 +25,9 @@ func (e webServerConfig) EncodeResponse(_ context.Context, r interface{}) (inter
 		return encodeServerNames, nil
 	case *v1.WebServerConfig: // encode `Get` response
 		return &pbv1.ServerConfig{
-			ServerName: r.ServerName.Name,
-			JsonData:   r.JsonData,
+			ServerName:           r.ServerName.Name,
+			JsonData:             r.JsonData,
+			OriginalFingerprints: r.OriginalFingerprints,
 		}, nil
 	case *v1.Response: // encode `Update` response
 		return &pbv1.Response{Msg: []byte(r.Message)}, nil

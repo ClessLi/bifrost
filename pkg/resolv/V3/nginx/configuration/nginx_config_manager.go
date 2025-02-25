@@ -194,7 +194,7 @@ func (m *nginxConfigManager) refresh() error {
 		return err
 	}
 
-	if !fsFingerprinter.Diff(utilsV3.NewConfigFingerprinter(m.configuration.Dump())) {
+	if !fsFingerprinter.Diff(utilsV3.NewConfigFingerprinter(m.configuration.Dump()).Fingerprints()) {
 		// 指纹一致不做刷新
 		return nil
 	}

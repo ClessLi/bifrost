@@ -22,8 +22,9 @@ func (d webServerConfig) DecodeRequest(_ context.Context, r interface{}) (interf
 		return &v1.ServerName{Name: r.GetName()}, nil
 	case *pbv1.ServerConfig: // decode `Update` request
 		return &v1.WebServerConfig{
-			ServerName: &v1.ServerName{Name: r.GetServerName()},
-			JsonData:   r.GetJsonData(),
+			ServerName:           &v1.ServerName{Name: r.GetServerName()},
+			JsonData:             r.GetJsonData(),
+			OriginalFingerprints: r.GetOriginalFingerprints(),
 		}, nil
 	default:
 		return nil, errors.WithCode(code.ErrDecodingFailed, "invalid request: %v", r)

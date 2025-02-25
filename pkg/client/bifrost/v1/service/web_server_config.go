@@ -1,6 +1,9 @@
 package service
 
 import (
+	"encoding/json"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration"
+	utilsV3 "github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/utils"
 	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"github.com/marmotedu/errors"
 
@@ -10,8 +13,8 @@ import (
 
 type WebServerConfigService interface {
 	GetServerNames() (servernames []string, err error)
-	Get(servername string) ([]byte, error)
-	Update(servername string, config []byte) error
+	Get(servername string) (config configuration.NginxConfig, originalFingerprinter utilsV3.ConfigFingerprinter, err error)
+	Update(servername string, config configuration.NginxConfig, originalFingerprints utilsV3.ConfigFingerprints) error
 }
 
 type webServerConfigService struct {
@@ -31,27 +34,40 @@ func (w *webServerConfigService) GetServerNames() (servernames []string, err err
 	return
 }
 
-func (w *webServerConfigService) Get(servername string) ([]byte, error) {
+func (w *webServerConfigService) Get(servername string) (configuration.NginxConfig, utilsV3.ConfigFingerprinter, error) {
 	resp, err := w.eps.EndpointGet()(GetContext(), &v1.ServerName{Name: servername})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	response := resp.(*v1.WebServerConfig)
 	if response.ServerName.Name != servername {
-		return nil, errors.Errorf(
+		return nil, nil, errors.Errorf(
 			"get incorrect web server config: get `%s`, want `%s`",
 			response.ServerName.Name,
 			servername,
 		)
 	}
-
-	return response.JsonData, nil
+	config, err := configuration.NewNginxConfigFromJsonBytes(response.JsonData)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "failed to unmarshal the web server(%s) config", response.ServerName.Name)
+	}
+	var ofp utilsV3.ConfigFingerprints
+	err = json.Unmarshal(response.OriginalFingerprints, &ofp)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "failed to unmarshal fingerprints of the web server(%s) config", response.ServerName.Name)
+	}
+	return config, utilsV3.SimpleConfigFingerprinter(ofp), nil
 }
 
-func (w *webServerConfigService) Update(servername string, config []byte) error {
+func (w *webServerConfigService) Update(servername string, config configuration.NginxConfig, ofp utilsV3.ConfigFingerprints) error {
+	ofpdata, err := json.Marshal(ofp)
+	if err != nil {
+		return errors.Wrap(err, "failed to unmarshal fingerprints of the web server config")
+	}
 	resp, err := w.eps.EndpointUpdate()(GetContext(), &v1.WebServerConfig{
-		ServerName: &v1.ServerName{Name: servername},
-		JsonData:   config,
+		ServerName:           &v1.ServerName{Name: servername},
+		JsonData:             config.Json(),
+		OriginalFingerprints: ofpdata,
 	})
 	if err != nil {
 		return err

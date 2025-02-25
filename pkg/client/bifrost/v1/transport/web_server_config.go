@@ -57,8 +57,10 @@ func newWebServerConfigGetClient(
 		if err != nil {
 			return nil, err
 		}
-
-		buf := bytes.NewBuffer(nil)
+		dataBuffer := bytes.NewBuffer(nil)
+		defer dataBuffer.Reset()
+		ofpBuffer := bytes.NewBuffer(nil)
+		defer ofpBuffer.Reset()
 		for {
 			d, err := stream.Recv()
 			if err != nil && !errors.Is(err, io.EOF) {
@@ -74,14 +76,16 @@ func newWebServerConfigGetClient(
 					req.(*pbv1.ServerName).GetName(),
 				)
 			}
-			buf.Write(d.GetJsonData())
+			dataBuffer.Write(d.GetJsonData())
+			ofpBuffer.Write(d.GetOriginalFingerprints())
 		}
 
 		return responseFunc(
 			ctx,
 			&pbv1.ServerConfig{
-				ServerName: req.(*pbv1.ServerName).GetName(),
-				JsonData:   buf.Bytes(),
+				ServerName:           req.(*pbv1.ServerName).GetName(),
+				JsonData:             dataBuffer.Bytes(),
+				OriginalFingerprints: ofpBuffer.Bytes(),
 			},
 		)
 	})
