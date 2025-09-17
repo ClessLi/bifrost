@@ -60,6 +60,9 @@ const (
 
 	// ErrV3ConversionToContextFailed - 500: Conversion to context failed.
 	ErrV3ConversionToContextFailed
+
+	// ErrV3DomainNameResolutionFailed - 500: Domain name resolution failed.
+	ErrV3DomainNameResolutionFailed
 )
 
 // bifrost: statistics errors.

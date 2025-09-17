@@ -3,10 +3,9 @@ package context
 import (
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
+
 	"github.com/marmotedu/errors"
 )
-
-const ()
 
 var (
 	ErrIndexOutOfRange             = errors.New("index out of range")
@@ -132,10 +131,12 @@ func (e *ErrorContext) AppendError(err error) Context {
 		if e == nullContext {
 			clone := e.clone()
 			clone.errors = append(clone.errors, err)
+
 			return clone
 		}
 		e.errors = append(e.errors, err)
 	}
+
 	return e
 }
 

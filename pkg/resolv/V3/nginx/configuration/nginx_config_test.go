@@ -2,13 +2,14 @@ package configuration
 
 import (
 	"bytes"
-	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
-	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context/local"
 	"os"
 	"path/filepath"
 	"reflect"
 	"sync"
 	"testing"
+
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context/local"
 )
 
 func TestNewNginxConfigFromJsonBytes(t *testing.T) {
@@ -28,6 +29,7 @@ func TestNewNginxConfigFromJsonBytes(t *testing.T) {
 			got, err := NewNginxConfigFromJsonBytes(tt.args.data)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewNginxConfigFromJsonBytes() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
@@ -54,6 +56,7 @@ func TestNewNginxConfigFromPath(t *testing.T) {
 			got, err := NewNginxConfigFromFS(tt.args.filepath)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewNginxConfigFromFS() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
@@ -100,6 +103,7 @@ func Test_newNginxConfig(t *testing.T) {
 			got, err := newNginxConfig(tt.args.m)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("newNginxConfig() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
@@ -152,19 +156,22 @@ func Test_nginxConfig_LoadAndDump(t *testing.T) {
 			firstTimeN, err := NewNginxConfigFromFS(tt.fields.configPath)
 			if err != nil {
 				t.Errorf("init failed for test: %v", err)
+
 				return
 			}
 			firstTimeD := firstTimeN.Dump()
 			for file, dumpbuff := range firstTimeD {
-				err := os.WriteFile(file, dumpbuff.Bytes(), 0600)
+				err := os.WriteFile(file, dumpbuff.Bytes(), 0o600)
 				if err != nil {
 					t.Errorf("dumping failed for test, at first time: %++v", err)
+
 					return
 				}
 			}
 			secondTimeN, err := NewNginxConfigFromFS(tt.fields.configPath)
 			if err != nil {
 				t.Errorf("loading failed for test, at second time: %++v", err)
+
 				return
 			}
 			secondTimeD := secondTimeN.Dump()

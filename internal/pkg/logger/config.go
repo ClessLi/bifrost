@@ -1,8 +1,9 @@
 package logger
 
 import (
-	v1log "github.com/ClessLi/component-base/pkg/log/v1"
 	"path/filepath"
+
+	v1log "github.com/ClessLi/component-base/pkg/log/v1"
 )
 
 type Config struct {

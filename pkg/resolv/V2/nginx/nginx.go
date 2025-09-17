@@ -3,12 +3,13 @@ package nginx
 import (
 	"sync"
 
-	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
-	"github.com/marmotedu/errors"
-
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loader"
+
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
+
+	"github.com/marmotedu/errors"
 )
 
 // ConfigManagerOptions defines options for nginx configuration and manager.

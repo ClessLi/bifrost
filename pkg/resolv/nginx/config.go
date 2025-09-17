@@ -35,7 +35,7 @@ func (c *Config) Save() (Caches, error) {
 			data = append(data, []byte(line)...)
 		}
 
-		werr := ioutil.WriteFile(path, data, 0755)
+		werr := ioutil.WriteFile(path, data, 0o755)
 
 		cacheErr := caches.SetCache(caches[path].config, data)
 		if cacheErr != nil {

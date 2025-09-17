@@ -1,10 +1,11 @@
 package local
 
 import (
-	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
-	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
 	"reflect"
 	"testing"
+
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
 )
 
 func TestBuildBasicContextConfig_BasicContext(t *testing.T) {
@@ -72,6 +73,7 @@ func TestOptsApplyTo(t *testing.T) {
 			got, err := OptsApplyTo(tt.args.opts)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("OptsApplyTo() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {

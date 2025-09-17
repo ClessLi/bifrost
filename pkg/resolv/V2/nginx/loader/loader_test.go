@@ -13,7 +13,6 @@ func TestLoader_LoadFromFilePath(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Logf(string(config.Bytes()))
-
 }
 
 func TestLoader_LoadFromJsonBytes(t *testing.T) {

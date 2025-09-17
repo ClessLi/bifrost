@@ -3,11 +3,11 @@ package configuration
 import (
 	"strings"
 
-	"github.com/marmotedu/errors"
-
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_type"
+
+	"github.com/marmotedu/errors"
 )
 
 // keyword string: <parser type>[':sep: <value string>', ':sep: :reg: <value regexp>']

@@ -3,10 +3,10 @@ package decoder
 import (
 	"context"
 
-	"github.com/marmotedu/errors"
-
 	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
+
+	"github.com/marmotedu/errors"
 )
 
 type webServerStatus struct{}

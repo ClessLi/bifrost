@@ -1,11 +1,11 @@
 package transport
 
 import (
-	"github.com/go-kit/kit/transport/grpc"
-	"golang.org/x/net/context"
-
 	"github.com/ClessLi/bifrost/api/protobuf-spec/authpb"
 	"github.com/ClessLi/bifrost/internal/pkg/auth/endpoint"
+
+	"github.com/go-kit/kit/transport/grpc"
+	"golang.org/x/net/context"
 )
 
 type grpcServer struct {

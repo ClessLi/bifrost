@@ -1,12 +1,13 @@
 package logging
 
 import (
-	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"sync"
 
-	kitlog "github.com/go-kit/kit/log"
-
 	svcv1 "github.com/ClessLi/bifrost/internal/bifrost/service/v1"
+
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
+
+	kitlog "github.com/go-kit/kit/log"
 )
 
 var (

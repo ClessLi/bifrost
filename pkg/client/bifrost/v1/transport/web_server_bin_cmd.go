@@ -2,6 +2,7 @@ package transport //nolint:dupl
 
 import (
 	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
+
 	grpctransport "github.com/go-kit/kit/transport/grpc"
 )
 

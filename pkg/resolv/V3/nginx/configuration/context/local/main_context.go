@@ -2,8 +2,10 @@ package local
 
 import (
 	"encoding/json"
+
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
+
 	"github.com/marmotedu/errors"
 )
 
@@ -55,6 +57,7 @@ func (m *Main) ChildrenPosSet() context.PosSet {
 			if f, idx := pos.Position(); f == m.MainConfig().self {
 				return context.SetPos(m, idx), nil
 			}
+
 			return pos, nil
 		},
 	)
@@ -64,6 +67,7 @@ func (m *Main) SetValue(v string) error {
 	if len(m.ListConfigs()) > 1 {
 		return errors.New("cannot set value for MainContext with non empty graph")
 	}
+
 	return m.MainConfig().SetValue(v)
 }
 
@@ -131,6 +135,7 @@ func (m *Main) Clone() context.Context {
 	if err != nil {
 		return context.ErrContext(err)
 	}
+
 	return clone
 }
 
@@ -151,6 +156,7 @@ func NewMain(abspath string) (MainContext, error) {
 	}
 	m := &Main{ConfigGraph: g}
 	m.MainConfig().father = m
+
 	return m, nil
 }
 
@@ -164,10 +170,12 @@ func (m *Main) IsEnabled() bool {
 
 func (m *Main) Enable() context.Context {
 	m.MainConfig().Enable()
+
 	return m
 }
 
 func (m *Main) Disable() context.Context {
 	m.MainConfig().Disable()
+
 	return m
 }

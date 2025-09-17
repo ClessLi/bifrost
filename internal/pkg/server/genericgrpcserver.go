@@ -4,12 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"net"
 	"strings"
 	"time"
 
+	"github.com/ClessLi/bifrost/internal/pkg/service_register"
+	healthzclientv1 "github.com/ClessLi/bifrost/pkg/client/grpc_health_v1"
+
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"github.com/ClessLi/skirnir/pkg/discover"
+
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -17,10 +21,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
-
-	"github.com/ClessLi/bifrost/internal/pkg/service_register"
-	healthzclient_v1 "github.com/ClessLi/bifrost/pkg/client/grpc_health_v1"
-	//"github.com/ClessLi/bifrost/internal/pkg/middleware".
 )
 
 // GenericGRPCServer contains state for a bifrost api server.
@@ -340,7 +340,7 @@ func (s *GenericGRPCServer) Close() {
 //
 //nolint:funlen,gocognit
 func (s *GenericGRPCServer) ping(ctx context.Context) error {
-	healthzClients := make(map[string]*healthzclient_v1.Client)
+	healthzClients := make(map[string]*healthzclientv1.Client)
 	if s.InsecureServingInfo != nil {
 		logV1.Debugf("initialization insecure server health check...")
 		var address string
@@ -350,12 +350,12 @@ func (s *GenericGRPCServer) ping(ctx context.Context) error {
 			address = s.InsecureServingInfo.Address()
 		}
 
-		client, err := healthzclient_v1.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		client, err := healthzclientv1.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			return err
 		}
 
-		defer func(client *healthzclient_v1.Client) {
+		defer func(client *healthzclientv1.Client) {
 			err := client.Close()
 			if err != nil {
 				logV1.Warn(err.Error())
@@ -380,12 +380,12 @@ func (s *GenericGRPCServer) ping(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		client, err := healthzclient_v1.NewClient(address, grpc.WithTransportCredentials(creds))
+		client, err := healthzclientv1.NewClient(address, grpc.WithTransportCredentials(creds))
 		if err != nil {
 			return err
 		}
 
-		defer func(client *healthzclient_v1.Client) {
+		defer func(client *healthzclientv1.Client) {
 			err := client.Close()
 			if err != nil {
 				logV1.Warn(err.Error())
@@ -412,7 +412,7 @@ func (s *GenericGRPCServer) ping(ctx context.Context) error {
 					continue
 				}
 				healthzOK[tag+" "+svcname] = true
-				logV1.Infof("The '%s' %s-service state is: %v", svcname, tag, healthzclient_v1.StatusString(status))
+				logV1.Infof("The '%s' %s-service state is: %v", svcname, tag, healthzclientv1.StatusString(status))
 			}
 		}
 

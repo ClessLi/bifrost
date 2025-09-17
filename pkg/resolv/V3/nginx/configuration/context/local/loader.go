@@ -2,15 +2,17 @@ package local
 
 import (
 	"encoding/json"
-	"github.com/ClessLi/bifrost/internal/pkg/code"
-	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
-	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
-	"github.com/dominikbraun/graph"
-	"github.com/marmotedu/errors"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/ClessLi/bifrost/internal/pkg/code"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
+
+	"github.com/dominikbraun/graph"
+	"github.com/marmotedu/errors"
 )
 
 type Loader interface {
@@ -29,6 +31,7 @@ func (j *jsonLoader) Load() (MainContext, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return j.unmarshaler.completedMain, nil
 }
 
@@ -61,6 +64,7 @@ func (f *fileLoader) Load() (MainContext, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return main, main.renderGraph()
 }
 
@@ -80,7 +84,6 @@ func (f *fileLoader) load(config *Config) error {
 	}
 
 	for {
-
 		isParsed := false
 		if parseBlankLine(data, &idx) {
 			continue
@@ -96,6 +99,7 @@ func (f *fileLoader) load(config *Config) error {
 			if err != nil {
 				return errors.Wrap(err, "quit context from stack failed")
 			}
+
 			continue
 		}
 
@@ -116,6 +120,7 @@ func (f *fileLoader) load(config *Config) error {
 					return errors.Wrap(err, "push context to stack failed")
 				}
 				isParsed = true
+
 				break
 			}
 		}
@@ -135,6 +140,7 @@ func (f *fileLoader) load(config *Config) error {
 					return errors.Wrap(err, "insert context failed")
 				}
 				isParsed = true
+
 				break
 			}
 		}
@@ -167,6 +173,7 @@ func (f *fileLoader) load(config *Config) error {
 		Filter(
 			func(pos context.Pos) bool {
 				_, ok := pos.Target().(*Include)
+
 				return ok
 			},
 		).
@@ -176,6 +183,7 @@ func (f *fileLoader) load(config *Config) error {
 				if err := f.loadInclude(pos.Target().(*Include)); err != nil {
 					return pos, errors.Wrap(err, "load include configs failed")
 				}
+
 				return pos, nil
 			},
 		).
@@ -223,6 +231,7 @@ func (f *fileLoader) loadInclude(include *Include) error {
 			if errors.Is(err, graph.ErrVertexAlreadyExists) {
 				continue
 			}
+
 			return err
 		}
 		// loading configs from file system
@@ -250,6 +259,7 @@ func (s *contextStack) current() (context.Context, error) {
 	if len(s.contexts) == 0 {
 		return context.NullContext(), errors.New("empty context stack")
 	}
+
 	return s.contexts[len(s.contexts)-1], nil
 }
 
@@ -259,6 +269,7 @@ func (s *contextStack) pop() (context.Context, error) {
 		return ctx, err
 	}
 	s.contexts = s.contexts[:len(s.contexts)-1]
+
 	return ctx, nil
 }
 
@@ -271,6 +282,7 @@ func (s *contextStack) push(ctx context.Context) error {
 		return err
 	}
 	s.contexts = append(s.contexts, ctx)
+
 	return nil
 }
 
@@ -303,8 +315,10 @@ func parseErrLine(data []byte, idx *int, config *Config) error {
 				line++
 			}
 		}
+
 		return errors.WithCode(code.ErrParseFailed, "parse failed at line %d of %s", line, configHash(config))
 	}
+
 	return nil
 }
 

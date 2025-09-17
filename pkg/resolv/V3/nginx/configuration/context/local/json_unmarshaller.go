@@ -2,10 +2,12 @@ package local
 
 import (
 	"encoding/json"
+	"strings"
+
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
+
 	"github.com/marmotedu/errors"
-	"strings"
 )
 
 type jsonUnmarshalContext struct {
@@ -39,7 +41,7 @@ func (m *mainUnmarshaller) UnmarshalJSON(bytes []byte) error {
 
 	// add configs into graph, and unmarshal configs
 	for configpath, configRaw := range unmarshalMain.Configs {
-		//var configHashString string
+		// var configHashString string
 		if configpath != unmarshalMain.MainConfig {
 			config, ok := NewContext(context_type.TypeConfig, configpath).(*Config)
 			if !ok {
@@ -117,6 +119,7 @@ func (u *jsonUnmarshaller) UnmarshalJSON(bytes []byte) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -139,5 +142,6 @@ func (u *jsonUnmarshaller) unmarshalConfig(unmashalctx *jsonUnmarshalContext) er
 	}
 
 	u.completedContext = cache
+
 	return nil
 }

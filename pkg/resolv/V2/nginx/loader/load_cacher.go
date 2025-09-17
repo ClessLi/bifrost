@@ -4,10 +4,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/marmotedu/errors"
-
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
+
+	"github.com/marmotedu/errors"
 )
 
 type LoadCacher interface {

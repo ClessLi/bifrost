@@ -1,12 +1,14 @@
 package nginx
 
 import (
+	"os/exec"
+	"time"
+
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration"
+
 	"github.com/marmotedu/errors"
-	"os/exec"
-	"time"
 )
 
 type ConfigsManager interface {

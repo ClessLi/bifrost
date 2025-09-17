@@ -1,8 +1,9 @@
 package context
 
 import (
-	"github.com/marmotedu/errors"
 	"path/filepath"
+
+	"github.com/marmotedu/errors"
 )
 
 type ConfigPath interface {
@@ -36,6 +37,7 @@ func NewRelConfigPath(dir, file string) (ConfigPath, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		return &RelConfigPath{
 			configHomeDir:      cleanDir,
 			configRelativePath: rel,
@@ -62,6 +64,7 @@ func (a AbsConfigPath) BaseDir() string {
 
 func (a AbsConfigPath) RelativePath() string {
 	_, filename := filepath.Split(a.fullPath)
+
 	return filename
 }
 
@@ -69,6 +72,7 @@ func NewAbsConfigPath(absPath string) (ConfigPath, error) {
 	if !filepath.IsAbs(absPath) {
 		return nil, errors.Errorf("%s is not a absolute path", absPath)
 	}
+
 	return &AbsConfigPath{filepath.Clean(absPath)}, nil
 }
 

@@ -10,11 +10,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/apsdehal/go-logger"
-	"gopkg.in/yaml.v3"
-
 	"github.com/ClessLi/bifrost/internal/pkg/auth/config"
 	"github.com/ClessLi/bifrost/internal/pkg/auth/service"
+
+	"github.com/apsdehal/go-logger"
+	"gopkg.in/yaml.v3"
 )
 
 var (
@@ -170,7 +170,7 @@ func init() {
 	}
 
 	logPath := filepath.Join(logDir, "bifrost-auth.log")
-	Logf, openErr := os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	Logf, openErr := os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o644)
 	if openErr != nil {
 		panic(openErr)
 	}
@@ -183,7 +183,7 @@ func init() {
 
 	// 初始化应用运行日志输出
 	stdoutPath := filepath.Join(logDir, "bifrost-auth.out")
-	Stdoutf, openErr = os.OpenFile(stdoutPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	Stdoutf, openErr = os.OpenFile(stdoutPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o644)
 	if openErr != nil {
 		panic(openErr)
 	}

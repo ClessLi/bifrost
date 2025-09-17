@@ -7,9 +7,9 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/apsdehal/go-logger"
-
 	"github.com/ClessLi/bifrost/internal/pkg/auth/service"
+
+	"github.com/apsdehal/go-logger"
 )
 
 // readFile, 读取文件函数

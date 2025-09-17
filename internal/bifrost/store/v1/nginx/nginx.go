@@ -1,18 +1,19 @@
 package nginx
 
 import (
-	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration"
-	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"sync"
 	"time"
-
-	"github.com/marmotedu/errors"
 
 	storev1 "github.com/ClessLi/bifrost/internal/bifrost/store/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/file_watcher"
 	"github.com/ClessLi/bifrost/internal/pkg/monitor"
 	genericoptions "github.com/ClessLi/bifrost/internal/pkg/options"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration"
+
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
+
+	"github.com/marmotedu/errors"
 )
 
 const (

@@ -2,6 +2,7 @@ package nginx
 
 import (
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration"
+
 	"github.com/marmotedu/errors"
 )
 

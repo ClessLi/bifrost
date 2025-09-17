@@ -1,12 +1,14 @@
 package local
 
 import (
+	"reflect"
+	"testing"
+
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
+
 	"github.com/marmotedu/errors"
-	"reflect"
-	"testing"
 )
 
 func TestDirective_Child(t *testing.T) {
@@ -201,6 +203,7 @@ func TestDirective_ConfigLines(t *testing.T) {
 			got, err := d.ConfigLines(tt.args.isDumping)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ConfigLines() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
@@ -500,6 +503,7 @@ func TestDirective_MarshalJSON(t *testing.T) {
 			got, err := d.MarshalJSON()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("MarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {

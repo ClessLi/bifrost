@@ -2,13 +2,15 @@ package local
 
 import (
 	"encoding/json"
-	"github.com/ClessLi/bifrost/internal/pkg/code"
-	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
-	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
-	"github.com/marmotedu/errors"
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/ClessLi/bifrost/internal/pkg/code"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
+
+	"github.com/marmotedu/errors"
 )
 
 type includeSnapshot struct {
@@ -51,6 +53,7 @@ func newIncludedConfigsPosSet(main MainContext, father *Config, included ...*Con
 			included: c,
 		})
 	}
+
 	return set
 }
 
@@ -99,6 +102,7 @@ func (i *Include) parsePatternPath() (main MainContext, fatherConfig *Config, is
 	if filepath.IsAbs(i.Value()) {
 		return mainCtx, fatherConfig, isEnabled, i.Value(), nil
 	}
+
 	return mainCtx, fatherConfig, isEnabled, filepath.Join(mainCtx.MainConfig().BaseDir(), i.Value()), nil
 }
 
@@ -106,6 +110,7 @@ func (i *Include) PatternPath() string {
 	i.loadLocker.RLock()
 	defer i.loadLocker.RUnlock()
 	_, _, _, pattern, _ := i.parsePatternPath()
+
 	return pattern
 }
 
@@ -117,7 +122,7 @@ func (i *Include) parseSnapshot() (*includeSnapshot, error) {
 	if err != nil {
 		return nil, err
 	}
-	var isInTopology = false
+	isInTopology := false
 
 	// the `include` snapshot is located in the topology, if its father config has an in-edge in the config graph
 	edges, err := mainCtx.graph().(*configGraph).graph.Edges()
@@ -130,6 +135,7 @@ func (i *Include) parseSnapshot() (*includeSnapshot, error) {
 		for _, edge := range edges {
 			if fatherConfig.FullPath() == edge.Target {
 				isInTopology = true
+
 				break
 			}
 		}
@@ -152,6 +158,7 @@ func (i *Include) parseSnapshot() (*includeSnapshot, error) {
 		includePatternPath: pattern,
 		includedConfigs:    includes,
 	}
+
 	return i.snapshot, nil
 }
 
@@ -162,6 +169,7 @@ func (i *Include) Configs() []*Config {
 	if err != nil {
 		return nil
 	}
+
 	return snapshot.includedConfigs
 }
 
@@ -183,6 +191,7 @@ func (i *Include) fatherConfig() (isEnabled bool, fatherConfig *Config, err erro
 		}
 		fatherConfig, ok = fatherCtx.(*Config)
 	}
+
 	return isEnabled, fatherConfig, nil
 }
 
@@ -190,6 +199,7 @@ func (i *Include) FatherConfig() (*Config, error) {
 	i.loadLocker.RLock()
 	defer i.loadLocker.RUnlock()
 	_, fc, err := i.fatherConfig()
+
 	return fc, err
 }
 
@@ -208,6 +218,7 @@ func (i *Include) Modify(ctx context.Context, idx int) context.Context {
 func (i *Include) Father() context.Context {
 	i.loadLocker.RLock()
 	defer i.loadLocker.RUnlock()
+
 	return i.fatherContext
 }
 
@@ -221,12 +232,14 @@ func (i *Include) childrenPosSet() context.PosSet {
 	if err != nil || !snapshot.isEnabled || !snapshot.isInTopology { // If the snapshot is not resolved, disabled or not in the topology, there is no need to load includes
 		return context.NewPosSet()
 	}
+
 	return newIncludedConfigsPosSet(snapshot.mainContext, snapshot.fatherConfig, snapshot.includedConfigs...)
 }
 
 func (i *Include) ChildrenPosSet() context.PosSet {
 	i.loadLocker.RLock()
 	defer i.loadLocker.RUnlock()
+
 	return i.childrenPosSet()
 }
 
@@ -235,6 +248,7 @@ func (i *Include) Clone() context.Context {
 	if !i.enabled {
 		return clone.Disable()
 	}
+
 	return clone
 }
 
@@ -244,11 +258,17 @@ func (i *Include) SetValue(v string) error {
 
 func (i *Include) load() error {
 	i.snapshot = nil // fresh snapshot
+
 	return i.childrenPosSet().
-		Filter(func(pos context.Pos) bool { _, ok := pos.(*includedConfigPos); return ok }).
+		Filter(func(pos context.Pos) bool {
+			_, ok := pos.(*includedConfigPos)
+
+			return ok
+		}).
 		Map( // add edges from father config to included configs
 			func(pos context.Pos) (context.Pos, error) {
 				includedPos := pos.(*includedConfigPos)
+
 				return includedPos, includedPos.mainCtx.AddEdge(includedPos.father, includedPos.included)
 			},
 		).
@@ -264,12 +284,17 @@ func (i *Include) load() error {
 								return false
 							}
 							_, subFatherConfig, _ := targetInclude.fatherConfig()
+
 							return subFatherConfig != pos.Target()
 						},
 					).
 					// skip self
 					SetSkipQueryFilter(func(targetCtx context.Context) bool { return targetCtx == i })).
-					Filter(func(pos context.Pos) bool { _, ok := pos.Target().(*Include); return ok }).
+					Filter(func(pos context.Pos) bool {
+						_, ok := pos.Target().(*Include)
+
+						return ok
+					}).
 					Map(func(pos context.Pos) (context.Pos, error) { return pos, pos.Target().(*Include).load() }).
 					Error()
 			},
@@ -280,11 +305,17 @@ func (i *Include) unload() error {
 	defer func() { // release snapshot
 		i.snapshot = nil
 	}()
+
 	return i.childrenPosSet().
-		Filter(func(pos context.Pos) bool { _, ok := pos.(*includedConfigPos); return ok }).
+		Filter(func(pos context.Pos) bool {
+			_, ok := pos.(*includedConfigPos)
+
+			return ok
+		}).
 		Map( // remove edges from father config to included configs
 			func(pos context.Pos) (context.Pos, error) {
 				includedPos := pos.(*includedConfigPos)
+
 				return includedPos, includedPos.mainCtx.RemoveEdge(includedPos.father, includedPos.included, true)
 			},
 		).
@@ -300,12 +331,17 @@ func (i *Include) unload() error {
 								return false
 							}
 							_, subFatherConfig, _ := targetInclude.fatherConfig()
+
 							return subFatherConfig != pos.Target()
 						},
 					).
 					// skip self
 					SetSkipQueryFilter(func(targetCtx context.Context) bool { return targetCtx == i })).
-					Filter(func(pos context.Pos) bool { _, ok := pos.Target().(*Include); return ok }).
+					Filter(func(pos context.Pos) bool {
+						_, ok := pos.Target().(*Include)
+
+						return ok
+					}).
 					Map(func(pos context.Pos) (context.Pos, error) { return pos, pos.Target().(*Include).unload() }).
 					Error()
 			},
@@ -314,6 +350,7 @@ func (i *Include) unload() error {
 
 func (i *Include) reload() error {
 	_ = i.unload()
+
 	return i.load()
 }
 
@@ -327,6 +364,7 @@ func (i *Include) SetFather(ctx context.Context) error {
 	if i.enabled { // reload when include is enabled
 		return i.load()
 	}
+
 	return nil
 }
 
@@ -365,6 +403,7 @@ func (i *Include) ConfigLines(isDumping bool) ([]string, error) {
 	}
 	if isDumping {
 		lines = append(lines, "include "+i.ContextValue+";")
+
 		return lines, nil
 	}
 
@@ -378,12 +417,14 @@ func (i *Include) ConfigLines(isDumping bool) ([]string, error) {
 			lines = append(lines, configlines...)
 		}
 	}
+
 	return lines, nil
 }
 
 func (i *Include) IsEnabled() bool {
 	i.loadLocker.RLock()
 	defer i.loadLocker.RUnlock()
+
 	return i.enabled
 }
 
@@ -398,8 +439,10 @@ func (i *Include) Enable() context.Context {
 	err := i.load()
 	if err != nil {
 		i.enabled = false
+
 		return context.ErrContext(err, i.unload())
 	}
+
 	return i
 }
 
@@ -415,6 +458,7 @@ func (i *Include) Disable() context.Context {
 		return context.ErrContext(err, i.load())
 	}
 	i.enabled = false
+
 	return i
 }
 
@@ -427,5 +471,6 @@ func registerIncludeBuilder() error {
 			fatherContext: context.NullContext(),
 		}
 	}
+
 	return nil
 }

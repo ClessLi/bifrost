@@ -32,6 +32,7 @@ func tgz(dest string, list []string) (err error) {
 			return compErr
 		}
 	}
+
 	return
 }
 
@@ -55,6 +56,7 @@ func compress(fd *os.File, prefix string, tgzw *tar.Writer) error {
 	if ioErr != nil {
 		return ioErr
 	}
+
 	return nil
 }
 

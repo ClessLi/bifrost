@@ -1,8 +1,9 @@
 package logger
 
 import (
-	"github.com/marmotedu/errors"
 	"os"
+
+	"github.com/marmotedu/errors"
 )
 
 type Logger struct {

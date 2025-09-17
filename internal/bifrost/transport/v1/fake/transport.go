@@ -7,6 +7,10 @@ import (
 
 type transport struct{}
 
+func (t transport) WebServerBinCMD() pbv1.WebServerBinCMDServer {
+	return webServerBinCMD{}
+}
+
 func (t transport) WebServerStatistics() pbv1.WebServerStatisticsServer {
 	return webServerStatistics{}
 }

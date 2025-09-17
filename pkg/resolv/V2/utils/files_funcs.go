@@ -3,7 +3,6 @@ package utils
 import (
 	"bytes"
 	"fmt"
-	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -11,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 
 	"github.com/marmotedu/errors"
 )

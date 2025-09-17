@@ -3,20 +3,20 @@ package bifrost
 import (
 	"context"
 	"fmt"
-	nginx_ctx "github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
-	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context/local"
-	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
-	utilsV3 "github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/utils"
-	"github.com/marmotedu/errors"
 	"sync"
 	"testing"
 	"time"
 
-	"google.golang.org/grpc"
-
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	bifrost_cliv1 "github.com/ClessLi/bifrost/pkg/client/bifrost/v1"
 	healthzclient_v1 "github.com/ClessLi/bifrost/pkg/client/grpc_health_v1"
+	nginx_ctx "github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context/local"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
+	utilsV3 "github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/utils"
+
+	"github.com/marmotedu/errors"
+	"google.golang.org/grpc"
 )
 
 func TestRun(t *testing.T) {
@@ -43,6 +43,7 @@ func TestBifrostClient(t *testing.T) {
 		}
 		if state == healthzclient_v1.SERVING {
 			t.Log("service is serving")
+
 			break
 		}
 		time.Sleep(time.Second * 3)

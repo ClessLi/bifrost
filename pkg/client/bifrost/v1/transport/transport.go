@@ -3,12 +3,13 @@ package transport
 import (
 	"sync"
 
-	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
-	"github.com/go-kit/kit/endpoint"
-	"google.golang.org/grpc"
-
 	"github.com/ClessLi/bifrost/pkg/client/bifrost/v1/transport/decoder"
 	"github.com/ClessLi/bifrost/pkg/client/bifrost/v1/transport/encoder"
+
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
+
+	"github.com/go-kit/kit/endpoint"
+	"google.golang.org/grpc"
 )
 
 type Client interface {

@@ -1,10 +1,10 @@
 package options
 
 import (
+	"github.com/ClessLi/bifrost/internal/pkg/server"
+
 	"github.com/marmotedu/errors"
 	"github.com/spf13/pflag"
-
-	"github.com/ClessLi/bifrost/internal/pkg/server"
 )
 
 type GRPCServerOptions struct {

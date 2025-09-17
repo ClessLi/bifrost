@@ -1,9 +1,9 @@
 package graph
 
 import (
-	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
-
 	"github.com/ClessLi/bifrost/pkg/queue"
+
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 )
 
 type Graph struct {

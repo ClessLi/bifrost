@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
+
 	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/net/context"
-
-	"github.com/ClessLi/bifrost/pkg/resolv/nginx"
 )
 
 var (

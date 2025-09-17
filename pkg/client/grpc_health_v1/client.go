@@ -3,6 +3,7 @@ package grpc_health_v1
 import (
 	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"github.com/ClessLi/skirnir/pkg/discover"
+
 	kitzaplog "github.com/go-kit/kit/log/zap"
 	"github.com/marmotedu/errors"
 	"google.golang.org/grpc"

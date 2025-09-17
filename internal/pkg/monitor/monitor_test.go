@@ -77,7 +77,7 @@ func Test_monitor_Start(t *testing.T) {
 	tests := []struct {
 		name   string
 		fields fields
-		//multi   int
+		// multi   int
 		wantErr bool
 	}{
 		{
@@ -96,7 +96,7 @@ func Test_monitor_Start(t *testing.T) {
 				watchLocker:                 new(sync.Mutex),
 				cannotSync:                  false,
 			},
-			//multi:   10,
+			// multi:   10,
 			wantErr: true,
 		},
 	}
@@ -118,7 +118,7 @@ func Test_monitor_Start(t *testing.T) {
 			}
 			errs := make([]error, 0)
 			wg := new(sync.WaitGroup)
-			//for i := 0; i < tt.multi; i++ {
+			// for i := 0; i < tt.multi; i++ {
 			wg.Add(2)
 			go func() {
 				defer wg.Done()
@@ -138,7 +138,7 @@ func Test_monitor_Start(t *testing.T) {
 			//}
 			wg.Wait()
 			if err := errors.NewAggregate(errs); (err != nil) != tt.wantErr {
-				//t.Errorf("%d times Start() error = %v, wantErr %v", tt.multi, err, tt.wantErr)
+				// t.Errorf("%d times Start() error = %v, wantErr %v", tt.multi, err, tt.wantErr)
 				t.Errorf("Start() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})

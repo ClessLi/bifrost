@@ -2,11 +2,13 @@ package local
 
 import (
 	"encoding/json"
+	"strings"
+
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
+
 	"github.com/marmotedu/errors"
-	"strings"
 )
 
 type Directive struct {
@@ -73,11 +75,13 @@ func (d *Directive) SetValue(v string) error {
 	} else {
 		d.Params = ""
 	}
+
 	return nil
 }
 
 func (d *Directive) SetFather(ctx context.Context) error {
 	d.fatherContext = ctx
+
 	return nil
 }
 
@@ -94,6 +98,7 @@ func (d *Directive) Value() string {
 	if params := strings.TrimSpace(d.Params); len(params) > 0 {
 		v += " " + params
 	}
+
 	return v
 }
 
@@ -111,10 +116,12 @@ func (d *Directive) ConfigLines(isDumping bool) ([]string, error) {
 		// !!disabled `directive` context will have their line breaks replaced with space characters when dumped!!
 		if !isDumping {
 			value = "# " + strings.ReplaceAll(value, "\n", "\n# ")
+
 			return strings.Split(value, "\n"), nil
 		}
 		value = "# " + strings.ReplaceAll(value, "\n", " ")
 	}
+
 	return []string{value}, nil
 }
 
@@ -124,11 +131,13 @@ func (d *Directive) IsEnabled() bool {
 
 func (d *Directive) Enable() context.Context {
 	d.enabled = true
+
 	return d
 }
 
 func (d *Directive) Disable() context.Context {
 	d.enabled = false
+
 	return d
 }
 
@@ -146,8 +155,10 @@ func registerDirectiveBuilder() error {
 		if len(kv) == 2 {
 			d.Params = strings.TrimSpace(kv[1])
 		}
+
 		return d
 	}
+
 	return nil
 }
 
@@ -157,6 +168,7 @@ func registerDirectiveParseFunc() error {
 			subMatch := RegDirectiveWithoutValue.FindSubmatch(data[*idx:])
 			*idx += matchIndexes[len(matchIndexes)-1]
 			key := string(subMatch[1])
+
 			return NewContext(context_type.TypeDirective, key)
 		}
 
@@ -168,9 +180,12 @@ func registerDirectiveParseFunc() error {
 			if name == string(context_type.TypeInclude) {
 				return NewContext(context_type.TypeInclude, value)
 			}
+
 			return NewContext(context_type.TypeDirective, name+" "+value)
 		}
+
 		return context.NullContext()
 	}
+
 	return nil
 }

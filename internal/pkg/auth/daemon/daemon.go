@@ -75,7 +75,7 @@ func Start() (err error) {
 
 		// 记录pid
 		pid := os.Getpid()
-		pidErr := ioutil.WriteFile(pidFile, []byte(fmt.Sprintf("%d", pid)), 0644)
+		pidErr := ioutil.WriteFile(pidFile, []byte(fmt.Sprintf("%d", pid)), 0o644)
 		if pidErr != nil {
 			Log(ERROR, "failed to start bifrost, cased by '%s'", pidErr)
 			return pidErr

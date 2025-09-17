@@ -30,10 +30,13 @@ func (f *configFingerprinter) Diff(fingerprints ConfigFingerprints) bool {
 				localFingerprint == fingerprint {
 				continue
 			}
+
 			return true
 		}
+
 		return false
 	}
+
 	return true
 }
 
@@ -61,6 +64,7 @@ func (f *configFingerprinter) Fingerprints() ConfigFingerprints {
 	for s := range f.fingerprints {
 		fp[s] = f.fingerprints[s]
 	}
+
 	return fp
 }
 
@@ -83,6 +87,7 @@ func NewConfigFingerprinterWithTimestamp(buffMap map[string]*bytes.Buffer, times
 	for s, buff := range buffMap {
 		cf.setFingerprint(s, buff.Bytes())
 	}
+
 	return cf
 }
 

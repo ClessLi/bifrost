@@ -28,5 +28,4 @@ const (
 var buildFuncMap map[context_type.ContextType]func(value string) Context = make(map[context_type.ContextType]func(value string) Context)
 
 func RegisterContextBuilder() {
-
 }

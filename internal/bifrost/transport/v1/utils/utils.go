@@ -38,6 +38,7 @@ func StreamSendMsg(stream grpc.ServerStream, data []byte, chunksize int, assembl
 		}
 		i += chunksize
 	}
+
 	return nil
 }
 
@@ -50,10 +51,12 @@ func resolveResExhaustedErr(err error) (int, int, error) {
 			if err != nil {
 				return 0, 0, errors.Wrap(err, "failed to resolve valid message size")
 			}
+
 			return s1, s2, nil
 		} else {
 			return 0, 0, errors.Wrap(err, "failed to resolve gRPC `ResourceExhausted` error")
 		}
 	}
+
 	return 0, 0, err
 }

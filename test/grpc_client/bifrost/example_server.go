@@ -55,6 +55,7 @@ func exampleServerRun() error {
 	opts.WebServerLogWatcherOptions.MaxConnections = 1024
 
 	opts.Log.InfoLevel = "debug"
+
 	return bifrost.Run(&config.Config{Options: opts})
 }
 

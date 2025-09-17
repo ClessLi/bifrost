@@ -3,12 +3,12 @@ package auth
 import (
 	"errors"
 
+	"github.com/ClessLi/bifrost/api/protobuf-spec/authpb"
+
 	"github.com/go-kit/kit/endpoint"
 	grpctransport "github.com/go-kit/kit/transport/grpc"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-
-	"github.com/ClessLi/bifrost/api/protobuf-spec/authpb"
 )
 
 var ErrResponseNull = errors.New("response is null")

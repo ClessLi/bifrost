@@ -2,10 +2,11 @@ package V2
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_type"
-	"testing"
 )
 
 func TestExampleConfig(t *testing.T) {
@@ -139,5 +140,4 @@ func TestExampleConfig(t *testing.T) {
 
 	fmt.Println("\n" + string(c.View()))
 	t.Log("complete!")
-
 }

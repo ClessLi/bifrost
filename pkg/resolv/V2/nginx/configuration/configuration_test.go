@@ -63,7 +63,6 @@ func TestConfiguration_Json(t *testing.T) {
 }
 
 func TestConfiguration_InsertByQueryer(t *testing.T) {
-
 	config, err := exampleNewConfiguration()
 	if err != nil {
 		t.Fatal(err)
@@ -78,13 +77,12 @@ func TestConfiguration_InsertByQueryer(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	//jsonData := config.Json()
-	//fmt.Println(string(jsonData))
+	// jsonData := config.Json()
+	// fmt.Println(string(jsonData))
 	fmt.Println(string(config.View()))
 }
 
 func TestConfiguration_InsertLoopConfig(t *testing.T) {
-
 	config, err := exampleNewConfiguration()
 	if err != nil {
 		t.Fatal(err)
@@ -115,7 +113,7 @@ func TestConfiguration_InsertLoopConfig(t *testing.T) {
 		fatherCtx: loopInclude,
 		selfIndex: 0,
 	}
-	//err = loopInclude.Insert(locationConfig.Self(), 0)
+	// err = loopInclude.Insert(locationConfig.Self(), 0)
 	err = config.InsertByQueryer(locationConfig.Self(), q)
 	if err != nil {
 		t.Fatal(err)

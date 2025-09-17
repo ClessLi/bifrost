@@ -2,16 +2,17 @@ package nginx
 
 import (
 	"context"
-	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"path/filepath"
 	"regexp"
 	"time"
 
-	"github.com/marmotedu/errors"
-
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/internal/pkg/file_watcher"
+
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
+
+	"github.com/marmotedu/errors"
 )
 
 type webServerLogWatcherStore struct {

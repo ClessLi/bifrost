@@ -3,9 +3,9 @@ package options
 import (
 	"fmt"
 
-	"github.com/spf13/pflag"
-
 	"github.com/ClessLi/bifrost/internal/pkg/server"
+
+	"github.com/spf13/pflag"
 )
 
 // InsecureServingOptions are for creating an unauthenticated, unauthorized, insecure port.
@@ -64,7 +64,7 @@ func (s *InsecureServingOptions) Validate() []error {
 func (s *InsecureServingOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&s.BindAddress, "insecure.bind-address", s.BindAddress, ""+
 		"The IP address on which to serve the --insecure.bind-port "+
-		"(set to 0.0.0.0 for all IPv4 interfaces and :: for all IPv6 interfaces).")
+		"(set to 0.0.0.0 for all IPv4s interfaces and :: for all IPv6 interfaces).")
 	fs.IntVar(&s.BindPort, "insecure.bind-port", s.BindPort, ""+
 		"The port on which to serve unsecured, unauthenticated access. It is assumed "+
 		"that firewall rules are set up such that this port is not reachable from outside of "+

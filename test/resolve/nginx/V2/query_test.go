@@ -1,15 +1,15 @@
 package V2_test
 
 import (
+	"strings"
+	"testing"
+
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_type"
-	"strings"
-	"testing"
 )
 
 func TestQueryNonCascaded(t *testing.T) {
-
 	configPath := "../../../nginx/conf/nginx.conf"
 	config, err := configuration.NewConfigurationFromPath(configPath)
 	if err != nil {

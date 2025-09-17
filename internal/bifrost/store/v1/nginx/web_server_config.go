@@ -3,14 +3,14 @@ package nginx
 import (
 	"context"
 	"encoding/json"
-	utilsV3 "github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/utils"
-
-	"github.com/marmotedu/errors"
 
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	storev1 "github.com/ClessLi/bifrost/internal/bifrost/store/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration"
+	utilsV3 "github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/utils"
+
+	"github.com/marmotedu/errors"
 )
 
 type webServerConfigStore struct {
@@ -38,6 +38,7 @@ func (w *webServerConfigStore) Get(ctx context.Context, servername *v1.ServerNam
 		if err != nil {
 			return nil, errors.WithCode(code.ErrInvalidConfig, "failed to marshal fingerprints of the web server config, cased by: %v", err)
 		}
+
 		return &v1.WebServerConfig{
 			ServerName:           servername,
 			JsonData:             jdata,

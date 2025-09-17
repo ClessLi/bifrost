@@ -3,10 +3,10 @@ package options
 import (
 	"time"
 
+	"github.com/ClessLi/bifrost/internal/pkg/file_watcher"
+
 	"github.com/marmotedu/errors"
 	"github.com/spf13/pflag"
-
-	"github.com/ClessLi/bifrost/internal/pkg/file_watcher"
 )
 
 type WebServerLogWatcherOptions struct {

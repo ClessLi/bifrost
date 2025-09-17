@@ -9,14 +9,14 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/marmotedu/errors"
-
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loop_preventer"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_indention"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_position"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_type"
+
+	"github.com/marmotedu/errors"
 )
 
 type Loader interface {

@@ -2,11 +2,12 @@ package local
 
 import (
 	"encoding/json"
-	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
-	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
 )
 
 func Test_jsonUnmarshaler_UnmarshalJSON(t *testing.T) {

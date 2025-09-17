@@ -1,12 +1,12 @@
 package handler
 
 import (
-	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/kit/transport/grpc"
-
 	epv1 "github.com/ClessLi/bifrost/internal/bifrost/endpoint/v1"
 	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/decoder"
 	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/encoder"
+
+	"github.com/go-kit/kit/endpoint"
+	"github.com/go-kit/kit/transport/grpc"
 )
 
 type HandlersFactory interface {

@@ -8,7 +8,6 @@ import (
 
 func TestList(t *testing.T) {
 	path, caches, err := nginx.Load("config_test/nginx.conf")
-
 	if err != nil {
 		t.Log(err)
 	}

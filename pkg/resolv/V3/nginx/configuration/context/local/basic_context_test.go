@@ -3,12 +3,14 @@ package local
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
+	"testing"
+
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
+
 	"github.com/marmotedu/errors"
-	"reflect"
-	"testing"
 )
 
 func TestBasicContext_Child(t *testing.T) {
@@ -157,7 +159,7 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	testMain.Insert(
+	testMain.Insert( //nolint:dupl
 		NewContext(context_type.TypeHttp, "").
 			Insert(
 				NewContext(context_type.TypeServer, "").
@@ -660,6 +662,7 @@ func TestBasicContext_ConfigLines(t *testing.T) {
 			got, err := b.ConfigLines(tt.args.isDumping)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ConfigLines() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
@@ -1522,7 +1525,7 @@ func TestBasicContext_Modify(t *testing.T) {
 				ctx: NewContext(context_type.TypeLocation, "~ /test4"),
 				idx: hasErrChildCtx.Len() - 1,
 			},
-			want: context.ErrContext(errors.WithCode(code.ErrV3SetFatherContextFailed, context.NullContext().(*context.ErrorContext).
+			want: context.ErrContext(errors.WithCode(code.ErrV3SetFatherContextFailed, "%s", context.NullContext().(*context.ErrorContext).
 				AppendError(context.ErrSetFatherToErrorContext).Error().Error())).(*context.ErrorContext).
 				AppendError(context.ErrInsertIntoErrorContext),
 			wantModified: false,
@@ -2020,6 +2023,27 @@ func Test_newBasicContext(t *testing.T) {
 				got.ContextValue != tt.want.ContextValue ||
 				!reflect.DeepEqual(got.Children, tt.want.Children) {
 				t.Errorf("newBasicContext() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_getFatherContextByType(t *testing.T) {
+	type args struct {
+		ctx         context.Context
+		contextType context_type.ContextType
+	}
+	tests := []struct {
+		name string
+		args args
+		want context.Context
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := getFatherContextByType(tt.args.ctx, tt.args.contextType); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("getFatherContextByType() = %v, want %v", got, tt.want)
 			}
 		})
 	}

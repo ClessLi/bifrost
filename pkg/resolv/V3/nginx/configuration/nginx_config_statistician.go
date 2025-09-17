@@ -1,16 +1,16 @@
 package configuration
 
 import (
-	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
-	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context/local"
-	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
 	"strconv"
-
-	"github.com/marmotedu/errors"
 
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	utilsV2 "github.com/ClessLi/bifrost/pkg/resolv/V2/utils"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context/local"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
+
+	"github.com/marmotedu/errors"
 )
 
 type HttpInfo struct {
@@ -44,7 +44,6 @@ func (s *statistician) HttpInfo() HttpInfo {
 }
 
 func (s *statistician) StreamInfo() StreamInfo {
-
 	return StreamInfo{
 		PortCount: StreamServers(s.configuration.Main()),
 	}
@@ -103,7 +102,6 @@ func HttpPorts(ctx context.Context) []int {
 			QueryAll(context.NewKeyWords(context_type.TypeServer).SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc)).
 			Targets(),
 	)
-
 }
 
 func HttpServers(ctx context.Context) (int, map[string][]int) {
@@ -124,6 +122,7 @@ func HttpServers(ctx context.Context) (int, map[string][]int) {
 					if !errors.IsCode(servernameDirective.Error(), code.ErrV3ContextNotFound) {
 						return pos, servernameDirective.Error()
 					}
+
 					return pos, nil
 				}
 				servername := servernameDirective.(*local.Directive).Params
@@ -131,6 +130,7 @@ func HttpServers(ctx context.Context) (int, map[string][]int) {
 				if serverport > 0 {
 					serverPortCount[servername] = append(serverPortCount[servername], serverport)
 				}
+
 				return pos, nil
 			},
 		).
@@ -138,6 +138,7 @@ func HttpServers(ctx context.Context) (int, map[string][]int) {
 	if err != nil {
 		return 0, nil
 	}
+
 	return serverCount, serverPortCount
 }
 

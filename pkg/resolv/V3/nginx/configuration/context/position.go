@@ -2,6 +2,7 @@ package context
 
 import (
 	"github.com/ClessLi/bifrost/internal/pkg/code"
+
 	"github.com/marmotedu/errors"
 )
 
@@ -99,6 +100,7 @@ func (s *posSet) Filter(fn func(pos Pos) bool) (result PosSet) {
 			result.Append((*s)[i])
 		}
 	}
+
 	return
 }
 
@@ -114,6 +116,7 @@ func (s *posSet) Map(fn func(pos Pos) (Pos, error)) (result PosSet) {
 		}
 		result.Append(p)
 	}
+
 	return
 }
 
@@ -122,12 +125,12 @@ func (s *posSet) MapToPosSet(fn func(pos Pos) PosSet) (result PosSet) {
 	if errSet := s.Map(func(pos Pos) (Pos, error) { return pos, result.AppendWithPosSet(fn(pos)).Error() }); errSet.Error() != nil {
 		return errSet
 	}
+
 	return
 }
 
 func (s *posSet) QueryOne(kw KeyWords) Pos {
 	for _, childPos := range s.Filter(func(pos Pos) bool { return !kw.SkipQueryThisContext(pos.Target()) }).List() {
-
 		if kw.Match(childPos.Target()) {
 			return childPos
 		}
@@ -141,11 +144,13 @@ func (s *posSet) QueryOne(kw KeyWords) Pos {
 			}
 		}
 	}
+
 	return NotFoundPos()
 }
 
 func (s *posSet) QueryAll(kw KeyWords) PosSet {
 	filteredSet := s.Filter(func(pos Pos) bool { return !kw.SkipQueryThisContext(pos.Target()) })
+
 	return filteredSet.Filter(func(pos Pos) bool { return kw.Match(pos.Target()) }).
 		// if query with non-cascaded KeyWords,
 		// only the children of the current context will be used for retrieval matching.
@@ -161,14 +166,17 @@ func (s *posSet) Targets() (result []Context) {
 	s.Map(
 		func(pos Pos) (Pos, error) {
 			result = append(result, pos.Target())
+
 			return pos, nil
 		},
 	)
+
 	return
 }
 
 func (s *posSet) Append(pos ...Pos) PosSet {
 	*s = append(*s, pos...)
+
 	return s
 }
 
@@ -176,6 +184,7 @@ func (s *posSet) AppendWithPosSet(posSet PosSet) PosSet {
 	if posSet.Error() != nil {
 		return posSet
 	}
+
 	return s.Append(posSet.List()...)
 }
 

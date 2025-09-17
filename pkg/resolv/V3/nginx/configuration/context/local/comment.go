@@ -2,12 +2,14 @@ package local
 
 import (
 	"encoding/json"
+	"sort"
+	"strings"
+
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
+
 	"github.com/marmotedu/errors"
-	"sort"
-	"strings"
 )
 
 type Comment struct {
@@ -61,11 +63,13 @@ func (c *Comment) Clone() context.Context {
 
 func (c *Comment) SetValue(v string) error {
 	c.Comments = v
+
 	return nil
 }
 
 func (c *Comment) SetFather(ctx context.Context) error {
 	c.fatherContext = ctx
+
 	return nil
 }
 
@@ -85,6 +89,7 @@ func (c *Comment) Type() context_type.ContextType {
 	if c.Inline {
 		return context_type.TypeInlineComment
 	}
+
 	return context_type.TypeComment
 }
 
@@ -96,6 +101,7 @@ func (c *Comment) ConfigLines(isDumping bool) ([]string, error) {
 	if len(strings.TrimSpace(c.Value())) == 0 {
 		return []string{"#"}, nil
 	}
+
 	return []string{"# " + c.Value()}, nil
 }
 
@@ -126,6 +132,7 @@ func registerCommentBuilder() error {
 			fatherContext: context.NullContext(),
 		}
 	}
+
 	return nil
 }
 
@@ -142,8 +149,10 @@ func registerCommentParseFunc() error {
 
 			return cmt
 		}
+
 		return context.NullContext()
 	}
+
 	return nil
 }
 
@@ -151,11 +160,11 @@ type CommentsToContextConverter interface {
 	Convert(ctx context.Context) context.Context
 }
 
-type commentsToContextConverter struct {
-}
+type commentsToContextConverter struct{}
 
 func (c commentsToContextConverter) queryComments(ctx context.Context) (map[context.Context]sort.IntSlice, error) {
 	store := make(map[context.Context]sort.IntSlice)
+
 	return store, ctx.ChildrenPosSet().QueryAll(context.NewKeyWords(context_type.TypeComment).SetCascaded(true)).Map(
 		func(pos context.Pos) (context.Pos, error) {
 			if err := pos.Target().Error(); err != nil {
@@ -163,6 +172,7 @@ func (c commentsToContextConverter) queryComments(ctx context.Context) (map[cont
 			}
 			father, idx := pos.Position()
 			store[father] = append(store[father], idx)
+
 			return pos, nil
 		},
 	).Error()
@@ -221,7 +231,6 @@ func (c commentsToContextConverter) convertSubPoses(fatherCtx context.Context, s
 	tmpCtx.self = tmpCtx
 	_ = stack.push(tmpCtx)
 	for {
-
 		isParsed := false
 		if parseBlankLine(data, &idx) {
 			continue
@@ -241,6 +250,7 @@ func (c commentsToContextConverter) convertSubPoses(fatherCtx context.Context, s
 				tmpCtx.Insert(NewContext(context_type.TypeComment, "}"), tmpCtx.Len())
 				_ = stack.push(ctx)
 			}
+
 			continue
 		}
 
@@ -261,6 +271,7 @@ func (c commentsToContextConverter) convertSubPoses(fatherCtx context.Context, s
 					return errors.WithCode(code.ErrV3ConversionToContextFailed, "push context to stack failed")
 				}
 				isParsed = true
+
 				break
 			}
 		}
@@ -280,6 +291,7 @@ func (c commentsToContextConverter) convertSubPoses(fatherCtx context.Context, s
 					return errors.WithCode(code.ErrV3ConversionToContextFailed, "insert context failed")
 				}
 				isParsed = true
+
 				break
 			}
 		}
@@ -290,6 +302,7 @@ func (c commentsToContextConverter) convertSubPoses(fatherCtx context.Context, s
 		if idx == len(data)-1 {
 			break
 		}
+
 		return errors.WithCode(code.ErrV3ConversionToContextFailed, "the comments content was not successfully parsed")
 	}
 	finalCtx, err := stack.pop()
@@ -337,6 +350,7 @@ func (c commentsToContextConverter) Convert(ctx context.Context) context.Context
 				if errors.IsCode(err, code.ErrV3ConversionToContextFailed) { // skip conversion when conversion fails
 					continue
 				}
+
 				return context.ErrContext(err)
 			}
 		}
@@ -354,8 +368,8 @@ func (c commentsToContextConverter) Convert(ctx context.Context) context.Context
 			}
 			c.Convert(father) // resolve and convert disabled children contexts in the disabled config context
 		}
-
 	}
+
 	return ctx
 }
 
@@ -366,6 +380,7 @@ func (c commentsToContextConverter) sliceContinuousIndexes(indexes []int) [][]in
 	for e := 1; e <= len(indexes); e++ {
 		if e == len(indexes) {
 			conIdxes = append(conIdxes, indexes[s:e])
+
 			continue
 		}
 		if indexes[e] != idxo+1 {
@@ -378,5 +393,6 @@ func (c commentsToContextConverter) sliceContinuousIndexes(indexes []int) [][]in
 		}
 		idxo = indexes[e]
 	}
+
 	return conIdxes
 }

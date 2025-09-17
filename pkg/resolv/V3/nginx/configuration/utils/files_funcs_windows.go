@@ -20,5 +20,6 @@ func FileModifyTime(filepath string) (*time.Time, error) {
 		return nil, err
 	}
 	tt := time.Unix(0, i.LastWriteTime.Nanoseconds())
+
 	return &tt, nil
 }

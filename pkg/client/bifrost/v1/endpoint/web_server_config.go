@@ -1,10 +1,10 @@
 package endpoint
 
 import (
-	"github.com/go-kit/kit/endpoint"
-
 	epv1 "github.com/ClessLi/bifrost/internal/bifrost/endpoint/v1"
 	txpclient "github.com/ClessLi/bifrost/pkg/client/bifrost/v1/transport"
+
+	"github.com/go-kit/kit/endpoint"
 )
 
 type webServerConfigEndpoints struct {

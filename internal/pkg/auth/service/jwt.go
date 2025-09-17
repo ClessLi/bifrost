@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/ClessLi/bifrost/internal/pkg/password"
+
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/golang-jwt/jwt/v4"
-
-	"github.com/ClessLi/bifrost/internal/pkg/password"
 )
 
 // JWTClaims, jwt断言对象，定义认证接口校验的用户信息.

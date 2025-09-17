@@ -2,14 +2,15 @@ package nginx
 
 import (
 	"context"
-	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"time"
-
-	"github.com/marmotedu/component-base/pkg/version"
-	"github.com/shirou/gopsutil/host"
 
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/monitor"
+
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
+
+	"github.com/marmotedu/component-base/pkg/version"
+	"github.com/shirou/gopsutil/host"
 )
 
 const webServerStatusTimeFormatLayout = "2006/01/02 15:04:05"

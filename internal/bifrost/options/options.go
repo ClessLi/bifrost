@@ -3,10 +3,10 @@ package options
 import (
 	"encoding/json"
 
-	cliflag "github.com/marmotedu/component-base/pkg/cli/flag"
-
 	genericoptions "github.com/ClessLi/bifrost/internal/pkg/options"
 	"github.com/ClessLi/bifrost/internal/pkg/server"
+
+	cliflag "github.com/marmotedu/component-base/pkg/cli/flag"
 )
 
 type Options struct {

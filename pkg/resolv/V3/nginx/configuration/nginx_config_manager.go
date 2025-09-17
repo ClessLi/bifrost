@@ -1,6 +1,13 @@
 package configuration
 
 import (
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+	"sync"
+	"time"
+
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	utilsV2 "github.com/ClessLi/bifrost/pkg/resolv/V2/utils"
@@ -8,14 +15,10 @@ import (
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context/local"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
 	utilsV3 "github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/utils"
+
 	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
+
 	"github.com/marmotedu/errors"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"strings"
-	"sync"
-	"time"
 )
 
 type NginxConfigManager interface {
@@ -47,6 +50,7 @@ type backupOption struct {
 }
 
 func (m *nginxConfigManager) Start() error {
+	// TODO: Server Port listen state, proxy server connection state
 	if m.isRunning {
 		return errors.WithCode(code.ErrConfigManagerIsRunning, "nginx config manager is already running")
 	}
@@ -61,6 +65,7 @@ func (m *nginxConfigManager) Start() error {
 			logV1.Errorf("regularly refresh and backup task start error. %+v", err)
 		}
 	}()
+
 	return nil
 }
 
@@ -74,6 +79,7 @@ func (m *nginxConfigManager) Stop(timeout time.Duration) error {
 		return errors.Errorf("stop nginx config manager time out for more than %d seconds", int(timeout/time.Second))
 	case m.regularlyTaskSignalChan <- 9:
 		m.isRunning = false
+
 		return nil
 	}
 }
@@ -100,7 +106,7 @@ func (m *nginxConfigManager) ServerStatus() (state v1.State) {
 	if !filepath.IsAbs(svrPidFilePath) {
 		nginxHomeAbsDir, err := filepath.Abs(m.nginxHome)
 		if err != nil {
-			return
+			return state
 		}
 		svrPidFilePath = filepath.Join(nginxHomeAbsDir, svrPidFilePath)
 	}
@@ -113,6 +119,7 @@ func (m *nginxConfigManager) ServerStatus() (state v1.State) {
 	if err != nil {
 		return v1.Abnormal
 	}
+
 	return v1.Normal
 }
 
@@ -123,11 +130,13 @@ func (m *nginxConfigManager) ServerVersion() (version string) {
 	if err != nil {
 		return
 	}
+
 	return strings.TrimRight(string(output), "\n")
 }
 
 func (m *nginxConfigManager) ServerBinCMD(arg ...string) *exec.Cmd {
 	arg = append(arg, "-c", m.configuration.Main().MainConfig().FullPath())
+
 	return exec.Command(m.nginxBinFilePath, arg...)
 }
 
@@ -159,6 +168,7 @@ func (m *nginxConfigManager) backup() error {
 	needBackup, err := utilsV2.CheckAndCleanBackups(m.backupOpts.backupPrefix, backupDir, m.backupOpts.backupRetentionDays, m.backupOpts.backupCycleDays, now)
 	if err != nil {
 		logV1.Warn("failed to check and clean backups, " + err.Error())
+
 		return err
 	}
 
@@ -176,6 +186,7 @@ func (m *nginxConfigManager) backup() error {
 	err = utilsV2.TarGZ(archivePath, configPaths)
 	if err != nil {
 		logV1.Warn("failed to backup configs, " + err.Error())
+
 		return err
 	}
 
@@ -185,6 +196,7 @@ func (m *nginxConfigManager) backup() error {
 		err = os.Rename(archivePath, backupPath)
 	}
 	logV1.Info("complete configs backup")
+
 	return err
 }
 
@@ -235,11 +247,14 @@ func (m *nginxConfigManager) refresh() error {
 			err = m.configuration.(*nginxConfig).renewMainContext(fsMain)
 			if err != nil && !errors.IsCode(err, code.ErrSameConfigFingerprint) {
 				logV1.Errorf("roll back nginx config failed. %+v", err)
+
 				return err
 			}
+
 			return m.saveWithCheck()
 		}
 	}
+
 	return nil
 }
 
@@ -274,11 +289,12 @@ func (m *nginxConfigManager) regularlyRefreshAndBackup(signalChan chan int) erro
 func (m *nginxConfigManager) save() error {
 	dumps := m.configuration.Dump()
 	for file, dumpbuff := range dumps {
-		err := os.WriteFile(file, dumpbuff.Bytes(), 0600)
+		err := os.WriteFile(file, dumpbuff.Bytes(), 0o600)
 		if err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -294,6 +310,7 @@ func (m *nginxConfigManager) saveWithCheck() error {
 	if err != nil {
 		return err
 	}
+
 	return m.check()
 }
 
@@ -303,5 +320,6 @@ func (m *nginxConfigManager) load() (local.MainContext, utilsV3.ConfigFingerprin
 		return nil, nil, err
 	}
 	fingerprinter := utilsV3.NewConfigFingerprinterWithTimestamp(dumpMainContext(localMain), timestamp)
+
 	return localMain, fingerprinter, nil
 }

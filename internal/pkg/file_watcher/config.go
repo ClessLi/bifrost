@@ -2,10 +2,11 @@ package file_watcher
 
 import (
 	"context"
-	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"os"
 	"path/filepath"
 	"time"
+
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 
 	"github.com/marmotedu/errors"
 )

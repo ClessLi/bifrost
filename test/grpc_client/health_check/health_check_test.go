@@ -5,13 +5,13 @@ import (
 	"net"
 	"testing"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/health"
-	"google.golang.org/grpc/health/grpc_health_v1"
-
 	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
 	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/fake"
 	clientv1 "github.com/ClessLi/bifrost/pkg/client/grpc_health_v1"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
 //	func TestHealthCheck(t *testing.T) {
@@ -29,6 +29,7 @@ func testGRPCServer() (*grpc.Server, *health.Server) {
 	pbv1.RegisterWebServerLogWatcherServer(server, fake.New().WebServerLogWatcher())
 	healthSvr := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(server, healthSvr)
+
 	return server, healthSvr
 }
 

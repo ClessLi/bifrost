@@ -20,8 +20,10 @@ func (w *webServerBinCMDService) Exec(servername string, arg ...string) (bool, s
 	})
 	if resp != nil {
 		response := resp.(*v1.ExecuteResponse)
+
 		return response.Successful, string(response.StandardOutput), string(response.StandardError), err
 	}
+
 	return false, "", "", err
 }
 

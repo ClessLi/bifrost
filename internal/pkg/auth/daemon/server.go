@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"net"
 
-	"google.golang.org/grpc"
-
 	"github.com/ClessLi/bifrost/api/protobuf-spec/authpb"
 	"github.com/ClessLi/bifrost/internal/pkg/auth/config"
 	"github.com/ClessLi/bifrost/internal/pkg/auth/endpoint"
 	"github.com/ClessLi/bifrost/internal/pkg/auth/logging"
 	"github.com/ClessLi/bifrost/internal/pkg/auth/service"
 	"github.com/ClessLi/bifrost/internal/pkg/auth/transport"
+
+	"google.golang.org/grpc"
 )
 
 // authSvc service.AuthService.

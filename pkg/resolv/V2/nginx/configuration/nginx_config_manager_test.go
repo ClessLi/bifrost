@@ -19,7 +19,6 @@ func exampleNewConfigManager() (*configManager, error) {
 }
 
 func TestConfigManager_SaveWithCheck(t *testing.T) {
-
 	manager, err := exampleNewConfigManager()
 	if err != nil {
 		t.Fatal(err)
@@ -34,9 +33,9 @@ func TestConfigManager_SaveWithCheck(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	//jsonData := config.Json()
-	//fmt.Println(string(jsonData))
-	//fmt.Println(string(config.View()))
+	// jsonData := config.Json()
+	// fmt.Println(string(jsonData))
+	// fmt.Println(string(config.View()))
 	err = manager.SaveWithCheck()
 	if err != nil {
 		t.Fatal(err)

@@ -1,13 +1,15 @@
 package local
 
 import (
-	"github.com/ClessLi/bifrost/internal/pkg/code"
-	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
-	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
-	"github.com/marmotedu/errors"
 	"reflect"
 	"sync"
 	"testing"
+
+	"github.com/ClessLi/bifrost/internal/pkg/code"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
+
+	"github.com/marmotedu/errors"
 )
 
 func TestInclude_Child(t *testing.T) {
@@ -287,6 +289,7 @@ func TestInclude_ConfigLines(t *testing.T) {
 			got, err := i.ConfigLines(tt.args.isDumping)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ConfigLines() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
@@ -410,6 +413,7 @@ func TestInclude_FatherConfig(t *testing.T) {
 			got, err := i.FatherConfig()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FatherConfig() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
@@ -1433,6 +1437,7 @@ func TestInclude_MarshalJSON(t *testing.T) {
 			got, err := i.MarshalJSON()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("MarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {

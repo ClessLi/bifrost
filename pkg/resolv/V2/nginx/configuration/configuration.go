@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"sync"
 
-	"github.com/marmotedu/errors"
-
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/dumper"
@@ -13,6 +11,8 @@ import (
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loop_preventer"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_type"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/utils"
+
+	"github.com/marmotedu/errors"
 )
 
 //type Updater interface {

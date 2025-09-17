@@ -11,15 +11,16 @@ import (
 	"sync"
 	"time"
 
-	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
-	"github.com/marmotedu/errors"
-	"github.com/wxnacy/wgo/arrays"
-
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration/parser"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loader"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/utils"
+
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
+
+	"github.com/marmotedu/errors"
+	"github.com/wxnacy/wgo/arrays"
 )
 
 type ConfigManager interface {
@@ -352,7 +353,7 @@ func (c configManager) save() ([]string, error) {
 
 			continue
 		}
-		err := ioutil.WriteFile(s, bytes, 0600)
+		err := ioutil.WriteFile(s, bytes, 0o600)
 		if err != nil {
 			return nil, err
 		}

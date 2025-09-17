@@ -1,14 +1,15 @@
 package local
 
 import (
+	"regexp"
+
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
-	"regexp"
 )
 
 var (
 
-	// regexps
+	// regexps.
 	RegCommentHead           = regexp.MustCompile(`^(\s*)#+[ \t\f]*([^\r\n]*?)` + LineBreak + `+`)
 	RegDirectiveWithValue    = regexp.MustCompile(S)
 	RegDirectiveWithoutValue = regexp.MustCompile(`^\s*(` + Normal + `)\s*;`)
@@ -28,13 +29,13 @@ var (
 	RegErrorHeed             = regexp.MustCompile(Abnormal)
 	RegLineBreak             = regexp.MustCompile(LineBreak)
 
-	// parse config function maps
+	// parse config function maps.
 	pushStackParseFuncMap = make(map[context_type.ContextType]parseFunc)
 	inStackParseFuncMap   = make(map[context_type.ContextType]parseFunc)
 
-	// commentsToContexts convertor parsing function map
+	// commentsToContexts convertor parsing function map.
 	convertorPushStackParseFuncMap = make(map[context_type.ContextType]func(comment *Comment) bool)
 
-	// context builder map
+	// context builder map.
 	builderMap = make(map[context_type.ContextType]func(value string) context.Context)
 )

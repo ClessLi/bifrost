@@ -2,13 +2,15 @@ package service
 
 import (
 	"encoding/json"
-	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration"
-	utilsV3 "github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/utils"
-	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
-	"github.com/marmotedu/errors"
 
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	epv1 "github.com/ClessLi/bifrost/internal/bifrost/endpoint/v1"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration"
+	utilsV3 "github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/utils"
+
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
+
+	"github.com/marmotedu/errors"
 )
 
 type WebServerConfigService interface {
@@ -56,6 +58,7 @@ func (w *webServerConfigService) Get(servername string) (configuration.NginxConf
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "failed to unmarshal fingerprints of the web server(%s) config", response.ServerName.Name)
 	}
+
 	return config, utilsV3.SimpleConfigFingerprinter(ofp), nil
 }
 

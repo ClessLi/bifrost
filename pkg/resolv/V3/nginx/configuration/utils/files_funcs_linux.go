@@ -1,9 +1,10 @@
 package utils
 
 import (
-	"github.com/marmotedu/errors"
 	"syscall"
 	"time"
+
+	"github.com/marmotedu/errors"
 )
 
 func FileModifyTime(filepath string) (*time.Time, error) {

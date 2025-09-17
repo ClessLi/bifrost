@@ -1,13 +1,14 @@
 package local
 
 import (
-	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
-	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
 	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
 )
 
 func TestFileLoader(t *testing.T) {
@@ -98,6 +99,7 @@ func Test_contextStack_current(t *testing.T) {
 			got, err := s.current()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("current() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
@@ -153,10 +155,12 @@ func Test_contextStack_pop(t *testing.T) {
 			got, err := s.pop()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("pop() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if !reflect.DeepEqual(got, tt.wantPop) {
 				t.Errorf("pop() got = %v, want %v", got, tt.wantPop)
+
 				return
 			}
 			if s != nil && len(s.contexts) > 0 {
@@ -269,6 +273,7 @@ func Test_fileLoader_Load(t *testing.T) {
 			got, err := f.Load()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Load() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if got == tt.want && got == nil {
@@ -493,6 +498,7 @@ func Test_jsonLoader_Load(t *testing.T) {
 			got, err := j.Load()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Load() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {

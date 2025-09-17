@@ -4,10 +4,10 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/ClessLi/bifrost/internal/pkg/auth/service"
+
 	"github.com/go-kit/kit/endpoint"
 	"golang.org/x/net/context"
-
-	"github.com/ClessLi/bifrost/internal/pkg/auth/service"
 )
 
 var (

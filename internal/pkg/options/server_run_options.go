@@ -1,9 +1,9 @@
 package options
 
 import (
-	"github.com/spf13/pflag"
-
 	"github.com/ClessLi/bifrost/internal/pkg/server"
+
+	"github.com/spf13/pflag"
 )
 
 // ServerRunOptions contains the options while running a generic api server.

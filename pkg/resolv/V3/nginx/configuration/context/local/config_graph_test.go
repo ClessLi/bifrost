@@ -1,8 +1,9 @@
 package local
 
 import (
-	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
 	"testing"
+
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
 )
 
 func TestModifyConfigPathInGraph(t *testing.T) {

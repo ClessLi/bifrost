@@ -4,12 +4,12 @@ import (
 	"context"
 	"io"
 
+	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
+	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
+
 	grpctransport "github.com/go-kit/kit/transport/grpc"
 	"github.com/marmotedu/errors"
 	"google.golang.org/grpc"
-
-	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
-	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
 )
 
 type WebServerLogWatcherTransport interface {

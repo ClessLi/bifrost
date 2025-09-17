@@ -3,8 +3,9 @@ package grpc_health_v1
 import (
 	"context"
 	"errors"
-	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"io"
+
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 
 	"github.com/go-kit/kit/endpoint"
 	grpctransport "github.com/go-kit/kit/transport/grpc"

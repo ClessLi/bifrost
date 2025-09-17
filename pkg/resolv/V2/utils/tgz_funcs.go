@@ -71,7 +71,6 @@ func TarGZ(dest string, filenames []string) (err error) {
 //
 //	错误
 func compress(fd *os.File, prefix string, tgzw *tar.Writer) error {
-
 	// 加载被归档文件信息
 	info, infoErr := fd.Stat()
 	if infoErr != nil {

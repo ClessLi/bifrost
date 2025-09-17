@@ -3,11 +3,12 @@ package local
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
-	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
 )
 
 func TestComment_Child(t *testing.T) {
@@ -125,6 +126,7 @@ func TestComment_ConfigLines(t *testing.T) {
 			got, err := c.ConfigLines(tt.args.isDumping)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ConfigLines() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
@@ -499,6 +501,7 @@ func TestComment_SetValue(t *testing.T) {
 			}
 			if err := c.SetValue(tt.args.v); (err != nil) != tt.wantErr {
 				t.Errorf("SetValue() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if getvalue := c.Value(); getvalue != tt.wantGetValue {

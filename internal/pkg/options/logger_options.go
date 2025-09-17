@@ -2,12 +2,14 @@ package options
 
 import (
 	"fmt"
-	"github.com/ClessLi/bifrost/internal/pkg/logger"
-	"github.com/spf13/pflag"
-	"go.uber.org/zap/zapcore"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/ClessLi/bifrost/internal/pkg/logger"
+
+	"github.com/spf13/pflag"
+	"go.uber.org/zap/zapcore"
 )
 
 const (

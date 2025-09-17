@@ -1,10 +1,10 @@
 package transport
 
 import (
-	"golang.org/x/net/context"
-
 	"github.com/ClessLi/bifrost/api/protobuf-spec/authpb"
 	"github.com/ClessLi/bifrost/internal/pkg/auth/endpoint"
+
+	"golang.org/x/net/context"
 )
 
 func EncodeVerifyResponse(_ context.Context, r interface{}) (response interface{}, err error) {

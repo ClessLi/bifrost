@@ -3,9 +3,10 @@ package monitor
 import (
 	"context"
 	"fmt"
-	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"sync"
 	"time"
+
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 
 	"github.com/marmotedu/errors"
 	"github.com/shirou/gopsutil/cpu"

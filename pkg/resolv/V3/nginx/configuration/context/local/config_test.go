@@ -1,12 +1,14 @@
 package local
 
 import (
-	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
-	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
-	"github.com/dominikbraun/graph"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
+
+	"github.com/dominikbraun/graph"
 )
 
 func TestConfig_Clone(t *testing.T) {
@@ -72,11 +74,13 @@ func TestConfig_Clone(t *testing.T) {
 			gotlines, err := got.ConfigLines(false)
 			if err != nil {
 				t.Errorf("got.ConfigLines() return error: %v", err)
+
 				return
 			}
 			wantlines, err := tt.want.ConfigLines(false)
 			if err != nil {
 				t.Errorf("want.ConfigLines() return error: %v", err)
+
 				return
 			}
 			if reflect.DeepEqual(got.(*Config).Children, tt.want.(*Config).Children) ||
@@ -383,6 +387,7 @@ func TestConfig_ConfigLines(t *testing.T) {
 			got, err := c.ConfigLines(tt.args.isDumping)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ConfigLines() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
@@ -630,6 +635,7 @@ func TestConfig_mainContext(t *testing.T) {
 			got, err := c.mainContext()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("mainContext() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
@@ -930,6 +936,7 @@ func Test_configGraph_GetConfig(t *testing.T) {
 			got, err := c.GetConfig(tt.args.fullpath)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetConfig() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
@@ -1255,8 +1262,8 @@ func Test_configGraph_RenameConfig(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	//testMain.AddEdge(inEdgeConfig, testConfig)
-	//testMain.AddEdge(testConfig, NewContext(context_type.TypeConfig, "outedge.conf").(*Config))
+	// testMain.AddEdge(inEdgeConfig, testConfig)
+	// testMain.AddEdge(testConfig, NewContext(context_type.TypeConfig, "outedge.conf").(*Config))
 	test2Main := testMain.Clone().(MainContext)
 	test3Main := testMain.Clone().(MainContext)
 
@@ -1800,6 +1807,7 @@ func Test_newConfigGraph(t *testing.T) {
 			got, err := newConfigGraph(tt.args.mainConfig)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("newConfigGraph() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
@@ -1875,6 +1883,7 @@ func Test_newConfigPath(t *testing.T) {
 			got, err := newConfigPath(tt.args.configgraph, tt.args.newconfigpath)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("newConfigPath() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {

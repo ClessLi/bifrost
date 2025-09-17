@@ -2,9 +2,10 @@ package file_watcher
 
 import (
 	"context"
-	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"sync"
 	"time"
+
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 
 	"github.com/marmotedu/errors"
 )

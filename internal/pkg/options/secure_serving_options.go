@@ -2,13 +2,14 @@ package options
 
 import (
 	"fmt"
-	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"net"
 	"path"
 
-	"github.com/spf13/pflag"
-
 	"github.com/ClessLi/bifrost/internal/pkg/server"
+
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
+
+	"github.com/spf13/pflag"
 )
 
 // SecureServingOptions contains configuration items related to TLS server startup.
@@ -105,7 +106,7 @@ func (s *SecureServingOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&s.BindAddress, "secure.bind-address", s.BindAddress, ""+
 		"The IP address on which to listen for the --secure.bind-port port. The "+
 		"associated interface(s) must be reachable by the rest of the engine, and by CLI/web "+
-		"clients. If blank, all interfaces will be used (0.0.0.0 for all IPv4 interfaces and :: for all IPv6 interfaces).")
+		"clients. If blank, all interfaces will be used (0.0.0.0 for all IPv4s interfaces and :: for all IPv6 interfaces).")
 	desc := "The port on which to serve 12421 with authentication and authorization."
 	desc += " Set to zero to disable."
 	fs.IntVar(&s.BindPort, "secure.bind-port", s.BindPort, desc)

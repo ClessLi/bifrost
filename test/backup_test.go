@@ -21,7 +21,7 @@ func TestRel(t *testing.T) {
 	//	t.Log(err)
 	//}
 
-	//for _, s := range fileList {
+	// for _, s := range fileList {
 	for s := range caches {
 		t.Log(filepath.Rel("F:\\GO_Project\\src\\bifrost\\test", s))
 	}
@@ -59,7 +59,6 @@ func checkBackups(name, dir string, saveTime, cycle int, now time.Time) (bool, e
 				fmt.Println("no backup required, cased by", baks[i], "is exist.")
 				needBackup = false
 			}
-
 		}
 	}
 

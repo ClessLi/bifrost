@@ -1,13 +1,15 @@
 package local
 
 import (
+	"path/filepath"
+	"strings"
+
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
+
 	"github.com/dominikbraun/graph"
 	"github.com/marmotedu/errors"
-	"path/filepath"
-	"strings"
 )
 
 type Config struct {
@@ -27,6 +29,7 @@ func (c *Config) isInGraph() bool {
 		return false
 	}
 	_, err = mainCtx.GetConfig(configHash(c))
+
 	return err == nil
 }
 
@@ -38,6 +41,7 @@ func (c *Config) Clone() context.Context {
 	for i, child := range c.Children {
 		clone.Insert(child.Clone(), i)
 	}
+
 	return clone
 }
 
@@ -46,6 +50,7 @@ func (c *Config) SetValue(v string) error {
 	if err != nil {
 		return err
 	}
+
 	return mainCtx.RenameConfig(configHash(c), v)
 }
 
@@ -54,6 +59,7 @@ func (c *Config) SetFather(ctx context.Context) error {
 		return errors.WithCode(code.ErrV3InvalidOperation, "the set father is not Main Context")
 	}
 	c.father = ctx
+
 	return nil
 }
 
@@ -69,6 +75,7 @@ func (c *Config) ConfigLines(isDumping bool) ([]string, error) {
 				c.Child(idx-1).Type() != context_type.TypeComment &&
 				c.Child(idx-1).Type() != context_type.TypeInlineComment {
 				lines[len(lines)-1] += INDENT + clines[0]
+
 				continue
 			}
 
@@ -83,6 +90,7 @@ func (c *Config) ConfigLines(isDumping bool) ([]string, error) {
 			lines[i] = "# " + lines[i]
 		}
 	}
+
 	return lines, nil
 }
 
@@ -114,6 +122,7 @@ func newConfigPath(configgraph ConfigGraph, newconfigpath string) (context.Confi
 	if filepath.IsAbs(newconfigpath) {
 		return context.NewAbsConfigPath(newconfigpath)
 	}
+
 	return context.NewRelConfigPath(configgraph.MainConfig().BaseDir(), newconfigpath)
 }
 
@@ -122,8 +131,10 @@ func registerConfigBuilder() error {
 		ctx := &Config{BasicContext: newBasicContext(context_type.TypeConfig, nullHeadString, nullTailString)}
 		ctx.ContextValue = value
 		ctx.self = ctx
+
 		return ctx
 	}
+
 	return nil
 }
 
@@ -157,6 +168,7 @@ func configHash(t *Config) string {
 	if t.ConfigPath == nil {
 		return ""
 	}
+
 	return strings.TrimSpace(t.FullPath())
 }
 
@@ -177,6 +189,7 @@ func (c *configGraph) AddEdge(src, dst *Config) error {
 	if err != nil && !errors.Is(err, graph.ErrEdgeAlreadyExists) { // allow repeated addition of edges
 		return err
 	}
+
 	return nil
 }
 
@@ -192,6 +205,7 @@ func (c *configGraph) RemoveEdge(src, dst *Config, keepDst bool) error {
 	if err != nil && !errors.Is(err, graph.ErrVertexHasEdges) { // Temporarily unable to be covered for testing
 		return err
 	}
+
 	return nil
 }
 
@@ -216,6 +230,7 @@ func (c *configGraph) checkOperatedVertex(v *Config) error {
 				v.BaseDir(), c.MainConfig().BaseDir())
 		}
 	}
+
 	return nil
 }
 
@@ -224,6 +239,7 @@ func (c *configGraph) addVertex(v *Config) error {
 	if err != nil {
 		return err
 	}
+
 	return c.graph.AddVertex(v)
 }
 
@@ -247,6 +263,7 @@ func (c *configGraph) renderGraph() error {
 		Filter(
 			func(pos context.Pos) bool {
 				_, ok := pos.Target().(*Include)
+
 				return ok
 			},
 		).
@@ -263,6 +280,7 @@ func (c *configGraph) rerenderGraph() error {
 	if err != nil {
 		return err
 	}
+
 	return c.renderGraph()
 }
 
@@ -281,6 +299,7 @@ func (c *configGraph) removeVertex(v *Config) error {
 		return err
 	}
 	v.father = context.NullContext()
+
 	return nil
 }
 
@@ -311,6 +330,7 @@ func (c *configGraph) setFatherFor(config *Config) error {
 	if err != nil {
 		return err
 	}
+
 	return config.SetFather(c.MainConfig().Father())
 }
 
@@ -332,6 +352,7 @@ func (c *configGraph) Topology() []*Config {
 		}
 		topo = append(topo, t)
 	}
+
 	return topo
 }
 
@@ -348,6 +369,7 @@ func (c *configGraph) ListConfigs() []*Config {
 		}
 		list = append(list, conf)
 	}
+
 	return list
 }
 
@@ -425,6 +447,7 @@ func newConfigGraph(mainConfig *Config) (ConfigGraph, error) {
 	if err != nil { // Temporarily unable to be covered for testing
 		return nil, err
 	}
+
 	return &configGraph{
 		graph:      g,
 		mainConfig: mainConfig,

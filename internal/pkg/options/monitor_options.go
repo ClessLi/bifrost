@@ -3,10 +3,10 @@ package options
 import (
 	"time"
 
+	"github.com/ClessLi/bifrost/internal/pkg/monitor"
+
 	"github.com/marmotedu/errors"
 	"github.com/spf13/pflag"
-
-	"github.com/ClessLi/bifrost/internal/pkg/monitor"
 )
 
 type MonitorOptions struct {

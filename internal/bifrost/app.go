@@ -3,6 +3,7 @@ package bifrost
 import (
 	"github.com/ClessLi/bifrost/internal/bifrost/config"
 	"github.com/ClessLi/bifrost/internal/bifrost/options"
+
 	"github.com/ClessLi/component-base/pkg/app"
 )
 

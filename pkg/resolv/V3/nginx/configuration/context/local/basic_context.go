@@ -4,6 +4,7 @@ import (
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
+
 	"github.com/marmotedu/errors"
 )
 
@@ -40,12 +41,14 @@ func (b *BasicContext) Insert(ctx context.Context, idx int) context.Context {
 		if ok {
 			return errctx.AppendError(errors.WithCode(code.ErrV3InvalidOperation, "refuse to insert error context"))
 		}
+
 		return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "refuse to insert invalid context"))
 	case context_type.TypeConfig:
 		_, ok := ctx.(*Config)
 		if ok {
 			return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "refuse to insert config context"))
 		}
+
 		return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "refuse to insert invalid context"))
 	}
 
@@ -83,6 +86,7 @@ func (b *BasicContext) Remove(idx int) context.Context {
 
 		b.Children = append(b.Children[:idx], b.Children[idx+1:]...)
 	}
+
 	return b.self
 }
 
@@ -98,6 +102,7 @@ func (b *BasicContext) Modify(ctx context.Context, idx int) context.Context {
 		if ok {
 			return errctx.AppendError(errors.WithCode(code.ErrV3InvalidOperation, "refuse to modify to error context"))
 		}
+
 		return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "refuse to modify to invalid context"))
 	}
 
@@ -117,6 +122,7 @@ func (b *BasicContext) Child(idx int) context.Context {
 	if idx >= b.Len() || idx < 0 {
 		return context.ErrContext(errors.WithCode(code.ErrV3ContextIndexOutOfRange, "index(%d) out of range", idx))
 	}
+
 	return b.Children[idx]
 }
 
@@ -125,6 +131,7 @@ func (b *BasicContext) ChildrenPosSet() context.PosSet {
 	for i := 0; i < b.Len(); i++ {
 		childrenPoses.Append(context.SetPos(b, i))
 	}
+
 	return childrenPoses
 }
 
@@ -136,11 +143,13 @@ func (b *BasicContext) Clone() context.Context {
 	for i, child := range b.Children {
 		clone.Insert(child.Clone(), i)
 	}
+
 	return clone
 }
 
 func (b *BasicContext) SetValue(v string) error {
 	b.ContextValue = v
+
 	return nil
 }
 
@@ -151,7 +160,11 @@ func (b *BasicContext) operateIncludes(handle func(include *Include) error) erro
 	// call include context handle some task
 	return b.self.ChildrenPosSet().
 		QueryAll(context.NewKeyWords(context_type.TypeInclude).SetCascaded(true)).
-		Filter(func(pos context.Pos) bool { _, ok := pos.Target().(*Include); return ok }).
+		Filter(func(pos context.Pos) bool {
+			_, ok := pos.Target().(*Include)
+
+			return ok
+		}).
 		Map(func(pos context.Pos) (context.Pos, error) { return pos, handle(pos.Target().(*Include)) }).
 		Error()
 }
@@ -180,6 +193,7 @@ func (b *BasicContext) SetFather(ctx context.Context) error {
 		return err
 	}
 	b.father = ctx
+
 	return b.loadIncludes()
 }
 
@@ -223,6 +237,7 @@ func (b *BasicContext) ConfigLines(isDumping bool) ([]string, error) {
 				b.Child(idx-1).Type() != context_type.TypeComment &&
 				b.Child(idx-1).Type() != context_type.TypeInlineComment {
 				lines[len(lines)-1] += INDENT + clines[0]
+
 				continue
 			}
 
@@ -258,6 +273,7 @@ func (b *BasicContext) Enable() context.Context {
 	if err != nil {
 		return context.ErrContext(err)
 	}
+
 	return b.self
 }
 
@@ -270,6 +286,7 @@ func (b *BasicContext) Disable() context.Context {
 	if err != nil {
 		return context.ErrContext(err)
 	}
+
 	return b.self
 }
 
@@ -282,4 +299,17 @@ func newBasicContext(ctxType context_type.ContextType, head func(context_type.Co
 		headStringFunc: head,
 		tailStringFunc: tail,
 	}
+}
+
+func getFatherContextByType(ctx context.Context, contextType context_type.ContextType) context.Context {
+	if ctx.Type() == context_type.TypeMain {
+		return errCtxGetFatherCtxFromMainByType
+	}
+
+	father := ctx.Father()
+	if father.Error() != nil || father.Type() == contextType {
+		return father
+	}
+
+	return getFatherContextByType(father, contextType)
 }

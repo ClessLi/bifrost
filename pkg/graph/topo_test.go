@@ -20,14 +20,14 @@ func TestTopo_CircleVertexIndex(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	//graph.SetCurrentVertex("./conf.d/test1.conf")
-	//graph.AddEdgeFromCurrentVertex("./conf.d/test/1.conf")
-	//graph.SetCurrentVertex("./conf.d/test2.conf")
-	//graph.AddEdgeFromCurrentVertex("./conf.d/location.conf")
-	//graph.SetCurrentVertex("./conf.d/test3.conf")
-	//graph.AddEdgeFromCurrentVertex("./conf.d/location.conf")
-	//graph.SetCurrentVertex("./conf.d/test4.conf")
-	//graph.AddEdgeFromCurrentVertex("./conf.d/location.conf")
+	// graph.SetCurrentVertex("./conf.d/test1.conf")
+	// graph.AddEdgeFromCurrentVertex("./conf.d/test/1.conf")
+	// graph.SetCurrentVertex("./conf.d/test2.conf")
+	// graph.AddEdgeFromCurrentVertex("./conf.d/location.conf")
+	// graph.SetCurrentVertex("./conf.d/test3.conf")
+	// graph.AddEdgeFromCurrentVertex("./conf.d/location.conf")
+	// graph.SetCurrentVertex("./conf.d/test4.conf")
+	// graph.AddEdgeFromCurrentVertex("./conf.d/location.conf")
 	err = graph.AddEdge("./conf.d/test1.conf", "./conf.d/test/1.conf")
 	if err != nil {
 		t.Fatal(err)
@@ -57,7 +57,7 @@ func TestTopo_CircleVertexIndex(t *testing.T) {
 	//	t.Fatal(err)
 	//}
 	err = graph.AddEdge("nginx.test.conf", "./conf.d/test1.conf")
-	//err := graph.topologicalSortByKahn()
+	// err := graph.topologicalSortByKahn()
 	if err != nil {
 		t.Fatal(err)
 	}

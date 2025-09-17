@@ -5,9 +5,9 @@ import (
 	"net"
 	"strings"
 
-	"google.golang.org/grpc/peer"
-
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
+
+	"google.golang.org/grpc/peer"
 )
 
 func GetClientIP(ctx context.Context) string {

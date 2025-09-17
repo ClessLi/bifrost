@@ -70,6 +70,7 @@ func (cc *CompletedManagerConfig) NewNginxConfigManager() (NginxConfigManager, e
 	if err != nil {
 		return nil, err
 	}
+
 	return &nginxConfigManager{
 		configuration:           c,
 		nginxHome:               cc.NginxHome,

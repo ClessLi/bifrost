@@ -3,10 +3,10 @@ package web_server_config
 import (
 	"context"
 
+	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
+
 	"github.com/go-kit/kit/endpoint"
 	"github.com/marmotedu/errors"
-
-	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 )
 
 func (w *webServerConfigEndpoints) EndpointUpdate() endpoint.Endpoint {

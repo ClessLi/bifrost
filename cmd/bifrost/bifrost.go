@@ -5,9 +5,9 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/marmotedu/component-base/pkg/time"
-
 	"github.com/ClessLi/bifrost/internal/bifrost"
+
+	"github.com/marmotedu/component-base/pkg/time"
 )
 
 func main() {

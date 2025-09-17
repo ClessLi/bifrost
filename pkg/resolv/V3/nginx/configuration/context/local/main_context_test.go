@@ -1,12 +1,14 @@
 package local
 
 import (
+	"reflect"
+	"testing"
+
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
+
 	"github.com/marmotedu/errors"
-	"reflect"
-	"testing"
 )
 
 func TestMain_Child(t *testing.T) {
@@ -83,6 +85,7 @@ func TestMain_ConfigLines(t *testing.T) {
 			got, err := m.ConfigLines(tt.args.isDumping)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ConfigLines() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
@@ -362,7 +365,7 @@ func TestMain_MarshalJSON(t *testing.T) {
 			name:   "normal test",
 			fields: fields{ConfigGraph: testMain.graph()},
 			want: []byte(
-				`{"main-config":"C:\\test\\nginx.conf","configs":{"C:\\test\\nginx.conf":{"enabled":true,"context-type":"config","value":"C:\\test\\nginx.conf","params":[{"enabled":true,"context-type":"http","params":[{"enabled":true,"context-type":"server","params":[{"context-type":"inline_comment","value":"enabled server with enabled children configs"},{"enabled":true,"context-type":"include","value":"conf.d/enabled.conf"}]},{"enabled":true,"context-type":"server","params":[{"context-type":"inline_comment","value":"enabled server with disabled children configs"},{"enabled":true,"context-type":"include","value":"conf.d/disabled.conf"}]},{"enabled":true,"context-type":"server","params":[{"context-type":"inline_comment","value":"enabled server with disabled include context"},{"context-type":"include","value":"conf.d/enabled.conf"}]},{"context-type":"server","params":[{"context-type":"inline_comment","value":"disabled server with enabled children configs"},{"enabled":true,"context-type":"include","value":"conf.d/enabled.conf"}]},{"context-type":"server","params":[{"context-type":"inline_comment","value":"disabled server with disabled children configs"},{"enabled":true,"context-type":"include","value":"conf.d/disabled.conf"}]},{"context-type":"server","params":[{"context-type":"inline_comment","value":"disabled server with disabled include context"},{"context-type":"include","value":"conf.d/enabled.conf"}]}]}]},"conf.d/disabled.conf":{"context-type":"config","value":"conf.d/disabled.conf","params":[{"context-type":"comment","value":"disabled config"},{"enabled":true,"context-type":"location","value":"~ /test","params":[{"enabled":true,"context-type":"directive","value":"return 404"}]}]},"conf.d/enabled.conf":{"enabled":true,"context-type":"config","value":"conf.d/enabled.conf","params":[{"enabled":true,"context-type":"location","value":"~ /test","params":[{"enabled":true,"context-type":"directive","value":"return 200 'test'"}]}]}}}`,
+				`{"main-config":"C:\\test\\nginx.conf","configs":{"C:\\test\\nginx.conf":{"enabled":true,"context-type":"config","value":"C:\\test\\nginx.conf","params":[{"enabled":true,"context-type":"http","params":[{"enabled":true,"context-type":"server","params":[{"context-type":"inline_comment","value":"enabled server with enabled children configs"},{"enabled":true,"context-type":"include","value":"conf.d/enabled.conf"}]},{"enabled":true,"context-type":"server","params":[{"context-type":"inline_comment","value":"enabled server with disabled children configs"},{"enabled":true,"context-type":"include","value":"conf.d/disabled.conf"}]},{"enabled":true,"context-type":"server","params":[{"context-type":"inline_comment","value":"enabled server with disabled include context"},{"context-type":"include","value":"conf.d/enabled.conf"}]},{"context-type":"server","params":[{"context-type":"inline_comment","value":"disabled server with enabled children configs"},{"enabled":true,"context-type":"include","value":"conf.d/enabled.conf"}]},{"context-type":"server","params":[{"context-type":"inline_comment","value":"disabled server with disabled children configs"},{"enabled":true,"context-type":"include","value":"conf.d/disabled.conf"}]},{"context-type":"server","params":[{"context-type":"inline_comment","value":"disabled server with disabled include context"},{"context-type":"include","value":"conf.d/enabled.conf"}]}]}]},"conf.d/disabled.conf":{"context-type":"config","value":"conf.d/disabled.conf","params":[{"context-type":"comment","value":"disabled config"},{"enabled":true,"context-type":"location","value":"~ /test","params":[{"enabled":true,"context-type":"directive","value":"return 404"}]}]},"conf.d/enabled.conf":{"enabled":true,"context-type":"config","value":"conf.d/enabled.conf","params":[{"enabled":true,"context-type":"location","value":"~ /test","params":[{"enabled":true,"context-type":"directive","value":"return 200 'test'"}]}]}}}`, //nolint:lll
 			),
 			wantErr: false,
 		},
@@ -375,6 +378,7 @@ func TestMain_MarshalJSON(t *testing.T) {
 			got, err := m.MarshalJSON()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("MarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
@@ -384,7 +388,7 @@ func TestMain_MarshalJSON(t *testing.T) {
 	}
 }
 
-func TestMain_Modify(t *testing.T) {
+func TestMain_Modify(t *testing.T) { //nolint:dupl
 	testMain, err := NewMain("C:\\test\\test.conf")
 	if err != nil {
 		t.Fatal(err)
@@ -616,6 +620,7 @@ func Test_NewMain(t *testing.T) {
 			got, err := NewMain(tt.args.abspath)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewMain() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			isSameFather := func(got, want *Config) bool {

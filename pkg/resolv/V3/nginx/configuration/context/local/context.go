@@ -3,6 +3,7 @@ package local
 import (
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
+
 	"github.com/marmotedu/errors"
 )
 
@@ -20,6 +21,7 @@ func OptsApplyTo(opts context.BuildOptions) (BuildBasicContextConfig, error) {
 	}
 
 	buildConfig.ContextType = opts.ContextType
+
 	return buildConfig, nil
 }
 
@@ -78,6 +80,7 @@ func RegisterBuilder(opts context.BuildOptions, registrar ContextBuilderRegistra
 		return errors.New("the registered context builder is nil")
 	}
 	builderMap[opts.ContextType] = builder
+
 	return nil
 }
 
@@ -90,10 +93,13 @@ func RegisterParseFunc(opts parseFuncBuildOptions, parserFunc map[context_type.C
 			}
 			ctx := NewContext(opts.contextType, value)
 			*idx += matchIndexes[len(matchIndexes)-1]
+
 			return ctx
 		}
+
 		return context.NullContext()
 	}
+
 	return nil
 }
 
@@ -117,6 +123,7 @@ func buildHeadAndTailStringFuncs(options context.BuildOptions) (func(context_typ
 	default:
 		return nil, nil
 	}
+
 	return head, tail
 }
 
@@ -131,6 +138,7 @@ func registerEventsBuilder() error {
 			return func(_ string) context.Context {
 				ctx := f()
 				ctx.self = ctx
+
 				return ctx
 			}
 		},
@@ -142,6 +150,7 @@ func registerEventsParseFunc() error {
 	convertorPushStackParseFuncMap[context_type.TypeEvents] = func(comment *Comment) bool {
 		return !comment.Inline && RegEventsHead.MatchString(comment.Value())
 	}
+
 	return RegisterParseFunc(
 		parseFuncBuildOptions{
 			regex:           RegEventsHead,
@@ -164,6 +173,7 @@ func registerGeoBuilder() error {
 				ctx := f()
 				ctx.ContextValue = value
 				ctx.self = ctx
+
 				return ctx
 			}
 		},
@@ -175,6 +185,7 @@ func registerGeoParseFunc() error {
 	convertorPushStackParseFuncMap[context_type.TypeGeo] = func(comment *Comment) bool {
 		return !comment.Inline && RegGeoHead.MatchString(comment.Value())
 	}
+
 	return RegisterParseFunc(
 		parseFuncBuildOptions{
 			regex:           RegGeoHead,
@@ -196,6 +207,7 @@ func registerHttpBuilder() error {
 			return func(_ string) context.Context {
 				ctx := f()
 				ctx.self = ctx
+
 				return ctx
 			}
 		},
@@ -207,6 +219,7 @@ func registerHttpParseFunc() error {
 	convertorPushStackParseFuncMap[context_type.TypeHttp] = func(comment *Comment) bool {
 		return !comment.Inline && RegHttpHead.MatchString(comment.Value())
 	}
+
 	return RegisterParseFunc(
 		parseFuncBuildOptions{
 			regex:           RegHttpHead,
@@ -229,6 +242,7 @@ func registerIfBuilder() error {
 				ctx := f()
 				ctx.ContextValue = value
 				ctx.self = ctx
+
 				return ctx
 			}
 		},
@@ -240,6 +254,7 @@ func registerIfParseFunc() error {
 	convertorPushStackParseFuncMap[context_type.TypeIf] = func(comment *Comment) bool {
 		return !comment.Inline && RegIfHead.MatchString(comment.Value())
 	}
+
 	return RegisterParseFunc(
 		parseFuncBuildOptions{
 			regex:           RegIfHead,
@@ -262,6 +277,7 @@ func registerLimitExceptBuilder() error {
 				ctx := f()
 				ctx.ContextValue = value
 				ctx.self = ctx
+
 				return ctx
 			}
 		},
@@ -273,6 +289,7 @@ func registerLimitExceptParseFunc() error {
 	convertorPushStackParseFuncMap[context_type.TypeLimitExcept] = func(comment *Comment) bool {
 		return !comment.Inline && RegLimitExceptHead.MatchString(comment.Value())
 	}
+
 	return RegisterParseFunc(
 		parseFuncBuildOptions{
 			regex:           RegLimitExceptHead,
@@ -295,6 +312,7 @@ func registerLocationBuilder() error {
 				ctx := f()
 				ctx.ContextValue = value
 				ctx.self = ctx
+
 				return ctx
 			}
 		},
@@ -306,6 +324,7 @@ func registerLocationParseFunc() error {
 	convertorPushStackParseFuncMap[context_type.TypeLocation] = func(comment *Comment) bool {
 		return !comment.Inline && RegLocationHead.MatchString(comment.Value())
 	}
+
 	return RegisterParseFunc(
 		parseFuncBuildOptions{
 			regex:           RegLocationHead,
@@ -328,6 +347,7 @@ func registerMapBuilder() error {
 				ctx := f()
 				ctx.ContextValue = value
 				ctx.self = ctx
+
 				return ctx
 			}
 		},
@@ -339,6 +359,7 @@ func registerMapParseFunc() error {
 	convertorPushStackParseFuncMap[context_type.TypeMap] = func(comment *Comment) bool {
 		return !comment.Inline && RegMapHead.MatchString(comment.Value())
 	}
+
 	return RegisterParseFunc(
 		parseFuncBuildOptions{
 			regex:           RegMapHead,
@@ -360,6 +381,7 @@ func registerServerBuilder() error {
 			return func(_ string) context.Context {
 				ctx := f()
 				ctx.self = ctx
+
 				return ctx
 			}
 		},
@@ -371,6 +393,7 @@ func registerServerParseFunc() error {
 	convertorPushStackParseFuncMap[context_type.TypeServer] = func(comment *Comment) bool {
 		return !comment.Inline && RegServerHead.MatchString(comment.Value())
 	}
+
 	return RegisterParseFunc(
 		parseFuncBuildOptions{
 			regex:           RegServerHead,
@@ -392,6 +415,7 @@ func registerStreamBuilder() error {
 			return func(_ string) context.Context {
 				ctx := f()
 				ctx.self = ctx
+
 				return ctx
 			}
 		},
@@ -403,6 +427,7 @@ func registerStreamParseFunc() error {
 	convertorPushStackParseFuncMap[context_type.TypeStream] = func(comment *Comment) bool {
 		return !comment.Inline && RegStreamHead.MatchString(comment.Value())
 	}
+
 	return RegisterParseFunc(
 		parseFuncBuildOptions{
 			regex:           RegStreamHead,
@@ -424,6 +449,7 @@ func registerTypesBuilder() error {
 			return func(_ string) context.Context {
 				ctx := f()
 				ctx.self = ctx
+
 				return ctx
 			}
 		},
@@ -435,6 +461,7 @@ func registerTypesParseFunc() error {
 	convertorPushStackParseFuncMap[context_type.TypeTypes] = func(comment *Comment) bool {
 		return !comment.Inline && RegTypesHead.MatchString(comment.Value())
 	}
+
 	return RegisterParseFunc(
 		parseFuncBuildOptions{
 			regex:           RegTypesHead,
@@ -457,6 +484,7 @@ func registerUpstreamBuilder() error {
 				ctx := f()
 				ctx.ContextValue = value
 				ctx.self = ctx
+
 				return ctx
 			}
 		},
@@ -468,6 +496,7 @@ func registerUpstreamParseFunc() error {
 	convertorPushStackParseFuncMap[context_type.TypeUpstream] = func(comment *Comment) bool {
 		return !comment.Inline && RegUpstreamHead.MatchString(comment.Value())
 	}
+
 	return RegisterParseFunc(
 		parseFuncBuildOptions{
 			regex:           RegUpstreamHead,
@@ -483,6 +512,7 @@ func NewContext(contextType context_type.ContextType, value string) context.Cont
 	if !has {
 		return context.ErrContext(errors.Errorf("not found context builder for %s", contextType))
 	}
+
 	return builder(value)
 }
 
@@ -504,7 +534,10 @@ func registerContextBuilders() error {
 		registerStreamBuilder(),
 		registerTypesBuilder(),
 		registerUpstreamBuilder(),
+		registerHTTPProxyPassBuilder(),
+		registerStreamProxyPassBuilder(),
 	)
+
 	return errors.NewAggregate(errs)
 }
 
@@ -524,6 +557,8 @@ func registerContextParseFuncs() error {
 		registerUpstreamParseFunc(),
 		registerDirectiveParseFunc(),
 		registerCommentParseFunc(),
+		registerProxyPassParseFunc(),
 	)
+
 	return errors.NewAggregate(errs)
 }

@@ -3,9 +3,9 @@ package loop_preventer
 import (
 	"fmt"
 
-	"github.com/marmotedu/errors"
-
 	"github.com/ClessLi/bifrost/pkg/graph"
+
+	"github.com/marmotedu/errors"
 )
 
 type LoopPreventer interface {

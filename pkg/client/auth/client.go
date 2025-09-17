@@ -3,9 +3,9 @@ package auth
 import (
 	"time"
 
-	"google.golang.org/grpc"
-
 	"github.com/ClessLi/bifrost/internal/pkg/auth/service"
+
+	"google.golang.org/grpc"
 )
 
 type Client struct {
