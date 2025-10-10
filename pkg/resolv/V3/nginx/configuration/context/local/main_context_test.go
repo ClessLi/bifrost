@@ -629,9 +629,9 @@ func Test_NewMain(t *testing.T) {
 			if (got == nil) != (tt.want == nil) ||
 				(got != nil &&
 					(!reflect.DeepEqual(got.MainConfig().ConfigPath, tt.want.MainConfig().ConfigPath) ||
-						!reflect.DeepEqual(got.MainConfig().BasicContext.ContextValue, tt.want.MainConfig().BasicContext.ContextValue) ||
-						!reflect.DeepEqual(got.MainConfig().BasicContext.ContextType, tt.want.MainConfig().BasicContext.ContextType) ||
-						!reflect.DeepEqual(got.MainConfig().BasicContext.Children, tt.want.MainConfig().BasicContext.Children) ||
+						!reflect.DeepEqual(got.MainConfig().ContextValue, tt.want.MainConfig().ContextValue) ||
+						!reflect.DeepEqual(got.MainConfig().ContextType, tt.want.MainConfig().ContextType) ||
+						!reflect.DeepEqual(got.MainConfig().Children, tt.want.MainConfig().Children) ||
 						!isSameFather(got.MainConfig(), tt.want.MainConfig()))) {
 				t.Errorf("NewMain() got = %v, want %v", got, tt.want)
 			}

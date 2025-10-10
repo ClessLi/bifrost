@@ -27,11 +27,17 @@ func (p pos) Target() Context {
 }
 
 func (p pos) QueryOne(kw KeyWords) Pos {
-	return p.Target().ChildrenPosSet().QueryOne(kw)
+	if kw.IsToLeafQuery() {
+		return p.Target().ChildrenPosSet().QueryOne(kw)
+	}
+	return p.Target().FatherPosSet().QueryOne(kw)
 }
 
 func (p pos) QueryAll(kw KeyWords) PosSet {
-	return p.Target().ChildrenPosSet().QueryAll(kw)
+	if kw.IsToLeafQuery() {
+		return p.Target().ChildrenPosSet().QueryAll(kw)
+	}
+	return p.Target().FatherPosSet().QueryAll(kw)
 }
 
 func SetPos(father Context, posIdx int) Pos {
@@ -130,15 +136,15 @@ func (s *posSet) MapToPosSet(fn func(pos Pos) PosSet) (result PosSet) {
 }
 
 func (s *posSet) QueryOne(kw KeyWords) Pos {
-	for _, childPos := range s.Filter(func(pos Pos) bool { return !kw.SkipQueryThisContext(pos.Target()) }).List() {
-		if kw.Match(childPos.Target()) {
-			return childPos
+	for _, p := range s.Filter(func(pos Pos) bool { return !kw.SkipQueryThisContext(pos.Target()) }).List() {
+		if kw.Match(p.Target()) {
+			return p
 		}
 
 		// if query with non-cascaded KeyWords,
-		// only the children of the current context will be used for retrieval matching.
+		// only the next poses of the current context will be used for retrieval matching.
 		if kw.Cascaded() {
-			result := childPos.QueryOne(kw)
+			result := p.QueryOne(kw)
 			if err := result.Target().Error(); err == nil {
 				return result
 			}
@@ -153,7 +159,7 @@ func (s *posSet) QueryAll(kw KeyWords) PosSet {
 
 	return filteredSet.Filter(func(pos Pos) bool { return kw.Match(pos.Target()) }).
 		// if query with non-cascaded KeyWords,
-		// only the children of the current context will be used for retrieval matching.
+		// only the next poses of the current context will be used for retrieval matching.
 		AppendWithPosSet(filteredSet.Filter(func(pos Pos) bool { return kw.Cascaded() }).
 			MapToPosSet(func(pos Pos) PosSet { return pos.QueryAll(kw) }))
 }

@@ -633,7 +633,7 @@ func Test_commentsToContextConverter_Convert(t *testing.T) {
 				2,
 			).Insert(
 				NewContext(context_type.TypeLocation, "~ /disabled-location").Disable().Insert(
-					NewContext(context_type.TypeDirective, "proxy_pass http://disabled-url"),
+					NewContext(context_type.TypeDirHTTPProxyPass, "http://disabled-url"),
 					0,
 				),
 				3,

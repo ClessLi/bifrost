@@ -118,6 +118,24 @@ func (b *BasicContext) Father() context.Context {
 	return b.father
 }
 
+func (b *BasicContext) FatherPosSet() context.PosSet {
+	if b.father.Type() == context_type.TypeConfig || b.father.Type() == context_type.TypeMain {
+		return b.father.FatherPosSet()
+	}
+	fatherPoses := context.NewPosSet()
+	matched := false
+	b.father.Father().ChildrenPosSet().Map(func(pos context.Pos) (context.Pos, error) {
+		if !matched && pos.Target() == b.father {
+			matched = true
+			fatherPoses.Append(pos)
+		}
+
+		return pos, nil
+	})
+
+	return fatherPoses
+}
+
 func (b *BasicContext) Child(idx int) context.Context {
 	if idx >= b.Len() || idx < 0 {
 		return context.ErrContext(errors.WithCode(code.ErrV3ContextIndexOutOfRange, "index(%d) out of range", idx))

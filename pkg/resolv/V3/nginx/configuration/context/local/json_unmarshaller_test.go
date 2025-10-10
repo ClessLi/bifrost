@@ -101,8 +101,24 @@ func Test_jsonUnmarshaler_UnmarshalJSON(t *testing.T) {
             "params": [
                 {
                     "enabled": true,
-                    "context-type": "directive",
-                    "value": "proxy_pass https://baidu.com"
+                    "context-type": "dir_http_proxy_pass",
+                    "value": "https://baidu.com",
+                    "proxy-pass": {
+                        "original-url": "https://baidu.com",
+                        "protocol": "https",
+                        "addresses": [
+                            {
+                                "domain-name": "baidu.com",
+                                "port": 443,
+                                "ipv4-list": [
+                                    "10.1.11.111",
+                                    "10.1.12.122"
+                                ],
+                                "resolve-err": null
+                            }
+                        ],
+                        "uri": ""
+                    }
                 }
             ]
         },
@@ -133,8 +149,24 @@ func Test_jsonUnmarshaler_UnmarshalJSON(t *testing.T) {
             "params": [
                 {
                     "enabled": true,
-                    "context-type": "directive",
-                    "value": "proxy_pass https://baidu.com"
+                    "context-type": "dir_http_proxy_pass",
+                    "value": "https://baidu.com",
+                    "proxy-pass": {
+                        "original-url": "https://baidu.com",
+                        "protocol": "https",
+                        "addresses": [
+                            {
+                                "domain-name": "baidu.com",
+                                "port": 443,
+                                "ipv4-list": [
+                                    "10.1.11.111",
+                                    "10.1.12.122"
+                                ],
+                                "resolve-err": null
+                            }
+                        ],
+                        "uri": ""
+                    }
                 }
             ]
         },

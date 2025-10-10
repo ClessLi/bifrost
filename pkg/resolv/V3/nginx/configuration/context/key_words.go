@@ -19,6 +19,8 @@ type KeyWords interface {
 	SkipQueryThisContext(ctx Context) bool
 	Cascaded() bool
 	SetCascaded(cascaded bool) KeyWords
+	IsToLeafQuery() bool
+	SetIsToLeafQuery(isToLeafQuery bool) KeyWords
 	SetStringMatchingValue(value string) KeyWords
 	SetRegexpMatchingValue(value string) KeyWords
 	SetSkipQueryFilter(filterFunc func(targetCtx Context) bool) KeyWords
@@ -30,6 +32,7 @@ type keywords struct {
 	matchingValue        string
 	isRegex              bool
 	isCascaded           bool
+	isToLeafQuery        bool
 	skipQueryFilterFuncs []func(targetCtx Context) bool
 	matchingFilterFuncs  []func(targetCtx Context) bool
 }
@@ -60,6 +63,16 @@ func (k *keywords) Cascaded() bool {
 
 func (k *keywords) SetCascaded(cascaded bool) KeyWords {
 	k.isCascaded = cascaded
+
+	return k
+}
+
+func (k *keywords) IsToLeafQuery() bool {
+	return k.isToLeafQuery
+}
+
+func (k *keywords) SetIsToLeafQuery(isToLeafQuery bool) KeyWords {
+	k.isToLeafQuery = isToLeafQuery
 
 	return k
 }
@@ -95,6 +108,7 @@ func NewKeyWords(ctxtype context_type.ContextType) KeyWords {
 		matchingType:         ctxtype,
 		isRegex:              false,
 		isCascaded:           true,
+		isToLeafQuery:        true,
 		skipQueryFilterFuncs: make([]func(targetCtx Context) bool, 0),
 		matchingFilterFuncs:  make([]func(targetCtx Context) bool, 0),
 	}

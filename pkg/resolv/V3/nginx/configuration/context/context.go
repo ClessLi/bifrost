@@ -11,6 +11,7 @@ type Context interface {
 	Modify(ctx Context, idx int) Context
 	// read `Context` methods
 	Father() Context
+	FatherPosSet() PosSet
 	Child(idx int) Context
 	ChildrenPosSet() PosSet
 

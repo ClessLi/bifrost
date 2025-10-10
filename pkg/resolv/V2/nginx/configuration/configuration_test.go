@@ -14,6 +14,7 @@ func exampleNewConfiguration() (Configuration, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return manager.configuration, nil
 }
 

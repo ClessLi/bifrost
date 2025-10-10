@@ -46,6 +46,7 @@ func (c *BasicContext) QueryAll(pType parserType, isRec bool, values ...string) 
 		return nil
 	}
 	kw.IsRec = isRec
+
 	return c.subQueryAll([]Parser{}, *kw)
 }
 
@@ -55,6 +56,7 @@ func (c *BasicContext) Query(pType parserType, isRec bool, values ...string) Par
 		return nil
 	}
 	kw.IsRec = isRec
+
 	return c.subQuery(*kw)
 }
 
@@ -67,6 +69,7 @@ func (c *BasicContext) Insert(indexParser Parser, pType parserType, values ...st
 
 		return c.InsertByParser(indexParser, p)
 	}
+
 	return ParserControlNoParamError
 }
 
@@ -89,6 +92,7 @@ func (c *BasicContext) InsertByParser(indexParser Parser, contents ...Parser) er
 				if err == ParserControlIndexNotFoundError {
 					continue
 				}
+
 				return err
 			}
 		} else {
@@ -100,6 +104,7 @@ func (c *BasicContext) InsertByParser(indexParser Parser, contents ...Parser) er
 			// return nil
 		}
 	}
+
 	return ParserControlIndexNotFoundError
 }
 
@@ -110,8 +115,10 @@ func (c *BasicContext) Add(pType parserType, values ...string) error {
 			return err
 		}
 		c.AddByParser(parser)
+
 		return nil
 	}
+
 	return ParserControlNoParamError
 }
 
@@ -122,6 +129,7 @@ func (c *BasicContext) AddByParser(contents ...Parser) {
 
 func (c *BasicContext) Remove(pType parserType, values ...string) error {
 	c.RemoveByParser(c.QueryAll(pType, false, values...)...)
+
 	return nil
 }
 
@@ -150,6 +158,7 @@ func (c *BasicContext) Modify(indexParser Parser, pType parserType, values ...st
 
 		return c.ModifyByParser(indexParser, ctx)
 	}
+
 	return ParserControlNoParamError
 }
 
@@ -166,12 +175,15 @@ func (c *BasicContext) ModifyByParser(indexParser, content Parser) error {
 					return err
 				}
 			}
+
 			continue
 		} else {
 			c.Children[i] = content
+
 			return nil
 		}
 	}
+
 	return ParserControlIndexNotFoundError
 }
 
@@ -188,6 +200,7 @@ func (c *BasicContext) Servers() []Parser {
 			}
 		}
 	}
+
 	return svrs
 }
 
@@ -205,6 +218,7 @@ func (c *BasicContext) Server() *Server {
 			}
 		}
 	}
+
 	return nil
 }
 
@@ -228,6 +242,7 @@ func (c *BasicContext) Params() (parsers []Parser) {
 			}
 		}
 	}
+
 	return
 }
 
@@ -260,6 +275,7 @@ func (c *BasicContext) filter(kw Keywords) bool {
 				for _, child := range c.Children {
 					if child.QueryAllByKeywords(childKW) != nil {
 						subMatch = true
+
 						break
 					}
 				}
@@ -280,6 +296,7 @@ func (c *BasicContext) subQueryAll(parsers []Parser, kw Keywords) []Parser {
 			parsers = append(parsers, tmpParsers...)
 		}
 	}
+
 	return parsers
 }
 
@@ -289,11 +306,13 @@ func (c *BasicContext) subQuery(kw Keywords) Parser {
 			return tmpParser
 		}
 	}
+
 	return nil
 }
 
 func (c BasicContext) String() []string {
 	caches := NewCaches()
+
 	return c.string(&caches, 0)
 }
 
@@ -404,6 +423,7 @@ func (c *BasicContext) List() (caches Caches, err error) {
 			}
 		}
 	}
+
 	return
 }
 
@@ -423,6 +443,7 @@ func (c *BasicContext) getTitle() string {
 	}
 
 	contextTitle += " {\n"
+
 	return contextTitle
 }
 
@@ -451,9 +472,11 @@ func (c *BasicContext) childInsert(i int, contents ...Parser) error {
 			return nil
 		} else if max == 0 && i == 0 {
 			c.Children = append(c.Children, contents...)
+
 			return nil
 		}
 	}
+
 	return ParserControlParamsError
 }
 
@@ -475,6 +498,7 @@ func newParser(pType parserType, values ...string) (Parser, error) {
 				keyValue = strings.Join(kv[1:], ":")
 			}
 			keyName := kv[0]
+
 			return NewKey(keyName, keyValue), nil
 		case TypeGeo:
 			parser = NewGeo(values[0])
@@ -546,7 +570,9 @@ func newParser(pType parserType, values ...string) (Parser, error) {
 				}
 			}
 		}
+
 		return ctx, nil
 	}
+
 	return parser, nil
 }

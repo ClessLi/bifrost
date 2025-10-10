@@ -96,11 +96,13 @@ func TestConfig_Clone(t *testing.T) {
 	}
 }
 
+//nolint:funlen
 func TestConfig_ConfigLines(t *testing.T) {
 	testMain, err := NewMain("C:\\test\\nginx.conf")
 	if err != nil {
 		t.Fatal(err)
 	}
+	//nolint:dupl
 	testMain.Insert(
 		NewContext(context_type.TypeHttp, "").Insert(
 			NewContext(context_type.TypeServer, "").Insert(
@@ -132,7 +134,7 @@ func TestConfig_ConfigLines(t *testing.T) {
 				2,
 			).Insert(
 				NewContext(context_type.TypeLocation, "~ /disabled-location").Disable().Insert(
-					NewContext(context_type.TypeDirective, "proxy_pass http://disabled-url"),
+					NewContext(context_type.TypeDirHTTPProxyPass, "http://disabled-url"),
 					0,
 				),
 				3,
@@ -1826,7 +1828,7 @@ func Test_newConfigPath(t *testing.T) {
 	relPathMain, _ := NewMain("C:\\test\\nginx.conf")
 	relPathMain.MainConfig().ConfigPath = &context.RelConfigPath{}
 	absCP, _ := context.NewAbsConfigPath("D:\\test\\test.conf")
-	relCP, _ := context.NewRelConfigPath(testMain.MainConfig().ConfigPath.BaseDir(), "relative.conf")
+	relCP, _ := context.NewRelConfigPath(testMain.MainConfig().BaseDir(), "relative.conf")
 	type args struct {
 		configgraph   ConfigGraph
 		newconfigpath string

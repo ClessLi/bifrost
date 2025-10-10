@@ -92,16 +92,16 @@ func (c configManager) serverStatus() (status v1.State) {
 	if !filepath.IsAbs(svrPidFilePath) {
 		svrBinAbs, absErr := filepath.Abs(c.serverBinPath)
 		if absErr != nil {
-			return
+			return status
 		}
 		svrWS, wsErr := filepath.Abs(filepath.Join(filepath.Dir(svrBinAbs), ".."))
 		if wsErr != nil {
-			return
+			return status
 		}
 		var pidErr error
 		svrPidFilePathAbs, pidErr = filepath.Abs(filepath.Join(svrWS, svrPidFilePath))
 		if pidErr != nil {
-			return
+			return status
 		}
 	}
 

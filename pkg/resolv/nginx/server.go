@@ -72,6 +72,7 @@ func (s *Server) Size(order Order) int {
 		if err != nil {
 			weight = 0
 		}
+
 		return weight
 	default:
 		return 0

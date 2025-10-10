@@ -109,7 +109,7 @@ func (i *Include) parsePatternPath() (main MainContext, fatherConfig *Config, is
 func (i *Include) PatternPath() string {
 	i.loadLocker.RLock()
 	defer i.loadLocker.RUnlock()
-	_, _, _, pattern, _ := i.parsePatternPath()
+	_, _, _, pattern, _ := i.parsePatternPath() //nolint:dogsled
 
 	return pattern
 }
@@ -222,6 +222,27 @@ func (i *Include) Father() context.Context {
 	return i.fatherContext
 }
 
+func (i *Include) FatherPosSet() context.PosSet {
+	i.loadLocker.RLock()
+	defer i.loadLocker.RUnlock()
+
+	if i.fatherContext.Type() == context_type.TypeConfig || i.fatherContext.Type() == context_type.TypeMain {
+		return i.fatherContext.FatherPosSet()
+	}
+	fatherPoses := context.NewPosSet()
+	matched := false
+	i.fatherContext.Father().ChildrenPosSet().Map(func(pos context.Pos) (context.Pos, error) {
+		if !matched && pos.Target() == i.fatherContext {
+			matched = true
+			fatherPoses.Append(pos)
+		}
+
+		return pos, nil
+	})
+
+	return fatherPoses
+}
+
 func (i *Include) Child(idx int) context.Context {
 	return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "include cannot get child config by index"))
 }
@@ -259,6 +280,7 @@ func (i *Include) SetValue(v string) error {
 func (i *Include) load() error {
 	i.snapshot = nil // fresh snapshot
 
+	//nolint:dupl
 	return i.childrenPosSet().
 		Filter(func(pos context.Pos) bool {
 			_, ok := pos.(*includedConfigPos)

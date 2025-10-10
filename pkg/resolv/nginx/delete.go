@@ -16,5 +16,6 @@ func Delete(config *Config) (err error) {
 			return
 		}
 	}
+
 	return nil
 }

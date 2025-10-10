@@ -25,6 +25,7 @@ func (i *Include) QueryAll(pType parserType, isRec bool, values ...string) []Par
 		for _, child := range i.Children {
 			parsers = append(parsers, child.QueryAllByKeywords(*kw)...)
 		}
+
 		return parsers
 	}
 }
@@ -41,6 +42,7 @@ func (i *Include) QueryAllByKeywords(kw Keywords) (parsers []Parser) {
 	if i.filter(kw) {
 		parsers = append(parsers, i)
 	}
+
 	return i.subQueryAll(parsers, kw)
 	//if kw.IsRec {
 	//	return i.subQueryAll(parsers, kw)
@@ -58,6 +60,7 @@ func (i *Include) Query(pType parserType, isRec bool, values ...string) Parser {
 		return nil
 	}
 	kw.IsRec = isRec
+
 	return i.subQuery(*kw)
 	//if isRec {
 	//	return i.subQuery(*kw)
@@ -75,6 +78,7 @@ func (i *Include) QueryByKeywords(kw Keywords) Parser {
 	if i.filter(kw) {
 		return i
 	}
+
 	return i.subQuery(kw)
 }
 
@@ -87,6 +91,7 @@ func (i *Include) Insert(indexParser Parser, pType parserType, values ...string)
 
 		return i.InsertByParser(indexParser, p)
 	}
+
 	return ParserControlNoParamError
 }
 
@@ -98,6 +103,7 @@ func (i *Include) InsertByParser(indexParser Parser, contents ...Parser) error {
 			return err
 		}
 	}
+
 	return ParserControlIndexNotFoundError
 }
 
@@ -108,8 +114,10 @@ func (i *Include) Add(pType parserType, values ...string) error {
 			return err
 		}
 		i.AddByParser(parser)
+
 		return nil
 	}
+
 	return ParserControlNoParamError
 }
 
@@ -119,6 +127,7 @@ func (i *Include) AddByParser(contents ...Parser) {
 
 func (i *Include) Remove(pType parserType, values ...string) error {
 	i.RemoveByParser(i.QueryAll(pType, false, values...)...)
+
 	return nil
 }
 
@@ -137,6 +146,7 @@ func (i *Include) Modify(indexParser Parser, pType parserType, values ...string)
 
 		return i.ModifyByParser(indexParser, ctx)
 	}
+
 	return ParserControlNoParamError
 }
 
@@ -148,6 +158,7 @@ func (i *Include) ModifyByParser(indexParser Parser, content Parser) error {
 			return err
 		}
 	}
+
 	return ParserControlIndexNotFoundError
 }
 
@@ -158,6 +169,7 @@ func (i *Include) Params() (parsers []Parser) {
 			parsers = append(parsers, child.(*Config).Params()...)
 		}
 	}
+
 	return
 }
 
@@ -175,6 +187,7 @@ func (i *Include) Size(_ Order) int {
 
 func (i Include) String() []string {
 	caches := NewCaches()
+
 	return i.string(&caches, 0)
 }
 
@@ -244,6 +257,7 @@ func (i *Include) dump(configPath string, caches *Caches, deep int) (map[string]
 	}
 
 	dumps[configPath] = i.Key.string(caches, deep)
+
 	return dumps, nil
 }
 
@@ -257,6 +271,7 @@ func (i *Include) AddConfig(configs ...Parser) error {
 		}
 	}
 	i.BasicContext.AddByParser(configs...)
+
 	return nil
 }
 

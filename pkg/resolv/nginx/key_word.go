@@ -56,6 +56,7 @@ func newKW(pType parserType, values ...string) (*Keywords, error) {
 		case TypeComment:
 			if ms := regexp.MustCompile(`^#+[ \r\t\f]*(.*)$`).FindStringSubmatch(values[0]); len(ms) == 2 {
 				kws = NewKeyWords(pType, "", ms[1], true, false)
+
 				return &kws, nil
 			} else {
 				return nil, ParserControlParamsError
@@ -68,6 +69,7 @@ func newKW(pType parserType, values ...string) (*Keywords, error) {
 			}
 			keyName := kv[0]
 			kws = NewKeyWords(pType, keyName, keyValue, true, false)
+
 			return &kws, nil
 		case TypeGeo, TypeIf, TypeLimitExcept, TypeLocation, TypeMap, TypeUpstream:
 			kws = NewKeyWords(pType, "", values[0], true, false)
@@ -104,5 +106,6 @@ func newKW(pType parserType, values ...string) (*Keywords, error) {
 			}
 		}
 	}
+
 	return &kws, nil
 }

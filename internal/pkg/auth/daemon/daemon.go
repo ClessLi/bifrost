@@ -49,6 +49,7 @@ func Start() (err error) {
 		_, procErr := os.StartProcess(exec, args, &os.ProcAttr{
 			Files: []*os.File{os.Stdin, os.Stdout, os.Stderr},
 		})
+
 		return procErr
 	} else { // 子进程时
 		Log(DEBUG, "Running Sub Process")
@@ -78,6 +79,7 @@ func Start() (err error) {
 		pidErr := ioutil.WriteFile(pidFile, []byte(fmt.Sprintf("%d", pid)), 0o644)
 		if pidErr != nil {
 			Log(ERROR, "failed to start bifrost, cased by '%s'", pidErr)
+
 			return pidErr
 		}
 
@@ -86,6 +88,7 @@ func Start() (err error) {
 		// Run()
 		runErr := ServerRun()
 		Log(NOTICE, "bifrost <PID %d> is finished", pid)
+
 		return runErr
 	}
 }
@@ -99,6 +102,7 @@ func Stop() error {
 	process, procErr := getProc(pidFile)
 	if procErr != nil {
 		Log(ERROR, procErr.Error())
+
 		return procErr
 	}
 
@@ -108,6 +112,7 @@ func Stop() error {
 	if killErr != nil {
 		if sysErr, ok := killErr.(*os.SyscallError); !ok || sysErr.Syscall != "TerminateProcess" {
 			Log(ERROR, killErr.Error())
+
 			return killErr
 		} else if ok && sysErr.Syscall == "TerminateProcess" {
 			Log(NOTICE, "bifrost is stopping or stopped")
@@ -126,6 +131,7 @@ func Restart() error {
 	if isMain() { // 主进程时
 		if err := Stop(); err != nil {
 			Log(ERROR, "stop bifrost failed cased by: '%s'", err.Error())
+
 			return err
 		}
 
@@ -157,6 +163,7 @@ func Status() (int, error) {
 		return -1, pidErr
 	}
 	_, procErr := os.FindProcess(pid)
+
 	return pid, procErr
 }
 

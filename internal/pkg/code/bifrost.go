@@ -63,6 +63,9 @@ const (
 
 	// ErrV3DomainNameResolutionFailed - 500: Domain name resolution failed.
 	ErrV3DomainNameResolutionFailed
+
+	// ErrV3CannotQueryFatherPosSetFromMainContext - 500: Can not query father pos set from MainContext.
+	ErrV3CannotQueryFatherPosSetFromMainContext
 )
 
 // bifrost: statistics errors.

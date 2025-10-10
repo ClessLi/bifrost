@@ -3,6 +3,7 @@ package local
 import (
 	"encoding/json"
 
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
 
@@ -25,7 +26,7 @@ func (m *Main) graph() ConfigGraph {
 }
 
 func (m *Main) MarshalJSON() ([]byte, error) {
-	if m.ConfigGraph == nil || m.ConfigGraph.MainConfig() == nil || !m.ConfigGraph.MainConfig().isInGraph() {
+	if m.ConfigGraph == nil || m.MainConfig() == nil || !m.ConfigGraph.MainConfig().isInGraph() {
 		return nil, errors.New("MainContext is not completed")
 	}
 	marshalCtx := struct {
@@ -36,7 +37,7 @@ func (m *Main) MarshalJSON() ([]byte, error) {
 		Configs:    make(map[string]*Config),
 	}
 
-	for _, config := range m.ConfigGraph.ListConfigs() {
+	for _, config := range m.ListConfigs() {
 		marshalCtx.Configs[config.Value()] = config
 	}
 
@@ -45,6 +46,10 @@ func (m *Main) MarshalJSON() ([]byte, error) {
 
 func (m *Main) Father() context.Context {
 	return m
+}
+
+func (m *Main) FatherPosSet() context.PosSet {
+	return context.ErrPosSet(errors.WithCode(code.ErrV3CannotQueryFatherPosSetFromMainContext, "cannot query father pos set from MainContext"))
 }
 
 func (m *Main) Child(idx int) context.Context {

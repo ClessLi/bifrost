@@ -31,6 +31,7 @@ func readFile(path string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return fd, nil
 }
 
@@ -68,6 +69,7 @@ func getProc(path string) (*os.Process, error) {
 	if pidErr != nil {
 		return nil, pidErr
 	}
+
 	return os.FindProcess(pid)
 }
 
@@ -91,6 +93,7 @@ func getPid(path string) (int, error) {
 		pidBytes, readPidErr := readFile(path)
 		if readPidErr != nil {
 			Log(ERROR, readPidErr.Error())
+
 			return -1, readPidErr
 		}
 
@@ -101,6 +104,7 @@ func getPid(path string) (int, error) {
 		pid, toIntErr := strconv.Atoi(string(pidBytes))
 		if toIntErr != nil {
 			Log(ERROR, toIntErr.Error())
+
 			return -1, toIntErr
 		}
 
@@ -125,5 +129,6 @@ func configCheck() error {
 	if AuthConf.AuthService.AuthDBConfig == nil && AuthConf.AuthService.AuthConfig == nil {
 		AuthConf.AuthService.AuthConfig = &service.AuthConfig{Username: "heimdall", Password: "Bultgang"}
 	}
+
 	return nil
 }

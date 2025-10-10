@@ -44,6 +44,9 @@ func (d *dnsClient) ResolveToIPv4s(domainName string) (ipv4s []string, err error
 	if d.isTCP {
 		client.Net = "tcp"
 	}
+	if domainName[len(domainName)-1] != '.' {
+		domainName = domainName + "."
+	}
 	r, _, err := client.Exchange(new(dns.Msg).SetQuestion(domainName, dns.TypeA), fmt.Sprintf("%s:%d", d.dnsHost, d.dnsPort))
 	if err != nil {
 		return ipv4s, errors.WithCode(code.ErrV3DomainNameResolutionFailed, err.Error())

@@ -59,6 +59,7 @@ func ServerRun() error {
 		if s == 9 {
 			// fmt.Println("stopping...")
 			Log(DEBUG, "stopping...")
+
 			break
 		}
 		Log(DEBUG, "stop signal error")
@@ -67,5 +68,6 @@ func ServerRun() error {
 	}
 	// fmt.Println("gRPC Server stopping...")
 	gRPCServer.Stop()
+
 	return stopErr
 }

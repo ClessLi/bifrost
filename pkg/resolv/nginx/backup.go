@@ -84,7 +84,7 @@ func Backup(config *Config, name string, saveTime, bakCycle int, backupDir ...st
 		err = NoBackupRequired
 	}
 
-	return
+	return bakPath, err
 }
 
 // checkBackups, 检查归档目录下归档文件是否需要清理及是否可以进行归档操作的函数
@@ -183,7 +183,8 @@ func tgz(dest string, caches Caches) (err error) {
 			return compErr
 		}
 	}
-	return
+
+	return err
 }
 
 // compress, 归档压缩子函数

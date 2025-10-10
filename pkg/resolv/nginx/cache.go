@@ -25,19 +25,23 @@ func (cs *Caches) SetCache(config *Config, file ...interface{}) error {
 		return IsInCaches
 	}
 	(*cs)[config.Value] = cache
+
 	return nil
 }
 
 func (cs Caches) IsCached(path string) bool {
 	_, ok := cs[path]
+
 	return ok
 }
 
 func (cs Caches) CheckHash(path string) (bool, error) {
 	if cs.IsCached(path) {
 		hash, hashErr := getHash(path)
+
 		return hash == cs[path].hash, hashErr
 	}
+
 	return false, IsNotInCaches
 }
 
@@ -45,6 +49,7 @@ func (cs Caches) GetConfig(path string) (*Config, error) {
 	if cache, ok := cs[path]; ok {
 		return cache.config, nil
 	}
+
 	return nil, fmt.Errorf("the Config(path: %s) cache object does not exist", path)
 }
 
@@ -55,6 +60,7 @@ type cache struct {
 
 func newCache(config *Config, file ...interface{}) (cache, error) {
 	hash, err := getHash(config.Value, file...)
+
 	return cache{
 		config: config,
 		hash:   hash,
@@ -124,5 +130,6 @@ func getHash(path string, file ...interface{}) (hash string, err error) {
 	if hashCPErr != nil {
 		return "", hashCPErr
 	}
+
 	return hex.EncodeToString(hash256.Sum(nil)), nil
 }

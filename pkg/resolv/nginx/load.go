@@ -20,6 +20,7 @@ func Load(path string) (string, Caches, error) {
 	if loadErr != nil && loadErr != IsInCaches {
 		return "", nil, loadErr
 	}
+
 	return configPath, cs, nil
 }
 
@@ -75,9 +76,11 @@ func load(ngDir, relativePath string, caches *Caches) (configAbsPath string, err
 			if context != nil {
 				lopen = append([]Parser{context}, lopen...)
 				index += m[len(m)-1]
+
 				return true
 			}
 		}
+
 		return false
 	}
 
@@ -92,6 +95,7 @@ func load(ngDir, relativePath string, caches *Caches) (configAbsPath string, err
 				f.AddByParser(c)
 			}
 			index += m[len(m)-1] - 1
+
 			return true
 		} else {
 			return false
@@ -110,6 +114,7 @@ func load(ngDir, relativePath string, caches *Caches) (configAbsPath string, err
 				}
 			}
 			index += m[len(m)-1]
+
 			return true
 		} else {
 			return false
@@ -130,6 +135,7 @@ func load(ngDir, relativePath string, caches *Caches) (configAbsPath string, err
 			k, ckErr := checkInclude(k, ngDir, caches)
 			if ckErr != nil {
 				err = ckErr
+
 				return false
 			}
 
@@ -140,8 +146,10 @@ func load(ngDir, relativePath string, caches *Caches) (configAbsPath string, err
 				f.AddByParser(k)
 			}
 			index += m[len(m)-1]
+
 			return true
 		}
+
 		return false
 	}
 
@@ -165,6 +173,7 @@ func load(ngDir, relativePath string, caches *Caches) (configAbsPath string, err
 			if err != nil {
 				return "", err
 			}
+
 			continue
 		}
 
@@ -173,7 +182,7 @@ func load(ngDir, relativePath string, caches *Caches) (configAbsPath string, err
 
 	err = caches.SetCache(f, file)
 
-	return
+	return configAbsPath, err
 }
 
 func checkInclude(k *Key, dir string, cs *Caches) (Parser, error) {
@@ -181,12 +190,14 @@ func checkInclude(k *Key, dir string, cs *Caches) (Parser, error) {
 		// return NewInclude(dir, k.Value, allConfigs, configCaches)
 		return NewInclude(dir, k.Value, cs)
 	}
+
 	return k, nil
 }
 
 func checkContext(lopen []Parser) (Context, bool) {
 	if len(lopen) > 0 {
 		ct, isContext := lopen[0].(Context)
+
 		return ct, isContext
 	} else {
 		return nil, false

@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"net"
 	"reflect"
+	"sync"
 	"testing"
 
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
 	utilsV3 "github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/utils"
-
 	"github.com/marmotedu/errors"
 )
 
@@ -23,6 +23,7 @@ func fakeHostsResolver() utilsV3.DomainNameResolver {
 	})
 }
 
+//nolint:funlen
 func fakeProxyPassTestMainCtx() (MainContext, error) {
 	testMain, err := NewMain("C:\\test\\nginx.conf")
 	if err != nil {
@@ -111,6 +112,18 @@ func fakeProxyPassTestMainCtx() (MainContext, error) {
 								0,
 							),
 						6,
+					).
+					Insert(
+						NewContext(context_type.TypeLocation, "~ /wrong-pos-stream-proxy-pass").
+							Insert(
+								NewContext(context_type.TypeDirStreamProxyPass, "error_pos_stream_proxy_pass_2"),
+								0,
+							),
+						7,
+					).
+					Insert(
+						NewContext(context_type.TypeDirHTTPProxyPass, "http://error.pos.http.proxy.pass2"),
+						8,
 					),
 				0,
 			).
@@ -429,7 +442,7 @@ func TestHTTPProxyPass_Type(t *testing.T) {
 	}
 }
 
-func TestHTTPProxyPass_reparseParams(t *testing.T) {
+func TestHTTPProxyPass_ReparseParams(t *testing.T) {
 	utilsV3.SetDomainNameResolver(fakeHostsResolver())
 	testMain, err := fakeProxyPassTestMainCtx()
 	if err != nil {
@@ -567,7 +580,7 @@ func TestHTTPProxyPass_reparseParams(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			h := tt.fields.proxyPass
-			err := h.reparseParams()
+			err := h.ReparseParams()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("reparseParams() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -579,6 +592,96 @@ func TestHTTPProxyPass_reparseParams(t *testing.T) {
 					t.Fatal(err)
 				}
 				t.Logf("OriginalURL: '%s'\nProtocol: '%s'\nAddresses: '%s'\nURI: '%s'", h.OriginalURL, h.Protocol, aj, h.URI)
+			}
+		})
+	}
+}
+
+func TestHTTPProxyPass_PosVerify(t *testing.T) {
+	utilsV3.SetDomainNameResolver(fakeHostsResolver())
+	testMain, err := fakeProxyPassTestMainCtx()
+	if err != nil {
+		t.Fatal(err)
+	}
+	type fields struct {
+		proxyPass *HTTPProxyPass
+	}
+	tests := []struct {
+		name        string
+		fields      fields
+		wantErr     bool
+		wantErrCode int
+	}{
+		{
+			name: "http location proxy pass to an address",
+			fields: fields{
+				proxyPass: testMain.MainConfig().ChildrenPosSet().
+					QueryOne(
+						context.NewKeyWords(context_type.TypeLocation).SetRegexpMatchingValue(`baidu`),
+					).
+					QueryOne(
+						context.NewKeyWords(context_type.TypeDirHTTPProxyPass),
+					).Target().(*HTTPProxyPass),
+			},
+		},
+		{
+			name: "http location proxy pass in a limit expect",
+			fields: fields{
+				proxyPass: testMain.MainConfig().ChildrenPosSet().
+					QueryOne(
+						context.NewKeyWords(context_type.TypeLocation).SetRegexpMatchingValue(`baidu`),
+					).
+					QueryOne(
+						context.NewKeyWords(context_type.TypeDirHTTPProxyPass).SetStringMatchingValue("abc.com"),
+					).Target().(*HTTPProxyPass),
+			},
+		},
+		{
+			name: "http location proxy pass in an If context",
+			fields: fields{
+				proxyPass: testMain.MainConfig().ChildrenPosSet().
+					QueryOne(
+						context.NewKeyWords(context_type.TypeLocation).SetRegexpMatchingValue(`example`),
+					).
+					QueryOne(
+						context.NewKeyWords(context_type.TypeDirHTTPProxyPass).SetStringMatchingValue("test.cn"),
+					).Target().(*HTTPProxyPass),
+			},
+		},
+		{
+			name: "http location proxy pass with an error position",
+			fields: fields{
+				proxyPass: testMain.MainConfig().ChildrenPosSet().
+					QueryOne(
+						context.NewKeyWords(context_type.TypeDirHTTPProxyPass).SetMatchingFilter(func(targetCtx context.Context) bool {
+							return targetCtx.Value() == "proxy_pass http://error.pos.http.proxy.pass"
+						}),
+					).Target().(*HTTPProxyPass),
+			},
+			wantErr:     true,
+			wantErrCode: code.ErrV3InvalidOperation,
+		},
+		{
+			name: "http location proxy pass with an error position#2",
+			fields: fields{
+				proxyPass: testMain.MainConfig().ChildrenPosSet().
+					QueryOne(
+						context.NewKeyWords(context_type.TypeDirHTTPProxyPass).SetMatchingFilter(func(targetCtx context.Context) bool {
+							return targetCtx.Value() == "proxy_pass http://error.pos.http.proxy.pass2"
+						}),
+					).Target().(*HTTPProxyPass),
+			},
+			wantErr:     true,
+			wantErrCode: code.ErrV3InvalidOperation,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := tt.fields.proxyPass
+			if err := h.PosVerify(); (err != nil) != tt.wantErr {
+				t.Errorf("PosVerify() error = %v, wantErr %v", err, tt.wantErr)
+			} else if err != nil && tt.wantErr && !errors.IsCode(err, tt.wantErrCode) {
+				t.Errorf("PosVerify() error = %+v, wantErrCode %v", err, tt.wantErrCode)
 			}
 		})
 	}
@@ -735,7 +838,7 @@ func TestStreamProxyPass_Type(t *testing.T) {
 	}
 }
 
-func TestStreamProxyPass_reparseParams(t *testing.T) {
+func TestStreamProxyPass_ReparseParams(t *testing.T) {
 	utilsV3.SetDomainNameResolver(fakeHostsResolver())
 	testMain, err := fakeProxyPassTestMainCtx()
 	if err != nil {
@@ -798,7 +901,7 @@ func TestStreamProxyPass_reparseParams(t *testing.T) {
 			},
 		},
 		{
-			name: "http location proxy pass with an error position",
+			name: "stream proxy pass with an error position",
 			fields: fields{
 				proxyPass: testMain.MainConfig().ChildrenPosSet().
 					QueryOne(
@@ -837,7 +940,7 @@ func TestStreamProxyPass_reparseParams(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := tt.fields.proxyPass
-			err := s.reparseParams()
+			err := s.ReparseParams()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("reparseParams() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -854,36 +957,71 @@ func TestStreamProxyPass_reparseParams(t *testing.T) {
 	}
 }
 
-//func TestStreamProxyPass_setFatherVerify(t *testing.T) {
-//	type fields struct {
-//		Directive       Directive
-//		OriginalAddress string
-//		Addresses       []ProxiedAddress
-//	}
-//	type args struct {
-//		ctx context.Context
-//	}
-//	tests := []struct {
-//		name    string
-//		fields  fields
-//		args    args
-//		wantErr bool
-//	}{
-//		// TODO: Add test cases.
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			s := &StreamProxyPass{
-//				Directive:       tt.fields.Directive,
-//				OriginalAddress: tt.fields.OriginalAddress,
-//				Addresses:       tt.fields.Addresses,
-//			}
-//			if err := s.setFatherVerify(tt.args.ctx); (err != nil) != tt.wantErr {
-//				t.Errorf("setFatherVerify() error = %v, wantErr %v", err, tt.wantErr)
-//			}
-//		})
-//	}
-//}
+func TestStreamProxyPass_PosVerify(t *testing.T) {
+	utilsV3.SetDomainNameResolver(fakeHostsResolver())
+	testMain, err := fakeProxyPassTestMainCtx()
+	if err != nil {
+		t.Fatal(err)
+	}
+	type fields struct {
+		proxyPass *StreamProxyPass
+	}
+	tests := []struct {
+		name        string
+		fields      fields
+		wantErr     bool
+		wantErrCode int
+	}{
+		{
+			name: "stream proxy pass to an address",
+			fields: fields{
+				proxyPass: testMain.MainConfig().ChildrenPosSet().
+					QueryOne(
+						context.NewKeyWords(context_type.TypeStream),
+					).
+					QueryOne(
+						context.NewKeyWords(context_type.TypeDirStreamProxyPass).SetStringMatchingValue("abc.com:22"),
+					).Target().(*StreamProxyPass),
+			},
+		},
+		{
+			name: "stream proxy pass with an error position",
+			fields: fields{
+				proxyPass: testMain.MainConfig().ChildrenPosSet().
+					QueryOne(
+						context.NewKeyWords(context_type.TypeDirStreamProxyPass).SetMatchingFilter(func(targetCtx context.Context) bool {
+							return targetCtx.Value() == "proxy_pass error_pos_stream_proxy_pass"
+						}),
+					).Target().(*StreamProxyPass),
+			},
+			wantErr:     true,
+			wantErrCode: code.ErrV3InvalidOperation,
+		},
+		{
+			name: "stream proxy pass with an error position #2",
+			fields: fields{
+				proxyPass: testMain.MainConfig().ChildrenPosSet().
+					QueryOne(
+						context.NewKeyWords(context_type.TypeDirStreamProxyPass).SetMatchingFilter(func(targetCtx context.Context) bool {
+							return targetCtx.Value() == "proxy_pass error_pos_stream_proxy_pass_2"
+						}),
+					).Target().(*StreamProxyPass),
+			},
+			wantErr:     true,
+			wantErrCode: code.ErrV3InvalidOperation,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := tt.fields.proxyPass
+			if err := s.PosVerify(); (err != nil) != tt.wantErr {
+				t.Errorf("PosVerify() error = %v, wantErr %v", err, tt.wantErr)
+			} else if err != nil && tt.wantErr && !errors.IsCode(err, tt.wantErrCode) {
+				t.Errorf("PosVerify() error = %+v, wantErrCode %v", err, tt.wantErrCode)
+			}
+		})
+	}
+}
 
 func Test_parseHTTPURL(t *testing.T) {
 	type args struct {
@@ -967,6 +1105,557 @@ func Test_registerStreamProxyPassBuilder(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := registerStreamProxyPassBuilder(); (err != nil) != tt.wantErr {
 				t.Errorf("registerStreamProxyPassBuilder() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestHTTPProxyPass_MarshalJSON(t *testing.T) {
+	utilsV3.SetDomainNameResolver(fakeHostsResolver())
+	testMain, err := fakeProxyPassTestMainCtx()
+	if err != nil {
+		t.Fatal(err)
+	}
+	type fields struct {
+		proxyPass *HTTPProxyPass
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		want    []byte
+		wantErr bool
+	}{
+		{
+			name: "http location proxy pass to an address",
+			fields: fields{
+				proxyPass: testMain.MainConfig().ChildrenPosSet().
+					QueryOne(
+						context.NewKeyWords(context_type.TypeLocation).SetRegexpMatchingValue(`baidu`),
+					).
+					QueryOne(
+						context.NewKeyWords(context_type.TypeDirHTTPProxyPass),
+					).Target().(*HTTPProxyPass),
+			},
+			want: []byte(`{"enabled":true,"context-type":"dir_http_proxy_pass","value":"https://baidu.com","proxy-pass":{"original-url":"https://baidu.com","protocol":"https","addresses":[{"domain-name":"baidu.com","port":443,"ipv4-list":["10.1.11.111","10.1.12.122"],"resolve-err":null}],"uri":""}}`), //nolint:lll
+		},
+		{
+			name: "http location proxy pass with some errors",
+			fields: fields{
+				proxyPass: testMain.MainConfig().ChildrenPosSet().
+					QueryOne(
+						context.NewKeyWords(context_type.TypeLocation).SetStringMatchingValue("unknown-upstream"),
+					).
+					QueryOne(
+						context.NewKeyWords(context_type.TypeDirHTTPProxyPass),
+					).Target().(*HTTPProxyPass),
+			},
+			want: []byte("{\"enabled\":true,\"context-type\":\"dir_http_proxy_pass\",\"value\":\"http://unknown.upstream/localiptest\",\"proxy-pass\":{\"original-url\":\"http://unknown.upstream/localiptest\",\"protocol\":\"http\",\"addresses\":[{\"domain-name\":\"unknown.upstream\",\"port\":80,\"ipv4-list\":null,\"resolve-err\":{\"message\":\"Domain name resolution failed\",\"error\":\"the domain name resolution record for `unknown.upstream` does not exist\",\"code\":110020}}],\"uri\":\"/localiptest\"}}"), //nolint:lll
+		},
+		{
+			name: "http location proxy pass to upstream servers, which have some errors",
+			fields: fields{
+				proxyPass: testMain.MainConfig().ChildrenPosSet().
+					QueryOne(
+						context.NewKeyWords(context_type.TypeLocation).SetStringMatchingValue("has-unknown-server"),
+					).
+					QueryOne(
+						context.NewKeyWords(context_type.TypeDirHTTPProxyPass),
+					).Target().(*HTTPProxyPass),
+			},
+			want: []byte("{\"enabled\":true,\"context-type\":\"dir_http_proxy_pass\",\"value\":\"http://has_unknown_server/proxy/to/upstreamserver\",\"proxy-pass\":{\"original-url\":\"http://has_unknown_server/proxy/to/upstreamserver\",\"protocol\":\"http\",\"addresses\":[{\"domain-name\":\"test.cn\",\"port\":443,\"ipv4-list\":[\"10.1.12.122\",\"10.1.13.133\"],\"resolve-err\":null},{\"domain-name\":\"example.com\",\"port\":8443,\"ipv4-list\":[\"10.1.12.122\",\"10.1.13.133\"],\"resolve-err\":null},{\"domain-name\":\"127.0.0.1\",\"port\":8080,\"ipv4-list\":[\"127.0.0.1\"],\"resolve-err\":null},{\"domain-name\":\"unknown.domain\",\"port\":8080,\"ipv4-list\":null,\"resolve-err\":{\"message\":\"Domain name resolution failed\",\"error\":\"the domain name resolution record for `unknown.domain` does not exist\",\"code\":110020}}],\"uri\":\"/proxy/to/upstreamserver\"}}"), //nolint:lll
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := tt.fields.proxyPass
+			err = h.ReparseParams()
+			if err != nil {
+				t.Fatal(err)
+			}
+			got, err := h.MarshalJSON()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("MarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("MarshalJSON() got = %s, want %s", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestStreamProxyPass_MarshalJSON(t *testing.T) {
+	utilsV3.SetDomainNameResolver(fakeHostsResolver())
+	testMain, err := fakeProxyPassTestMainCtx()
+	if err != nil {
+		t.Fatal(err)
+	}
+	type fields struct {
+		proxyPass *StreamProxyPass
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		want    []byte
+		wantErr bool
+	}{
+		{
+			name: "stream proxy pass to an address",
+			fields: fields{
+				proxyPass: testMain.MainConfig().ChildrenPosSet().
+					QueryOne(
+						context.NewKeyWords(context_type.TypeStream),
+					).
+					QueryOne(
+						context.NewKeyWords(context_type.TypeDirStreamProxyPass).SetStringMatchingValue("abc.com:22"),
+					).Target().(*StreamProxyPass),
+			},
+			want: []byte(`{"enabled":true,"context-type":"dir_stream_proxy_pass","value":"abc.com:22","ProxyPass":{"original-address":"abc.com:22","addresses":[{"domain-name":"abc.com","port":22,"ipv4-list":["10.2.12.122"],"resolve-err":null}]}}`), //nolint:lll
+		},
+		{
+			name: "stream proxy pass to upstream servers, which have unknown server",
+			fields: fields{
+				proxyPass: testMain.MainConfig().ChildrenPosSet().
+					QueryOne(
+						context.NewKeyWords(context_type.TypeStream),
+					).
+					QueryOne(
+						context.NewKeyWords(context_type.TypeDirStreamProxyPass).SetStringMatchingValue("has_unknown_server"),
+					).Target().(*StreamProxyPass),
+			},
+			want: []byte("{\"enabled\":true,\"context-type\":\"dir_stream_proxy_pass\",\"value\":\"has_unknown_server\",\"ProxyPass\":{\"original-address\":\"has_unknown_server\",\"addresses\":[{\"domain-name\":\"test.cn\",\"port\":22,\"ipv4-list\":[\"10.1.12.122\",\"10.1.13.133\"],\"resolve-err\":null},{\"domain-name\":\"example.com\",\"port\":22,\"ipv4-list\":[\"10.1.12.122\",\"10.1.13.133\"],\"resolve-err\":null},{\"domain-name\":\"127.0.0.1\",\"port\":123,\"ipv4-list\":[\"127.0.0.1\"],\"resolve-err\":null},{\"domain-name\":\"unknown.domain\",\"port\":8080,\"ipv4-list\":null,\"resolve-err\":{\"message\":\"Domain name resolution failed\",\"error\":\"the domain name resolution record for `unknown.domain` does not exist\",\"code\":110020}}]}}"), //nolint:lll
+		},
+		{
+			name: "stream proxy pass to an address, which with an unknown domain name",
+			fields: fields{
+				proxyPass: testMain.MainConfig().ChildrenPosSet().
+					QueryOne(
+						context.NewKeyWords(context_type.TypeStream),
+					).
+					QueryOne(
+						context.NewKeyWords(context_type.TypeDirStreamProxyPass).SetStringMatchingValue("unknown.domain"),
+					).Target().(*StreamProxyPass),
+			},
+			want: []byte("{\"enabled\":true,\"context-type\":\"dir_stream_proxy_pass\",\"value\":\"unknown.domain:9876\",\"ProxyPass\":{\"original-address\":\"unknown.domain:9876\",\"addresses\":[{\"domain-name\":\"unknown.domain\",\"port\":9876,\"ipv4-list\":null,\"resolve-err\":{\"message\":\"Domain name resolution failed\",\"error\":\"the domain name resolution record for `unknown.domain` does not exist\",\"code\":110020}}]}}"), //nolint:lll
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := tt.fields.proxyPass
+			err = s.ReparseParams()
+			if err != nil {
+				t.Fatal(err)
+			}
+			got, err := s.MarshalJSON()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("MarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("MarshalJSON() got = %s, want %s", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_tmpProxyPass_verifyAndInitTo(t1 *testing.T) {
+	utilsV3.SetDomainNameResolver(fakeHostsResolver())
+	testMain, err := fakeProxyPassTestMainCtx()
+	if err != nil {
+		t1.Fatal(err)
+	}
+	initializedTmp := &tmpProxyPass{
+		isInitialized: true,
+		rwLock:        new(sync.RWMutex),
+	}
+	excludedTmp := &tmpProxyPass{
+		isInitialized: false,
+		rwLock:        new(sync.RWMutex),
+	}
+	httpTmp := &tmpProxyPass{
+		Directive: Directive{
+			enabled:       true,
+			Name:          "proxy_pass",
+			Params:        "https://example.com",
+			fatherContext: context.NullContext(),
+		},
+		rwLock: new(sync.RWMutex),
+	}
+	httpWrongPosTmp := &tmpProxyPass{
+		Directive: Directive{
+			enabled:       true,
+			Name:          "proxy_pass",
+			Params:        "https://wrong.pos",
+			fatherContext: context.NullContext(),
+		},
+		rwLock: new(sync.RWMutex),
+	}
+	streamTmp := &tmpProxyPass{
+		Directive: Directive{
+			enabled:       true,
+			Name:          "proxy_pass",
+			Params:        "example.com",
+			fatherContext: context.NullContext(),
+		},
+		rwLock: new(sync.RWMutex),
+	}
+	streamWrongPosTmp := &tmpProxyPass{
+		Directive: Directive{
+			enabled:       true,
+			Name:          "proxy_pass",
+			Params:        "wrong.pos",
+			fatherContext: context.NullContext(),
+		},
+		rwLock: new(sync.RWMutex),
+	}
+	wrongTmp := &tmpProxyPass{
+		Directive: Directive{
+			enabled:       true,
+			Name:          "proxy_pass",
+			Params:        "unknownProtocol://example.com",
+			fatherContext: context.NullContext(),
+		},
+		rwLock: new(sync.RWMutex),
+	}
+	invalidOperatedTmp := &tmpProxyPass{
+		Directive: Directive{
+			enabled:       true,
+			Name:          "proxy_pass",
+			Params:        "https://example.com",
+			fatherContext: context.NullContext(),
+		},
+		rwLock: new(sync.RWMutex),
+	}
+	err = testMain.AddConfig(
+		NewContext(context_type.TypeConfig, "excluded.conf").
+			Insert(
+				NewContext(context_type.TypeServer, "").
+					Insert(
+						NewContext(context_type.TypeLocation, "/test").
+							Insert(excludedTmp, 0),
+						0,
+					),
+				0,
+			).(*Config),
+	)
+	if err != nil {
+		t1.Fatal(err)
+	}
+	err = testMain.AddConfig(
+		NewContext(context_type.TypeConfig, "http_proxy_pass.conf").
+			Insert(httpTmp, 0).(*Config),
+	)
+	if err != nil {
+		t1.Fatal(err)
+	}
+	testMain.MainConfig().ChildrenPosSet().QueryOne(context.NewKeyWords(context_type.TypeHttp)).
+		QueryOne(context.NewKeyWords(context_type.TypeServer)).Target().
+		Insert(
+			NewContext(context_type.TypeLocation, "~ /included-proxy-pass").
+				Insert(
+					NewContext(context_type.TypeIf, "( $request_uri =~ included-proxy-pass )").
+						Insert(
+							NewContext(context_type.TypeInclude, "http_proxy_pass.conf"),
+							0,
+						),
+					0,
+				),
+			0,
+		)
+
+	testMain.MainConfig().ChildrenPosSet().QueryOne(context.NewKeyWords(context_type.TypeHttp)).Target().
+		Insert(httpWrongPosTmp, 0)
+
+	testMain.MainConfig().ChildrenPosSet().QueryOne(context.NewKeyWords(context_type.TypeStream)).Target().
+		Insert(
+			NewContext(context_type.TypeServer, "").
+				Insert(streamTmp, 0),
+			0,
+		)
+
+	testMain.MainConfig().ChildrenPosSet().QueryOne(context.NewKeyWords(context_type.TypeStream)).Target().
+		Insert(streamWrongPosTmp, 0)
+
+	loc := NewContext(context_type.TypeLocation, "~ /invalid-operated-proxy-pass").
+		Insert(NewContext(context_type.TypeComment, "stack"), 0)
+	testMain.MainConfig().ChildrenPosSet().QueryOne(context.NewKeyWords(context_type.TypeHttp)).
+		QueryOne(context.NewKeyWords(context_type.TypeServer)).Target().
+		Insert(
+			NewContext(context_type.TypeLocation, "/wrong-url").
+				Insert(wrongTmp, 0),
+			0,
+		).
+		Insert(loc, 1)
+	invalidOperatedTmp.fatherContext = loc
+
+	type fields struct {
+		proxyPass *tmpProxyPass
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   context.Context
+	}{
+		{
+			name: "initialized tmpProxyPass",
+			fields: fields{
+				proxyPass: initializedTmp,
+			},
+			want: context.ErrContext(errors.New("ProxyPass is already initialized")),
+		},
+		{
+			name: "excluded to main context",
+			fields: fields{
+				proxyPass: excludedTmp,
+			},
+			want: excludedTmp,
+		},
+		{
+			name: "http proxy pass",
+			fields: fields{
+				proxyPass: httpTmp,
+			},
+			want: &HTTPProxyPass{Directive: httpTmp.Directive},
+		},
+		{
+			name: "wrong pos http proxy pass",
+			fields: fields{
+				proxyPass: httpWrongPosTmp,
+			},
+			want: context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "Father context type not supported."+
+				" Only the following types are supported: `Location`, `If` in `Location`, `Limit_except`")),
+		},
+		{
+			name: "stream proxy pass",
+			fields: fields{
+				proxyPass: streamTmp,
+			},
+			want: &StreamProxyPass{Directive: streamTmp.Directive},
+		},
+		{
+			name: "wrong pos stream proxy pass",
+			fields: fields{
+				proxyPass: streamWrongPosTmp,
+			},
+			want: context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "Father context type not supported."+
+				" Only the following types are supported: `Server` which is in `Stream`")),
+		},
+	}
+	for _, tt := range tests {
+		t1.Run(tt.name, func(t1 *testing.T) {
+			t := tt.fields.proxyPass
+			if got := t.verifyAndInitTo(); reflect.DeepEqual(got, tt.want) {
+			} else if got.Error() == nil && tt.want.Error() == nil && got.Value() == tt.want.Value() {
+			} else if got.Error() != nil && tt.want.Error() != nil {
+				if got.Error().Error() != tt.want.Error().Error() {
+					t1.Errorf("verifyAndInitTo().Error() = %#v, want ErrContext %#v", got.Error(), tt.want.Error())
+				}
+			} else {
+				t1.Errorf("verifyAndInitTo() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_tmpProxyPass_MarshalJSON(t1 *testing.T) {
+	utilsV3.SetDomainNameResolver(fakeHostsResolver())
+	testMain, err := fakeProxyPassTestMainCtx()
+	if err != nil {
+		t1.Fatal(err)
+	}
+	initializedTmp := &tmpProxyPass{
+		isInitialized: true,
+		rwLock:        new(sync.RWMutex),
+	}
+	excludedTmp := &tmpProxyPass{
+		isInitialized: false,
+		Directive: Directive{
+			enabled: true,
+			Name:    "proxy_pass",
+			Params:  "https://example.com",
+		},
+		rwLock: new(sync.RWMutex),
+	}
+	httpTmp := &tmpProxyPass{
+		Directive: Directive{
+			enabled:       true,
+			Name:          "proxy_pass",
+			Params:        "https://example.com",
+			fatherContext: context.NullContext(),
+		},
+		rwLock: new(sync.RWMutex),
+	}
+	httpWrongPosTmp := &tmpProxyPass{
+		Directive: Directive{
+			enabled:       true,
+			Name:          "proxy_pass",
+			Params:        "https://wrong.pos",
+			fatherContext: context.NullContext(),
+		},
+		rwLock: new(sync.RWMutex),
+	}
+	streamTmp := &tmpProxyPass{
+		Directive: Directive{
+			enabled:       true,
+			Name:          "proxy_pass",
+			Params:        "example.com",
+			fatherContext: context.NullContext(),
+		},
+		rwLock: new(sync.RWMutex),
+	}
+	streamWrongPosTmp := &tmpProxyPass{
+		Directive: Directive{
+			enabled:       true,
+			Name:          "proxy_pass",
+			Params:        "wrong.pos",
+			fatherContext: context.NullContext(),
+		},
+		rwLock: new(sync.RWMutex),
+	}
+	wrongTmp := &tmpProxyPass{
+		Directive: Directive{
+			enabled:       true,
+			Name:          "proxy_pass",
+			Params:        "unknownProtocol://example.com",
+			fatherContext: context.NullContext(),
+		},
+		rwLock: new(sync.RWMutex),
+	}
+	invalidOperatedTmp := &tmpProxyPass{
+		Directive: Directive{
+			enabled:       true,
+			Name:          "proxy_pass",
+			Params:        "https://example.com",
+			fatherContext: context.NullContext(),
+		},
+		rwLock: new(sync.RWMutex),
+	}
+	err = testMain.AddConfig(
+		NewContext(context_type.TypeConfig, "excluded.conf").
+			Insert(
+				NewContext(context_type.TypeServer, "").
+					Insert(
+						NewContext(context_type.TypeLocation, "/test").
+							Insert(excludedTmp, 0),
+						0,
+					),
+				0,
+			).(*Config),
+	)
+	if err != nil {
+		t1.Fatal(err)
+	}
+	err = testMain.AddConfig(
+		NewContext(context_type.TypeConfig, "http_proxy_pass.conf").
+			Insert(httpTmp, 0).(*Config),
+	)
+	if err != nil {
+		t1.Fatal(err)
+	}
+	testMain.MainConfig().ChildrenPosSet().QueryOne(context.NewKeyWords(context_type.TypeHttp)).
+		QueryOne(context.NewKeyWords(context_type.TypeServer)).Target().
+		Insert(
+			NewContext(context_type.TypeLocation, "~ /included-proxy-pass").
+				Insert(
+					NewContext(context_type.TypeIf, "( $request_uri =~ included-proxy-pass )").
+						Insert(
+							NewContext(context_type.TypeInclude, "http_proxy_pass.conf"),
+							0,
+						),
+					0,
+				),
+			0,
+		)
+
+	testMain.MainConfig().ChildrenPosSet().QueryOne(context.NewKeyWords(context_type.TypeHttp)).Target().
+		Insert(httpWrongPosTmp, 0)
+
+	testMain.MainConfig().ChildrenPosSet().QueryOne(context.NewKeyWords(context_type.TypeStream)).Target().
+		Insert(
+			NewContext(context_type.TypeServer, "").
+				Insert(streamTmp, 0),
+			0,
+		)
+
+	testMain.MainConfig().ChildrenPosSet().QueryOne(context.NewKeyWords(context_type.TypeStream)).Target().
+		Insert(streamWrongPosTmp, 0)
+
+	loc := NewContext(context_type.TypeLocation, "~ /invalid-operated-proxy-pass").
+		Insert(NewContext(context_type.TypeComment, "stack"), 0)
+	testMain.MainConfig().ChildrenPosSet().QueryOne(context.NewKeyWords(context_type.TypeHttp)).
+		QueryOne(context.NewKeyWords(context_type.TypeServer)).Target().
+		Insert(
+			NewContext(context_type.TypeLocation, "/wrong-url").
+				Insert(wrongTmp, 0),
+			0,
+		).
+		Insert(loc, 1)
+	invalidOperatedTmp.fatherContext = loc
+
+	type fields struct {
+		proxyPass *tmpProxyPass
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		want    []byte
+		wantErr bool
+	}{
+		{
+			name: "initialized tmpProxyPass",
+			fields: fields{
+				proxyPass: initializedTmp,
+			},
+			wantErr: true,
+		},
+		{
+			name: "excluded to main context",
+			fields: fields{
+				proxyPass: excludedTmp,
+			},
+			want: []byte("{\"enabled\":true,\"context-type\":\"directive\",\"value\":\"proxy_pass https://example.com\"}"),
+		},
+		{
+			name: "http proxy pass",
+			fields: fields{
+				proxyPass: httpTmp,
+			},
+			want: []byte("{\"enabled\":true,\"context-type\":\"dir_http_proxy_pass\",\"value\":\"https://example.com\",\"proxy-pass\":{\"original-url\":\"\",\"protocol\":\"\",\"addresses\":null,\"uri\":\"\"}}"),
+		},
+		{
+			name: "wrong pos http proxy pass",
+			fields: fields{
+				proxyPass: httpWrongPosTmp,
+			},
+			wantErr: true,
+		},
+		{
+			name: "stream proxy pass",
+			fields: fields{
+				proxyPass: streamTmp,
+			},
+			want: []byte("{\"enabled\":true,\"context-type\":\"dir_stream_proxy_pass\",\"value\":\"example.com\",\"ProxyPass\":{\"original-address\":\"\",\"addresses\":null}}"),
+		},
+		{
+			name: "wrong pos stream proxy pass",
+			fields: fields{
+				proxyPass: streamWrongPosTmp,
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t1.Run(tt.name, func(t1 *testing.T) {
+			t := tt.fields.proxyPass
+			got, err := t.MarshalJSON()
+			if (err != nil) != tt.wantErr {
+				t1.Errorf("MarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t1.Errorf("MarshalJSON() got = %s, want %s", got, tt.want)
 			}
 		})
 	}

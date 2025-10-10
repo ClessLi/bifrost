@@ -21,6 +21,7 @@ func (k *Key) string(_ *Caches, deep int) []string {
 		//} else if !inString(k.Value, "\"") && (inString(k.Value, ";") || inString(k.Value, "#")) {
 		//	return []string{k.Name + " \"" + k.Value + "\";\n"}
 	}
+
 	return []string{ind + k.Name + " " + k.Value + ";\n"}
 }
 
@@ -30,6 +31,7 @@ func (k *Key) QueryAll(pType parserType, isRec bool, values ...string) []Parser 
 		return nil
 	}
 	kw.IsRec = isRec
+
 	return k.QueryAllByKeywords(*kw)
 }
 
@@ -37,6 +39,7 @@ func (k *Key) QueryAllByKeywords(kw Keywords) (parsers []Parser) {
 	if parser := k.QueryByKeywords(kw); parser != nil {
 		parsers = append(parsers, parser)
 	}
+
 	return
 }
 
@@ -46,6 +49,7 @@ func (k *Key) Query(pType parserType, isRec bool, values ...string) Parser {
 		return nil
 	}
 	kw.IsRec = isRec
+
 	return k.QueryByKeywords(*kw)
 }
 
@@ -63,6 +67,7 @@ func (k *Key) QueryByKeywords(kw Keywords) (parser Parser) {
 			parser = nil
 		}
 	}
+
 	return
 }
 

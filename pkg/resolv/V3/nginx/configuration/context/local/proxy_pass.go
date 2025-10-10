@@ -1,9 +1,11 @@
 package local
 
 import (
+	"encoding/json"
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
@@ -25,11 +27,17 @@ var (
 	upstreamSrvDirMustCompile     = regexp.MustCompile(`^server\s+(\S+)`)
 )
 
+type ProxyPass interface {
+	context.Context
+	PosVerify() error
+	ReparseParams() error
+}
+
 type ProxiedAddress struct {
-	DomainName string
-	Port       uint16
-	IPv4s      []string
-	ResolveErr error
+	DomainName string     `json:"domain-name"`
+	Port       uint16     `json:"port"`
+	IPv4s      []string   `json:"ipv4-list"`
+	ResolveErr *JSONError `json:"resolve-err"`
 }
 
 type HTTPProxyPass struct {
@@ -38,6 +46,30 @@ type HTTPProxyPass struct {
 	Protocol    string
 	Addresses   []ProxiedAddress
 	URI         string
+}
+
+func (h *HTTPProxyPass) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Enabled     bool                     `json:"enabled,omitempty"`
+		ContextType context_type.ContextType `json:"context-type"`
+		Value       string                   `json:"value"`
+		ProxyPass   struct {
+			OriginalURL string           `json:"original-url"`
+			Protocol    string           `json:"protocol"`
+			Addresses   []ProxiedAddress `json:"addresses"`
+			URI         string           `json:"uri"`
+		} `json:"proxy-pass,omitempty"`
+	}{
+		Enabled:     h.IsEnabled(),
+		ContextType: context_type.TypeDirHTTPProxyPass,
+		Value:       h.Params,
+		ProxyPass: struct {
+			OriginalURL string           `json:"original-url"`
+			Protocol    string           `json:"protocol"`
+			Addresses   []ProxiedAddress `json:"addresses"`
+			URI         string           `json:"uri"`
+		}{OriginalURL: h.OriginalURL, Protocol: h.Protocol, Addresses: h.Addresses, URI: h.URI},
+	})
 }
 
 func (h *HTTPProxyPass) Clone() context.Context {
@@ -75,7 +107,7 @@ func (h *HTTPProxyPass) SetValue(v string) (err error) {
 		return errors.WithCode(code.ErrV3InvalidOperation, "the set value does not conform to the syntax rules, the syntax is `proxy_pass <URL>`")
 	}
 
-	return h.reparseParams()
+	return h.ReparseParams()
 }
 
 func (h *HTTPProxyPass) SetFather(ctx context.Context) error {
@@ -91,7 +123,11 @@ func (h *HTTPProxyPass) Type() context_type.ContextType {
 	return context_type.TypeDirHTTPProxyPass
 }
 
-func (h *HTTPProxyPass) reparseParams() (err error) {
+func (h *HTTPProxyPass) ReparseParams() (err error) {
+	err = h.PosVerify()
+	if err != nil {
+		return err
+	}
 	var (
 		defaultProxyPassPort uint16
 		proxiedAddrs         []ProxiedAddress
@@ -106,9 +142,10 @@ func (h *HTTPProxyPass) reparseParams() (err error) {
 	}
 
 	// protocol must be "http" or "https"
-	if protocol == "http" {
+	switch protocol {
+	case "http":
 		defaultProxyPassPort = 80
-	} else if protocol == "https" {
+	case "https":
 		defaultProxyPassPort = 443
 	}
 
@@ -158,7 +195,7 @@ func (h *HTTPProxyPass) reparseParams() (err error) {
 			DomainName: host,
 			Port:       port,
 			IPv4s:      ipv4s,
-			ResolveErr: err,
+			ResolveErr: ToJSONError(err),
 		})
 
 		return nil
@@ -208,7 +245,7 @@ func (h *HTTPProxyPass) reparseParams() (err error) {
 						DomainName: srvHost,
 						Port:       srvPort,
 						IPv4s:      srvIPv4s,
-						ResolveErr: err,
+						ResolveErr: ToJSONError(err),
 					})
 					existAddrMap[addr] = true
 				}
@@ -260,18 +297,42 @@ func parseHTTPURL(url string) (protocol, host, uri string, port uint16, err erro
 	return protocol, host, uri, port, err
 }
 
-//func (h *HTTPProxyPass) setFatherVerify(ctx context.Context) error {
-//	// TODO
-//	// the father Context must in: Location, If in Location, Limit_except
-//	if fatherT := ctx.Type(); fatherT != context_type.TypeLocation &&
-//		fatherT != context_type.TypeLimitExcept &&
-//		(fatherT != context_type.TypeIf || ctx.Father().Type() != context_type.TypeLocation) {
-//		return errors.WithCode(code.ErrV3InvalidOperation, "Father context type not supported."+
-//			" Only the following types are supported: `Location`, `If` in `Location`, `Limit_except`")
-//	}
-//
-//	return nil
-//}
+func (h *HTTPProxyPass) PosVerify() error {
+	// the father Context must in: Location, If in Location, Limit_except
+	notMatchedError := errors.WithCode(code.ErrV3InvalidOperation, "Father context type not supported."+
+		" Only the following types are supported: `Location`, `If` in `Location`, `Limit_except`")
+	fatherPoses := FatherPosSetWithoutInclude(h)
+	if err := fatherPoses.Error(); err != nil {
+		if errors.IsCode(err, code.ErrV3CannotQueryFatherPosSetFromMainContext) {
+			return notMatchedError
+		}
+		return err
+	}
+	return fatherPoses.Map(func(pos context.Pos) (context.Pos, error) {
+		switch pos.Target().Type() {
+		case context_type.TypeLocation:
+			return pos, nil
+		case context_type.TypeLimitExcept:
+			return pos, nil
+		case context_type.TypeIf:
+			subFatherPoses := FatherPosSetWithoutInclude(pos.Target())
+			if err := subFatherPoses.Error(); err != nil {
+				if errors.IsCode(err, code.ErrV3CannotQueryFatherPosSetFromMainContext) {
+					return pos, notMatchedError
+				}
+				return pos, err
+			}
+			return pos, subFatherPoses.Map(func(pos context.Pos) (context.Pos, error) {
+				if pos.Target().Type() != context_type.TypeLocation {
+					return pos, notMatchedError
+				}
+				return pos, nil
+			}).Error()
+		default:
+			return pos, notMatchedError
+		}
+	}).Error()
+}
 
 func registerHTTPProxyPassBuilder() error {
 	builderMap[context_type.TypeDirHTTPProxyPass] = func(value string) context.Context {
@@ -289,6 +350,26 @@ type StreamProxyPass struct {
 	Directive
 	OriginalAddress string
 	Addresses       []ProxiedAddress
+}
+
+func (s *StreamProxyPass) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Enabled     bool                     `json:"enabled,omitempty"`
+		ContextType context_type.ContextType `json:"context-type"`
+		Value       string                   `json:"value"`
+		ProxyPass   struct {
+			OriginalAddress string           `json:"original-address"`
+			Addresses       []ProxiedAddress `json:"addresses"`
+		}
+	}{
+		Enabled:     s.IsEnabled(),
+		ContextType: context_type.TypeDirStreamProxyPass,
+		Value:       s.Params,
+		ProxyPass: struct {
+			OriginalAddress string           `json:"original-address"`
+			Addresses       []ProxiedAddress `json:"addresses"`
+		}{OriginalAddress: s.OriginalAddress, Addresses: s.Addresses},
+	})
 }
 
 func (s *StreamProxyPass) Clone() context.Context {
@@ -324,7 +405,7 @@ func (s *StreamProxyPass) SetValue(v string) (err error) {
 		return errors.WithCode(code.ErrV3InvalidOperation, "the set value does not conform to the syntax rules, the syntax is `proxy_pass <Address>`")
 	}
 
-	return s.reparseParams()
+	return s.ReparseParams()
 }
 
 func (s *StreamProxyPass) SetFather(ctx context.Context) error {
@@ -340,7 +421,11 @@ func (s *StreamProxyPass) Type() context_type.ContextType {
 	return context_type.TypeDirStreamProxyPass
 }
 
-func (s *StreamProxyPass) reparseParams() (err error) {
+func (s *StreamProxyPass) ReparseParams() (err error) {
+	err = s.PosVerify()
+	if err != nil {
+		return err
+	}
 	var (
 		host, upstreamServer string
 		port                 uint16
@@ -386,7 +471,7 @@ func (s *StreamProxyPass) reparseParams() (err error) {
 			DomainName: host,
 			Port:       port,
 			IPv4s:      ipv4s,
-			ResolveErr: err,
+			ResolveErr: ToJSONError(err),
 		})
 
 		return nil
@@ -445,7 +530,7 @@ func (s *StreamProxyPass) reparseParams() (err error) {
 							DomainName: srvHost,
 							Port:       srvPort,
 							IPv4s:      ipv4s,
-							ResolveErr: err,
+							ResolveErr: ToJSONError(err),
 						})
 						existAddrMap[addr] = true
 					}
@@ -456,15 +541,33 @@ func (s *StreamProxyPass) reparseParams() (err error) {
 		).Error()
 }
 
-//func (s *StreamProxyPass) setFatherVerify(ctx context.Context) error {
-//	// the set father Context must be Server in Stream
-//  // TODO
-//	if ctx.Type() != context_type.TypeServer && ctx.Father().Type() != context_type.TypeStream {
-//		return errors.WithCode(code.ErrV3InvalidOperation, "Father context type not supported. Only the following types are supported: `Server` which is in `Stream`")
-//	}
-//
-//	return nil
-//}
+func (s *StreamProxyPass) PosVerify() error {
+	// return nil, if itself is not enabled
+	if !s.enabled {
+		return nil
+	}
+	// the set father Context must be Server in Stream
+	notMatchedError := errors.WithCode(code.ErrV3InvalidOperation, "Father context type not supported."+
+		" Only the following types are supported: `Server` which is in `Stream`")
+	fatherPoses := FatherPosSetWithoutInclude(s)
+	if err := fatherPoses.Error(); err != nil {
+		if errors.IsCode(err, code.ErrV3CannotQueryFatherPosSetFromMainContext) {
+			return notMatchedError
+		}
+		return err
+	}
+	return fatherPoses.Map(func(pos context.Pos) (context.Pos, error) {
+		if pos.Target().Type() != context_type.TypeServer {
+			return pos, notMatchedError
+		}
+		return pos, FatherPosSetWithoutInclude(pos.Target()).Map(func(pos context.Pos) (context.Pos, error) {
+			if pos.Target().Type() != context_type.TypeStream {
+				return pos, notMatchedError
+			}
+			return pos, nil
+		}).Error()
+	}).Error()
+}
 
 func registerStreamProxyPassBuilder() error {
 	builderMap[context_type.TypeDirStreamProxyPass] = func(value string) context.Context {
@@ -478,6 +581,112 @@ func registerStreamProxyPassBuilder() error {
 	return nil
 }
 
+type tmpProxyPass struct {
+	Directive
+	isInitialized bool
+	rwLock        *sync.RWMutex
+}
+
+func (t *tmpProxyPass) MarshalJSON() ([]byte, error) {
+	// initialize before marshaling
+	p := t.verifyAndInitTo()
+	if err := p.Error(); err != nil {
+		return nil, err
+	}
+	// result marshaled data of Directive, when it has not been initialized.
+	if !t.isInitialized {
+		return t.Directive.MarshalJSON()
+	}
+	return json.Marshal(p)
+}
+
+func (t *tmpProxyPass) verifyAndInitTo() context.Context {
+	t.rwLock.Lock()
+	defer t.rwLock.Unlock()
+
+	if t.isInitialized {
+		return context.ErrContext(errors.New("ProxyPass is already initialized"))
+	}
+
+	// if tmpProxyPass has not been included into the MainContext, skip initializing
+	if t.fatherContext == nil || !errors.IsCode(context.SetPos(t.fatherContext, 0).
+		QueryAll(
+			context.NewKeyWords(context_type.TypeMain).
+				SetIsToLeafQuery(false),
+		).Error(), code.ErrV3CannotQueryFatherPosSetFromMainContext) {
+		return t
+	}
+
+	// verify ProxyPass
+	var p ProxyPass
+
+	var verifyErr error
+	if dirHTTPProxyPassMustCompile.MatchString(t.Value()) { //nolint:nestif
+		hp := &HTTPProxyPass{Directive: t.Directive}
+		verifyErr = hp.PosVerify()
+		if verifyErr == nil {
+			p = hp
+		}
+	}
+	if p == nil && dirStreamProxyPassMustCompile.MatchString(t.Value()) {
+		sp := &StreamProxyPass{Directive: t.Directive}
+		verifyErr = sp.PosVerify()
+		if verifyErr == nil {
+			p = sp
+		}
+	}
+
+	if verifyErr != nil {
+		return context.ErrContext(verifyErr)
+	} else if p == nil {
+		return context.ErrContext(errors.Errorf("invalid value `%s`", t.Value()))
+	}
+
+	// initializing ProxyPass instance
+	for i, pos := range t.fatherContext.ChildrenPosSet().List() {
+		if pos.Target() == t {
+			c := t.fatherContext.Modify(p, i)
+			if c.Error() != nil {
+				return c
+			}
+			t.isInitialized = true
+			return p
+		}
+	}
+	return context.ErrContext(errors.New("failed to initialize proxy pass"))
+}
+
+func (t *tmpProxyPass) PosVerify() error {
+	return t.verifyAndInitTo().Error()
+}
+
+func (t *tmpProxyPass) ReparseParams() error {
+	p := t.verifyAndInitTo()
+	if err := p.Error(); err != nil {
+		return err
+	}
+	if p != t {
+		return p.(ProxyPass).ReparseParams()
+	}
+	return nil
+}
+
+func (t *tmpProxyPass) SetFather(ctx context.Context) error {
+	return t.Directive.SetFather(ctx)
+}
+
+func (t *tmpProxyPass) Type() context_type.ContextType {
+	return context_type.TypeDirUninitializedProxyPass
+}
+
+func registerTmpProxyPassBuilder() error {
+	builderMap[context_type.TypeDirUninitializedProxyPass] = func(value string) context.Context {
+		return context.ErrContext(errors.New("cannot build a Directive of UninitializedProxyPass"))
+	}
+
+	return nil
+}
+
 func registerProxyPassParseFunc() error {
 	if inStackParseFuncMap[context_type.TypeDirective] == nil {
 		err := registerDirectiveParseFunc()
@@ -485,17 +694,21 @@ func registerProxyPassParseFunc() error {
 			return err
 		}
 	}
-	dirBuilder := inStackParseFuncMap[context_type.TypeDirective]
+	dirBuilder, ok := inStackParseFuncMap[context_type.TypeDirective]
+	if !ok {
+		return errors.New("directive parse function is not found in stack parse function map")
+	}
 	inStackParseFuncMap[context_type.TypeDirective] = func(data []byte, idx *int) context.Context {
 		dir := dirBuilder(data, idx)
 		if dir == context.NullContext() {
 			return dir
 		}
 		if dir.Type() == context_type.TypeDirective {
-			if dirHTTPProxyPassMustCompile.MatchString(dir.Value()) { //nolint:nestif
-				return &StreamProxyPass{Directive: *dir.(*Directive)}
-			} else if dirStreamProxyPassMustCompile.MatchString(dir.Value()) { //nolint:nestif
-				return &HTTPProxyPass{Directive: *dir.(*Directive)}
+			if dirHTTPProxyPassMustCompile.MatchString(dir.Value()) || dirStreamProxyPassMustCompile.MatchString(dir.Value()) { //nolint:nestif
+				return &tmpProxyPass{
+					Directive: *dir.(*Directive),
+					rwLock:    new(sync.RWMutex),
+				}
 			}
 		}
 

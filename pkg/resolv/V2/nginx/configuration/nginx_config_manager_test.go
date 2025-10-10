@@ -15,6 +15,7 @@ func exampleNewConfigManager() (*configManager, error) {
 		return nil, err
 	}
 	manager := NewNginxConfigurationManager(loader.NewLoader(), c, ".", "", 1, 7, new(sync.RWMutex))
+
 	return manager.(*configManager), nil
 }
 

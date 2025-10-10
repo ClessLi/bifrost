@@ -33,6 +33,56 @@ func (c *Config) isInGraph() bool {
 	return err == nil
 }
 
+func (c *Config) FatherPosSet() context.PosSet {
+	if c.isInGraph() {
+		// return ErrPosSet, which is result of the MainContext's FatherPosSet(), if config itself is main config
+		mainCtx, err := c.mainContext()
+		if err == nil && mainCtx.MainConfig() == c {
+			return mainCtx.FatherPosSet()
+		}
+
+		// return father Include pos list
+		fatherIncludePosSet := context.NewPosSet()
+		edges, err := mainCtx.graph().(*configGraph).graph.Edges()
+		if err != nil {
+			return context.ErrPosSet(err)
+		}
+
+		for _, edge := range edges {
+			if edge.Target == configHash(c) {
+				fc, err := mainCtx.GetConfig(edge.Source)
+				if err != nil {
+					return context.ErrPosSet(err)
+				}
+				fatherIncludePosSet.AppendWithPosSet(
+					fc.ChildrenPosSet().QueryAll(
+						context.NewKeyWords(context_type.TypeInclude),
+					).Filter(func(pos context.Pos) bool {
+						t := pos.Target()
+						i, ok := t.(*Include)
+						if !ok {
+							return false
+						}
+
+						i.loadLocker.Lock()
+						defer i.loadLocker.Unlock()
+						for _, ic := range i.snapshot.includedConfigs {
+							if ic == c {
+								return true
+							}
+						}
+						return false
+					}),
+				)
+			}
+		}
+
+		return fatherIncludePosSet
+	}
+
+	return context.NewPosSet()
+}
+
 func (c *Config) Clone() context.Context {
 	clone := NewContext(context_type.TypeConfig, c.ContextValue)
 	if !c.Enabled {
@@ -79,9 +129,7 @@ func (c *Config) ConfigLines(isDumping bool) ([]string, error) {
 				continue
 			}
 
-			for _, cline := range clines {
-				lines = append(lines, cline)
-			}
+			lines = append(lines, clines...)
 		}
 	}
 
@@ -145,6 +193,7 @@ type ConfigGraph interface {
 	cleanupGraph() error
 	renderGraph() error
 	rerenderGraph() error
+
 	AddEdge(src, dst *Config) error
 	RemoveEdge(src, dst *Config, keepDst bool) error
 	Topology() []*Config
@@ -224,7 +273,7 @@ func (c *configGraph) checkOperatedVertex(v *Config) error {
 		return errors.WithCode(code.ErrV3InvalidContext, "%s config is in another config graph", configHash(v))
 	}
 	if v.ConfigPath != nil {
-		if _, ok := v.ConfigPath.(*context.RelConfigPath); ok && v.ConfigPath.BaseDir() != c.MainConfig().BaseDir() {
+		if _, ok := v.ConfigPath.(*context.RelConfigPath); ok && v.BaseDir() != c.MainConfig().BaseDir() {
 			return errors.WithCode(code.ErrV3InvalidContext,
 				"he relative target directory(%s) of the included configuration file does not match the directory(%s) where the main configuration file is located",
 				v.BaseDir(), c.MainConfig().BaseDir())

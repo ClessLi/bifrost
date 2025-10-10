@@ -78,6 +78,10 @@ func (e *ErrorContext) Father() Context {
 	return e.AppendError(ErrGetFatherFromErrorContext)
 }
 
+func (e *ErrorContext) FatherPosSet() PosSet {
+	return ErrPosSet(e.AppendError(ErrGetFatherFromErrorContext).Error())
+}
+
 func (e *ErrorContext) Child(idx int) Context {
 	return e.AppendError(ErrGetChildFromErrorContext)
 }

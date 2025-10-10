@@ -47,6 +47,24 @@ func (d *Directive) Father() context.Context {
 	return d.fatherContext
 }
 
+func (d *Directive) FatherPosSet() context.PosSet {
+	if d.fatherContext.Type() == context_type.TypeConfig || d.fatherContext.Type() == context_type.TypeMain {
+		return d.fatherContext.FatherPosSet()
+	}
+	fatherPoses := context.NewPosSet()
+	matched := false
+	d.fatherContext.Father().ChildrenPosSet().Map(func(pos context.Pos) (context.Pos, error) {
+		if !matched && pos.Target() == d.fatherContext {
+			matched = true
+			fatherPoses.Append(pos)
+		}
+
+		return pos, nil
+	})
+
+	return fatherPoses
+}
+
 func (d *Directive) Child(idx int) context.Context {
 	return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "directive has no child context"))
 }

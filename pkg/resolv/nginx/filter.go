@@ -12,6 +12,7 @@ func GetHTTP(ctx Context) *Http {
 			return http
 		}
 	}
+
 	return nil
 }
 
@@ -24,6 +25,7 @@ func GetHTTPServers(ctx Context, orders ...Order) []Parser {
 	if orders != nil {
 		SortByOrders(&servers, orders...)
 	}
+
 	return servers
 }
 
@@ -33,6 +35,7 @@ func GetStream(ctx Context) *Stream {
 			return stream
 		}
 	}
+
 	return nil
 }
 
@@ -56,8 +59,10 @@ func GetPort(ctx Context) int {
 		if err != nil {
 			port = -1
 		}
+
 		return port
 	}
+
 	return -1
 }
 
@@ -114,6 +119,7 @@ func SortInsertUniqInt(slice []int, ints ...int) []int {
 		if n <= 0 {
 			slice = append(slice, num)
 			n++
+
 			continue
 		}
 
@@ -122,6 +128,7 @@ func SortInsertUniqInt(slice []int, ints ...int) []int {
 		} else if slice[n-1] < num {
 			slice = append(slice, num)
 			n++
+
 			continue
 		}
 
@@ -135,6 +142,7 @@ func SortInsertUniqInt(slice []int, ints ...int) []int {
 
 		if slice[i] == num {
 			slice[n-1] = tmp
+
 			continue
 		}
 
@@ -152,5 +160,6 @@ func SortInsertUniqInt(slice []int, ints ...int) []int {
 
 func StripSpace(s string) string {
 	spaceReg := regexp.MustCompile(`\s+`)
+
 	return string(spaceReg.ReplaceAll(bytes.TrimSpace([]byte(s)), []byte(" ")))
 }

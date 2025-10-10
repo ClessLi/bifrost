@@ -24,6 +24,7 @@ func (cmt *Comment) QueryAll(pType parserType, isRec bool, values ...string) []P
 		return nil
 	}
 	kw.IsRec = isRec
+
 	return cmt.QueryAllByKeywords(*kw)
 }
 
@@ -31,6 +32,7 @@ func (cmt *Comment) QueryAllByKeywords(kw Keywords) (parsers []Parser) {
 	if parser := cmt.QueryByKeywords(kw); parser != nil {
 		parsers = append(parsers, parser)
 	}
+
 	return
 }
 
@@ -40,6 +42,7 @@ func (cmt *Comment) Query(pType parserType, isRec bool, values ...string) Parser
 		return nil
 	}
 	kw.IsRec = isRec
+
 	return cmt.QueryByKeywords(*kw)
 }
 
@@ -57,6 +60,7 @@ func (cmt *Comment) QueryByKeywords(kw Keywords) (parser Parser) {
 			parser = nil
 		}
 	}
+
 	return
 }
 

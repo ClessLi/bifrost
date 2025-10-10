@@ -68,11 +68,13 @@ func (c Config) getCaches() (Caches, error) {
 			return nil, cacheErr
 		}
 	}
+
 	return caches, nil
 }
 
 func (c Config) String() []string {
 	caches := NewCaches()
+
 	return c.string(&caches, 0)
 }
 
@@ -163,6 +165,7 @@ func (c *Config) dump(_ string, caches *Caches, deep int) (map[string][]string, 
 		}
 	}
 	dumps[c.Value] = dmp
+
 	return dumps, nil
 }
 
@@ -188,6 +191,7 @@ func (c *Config) List() (caches Caches, err error) {
 			}
 		}
 	}
+
 	return
 }
 
@@ -195,6 +199,7 @@ func (c *Config) QueryAllByKeywords(kw Keywords) (parsers []Parser) {
 	if c.filter(kw) {
 		parsers = append(parsers, c)
 	}
+
 	return c.subQueryAll(parsers, kw)
 }
 
@@ -202,6 +207,7 @@ func (c *Config) QueryByKeywords(kw Keywords) (parser Parser) {
 	if c.filter(kw) {
 		return c
 	}
+
 	return c.subQuery(kw)
 }
 

@@ -5,5 +5,6 @@ func Save(conf *Config) (Caches, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return caches, nil
 }

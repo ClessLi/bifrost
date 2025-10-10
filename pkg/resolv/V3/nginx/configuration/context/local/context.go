@@ -534,6 +534,7 @@ func registerContextBuilders() error {
 		registerStreamBuilder(),
 		registerTypesBuilder(),
 		registerUpstreamBuilder(),
+		registerTmpProxyPassBuilder(),
 		registerHTTPProxyPassBuilder(),
 		registerStreamProxyPassBuilder(),
 	)
@@ -561,4 +562,17 @@ func registerContextParseFuncs() error {
 	)
 
 	return errors.NewAggregate(errs)
+}
+
+func FatherPosSetWithoutInclude(ctx context.Context) context.PosSet {
+	ps := ctx.FatherPosSet()
+	if ps.Error() != nil {
+		return ps
+	}
+	return ps.MapToPosSet(func(pos context.Pos) context.PosSet {
+		if pos.Target().Type() == context_type.TypeInclude {
+			return FatherPosSetWithoutInclude(pos.Target())
+		}
+		return context.NewPosSet().Append(pos)
+	})
 }

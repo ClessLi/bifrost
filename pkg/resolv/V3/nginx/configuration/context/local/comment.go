@@ -45,6 +45,24 @@ func (c *Comment) Father() context.Context {
 	return c.fatherContext
 }
 
+func (c *Comment) FatherPosSet() context.PosSet {
+	if c.fatherContext.Type() == context_type.TypeConfig || c.fatherContext.Type() == context_type.TypeMain {
+		return c.fatherContext.FatherPosSet()
+	}
+	fatherPoses := context.NewPosSet()
+	matched := false
+	c.fatherContext.Father().ChildrenPosSet().Map(func(pos context.Pos) (context.Pos, error) {
+		if !matched && pos.Target() == c.fatherContext {
+			matched = true
+			fatherPoses.Append(pos)
+		}
+
+		return pos, nil
+	})
+
+	return fatherPoses
+}
+
 func (c *Comment) Child(idx int) context.Context {
 	return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "comment has no context"))
 }
