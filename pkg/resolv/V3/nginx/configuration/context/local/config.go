@@ -56,7 +56,7 @@ func (c *Config) FatherPosSet() context.PosSet {
 				}
 				fatherIncludePosSet.AppendWithPosSet(
 					fc.ChildrenPosSet().QueryAll(
-						context.NewKeyWords(context_type.TypeInclude),
+						context.NewKeyWordsByType(context_type.TypeInclude),
 					).Filter(func(pos context.Pos) bool {
 						t := pos.Target()
 						i, ok := t.(*Include)
@@ -308,7 +308,7 @@ func (c *configGraph) cleanupGraph() error {
 func (c *configGraph) renderGraph() error {
 	return c.MainConfig().
 		ChildrenPosSet().
-		QueryAll(context.NewKeyWords(context_type.TypeInclude).SetCascaded(true)).
+		QueryAll(context.NewKeyWordsByType(context_type.TypeInclude).SetCascaded(true)).
 		Filter(
 			func(pos context.Pos) bool {
 				_, ok := pos.Target().(*Include)

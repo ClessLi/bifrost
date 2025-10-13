@@ -462,10 +462,10 @@ func TestHTTPProxyPass_ReparseParams(t *testing.T) {
 			fields: fields{
 				proxyPass: testMain.MainConfig().ChildrenPosSet().
 					QueryOne(
-						context.NewKeyWords(context_type.TypeLocation).SetRegexpMatchingValue(`baidu`),
+						context.NewKeyWordsByType(context_type.TypeLocation).SetRegexpMatchingValue(`baidu`),
 					).
 					QueryOne(
-						context.NewKeyWords(context_type.TypeDirHTTPProxyPass),
+						context.NewKeyWordsByType(context_type.TypeDirHTTPProxyPass),
 					).Target().(*HTTPProxyPass),
 			},
 		},
@@ -474,10 +474,10 @@ func TestHTTPProxyPass_ReparseParams(t *testing.T) {
 			fields: fields{
 				proxyPass: testMain.MainConfig().ChildrenPosSet().
 					QueryOne(
-						context.NewKeyWords(context_type.TypeLocation).SetRegexpMatchingValue(`baidu`),
+						context.NewKeyWordsByType(context_type.TypeLocation).SetRegexpMatchingValue(`baidu`),
 					).
 					QueryOne(
-						context.NewKeyWords(context_type.TypeDirHTTPProxyPass).SetStringMatchingValue("abc.com"),
+						context.NewKeyWordsByType(context_type.TypeDirHTTPProxyPass).SetStringMatchingValue("abc.com"),
 					).Target().(*HTTPProxyPass),
 			},
 		},
@@ -486,10 +486,10 @@ func TestHTTPProxyPass_ReparseParams(t *testing.T) {
 			fields: fields{
 				proxyPass: testMain.MainConfig().ChildrenPosSet().
 					QueryOne(
-						context.NewKeyWords(context_type.TypeLocation).SetRegexpMatchingValue(`example`),
+						context.NewKeyWordsByType(context_type.TypeLocation).SetRegexpMatchingValue(`example`),
 					).
 					QueryOne(
-						context.NewKeyWords(context_type.TypeDirHTTPProxyPass).SetStringMatchingValue("test.cn"),
+						context.NewKeyWordsByType(context_type.TypeDirHTTPProxyPass).SetStringMatchingValue("test.cn"),
 					).Target().(*HTTPProxyPass),
 			},
 		},
@@ -498,10 +498,10 @@ func TestHTTPProxyPass_ReparseParams(t *testing.T) {
 			fields: fields{
 				proxyPass: testMain.MainConfig().ChildrenPosSet().
 					QueryOne(
-						context.NewKeyWords(context_type.TypeLocation).SetRegexpMatchingValue(`ipv4`),
+						context.NewKeyWordsByType(context_type.TypeLocation).SetRegexpMatchingValue(`ipv4`),
 					).
 					QueryOne(
-						context.NewKeyWords(context_type.TypeDirHTTPProxyPass),
+						context.NewKeyWordsByType(context_type.TypeDirHTTPProxyPass),
 					).Target().(*HTTPProxyPass),
 			},
 		},
@@ -510,10 +510,10 @@ func TestHTTPProxyPass_ReparseParams(t *testing.T) {
 			fields: fields{
 				proxyPass: testMain.MainConfig().ChildrenPosSet().
 					QueryOne(
-						context.NewKeyWords(context_type.TypeLocation).SetRegexpMatchingValue(`/upstream$`),
+						context.NewKeyWordsByType(context_type.TypeLocation).SetRegexpMatchingValue(`/upstream$`),
 					).
 					QueryOne(
-						context.NewKeyWords(context_type.TypeDirHTTPProxyPass),
+						context.NewKeyWordsByType(context_type.TypeDirHTTPProxyPass),
 					).Target().(*HTTPProxyPass),
 			},
 		},
@@ -522,10 +522,10 @@ func TestHTTPProxyPass_ReparseParams(t *testing.T) {
 			fields: fields{
 				proxyPass: testMain.MainConfig().ChildrenPosSet().
 					QueryOne(
-						context.NewKeyWords(context_type.TypeLocation).SetRegexpMatchingValue(`upstream2`),
+						context.NewKeyWordsByType(context_type.TypeLocation).SetRegexpMatchingValue(`upstream2`),
 					).
 					QueryOne(
-						context.NewKeyWords(context_type.TypeDirHTTPProxyPass),
+						context.NewKeyWordsByType(context_type.TypeDirHTTPProxyPass),
 					).Target().(*HTTPProxyPass),
 			},
 		},
@@ -534,10 +534,10 @@ func TestHTTPProxyPass_ReparseParams(t *testing.T) {
 			fields: fields{
 				proxyPass: testMain.MainConfig().ChildrenPosSet().
 					QueryOne(
-						context.NewKeyWords(context_type.TypeLocation).SetRegexpMatchingValue(`unknown-upstream`),
+						context.NewKeyWordsByType(context_type.TypeLocation).SetRegexpMatchingValue(`unknown-upstream`),
 					).
 					QueryOne(
-						context.NewKeyWords(context_type.TypeDirHTTPProxyPass),
+						context.NewKeyWordsByType(context_type.TypeDirHTTPProxyPass),
 					).Target().(*HTTPProxyPass),
 			},
 		},
@@ -546,10 +546,10 @@ func TestHTTPProxyPass_ReparseParams(t *testing.T) {
 			fields: fields{
 				proxyPass: testMain.MainConfig().ChildrenPosSet().
 					QueryOne(
-						context.NewKeyWords(context_type.TypeLocation).SetRegexpMatchingValue(`has-unknown-server`),
+						context.NewKeyWordsByType(context_type.TypeLocation).SetRegexpMatchingValue(`has-unknown-server`),
 					).
 					QueryOne(
-						context.NewKeyWords(context_type.TypeDirHTTPProxyPass),
+						context.NewKeyWordsByType(context_type.TypeDirHTTPProxyPass),
 					).Target().(*HTTPProxyPass),
 			},
 		},
@@ -558,7 +558,7 @@ func TestHTTPProxyPass_ReparseParams(t *testing.T) {
 			fields: fields{
 				proxyPass: testMain.MainConfig().ChildrenPosSet().
 					QueryOne(
-						context.NewKeyWords(context_type.TypeDirHTTPProxyPass).SetStringMatchingValue("error.pos.http.proxy.pass"),
+						context.NewKeyWordsByType(context_type.TypeDirHTTPProxyPass).SetStringMatchingValue("error.pos.http.proxy.pass"),
 					).Target().(*HTTPProxyPass),
 			},
 			wantErr: true,
@@ -568,10 +568,10 @@ func TestHTTPProxyPass_ReparseParams(t *testing.T) {
 		// 	fields: fields{
 		// 		proxyPass: testMain.MainConfig().ChildrenPosSet().
 		// 			QueryOne(
-		// 				context.NewKeyWords(context_type.TypeLocation).SetRegexpMatchingValue(`has-error-server`),
+		// 				context.NewKeyWordsByType(context_type.TypeLocation).SetRegexpMatchingValue(`has-error-server`),
 		// 			).
 		// 			QueryOne(
-		// 				context.NewKeyWords(context_type.TypeDirHTTPProxyPass),
+		// 				context.NewKeyWordsByType(context_type.TypeDirHTTPProxyPass),
 		// 			).Target().(*HTTPProxyPass),
 		// 	},
 		// 	wantErr: true,
@@ -617,10 +617,10 @@ func TestHTTPProxyPass_PosVerify(t *testing.T) {
 			fields: fields{
 				proxyPass: testMain.MainConfig().ChildrenPosSet().
 					QueryOne(
-						context.NewKeyWords(context_type.TypeLocation).SetRegexpMatchingValue(`baidu`),
+						context.NewKeyWordsByType(context_type.TypeLocation).SetRegexpMatchingValue(`baidu`),
 					).
 					QueryOne(
-						context.NewKeyWords(context_type.TypeDirHTTPProxyPass),
+						context.NewKeyWordsByType(context_type.TypeDirHTTPProxyPass),
 					).Target().(*HTTPProxyPass),
 			},
 		},
@@ -629,10 +629,10 @@ func TestHTTPProxyPass_PosVerify(t *testing.T) {
 			fields: fields{
 				proxyPass: testMain.MainConfig().ChildrenPosSet().
 					QueryOne(
-						context.NewKeyWords(context_type.TypeLocation).SetRegexpMatchingValue(`baidu`),
+						context.NewKeyWordsByType(context_type.TypeLocation).SetRegexpMatchingValue(`baidu`),
 					).
 					QueryOne(
-						context.NewKeyWords(context_type.TypeDirHTTPProxyPass).SetStringMatchingValue("abc.com"),
+						context.NewKeyWordsByType(context_type.TypeDirHTTPProxyPass).SetStringMatchingValue("abc.com"),
 					).Target().(*HTTPProxyPass),
 			},
 		},
@@ -641,10 +641,10 @@ func TestHTTPProxyPass_PosVerify(t *testing.T) {
 			fields: fields{
 				proxyPass: testMain.MainConfig().ChildrenPosSet().
 					QueryOne(
-						context.NewKeyWords(context_type.TypeLocation).SetRegexpMatchingValue(`example`),
+						context.NewKeyWordsByType(context_type.TypeLocation).SetRegexpMatchingValue(`example`),
 					).
 					QueryOne(
-						context.NewKeyWords(context_type.TypeDirHTTPProxyPass).SetStringMatchingValue("test.cn"),
+						context.NewKeyWordsByType(context_type.TypeDirHTTPProxyPass).SetStringMatchingValue("test.cn"),
 					).Target().(*HTTPProxyPass),
 			},
 		},
@@ -653,7 +653,7 @@ func TestHTTPProxyPass_PosVerify(t *testing.T) {
 			fields: fields{
 				proxyPass: testMain.MainConfig().ChildrenPosSet().
 					QueryOne(
-						context.NewKeyWords(context_type.TypeDirHTTPProxyPass).SetMatchingFilter(func(targetCtx context.Context) bool {
+						context.NewKeyWordsByType(context_type.TypeDirHTTPProxyPass).AppendMatchingFilter(func(targetCtx context.Context) bool {
 							return targetCtx.Value() == "proxy_pass http://error.pos.http.proxy.pass"
 						}),
 					).Target().(*HTTPProxyPass),
@@ -666,7 +666,7 @@ func TestHTTPProxyPass_PosVerify(t *testing.T) {
 			fields: fields{
 				proxyPass: testMain.MainConfig().ChildrenPosSet().
 					QueryOne(
-						context.NewKeyWords(context_type.TypeDirHTTPProxyPass).SetMatchingFilter(func(targetCtx context.Context) bool {
+						context.NewKeyWordsByType(context_type.TypeDirHTTPProxyPass).AppendMatchingFilter(func(targetCtx context.Context) bool {
 							return targetCtx.Value() == "proxy_pass http://error.pos.http.proxy.pass2"
 						}),
 					).Target().(*HTTPProxyPass),
@@ -857,10 +857,10 @@ func TestStreamProxyPass_ReparseParams(t *testing.T) {
 			fields: fields{
 				proxyPass: testMain.MainConfig().ChildrenPosSet().
 					QueryOne(
-						context.NewKeyWords(context_type.TypeStream),
+						context.NewKeyWordsByType(context_type.TypeStream),
 					).
 					QueryOne(
-						context.NewKeyWords(context_type.TypeDirStreamProxyPass).SetStringMatchingValue("abc.com:22"),
+						context.NewKeyWordsByType(context_type.TypeDirStreamProxyPass).SetStringMatchingValue("abc.com:22"),
 					).Target().(*StreamProxyPass),
 			},
 		},
@@ -869,10 +869,10 @@ func TestStreamProxyPass_ReparseParams(t *testing.T) {
 			fields: fields{
 				proxyPass: testMain.MainConfig().ChildrenPosSet().
 					QueryOne(
-						context.NewKeyWords(context_type.TypeStream),
+						context.NewKeyWordsByType(context_type.TypeStream),
 					).
 					QueryOne(
-						context.NewKeyWords(context_type.TypeDirStreamProxyPass).SetStringMatchingValue("upstream_server"),
+						context.NewKeyWordsByType(context_type.TypeDirStreamProxyPass).SetStringMatchingValue("upstream_server"),
 					).Target().(*StreamProxyPass),
 			},
 		},
@@ -881,10 +881,10 @@ func TestStreamProxyPass_ReparseParams(t *testing.T) {
 			fields: fields{
 				proxyPass: testMain.MainConfig().ChildrenPosSet().
 					QueryOne(
-						context.NewKeyWords(context_type.TypeStream),
+						context.NewKeyWordsByType(context_type.TypeStream),
 					).
 					QueryOne(
-						context.NewKeyWords(context_type.TypeDirStreamProxyPass).SetStringMatchingValue("unknown.domain"),
+						context.NewKeyWordsByType(context_type.TypeDirStreamProxyPass).SetStringMatchingValue("unknown.domain"),
 					).Target().(*StreamProxyPass),
 			},
 		},
@@ -893,10 +893,10 @@ func TestStreamProxyPass_ReparseParams(t *testing.T) {
 			fields: fields{
 				proxyPass: testMain.MainConfig().ChildrenPosSet().
 					QueryOne(
-						context.NewKeyWords(context_type.TypeStream),
+						context.NewKeyWordsByType(context_type.TypeStream),
 					).
 					QueryOne(
-						context.NewKeyWords(context_type.TypeDirStreamProxyPass).SetStringMatchingValue("has_unknown_server"),
+						context.NewKeyWordsByType(context_type.TypeDirStreamProxyPass).SetStringMatchingValue("has_unknown_server"),
 					).Target().(*StreamProxyPass),
 			},
 		},
@@ -905,7 +905,7 @@ func TestStreamProxyPass_ReparseParams(t *testing.T) {
 			fields: fields{
 				proxyPass: testMain.MainConfig().ChildrenPosSet().
 					QueryOne(
-						context.NewKeyWords(context_type.TypeDirStreamProxyPass).SetStringMatchingValue("error_pos_stream_proxy_pass"),
+						context.NewKeyWordsByType(context_type.TypeDirStreamProxyPass).SetStringMatchingValue("error_pos_stream_proxy_pass"),
 					).Target().(*StreamProxyPass),
 			},
 			wantErr: true,
@@ -915,10 +915,10 @@ func TestStreamProxyPass_ReparseParams(t *testing.T) {
 			fields: fields{
 				proxyPass: testMain.MainConfig().ChildrenPosSet().
 					QueryOne(
-						context.NewKeyWords(context_type.TypeStream),
+						context.NewKeyWordsByType(context_type.TypeStream),
 					).
 					QueryOne(
-						context.NewKeyWords(context_type.TypeDirStreamProxyPass).SetStringMatchingValue("has_error_server"),
+						context.NewKeyWordsByType(context_type.TypeDirStreamProxyPass).SetStringMatchingValue("has_error_server"),
 					).Target().(*StreamProxyPass),
 			},
 			wantErr: true,
@@ -928,10 +928,10 @@ func TestStreamProxyPass_ReparseParams(t *testing.T) {
 			fields: fields{
 				proxyPass: testMain.MainConfig().ChildrenPosSet().
 					QueryOne(
-						context.NewKeyWords(context_type.TypeStream),
+						context.NewKeyWordsByType(context_type.TypeStream),
 					).
 					QueryOne(
-						context.NewKeyWords(context_type.TypeDirStreamProxyPass).SetStringMatchingValue("unknown_upstream"),
+						context.NewKeyWordsByType(context_type.TypeDirStreamProxyPass).SetStringMatchingValue("unknown_upstream"),
 					).Target().(*StreamProxyPass),
 			},
 			wantErr: true,
@@ -977,10 +977,10 @@ func TestStreamProxyPass_PosVerify(t *testing.T) {
 			fields: fields{
 				proxyPass: testMain.MainConfig().ChildrenPosSet().
 					QueryOne(
-						context.NewKeyWords(context_type.TypeStream),
+						context.NewKeyWordsByType(context_type.TypeStream),
 					).
 					QueryOne(
-						context.NewKeyWords(context_type.TypeDirStreamProxyPass).SetStringMatchingValue("abc.com:22"),
+						context.NewKeyWordsByType(context_type.TypeDirStreamProxyPass).SetStringMatchingValue("abc.com:22"),
 					).Target().(*StreamProxyPass),
 			},
 		},
@@ -989,7 +989,7 @@ func TestStreamProxyPass_PosVerify(t *testing.T) {
 			fields: fields{
 				proxyPass: testMain.MainConfig().ChildrenPosSet().
 					QueryOne(
-						context.NewKeyWords(context_type.TypeDirStreamProxyPass).SetMatchingFilter(func(targetCtx context.Context) bool {
+						context.NewKeyWordsByType(context_type.TypeDirStreamProxyPass).AppendMatchingFilter(func(targetCtx context.Context) bool {
 							return targetCtx.Value() == "proxy_pass error_pos_stream_proxy_pass"
 						}),
 					).Target().(*StreamProxyPass),
@@ -1002,7 +1002,7 @@ func TestStreamProxyPass_PosVerify(t *testing.T) {
 			fields: fields{
 				proxyPass: testMain.MainConfig().ChildrenPosSet().
 					QueryOne(
-						context.NewKeyWords(context_type.TypeDirStreamProxyPass).SetMatchingFilter(func(targetCtx context.Context) bool {
+						context.NewKeyWordsByType(context_type.TypeDirStreamProxyPass).AppendMatchingFilter(func(targetCtx context.Context) bool {
 							return targetCtx.Value() == "proxy_pass error_pos_stream_proxy_pass_2"
 						}),
 					).Target().(*StreamProxyPass),
@@ -1130,10 +1130,10 @@ func TestHTTPProxyPass_MarshalJSON(t *testing.T) {
 			fields: fields{
 				proxyPass: testMain.MainConfig().ChildrenPosSet().
 					QueryOne(
-						context.NewKeyWords(context_type.TypeLocation).SetRegexpMatchingValue(`baidu`),
+						context.NewKeyWordsByType(context_type.TypeLocation).SetRegexpMatchingValue(`baidu`),
 					).
 					QueryOne(
-						context.NewKeyWords(context_type.TypeDirHTTPProxyPass),
+						context.NewKeyWordsByType(context_type.TypeDirHTTPProxyPass),
 					).Target().(*HTTPProxyPass),
 			},
 			want: []byte(`{"enabled":true,"context-type":"dir_http_proxy_pass","value":"https://baidu.com","proxy-pass":{"original-url":"https://baidu.com","protocol":"https","addresses":[{"domain-name":"baidu.com","port":443,"ipv4-list":["10.1.11.111","10.1.12.122"],"resolve-err":null}],"uri":""}}`), //nolint:lll
@@ -1143,10 +1143,10 @@ func TestHTTPProxyPass_MarshalJSON(t *testing.T) {
 			fields: fields{
 				proxyPass: testMain.MainConfig().ChildrenPosSet().
 					QueryOne(
-						context.NewKeyWords(context_type.TypeLocation).SetStringMatchingValue("unknown-upstream"),
+						context.NewKeyWordsByType(context_type.TypeLocation).SetStringMatchingValue("unknown-upstream"),
 					).
 					QueryOne(
-						context.NewKeyWords(context_type.TypeDirHTTPProxyPass),
+						context.NewKeyWordsByType(context_type.TypeDirHTTPProxyPass),
 					).Target().(*HTTPProxyPass),
 			},
 			want: []byte("{\"enabled\":true,\"context-type\":\"dir_http_proxy_pass\",\"value\":\"http://unknown.upstream/localiptest\",\"proxy-pass\":{\"original-url\":\"http://unknown.upstream/localiptest\",\"protocol\":\"http\",\"addresses\":[{\"domain-name\":\"unknown.upstream\",\"port\":80,\"ipv4-list\":null,\"resolve-err\":{\"message\":\"Domain name resolution failed\",\"error\":\"the domain name resolution record for `unknown.upstream` does not exist\",\"code\":110020}}],\"uri\":\"/localiptest\"}}"), //nolint:lll
@@ -1156,10 +1156,10 @@ func TestHTTPProxyPass_MarshalJSON(t *testing.T) {
 			fields: fields{
 				proxyPass: testMain.MainConfig().ChildrenPosSet().
 					QueryOne(
-						context.NewKeyWords(context_type.TypeLocation).SetStringMatchingValue("has-unknown-server"),
+						context.NewKeyWordsByType(context_type.TypeLocation).SetStringMatchingValue("has-unknown-server"),
 					).
 					QueryOne(
-						context.NewKeyWords(context_type.TypeDirHTTPProxyPass),
+						context.NewKeyWordsByType(context_type.TypeDirHTTPProxyPass),
 					).Target().(*HTTPProxyPass),
 			},
 			want: []byte("{\"enabled\":true,\"context-type\":\"dir_http_proxy_pass\",\"value\":\"http://has_unknown_server/proxy/to/upstreamserver\",\"proxy-pass\":{\"original-url\":\"http://has_unknown_server/proxy/to/upstreamserver\",\"protocol\":\"http\",\"addresses\":[{\"domain-name\":\"test.cn\",\"port\":443,\"ipv4-list\":[\"10.1.12.122\",\"10.1.13.133\"],\"resolve-err\":null},{\"domain-name\":\"example.com\",\"port\":8443,\"ipv4-list\":[\"10.1.12.122\",\"10.1.13.133\"],\"resolve-err\":null},{\"domain-name\":\"127.0.0.1\",\"port\":8080,\"ipv4-list\":[\"127.0.0.1\"],\"resolve-err\":null},{\"domain-name\":\"unknown.domain\",\"port\":8080,\"ipv4-list\":null,\"resolve-err\":{\"message\":\"Domain name resolution failed\",\"error\":\"the domain name resolution record for `unknown.domain` does not exist\",\"code\":110020}}],\"uri\":\"/proxy/to/upstreamserver\"}}"), //nolint:lll
@@ -1205,10 +1205,10 @@ func TestStreamProxyPass_MarshalJSON(t *testing.T) {
 			fields: fields{
 				proxyPass: testMain.MainConfig().ChildrenPosSet().
 					QueryOne(
-						context.NewKeyWords(context_type.TypeStream),
+						context.NewKeyWordsByType(context_type.TypeStream),
 					).
 					QueryOne(
-						context.NewKeyWords(context_type.TypeDirStreamProxyPass).SetStringMatchingValue("abc.com:22"),
+						context.NewKeyWordsByType(context_type.TypeDirStreamProxyPass).SetStringMatchingValue("abc.com:22"),
 					).Target().(*StreamProxyPass),
 			},
 			want: []byte(`{"enabled":true,"context-type":"dir_stream_proxy_pass","value":"abc.com:22","ProxyPass":{"original-address":"abc.com:22","addresses":[{"domain-name":"abc.com","port":22,"ipv4-list":["10.2.12.122"],"resolve-err":null}]}}`), //nolint:lll
@@ -1218,10 +1218,10 @@ func TestStreamProxyPass_MarshalJSON(t *testing.T) {
 			fields: fields{
 				proxyPass: testMain.MainConfig().ChildrenPosSet().
 					QueryOne(
-						context.NewKeyWords(context_type.TypeStream),
+						context.NewKeyWordsByType(context_type.TypeStream),
 					).
 					QueryOne(
-						context.NewKeyWords(context_type.TypeDirStreamProxyPass).SetStringMatchingValue("has_unknown_server"),
+						context.NewKeyWordsByType(context_type.TypeDirStreamProxyPass).SetStringMatchingValue("has_unknown_server"),
 					).Target().(*StreamProxyPass),
 			},
 			want: []byte("{\"enabled\":true,\"context-type\":\"dir_stream_proxy_pass\",\"value\":\"has_unknown_server\",\"ProxyPass\":{\"original-address\":\"has_unknown_server\",\"addresses\":[{\"domain-name\":\"test.cn\",\"port\":22,\"ipv4-list\":[\"10.1.12.122\",\"10.1.13.133\"],\"resolve-err\":null},{\"domain-name\":\"example.com\",\"port\":22,\"ipv4-list\":[\"10.1.12.122\",\"10.1.13.133\"],\"resolve-err\":null},{\"domain-name\":\"127.0.0.1\",\"port\":123,\"ipv4-list\":[\"127.0.0.1\"],\"resolve-err\":null},{\"domain-name\":\"unknown.domain\",\"port\":8080,\"ipv4-list\":null,\"resolve-err\":{\"message\":\"Domain name resolution failed\",\"error\":\"the domain name resolution record for `unknown.domain` does not exist\",\"code\":110020}}]}}"), //nolint:lll
@@ -1231,10 +1231,10 @@ func TestStreamProxyPass_MarshalJSON(t *testing.T) {
 			fields: fields{
 				proxyPass: testMain.MainConfig().ChildrenPosSet().
 					QueryOne(
-						context.NewKeyWords(context_type.TypeStream),
+						context.NewKeyWordsByType(context_type.TypeStream),
 					).
 					QueryOne(
-						context.NewKeyWords(context_type.TypeDirStreamProxyPass).SetStringMatchingValue("unknown.domain"),
+						context.NewKeyWordsByType(context_type.TypeDirStreamProxyPass).SetStringMatchingValue("unknown.domain"),
 					).Target().(*StreamProxyPass),
 			},
 			want: []byte("{\"enabled\":true,\"context-type\":\"dir_stream_proxy_pass\",\"value\":\"unknown.domain:9876\",\"ProxyPass\":{\"original-address\":\"unknown.domain:9876\",\"addresses\":[{\"domain-name\":\"unknown.domain\",\"port\":9876,\"ipv4-list\":null,\"resolve-err\":{\"message\":\"Domain name resolution failed\",\"error\":\"the domain name resolution record for `unknown.domain` does not exist\",\"code\":110020}}]}}"), //nolint:lll
@@ -1350,8 +1350,8 @@ func Test_tmpProxyPass_verifyAndInitTo(t1 *testing.T) {
 	if err != nil {
 		t1.Fatal(err)
 	}
-	testMain.MainConfig().ChildrenPosSet().QueryOne(context.NewKeyWords(context_type.TypeHttp)).
-		QueryOne(context.NewKeyWords(context_type.TypeServer)).Target().
+	testMain.MainConfig().ChildrenPosSet().QueryOne(context.NewKeyWordsByType(context_type.TypeHttp)).
+		QueryOne(context.NewKeyWordsByType(context_type.TypeServer)).Target().
 		Insert(
 			NewContext(context_type.TypeLocation, "~ /included-proxy-pass").
 				Insert(
@@ -1365,23 +1365,23 @@ func Test_tmpProxyPass_verifyAndInitTo(t1 *testing.T) {
 			0,
 		)
 
-	testMain.MainConfig().ChildrenPosSet().QueryOne(context.NewKeyWords(context_type.TypeHttp)).Target().
+	testMain.MainConfig().ChildrenPosSet().QueryOne(context.NewKeyWordsByType(context_type.TypeHttp)).Target().
 		Insert(httpWrongPosTmp, 0)
 
-	testMain.MainConfig().ChildrenPosSet().QueryOne(context.NewKeyWords(context_type.TypeStream)).Target().
+	testMain.MainConfig().ChildrenPosSet().QueryOne(context.NewKeyWordsByType(context_type.TypeStream)).Target().
 		Insert(
 			NewContext(context_type.TypeServer, "").
 				Insert(streamTmp, 0),
 			0,
 		)
 
-	testMain.MainConfig().ChildrenPosSet().QueryOne(context.NewKeyWords(context_type.TypeStream)).Target().
+	testMain.MainConfig().ChildrenPosSet().QueryOne(context.NewKeyWordsByType(context_type.TypeStream)).Target().
 		Insert(streamWrongPosTmp, 0)
 
 	loc := NewContext(context_type.TypeLocation, "~ /invalid-operated-proxy-pass").
 		Insert(NewContext(context_type.TypeComment, "stack"), 0)
-	testMain.MainConfig().ChildrenPosSet().QueryOne(context.NewKeyWords(context_type.TypeHttp)).
-		QueryOne(context.NewKeyWords(context_type.TypeServer)).Target().
+	testMain.MainConfig().ChildrenPosSet().QueryOne(context.NewKeyWordsByType(context_type.TypeHttp)).
+		QueryOne(context.NewKeyWordsByType(context_type.TypeServer)).Target().
 		Insert(
 			NewContext(context_type.TypeLocation, "/wrong-url").
 				Insert(wrongTmp, 0),
@@ -1554,8 +1554,8 @@ func Test_tmpProxyPass_MarshalJSON(t1 *testing.T) {
 	if err != nil {
 		t1.Fatal(err)
 	}
-	testMain.MainConfig().ChildrenPosSet().QueryOne(context.NewKeyWords(context_type.TypeHttp)).
-		QueryOne(context.NewKeyWords(context_type.TypeServer)).Target().
+	testMain.MainConfig().ChildrenPosSet().QueryOne(context.NewKeyWordsByType(context_type.TypeHttp)).
+		QueryOne(context.NewKeyWordsByType(context_type.TypeServer)).Target().
 		Insert(
 			NewContext(context_type.TypeLocation, "~ /included-proxy-pass").
 				Insert(
@@ -1569,23 +1569,23 @@ func Test_tmpProxyPass_MarshalJSON(t1 *testing.T) {
 			0,
 		)
 
-	testMain.MainConfig().ChildrenPosSet().QueryOne(context.NewKeyWords(context_type.TypeHttp)).Target().
+	testMain.MainConfig().ChildrenPosSet().QueryOne(context.NewKeyWordsByType(context_type.TypeHttp)).Target().
 		Insert(httpWrongPosTmp, 0)
 
-	testMain.MainConfig().ChildrenPosSet().QueryOne(context.NewKeyWords(context_type.TypeStream)).Target().
+	testMain.MainConfig().ChildrenPosSet().QueryOne(context.NewKeyWordsByType(context_type.TypeStream)).Target().
 		Insert(
 			NewContext(context_type.TypeServer, "").
 				Insert(streamTmp, 0),
 			0,
 		)
 
-	testMain.MainConfig().ChildrenPosSet().QueryOne(context.NewKeyWords(context_type.TypeStream)).Target().
+	testMain.MainConfig().ChildrenPosSet().QueryOne(context.NewKeyWordsByType(context_type.TypeStream)).Target().
 		Insert(streamWrongPosTmp, 0)
 
 	loc := NewContext(context_type.TypeLocation, "~ /invalid-operated-proxy-pass").
 		Insert(NewContext(context_type.TypeComment, "stack"), 0)
-	testMain.MainConfig().ChildrenPosSet().QueryOne(context.NewKeyWords(context_type.TypeHttp)).
-		QueryOne(context.NewKeyWords(context_type.TypeServer)).Target().
+	testMain.MainConfig().ChildrenPosSet().QueryOne(context.NewKeyWordsByType(context_type.TypeHttp)).
+		QueryOne(context.NewKeyWordsByType(context_type.TypeServer)).Target().
 		Insert(
 			NewContext(context_type.TypeLocation, "/wrong-url").
 				Insert(wrongTmp, 0),

@@ -2,28 +2,33 @@ package nginx
 
 import (
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration"
-
+	utilsV3 "github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/utils"
 	"github.com/marmotedu/errors"
 )
 
 type Config struct {
-	ManagersConfig map[string]*configuration.ManagerConfig
+	ManagersConfig       map[string]*configuration.ManagerConfig
+	DomainNameServerIPv4 string
 }
 
 func (c *Config) Complete() (*CompletedConfig, error) {
 	var errs []error
 	var err error
-	cc := &CompletedConfig{make(map[string]*configuration.CompletedManagerConfig)}
+	cc := &CompletedConfig{ManagersConfig: make(map[string]*configuration.CompletedManagerConfig)}
 
 	for svrname, config := range c.ManagersConfig {
 		cc.ManagersConfig[svrname], err = config.Complete()
 		errs = append(errs, err)
 	}
+
+	cc.DomainNameServerIPv4 = c.DomainNameServerIPv4
+
 	return cc, errors.NewAggregate(errs)
 }
 
 type CompletedConfig struct {
-	ManagersConfig map[string]*configuration.CompletedManagerConfig
+	ManagersConfig       map[string]*configuration.CompletedManagerConfig
+	DomainNameServerIPv4 string
 }
 
 func (cc *CompletedConfig) NewConfigsManager() (ConfigsManager, error) {
@@ -35,4 +40,8 @@ func (cc *CompletedConfig) NewConfigsManager() (ConfigsManager, error) {
 		errs = append(errs, err)
 	}
 	return m, errors.NewAggregate(errs)
+}
+
+func (cc *CompletedConfig) SetDomainNameResolver() {
+	utilsV3.SetDomainNameResolver(utilsV3.NewDNSClient(cc.DomainNameServerIPv4))
 }

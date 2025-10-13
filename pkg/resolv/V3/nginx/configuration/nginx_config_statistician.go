@@ -68,7 +68,7 @@ func NewStatistician(c NginxConfig) Statistician {
 
 func Port(ctx context.Context) int {
 	portDirective := ctx.ChildrenPosSet().
-		QueryOne(context.NewKeyWords(context_type.TypeDirective).
+		QueryOne(context.NewKeyWordsByType(context_type.TypeDirective).
 			SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc).
 			SetRegexpMatchingValue(context.RegexpMatchingListenPortValue)).
 		Target()
@@ -98,8 +98,8 @@ func Ports(contexts []context.Context) []int {
 func HttpPorts(ctx context.Context) []int {
 	return Ports(
 		ctx.ChildrenPosSet().
-			QueryOne(context.NewKeyWords(context_type.TypeHttp).SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc)).
-			QueryAll(context.NewKeyWords(context_type.TypeServer).SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc)).
+			QueryOne(context.NewKeyWordsByType(context_type.TypeHttp).SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc)).
+			QueryAll(context.NewKeyWordsByType(context_type.TypeServer).SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc)).
 			Targets(),
 	)
 }
@@ -108,13 +108,13 @@ func HttpServers(ctx context.Context) (int, map[string][]int) {
 	serverCount := 0
 	serverPortCount := make(map[string][]int)
 	err := ctx.ChildrenPosSet().
-		QueryOne(context.NewKeyWords(context_type.TypeHttp).SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc)).
-		QueryAll(context.NewKeyWords(context_type.TypeServer).SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc)).
+		QueryOne(context.NewKeyWordsByType(context_type.TypeHttp).SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc)).
+		QueryAll(context.NewKeyWordsByType(context_type.TypeServer).SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc)).
 		Map(
 			func(pos context.Pos) (context.Pos, error) {
 				serverCount++
 				servernameDirective := pos.QueryOne(
-					context.NewKeyWords(context_type.TypeDirective).
+					context.NewKeyWordsByType(context_type.TypeDirective).
 						SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc).
 						SetRegexpMatchingValue(context.RegexpMatchingServerNameValue),
 				).Target()
@@ -145,8 +145,8 @@ func HttpServers(ctx context.Context) (int, map[string][]int) {
 func StreamServers(ctx context.Context) []int {
 	return Ports(
 		ctx.ChildrenPosSet().
-			QueryOne(context.NewKeyWords(context_type.TypeStream).SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc)).
-			QueryAll(context.NewKeyWords(context_type.TypeServer).SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc)).
+			QueryOne(context.NewKeyWordsByType(context_type.TypeStream).SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc)).
+			QueryAll(context.NewKeyWordsByType(context_type.TypeServer).SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc)).
 			Targets(),
 	)
 }

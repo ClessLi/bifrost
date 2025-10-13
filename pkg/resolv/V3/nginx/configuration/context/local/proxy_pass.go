@@ -72,6 +72,34 @@ func (h *HTTPProxyPass) MarshalJSON() ([]byte, error) {
 	})
 }
 
+func (h *HTTPProxyPass) UnmarshalJSON(bytes []byte) error {
+	tmp := struct {
+		Enabled     bool                     `json:"enabled,omitempty"`
+		ContextType context_type.ContextType `json:"context-type"`
+		Value       string                   `json:"value"`
+		ProxyPass   struct {
+			OriginalURL string           `json:"original-url"`
+			Protocol    string           `json:"protocol"`
+			Addresses   []ProxiedAddress `json:"addresses"`
+			URI         string           `json:"uri"`
+		} `json:"proxy-pass,omitempty"`
+	}{}
+	err := json.Unmarshal(bytes, &tmp)
+	if err != nil {
+		return err
+	}
+	if tmp.ContextType != context_type.TypeDirHTTPProxyPass {
+		return errors.WithCode(code.ErrV3InvalidContext, "invalid context-type: %s", tmp.ContextType)
+	}
+	h.enabled = tmp.Enabled
+	h.Params = tmp.Value
+	h.OriginalURL = tmp.ProxyPass.OriginalURL
+	h.Protocol = tmp.ProxyPass.Protocol
+	h.Addresses = tmp.ProxyPass.Addresses
+	h.URI = tmp.ProxyPass.URI
+	return nil
+}
+
 func (h *HTTPProxyPass) Clone() context.Context {
 	cloneProxiedAddress := make([]ProxiedAddress, len(h.Addresses))
 	for i, address := range h.Addresses {
@@ -180,9 +208,9 @@ func (h *HTTPProxyPass) ReparseParams() (err error) {
 		return errors.WithCode(code.ErrV3InvalidContext, "cannot query father HTTP Context. error: %++v", httpCtx.Error())
 	}
 	upstreamPos := httpCtx.ChildrenPosSet().QueryOne(
-		context.NewKeyWords(context_type.TypeUpstream).
+		context.NewKeyWordsByType(context_type.TypeUpstream).
 			SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc).
-			SetMatchingFilter(func(targetCtx context.Context) bool {
+			AppendMatchingFilter(func(targetCtx context.Context) bool {
 				return targetCtx.Value() == host
 			}),
 	)
@@ -201,7 +229,7 @@ func (h *HTTPProxyPass) ReparseParams() (err error) {
 		return nil
 	}
 
-	return upstreamPos.QueryAll(context.NewKeyWords(context_type.TypeDirective).
+	return upstreamPos.QueryAll(context.NewKeyWordsByType(context_type.TypeDirective).
 		SetRegexpMatchingValue(`^server\s+`).
 		SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc)).
 		Filter(
@@ -372,6 +400,30 @@ func (s *StreamProxyPass) MarshalJSON() ([]byte, error) {
 	})
 }
 
+func (s *StreamProxyPass) UnmarshalJSON(bytes []byte) error {
+	tmp := struct {
+		Enabled     bool                     `json:"enabled,omitempty"`
+		ContextType context_type.ContextType `json:"context-type"`
+		Value       string                   `json:"value"`
+		ProxyPass   struct {
+			OriginalAddress string           `json:"original-address"`
+			Addresses       []ProxiedAddress `json:"addresses"`
+		}
+	}{}
+	err := json.Unmarshal(bytes, &tmp)
+	if err != nil {
+		return err
+	}
+	if tmp.ContextType != context_type.TypeDirStreamProxyPass {
+		return errors.WithCode(code.ErrV3InvalidContext, "invalid context-type: %s", tmp.ContextType)
+	}
+	s.enabled = tmp.Enabled
+	s.Params = tmp.Value
+	s.OriginalAddress = tmp.ProxyPass.OriginalAddress
+	s.Addresses = tmp.ProxyPass.Addresses
+	return nil
+}
+
 func (s *StreamProxyPass) Clone() context.Context {
 	cloneProxiedAddress := make([]ProxiedAddress, len(s.Addresses))
 	for i, address := range s.Addresses {
@@ -487,9 +539,9 @@ func (s *StreamProxyPass) ReparseParams() (err error) {
 	}
 
 	upstreamPos := streamCtx.ChildrenPosSet().QueryOne(
-		context.NewKeyWords(context_type.TypeUpstream).
+		context.NewKeyWordsByType(context_type.TypeUpstream).
 			SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc).
-			SetMatchingFilter(func(targetCtx context.Context) bool {
+			AppendMatchingFilter(func(targetCtx context.Context) bool {
 				return targetCtx.Value() == upstreamServer
 			}),
 	)
@@ -497,7 +549,7 @@ func (s *StreamProxyPass) ReparseParams() (err error) {
 		return errors.WithCode(code.ErrV3InvalidOperation, "unknown upstream server: '%s'. failed to query Upstream(Stream) Context, error: %v", upstreamServer, err)
 	}
 
-	return upstreamPos.QueryAll(context.NewKeyWords(context_type.TypeDirective).
+	return upstreamPos.QueryAll(context.NewKeyWordsByType(context_type.TypeDirective).
 		SetRegexpMatchingValue(`^server\s+`).
 		SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc)).
 		Map(
@@ -611,7 +663,7 @@ func (t *tmpProxyPass) verifyAndInitTo() context.Context {
 	// if tmpProxyPass has not been included into the MainContext, skip initializing
 	if t.fatherContext == nil || !errors.IsCode(context.SetPos(t.fatherContext, 0).
 		QueryAll(
-			context.NewKeyWords(context_type.TypeMain).
+			context.NewKeyWordsByType(context_type.TypeMain).
 				SetIsToLeafQuery(false),
 		).Error(), code.ErrV3CannotQueryFatherPosSetFromMainContext) {
 		return t

@@ -183,7 +183,7 @@ type commentsToContextConverter struct{}
 func (c commentsToContextConverter) queryComments(ctx context.Context) (map[context.Context]sort.IntSlice, error) {
 	store := make(map[context.Context]sort.IntSlice)
 
-	return store, ctx.ChildrenPosSet().QueryAll(context.NewKeyWords(context_type.TypeComment).SetCascaded(true)).Map(
+	return store, ctx.ChildrenPosSet().QueryAll(context.NewKeyWordsByType(context_type.TypeComment).SetCascaded(true)).Map(
 		func(pos context.Pos) (context.Pos, error) {
 			if err := pos.Target().Error(); err != nil {
 				return pos, err

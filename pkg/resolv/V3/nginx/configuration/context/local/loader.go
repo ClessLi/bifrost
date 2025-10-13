@@ -163,7 +163,7 @@ func (f *fileLoader) load(config *Config) error {
 	}
 
 	return config.ChildrenPosSet().
-		QueryAll(context.NewKeyWords(context_type.TypeInclude).
+		QueryAll(context.NewKeyWordsByType(context_type.TypeInclude).
 			SetCascaded(true).
 			SetSkipQueryFilter(
 				func(targetCtx context.Context) bool {

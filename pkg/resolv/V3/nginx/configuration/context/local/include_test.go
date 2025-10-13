@@ -829,7 +829,7 @@ func TestInclude_Modify(t *testing.T) {
 	}
 }
 
-func TestInclude_QueryAllByKeyWords(t *testing.T) {
+func TestInclude_QueryAll(t *testing.T) {
 	testMain, err := NewMain("C:\\test\\nginx.conf")
 	if err != nil {
 		t.Fatal(err)
@@ -898,7 +898,7 @@ func TestInclude_QueryAllByKeyWords(t *testing.T) {
 				fatherContext: testInclude.fatherContext,
 				loadLocker:    testInclude.loadLocker,
 			},
-			args: args{kw: context.NewKeyWords(context_type.TypeLocation).SetRegexpMatchingValue("test")},
+			args: args{kw: context.NewKeyWordsByType(context_type.TypeLocation).SetRegexpMatchingValue("test")},
 			want: context.NewPosSet().Append(
 				context.SetPos(aFather, 0),
 				context.SetPos(bFather, 1),
@@ -912,7 +912,7 @@ func TestInclude_QueryAllByKeyWords(t *testing.T) {
 				fatherContext: disabledInclude.fatherContext,
 				loadLocker:    disabledInclude.loadLocker,
 			},
-			args: args{kw: context.NewKeyWords(context_type.TypeLocation).SetRegexpMatchingValue("test")},
+			args: args{kw: context.NewKeyWordsByType(context_type.TypeLocation).SetRegexpMatchingValue("test")},
 			want: context.NewPosSet(),
 		},
 	}
@@ -925,13 +925,13 @@ func TestInclude_QueryAllByKeyWords(t *testing.T) {
 				loadLocker:    tt.fields.loadLocker,
 			}
 			if got := i.ChildrenPosSet().QueryAll(tt.args.kw); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("QueryAllByKeyWords() = %v, want %v", got, tt.want)
+				t.Errorf("QueryAll() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestInclude_QueryByKeyWords(t *testing.T) {
+func TestInclude_QueryOne(t *testing.T) {
 	testMain, err := NewMain("C:\\test\\nginx.conf")
 	if err != nil {
 		t.Fatal(err)
@@ -1000,7 +1000,7 @@ func TestInclude_QueryByKeyWords(t *testing.T) {
 				fatherContext: testInclude.fatherContext,
 				loadLocker:    testInclude.loadLocker,
 			},
-			args: args{kw: context.NewKeyWords(context_type.TypeLocation).SetStringMatchingValue("test")},
+			args: args{kw: context.NewKeyWordsByType(context_type.TypeLocation).SetStringMatchingValue("test")},
 			want: context.SetPos(aFather, 0),
 		},
 		{
@@ -1011,7 +1011,7 @@ func TestInclude_QueryByKeyWords(t *testing.T) {
 				fatherContext: disabledInclude.fatherContext,
 				loadLocker:    disabledInclude.loadLocker,
 			},
-			args: args{kw: context.NewKeyWords(context_type.TypeLocation).SetRegexpMatchingValue("test")},
+			args: args{kw: context.NewKeyWordsByType(context_type.TypeLocation).SetRegexpMatchingValue("test")},
 			want: context.NotFoundPos(),
 		},
 	}

@@ -13,6 +13,7 @@ grpc:
 
 # Web Server Config 相关配置
 web-server-configs:
+  dns-ipv4: "114.114.114.114"  # dns的ip地址，用于解析被反向代理URL的域名地址
   items:
     - server-name: "bifrost-test"  # WebServer 名称
       server-type: "nginx"  # WebServer 类型，目前暂仅支持 nginx

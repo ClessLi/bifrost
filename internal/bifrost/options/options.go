@@ -41,6 +41,7 @@ func (o *Options) Flags() (fss cliflag.NamedFlagSets) {
 	o.InsecureServing.AddFlags(fss.FlagSet("insecure serving"))
 	o.RAOptions.AddFlags(fss.FlagSet("RA options"))
 	o.GRPCServing.AddFlags(fss.FlagSet("gRPC serving"))
+	o.WebServerConfigsOptions.AddFlags(fss.FlagSet("web server configs"))
 	o.MonitorOptions.AddFlags(fss.FlagSet("monitor"))
 	o.WebServerLogWatcherOptions.AddFlags(fss.FlagSet("log watcher"))
 	o.Log.AddFlags(fss.FlagSet("log"))

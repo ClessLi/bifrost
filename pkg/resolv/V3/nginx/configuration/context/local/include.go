@@ -296,7 +296,7 @@ func (i *Include) load() error {
 		).
 		Map( // call included Include Contexts to load
 			func(pos context.Pos) (context.Pos, error) {
-				return pos, pos.QueryAll(context.NewKeyWords(context_type.TypeInclude).
+				return pos, pos.QueryAll(context.NewKeyWordsByType(context_type.TypeInclude).
 					SetCascaded(true).
 					SetSkipQueryFilter(
 						func(targetCtx context.Context) bool {
@@ -343,7 +343,7 @@ func (i *Include) unload() error {
 		).
 		Map( // call included Include Contexts to unload
 			func(pos context.Pos) (context.Pos, error) {
-				return pos, pos.QueryAll(context.NewKeyWords(context_type.TypeInclude).
+				return pos, pos.QueryAll(context.NewKeyWordsByType(context_type.TypeInclude).
 					SetCascaded(true).
 					SetSkipQueryFilter(
 						func(targetCtx context.Context) bool {

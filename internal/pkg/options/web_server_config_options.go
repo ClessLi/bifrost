@@ -1,6 +1,7 @@
 package options
 
 import (
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -139,15 +140,25 @@ func (c *WebServerConfigOptions) ApplyToNginx(config *nginx.Config) {
 }
 
 type WebServerConfigsOptions struct {
-	WebServerConfigs []*WebServerConfigOptions `json:"items" mapstructure:"items"`
+	DomainNameServerIPv4 string                    `json:"dns-ipv4" mapstructure:"dns-ipv4"`
+	WebServerConfigs     []*WebServerConfigOptions `json:"items" mapstructure:"items"`
 }
 
 func NewWebServerConfigsOptions() *WebServerConfigsOptions {
 	return &WebServerConfigsOptions{WebServerConfigs: make([]*WebServerConfigOptions, 0)}
 }
 
+func (cs *WebServerConfigsOptions) AddFlags(fs *pflag.FlagSet) {
+	fs.StringVar(&cs.DomainNameServerIPv4, "web-server-configs.dns-ipv4", cs.DomainNameServerIPv4, ""+
+		"Set Domain Name resolver for resolving the proxy service domain name")
+}
+
 func (cs *WebServerConfigsOptions) Validate() []error {
 	var errs []error
+
+	if net.ParseIP(cs.DomainNameServerIPv4).String() == "<nil>" {
+		errs = append(errs, errors.Errorf("--web-server-configs.dns-ipv4 %s is not valid", cs.DomainNameServerIPv4))
+	}
 
 	if len(cs.WebServerConfigs) == 0 {
 		errs = append(errs, errors.New("web server configs options is null."))
@@ -163,4 +174,8 @@ func (cs *WebServerConfigsOptions) Validate() []error {
 	}
 
 	return errs
+}
+
+func (cs *WebServerConfigsOptions) ApplyGenericOptsTo(config *nginx.Config) {
+	config.DomainNameServerIPv4 = cs.DomainNameServerIPv4
 }

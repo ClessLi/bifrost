@@ -1624,7 +1624,7 @@ func TestBasicContext_QueryAllByKeyWords(t *testing.T) {
 				headStringFunc: testContext.headStringFunc,
 				tailStringFunc: testContext.tailStringFunc,
 			},
-			args: args{kw: context.NewKeyWords(context_type.TypeLocation).SetRegexpMatchingValue("test")},
+			args: args{kw: context.NewKeyWordsByType(context_type.TypeLocation).SetRegexpMatchingValue("test")},
 			want: context.NewPosSet().Append(
 				context.SetPos(testFather, 0),
 				context.SetPos(testFather, 2),
@@ -1684,7 +1684,7 @@ func TestBasicContext_QueryByKeyWords(t *testing.T) {
 				headStringFunc: testContext.headStringFunc,
 				tailStringFunc: testContext.tailStringFunc,
 			},
-			args: args{kw: context.NewKeyWords(context_type.TypeLocation).SetRegexpMatchingValue("test")},
+			args: args{kw: context.NewKeyWordsByType(context_type.TypeLocation).SetRegexpMatchingValue("test")},
 			want: context.SetPos(testFather, 0),
 		},
 		{
@@ -1698,7 +1698,7 @@ func TestBasicContext_QueryByKeyWords(t *testing.T) {
 				headStringFunc: testContext.headStringFunc,
 				tailStringFunc: testContext.tailStringFunc,
 			},
-			args: args{kw: context.NewKeyWords(context_type.TypeComment)},
+			args: args{kw: context.NewKeyWordsByType(context_type.TypeComment)},
 			want: context.NotFoundPos(),
 		},
 	}

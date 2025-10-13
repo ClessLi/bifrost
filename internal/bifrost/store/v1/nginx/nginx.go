@@ -77,6 +77,9 @@ func GetNginxStoreFactory(
 	once.Do(func() {
 		// init and start config managers and log watcher manager
 		cmConf := &nginx.Config{ManagersConfig: make(map[string]*configuration.ManagerConfig)}
+		// apply options to configuration for ConfigsManager
+		webSvrConfOpts.ApplyGenericOptsTo(cmConf)
+
 		svrLogsDirs := make(map[string]string)
 		for _, itemOpts := range webSvrConfOpts.WebServerConfigs {
 			if itemOpts.ServerType == nginxServer {
@@ -84,6 +87,8 @@ func GetNginxStoreFactory(
 			}
 			svrLogsDirs[itemOpts.ServerName] = itemOpts.LogsDirPath
 		}
+
+		// complete the configuration for ConfigsManager
 		var cmCompletedConf *nginx.CompletedConfig
 		cmCompletedConf, err = cmConf.Complete()
 		if err != nil {
@@ -93,6 +98,9 @@ func GetNginxStoreFactory(
 		if err != nil {
 			return
 		}
+
+		// set domain name resolver for parsing proxy info
+		cmCompletedConf.SetDomainNameResolver()
 
 		err = configsManager.Start()
 		if err != nil {

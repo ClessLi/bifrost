@@ -1,6 +1,7 @@
 package configuration
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -54,15 +55,16 @@ func (m *nginxConfigManager) Start() error {
 	if m.isRunning {
 		return errors.WithCode(code.ErrConfigManagerIsRunning, "nginx config manager is already running")
 	}
+	// cron jobs
 	m.wg.Add(1)
 	go func() {
 		defer func() {
 			m.isRunning = false
 		}()
 		defer m.wg.Done()
-		err := m.regularlyRefreshAndBackup(m.regularlyTaskSignalChan)
+		err := m.regularlyTask(m.regularlyTaskSignalChan)
 		if err != nil {
-			logV1.Errorf("regularly refresh and backup task start error. %+v", err)
+			logV1.Errorf("regularly task start error. %+v", err)
 		}
 	}()
 
@@ -93,7 +95,7 @@ func (m *nginxConfigManager) ServerStatus() (state v1.State) {
 	svrPidFilePath := filepath.Join("logs", "nginx.pid")
 	pidCtx := m.configuration.Main().
 		ChildrenPosSet().
-		QueryOne(context.NewKeyWords(context_type.TypeDirective).
+		QueryOne(context.NewKeyWordsByType(context_type.TypeDirective).
 			SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc).
 			SetRegexpMatchingValue(`pid\s+.*`)).
 		Target()
@@ -258,7 +260,25 @@ func (m *nginxConfigManager) refresh() error {
 	return nil
 }
 
-func (m *nginxConfigManager) regularlyRefreshAndBackup(signalChan chan int) error {
+func (m *nginxConfigManager) reparseProxyInfo() error {
+	return m.configuration.Main().ChildrenPosSet().QueryAll(context.NewKeyWords(func(targetCtx context.Context) bool {
+		return targetCtx.Type() == context_type.TypeDirHTTPProxyPass ||
+			targetCtx.Type() == context_type.TypeDirStreamProxyPass ||
+			targetCtx.Type() == context_type.TypeDirUninitializedProxyPass
+	})).
+		Map(func(pos context.Pos) (context.Pos, error) {
+			if err := pos.Target().Error(); err != nil {
+				return pos, err
+			}
+			pp, ok := pos.Target().(local.ProxyPass)
+			if !ok {
+				return pos, fmt.Errorf("invalid ProxyPass: %s", pos.Target().Value())
+			}
+			return pos, pp.ReparseParams()
+		}).Error()
+}
+
+func (m *nginxConfigManager) regularlyTask(signalChan chan int) error {
 	// regularly backup is disabled, when c.backupCycleDays or c.backupRetentionDays is less equal zero.
 	backupIsDisabled := m.backupOpts.backupCycleDays <= 0 || m.backupOpts.backupRetentionDays <= 0
 
@@ -282,6 +302,12 @@ func (m *nginxConfigManager) regularlyRefreshAndBackup(signalChan chan int) erro
 			if err != nil {
 				logV1.Errorf("backup nginx config failed, cased by: %+v", err)
 			}
+		}
+
+		// proxy information parsing task
+		err = m.reparseProxyInfo()
+		if err != nil {
+			logV1.Errorf("reparse proxy info failed, cased by: %+v", err)
 		}
 	}
 }

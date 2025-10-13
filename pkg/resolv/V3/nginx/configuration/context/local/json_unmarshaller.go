@@ -90,6 +90,21 @@ func (u *jsonUnmarshaller) UnmarshalJSON(bytes []byte) error {
 		if err != nil {
 			return err
 		}
+	case context_type.TypeDirHTTPProxyPass, context_type.TypeDirStreamProxyPass: // context of special leaf nodes.
+		u.completedContext = NewContext(unmarshalCtx.ContextType, unmarshalCtx.Value)
+		if err = u.completedContext.Error(); err != nil {
+			return err
+		}
+
+		err = json.Unmarshal(bytes, &u.completedContext)
+		if err != nil {
+			return err
+		}
+
+		// insert the context to be unmarshalled into its father
+		if err = u.fatherContext.Insert(u.completedContext, u.fatherContext.Len()).Error(); err != nil {
+			return err
+		}
 	default:
 		u.completedContext = NewContext(unmarshalCtx.ContextType, unmarshalCtx.Value)
 		if err = u.completedContext.Error(); err != nil {

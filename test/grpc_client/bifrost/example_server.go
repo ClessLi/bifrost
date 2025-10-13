@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	localhostIP = "192.168.121.1"
+	localhostIP = "127.0.0.1"
 	testPort    = 12321
 )
 
@@ -36,6 +36,7 @@ func exampleServerRun() error {
 	if err != nil {
 		return err
 	}
+	opts.WebServerConfigsOptions.DomainNameServerIPv4 = "114.114.114.114"
 	opts.WebServerConfigsOptions.WebServerConfigs = make([]*options.WebServerConfigOptions, 0)
 	opts.WebServerConfigsOptions.WebServerConfigs = append(
 		opts.WebServerConfigsOptions.WebServerConfigs,

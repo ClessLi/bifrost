@@ -24,3 +24,13 @@ func ResolveDomainNameToIPv4(name string) ([]string, error) {
 
 	return dnResolver.ResolveToIPv4s(name)
 }
+
+// TODO: check TCP and UDP socket connectivity
+// func CheckSocketConnectivity(nettype, address string, timeout time.Duration) bool {
+// 	conn, err := net.DialTimeout(nettype, address, timeout)
+// 	if err != nil {
+// 		return false
+// 	}
+// 	defer conn.Close()
+// 	return true
+// }

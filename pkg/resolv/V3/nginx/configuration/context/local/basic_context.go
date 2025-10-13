@@ -177,7 +177,7 @@ func (b *BasicContext) operateIncludes(handle func(include *Include) error) erro
 	}
 	// call include context handle some task
 	return b.self.ChildrenPosSet().
-		QueryAll(context.NewKeyWords(context_type.TypeInclude).SetCascaded(true)).
+		QueryAll(context.NewKeyWordsByType(context_type.TypeInclude).SetCascaded(true)).
 		Filter(func(pos context.Pos) bool {
 			_, ok := pos.Target().(*Include)
 
