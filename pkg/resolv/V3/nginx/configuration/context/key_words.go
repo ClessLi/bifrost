@@ -24,11 +24,10 @@ type KeyWords interface {
 	SetStringMatchingValue(value string) KeyWords
 	SetRegexpMatchingValue(value string) KeyWords
 	SetSkipQueryFilter(filterFunc func(targetCtx Context) bool) KeyWords
-	SetMatchingFilter(filterFunc func(targetCtx Context) bool) KeyWords
+	AppendMatchingFilter(filterFunc func(targetCtx Context) bool) KeyWords
 }
 
 type keywords struct {
-	matchingType         context_type.ContextType
 	matchingValue        string
 	isRegex              bool
 	isCascaded           bool
@@ -97,40 +96,47 @@ func (k *keywords) SetSkipQueryFilter(filterFunc func(targetCtx Context) bool) K
 	return k
 }
 
-func (k *keywords) SetMatchingFilter(filterFunc func(targetCtx Context) bool) KeyWords {
+func (k *keywords) AppendMatchingFilter(filterFunc func(targetCtx Context) bool) KeyWords {
 	k.matchingFilterFuncs = append(k.matchingFilterFuncs, filterFunc)
 
 	return k
 }
 
-func NewKeyWords(ctxtype context_type.ContextType) KeyWords {
+func NewKeyWords(matchingFilterFunc func(targetCtx Context) bool) KeyWords {
 	kw := &keywords{
-		matchingType:         ctxtype,
 		isRegex:              false,
 		isCascaded:           true,
 		isToLeafQuery:        true,
 		skipQueryFilterFuncs: make([]func(targetCtx Context) bool, 0),
 		matchingFilterFuncs:  make([]func(targetCtx Context) bool, 0),
 	}
-	// match context's type
-	kw.matchingFilterFuncs = append(kw.matchingFilterFuncs, func(targetCtx Context) bool {
-		return targetCtx.Type() == kw.matchingType
-	})
-	// match context's value
-	kw.matchingFilterFuncs = append(kw.matchingFilterFuncs, func(targetCtx Context) bool {
-		matched := false
-		if kw.isRegex {
-			var err error
-			matched, err = regexp.MatchString(kw.matchingValue, targetCtx.Value())
-			if err != nil {
-				return false
+
+	// set the first matching filter func
+	return kw.AppendMatchingFilter(matchingFilterFunc).
+		// set next matching filter func to match context's type
+		AppendMatchingFilter(func(targetCtx Context) bool {
+			// skip empty matching value
+			if kw.matchingValue == "" {
+				return true
 			}
-		} else {
-			matched = strings.Contains(targetCtx.Value(), kw.matchingValue)
-		}
 
-		return matched
+			matched := false
+			if kw.isRegex {
+				var err error
+				matched, err = regexp.MatchString(kw.matchingValue, targetCtx.Value())
+				if err != nil {
+					return false
+				}
+			} else {
+				matched = strings.Contains(targetCtx.Value(), kw.matchingValue)
+			}
+
+			return matched
+		})
+}
+
+func NewKeyWordsByType(ctxtype context_type.ContextType) KeyWords {
+	return NewKeyWords(func(targetCtx Context) bool {
+		return targetCtx.Type() == ctxtype
 	})
-
-	return kw
 }
