@@ -52,7 +52,6 @@ func (c CompletedConfig) NewMonitor() (Monitor, error) {
 		cancel:                      nil,
 		procLocker:                  new(sync.Mutex),
 		procStarted:                 false,
-		wg:                          new(sync.WaitGroup),
 		cache:                       unknownSysInfo,
 		cachemu:                     new(sync.RWMutex),
 		current:                     unknownSysInfo,

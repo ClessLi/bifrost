@@ -12,6 +12,7 @@ import (
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/disk"
 	"github.com/shirou/gopsutil/mem"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -46,7 +47,7 @@ type monitor struct {
 	procLocker  sync.Locker
 	procStarted bool
 
-	wg *sync.WaitGroup
+	eg *errgroup.Group
 
 	cache       *SystemInfo
 	cachemu     *sync.RWMutex
@@ -67,7 +68,9 @@ func (m *monitor) Start() error {
 	defer func() { m.procStarted = false }()
 
 	// init process context
+	var workCtx context.Context
 	m.ctx, m.cancel = context.WithCancel(context.Background())
+	m.eg, workCtx = errgroup.WithContext(m.ctx)
 
 	m.procLocker.Unlock()
 
@@ -100,46 +103,42 @@ func (m *monitor) Start() error {
 	interval := cycle / time.Duration(frequency)
 
 	// sync system information
-	syncWork, _ := context.WithCancel(m.ctx)
-	m.wg.Add(1)
-	go func(ctx context.Context) {
-		defer m.wg.Done()
+	m.eg.Go(func() error {
 		logV1.Info("start to sync system information")
 		syncTicker := time.NewTicker(syncDuration)
 		for {
 			select {
-			case <-ctx.Done():
+			case <-workCtx.Done():
 				logV1.Info("sync system information stopped")
 
-				return
+				return workCtx.Err()
 			case <-syncTicker.C:
-				m.infoSync(ctx)
+				m.infoSync(workCtx)
 			}
 		}
-	}(syncWork)
+	})
 
 	// system information collection
-	m.wg.Add(1)
-	watchingWork, _ := context.WithCancel(m.ctx)
-	go func(ctx context.Context) {
-		defer m.wg.Done()
-		var err error
-		defer func() {
-			if err != nil && !errors.Is(err, context.Canceled) {
-				logV1.Warnf("collect system information failed: %v", err)
-				err = m.Stop()
-				if err != nil {
-					logV1.Errorf(err.Error())
-				}
-			}
-		}()
+	m.eg.Go(func() error {
 		logV1.Info("start to collect system information")
-		err = m.watch(ctx, cycle, interval)
-	}(watchingWork)
+		err := m.watch(workCtx, cycle, interval)
+		if err != nil && !errors.Is(err, context.Canceled) {
+			logV1.Warnf("collect system information failed: %v", err)
+			err = m.Stop()
+			if err != nil {
+				logV1.Errorf(err.Error())
+
+				return err
+			}
+		}
+
+		return nil
+	})
 
 	if err := m.ctx.Err(); err != nil && !errors.Is(err, context.Canceled) {
 		return err
 	}
+
 	return nil
 }
 
@@ -147,20 +146,24 @@ func (m *monitor) Stop() error {
 	if m.ctx == nil || m.cancel == nil {
 		return errors.New("the monitor is not started or initialization.")
 	}
-	timeoutC, cancel := context.WithTimeout(context.TODO(), time.Second*10)
-	defer cancel()
+	timeoutC, done := context.WithTimeout(context.TODO(), time.Second*10)
+	defer done()
 
-	go func(done context.CancelFunc) {
+	stopeg, _ := errgroup.WithContext(timeoutC)
+	stopeg.Go(func() (err error) {
+		defer func() {
+			done()
+			if errors.Is(err, context.Canceled) {
+				logV1.Debugf("the monitor stopped successfully.")
+			}
+		}()
 		logV1.Info("the monitor is stopping...")
 		m.cancel()
-		m.wg.Wait()
-		done()
-		logV1.Debugf("the monitor stopped successfully.")
-	}(cancel)
 
-	<-timeoutC.Done()
+		return m.eg.Wait()
+	})
 
-	if err := timeoutC.Err(); err != nil {
+	if err := stopeg.Wait(); err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
 			logV1.Errorf("the monitor stopped timeout")
 

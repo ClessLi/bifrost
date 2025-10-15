@@ -68,7 +68,6 @@ func Test_monitor_Start(t *testing.T) {
 		cancel                      context.CancelFunc
 		procLocker                  sync.Locker
 		procStarted                 bool
-		wg                          *sync.WaitGroup
 		cache                       *SystemInfo
 		cachemu                     *sync.RWMutex
 		current                     *SystemInfo
@@ -91,7 +90,6 @@ func Test_monitor_Start(t *testing.T) {
 				cancel:                      nil,
 				procLocker:                  new(sync.Mutex),
 				procStarted:                 false,
-				wg:                          new(sync.WaitGroup),
 				cache:                       new(SystemInfo),
 				cachemu:                     new(sync.RWMutex),
 				current:                     new(SystemInfo),
@@ -99,7 +97,7 @@ func Test_monitor_Start(t *testing.T) {
 				cannotSync:                  false,
 			},
 			// multi:   10,
-			wantErr: true,
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
@@ -112,7 +110,6 @@ func Test_monitor_Start(t *testing.T) {
 				cancel:                      tt.fields.cancel,
 				procLocker:                  tt.fields.procLocker,
 				procStarted:                 tt.fields.procStarted,
-				wg:                          tt.fields.wg,
 				cache:                       tt.fields.cache,
 				cachemu:                     tt.fields.cachemu,
 				current:                     tt.fields.current,
@@ -132,7 +129,7 @@ func Test_monitor_Start(t *testing.T) {
 			}()
 			go func() {
 				defer wg.Done()
-				time.Sleep(time.Minute * 2)
+				time.Sleep(time.Second * 10)
 				err := m.Stop()
 				if err != nil {
 					errs = append(errs, err)
