@@ -59,18 +59,16 @@ type monitor struct {
 func (m *monitor) Start() error {
 	m.procLocker.Lock()
 	// check monitor is already start or not.
-	if m.ctx != nil {
-		if m.ctx.Err() == nil || m.procStarted {
-			return errors.New("the monitor is already start")
-		}
+	if m.procStarted || (m.ctx != nil && m.ctx.Err() == nil) {
+		return errors.New("the monitor is already start")
 	}
 	m.procStarted = true
 	defer func() { m.procStarted = false }()
 
 	// init process context
-	var workCtx context.Context
+	var work context.Context
 	m.ctx, m.cancel = context.WithCancel(context.Background())
-	m.eg, workCtx = errgroup.WithContext(m.ctx)
+	m.eg, work = errgroup.WithContext(m.ctx)
 
 	m.procLocker.Unlock()
 
@@ -108,12 +106,12 @@ func (m *monitor) Start() error {
 		syncTicker := time.NewTicker(syncDuration)
 		for {
 			select {
-			case <-workCtx.Done():
+			case <-work.Done():
 				logV1.Info("sync system information stopped")
 
-				return workCtx.Err()
+				return work.Err()
 			case <-syncTicker.C:
-				m.infoSync(workCtx)
+				m.infoSync(work)
 			}
 		}
 	})
@@ -121,25 +119,19 @@ func (m *monitor) Start() error {
 	// system information collection
 	m.eg.Go(func() error {
 		logV1.Info("start to collect system information")
-		err := m.watch(workCtx, cycle, interval)
+		err := m.watch(work, cycle, interval)
 		if err != nil && !errors.Is(err, context.Canceled) {
 			logV1.Warnf("collect system information failed: %v", err)
 			err = m.Stop()
 			if err != nil {
 				logV1.Errorf(err.Error())
-
-				return err
 			}
 		}
 
-		return nil
+		return err
 	})
 
-	if err := m.ctx.Err(); err != nil && !errors.Is(err, context.Canceled) {
-		return err
-	}
-
-	return nil
+	return m.ctx.Err()
 }
 
 func (m *monitor) Stop() error {

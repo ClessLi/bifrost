@@ -11,6 +11,7 @@ import (
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
 	utilsV3 "github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/utils"
+
 	"github.com/marmotedu/errors"
 )
 
@@ -1260,6 +1261,7 @@ func TestStreamProxyPass_MarshalJSON(t *testing.T) {
 	}
 }
 
+//nolint:funlen
 func Test_tmpProxyPass_verifyAndInitTo(t1 *testing.T) {
 	utilsV3.SetDomainNameResolver(fakeHostsResolver())
 	testMain, err := fakeProxyPassTestMainCtx()
@@ -1459,6 +1461,7 @@ func Test_tmpProxyPass_verifyAndInitTo(t1 *testing.T) {
 	}
 }
 
+//nolint:funlen
 func Test_tmpProxyPass_MarshalJSON(t1 *testing.T) {
 	utilsV3.SetDomainNameResolver(fakeHostsResolver())
 	testMain, err := fakeProxyPassTestMainCtx()
@@ -1652,6 +1655,7 @@ func Test_tmpProxyPass_MarshalJSON(t1 *testing.T) {
 			got, err := t.MarshalJSON()
 			if (err != nil) != tt.wantErr {
 				t1.Errorf("MarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {

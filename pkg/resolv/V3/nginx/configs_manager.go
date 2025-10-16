@@ -8,6 +8,8 @@ import (
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration"
 
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
+
 	"github.com/marmotedu/errors"
 )
 
@@ -26,18 +28,24 @@ type configsManager struct {
 var _ ConfigsManager = &configsManager{}
 
 func (m *configsManager) Start() error {
+	logV1.Infof("the configs manager is starting...")
 	var errs []error
-	for _, manager := range m.managerMap {
+	for name, manager := range m.managerMap {
+		logV1.Infof("the config manager(%s) is running...", name)
 		errs = append(errs, manager.Start())
 	}
+
 	return errors.NewAggregate(errs)
 }
 
 func (m *configsManager) Stop(timeout time.Duration) error {
+	logV1.Infof("the configs manager is stopping...")
 	var errs []error
-	for _, manager := range m.managerMap {
+	for name, manager := range m.managerMap {
+		logV1.Infof("the config manager(%s) is stopping...", name)
 		errs = append(errs, manager.Stop(timeout))
 	}
+
 	return errors.NewAggregate(errs)
 }
 
@@ -46,6 +54,7 @@ func (m *configsManager) GetConfigs() (configs map[string]configuration.NginxCon
 	for svrname, manager := range m.managerMap {
 		configs[svrname] = manager.NginxConfig()
 	}
+
 	return
 }
 
@@ -58,6 +67,7 @@ func (m *configsManager) GetServerInfos() (infos []*v1.WebServerInfo) {
 			Version: manager.ServerVersion(),
 		})
 	}
+
 	return
 }
 
@@ -67,5 +77,6 @@ func (m *configsManager) GenServerBinCMD(servername string, arg ...string) (*exe
 			return m.managerMap[svrname].ServerBinCMD(arg...), nil
 		}
 	}
+
 	return nil, errors.WithCode(code.ErrWebServerNotFound, "nginx server '%v' not found", servername)
 }

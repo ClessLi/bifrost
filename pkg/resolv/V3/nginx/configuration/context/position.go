@@ -30,6 +30,7 @@ func (p pos) QueryOne(kw KeyWords) Pos {
 	if kw.IsToLeafQuery() {
 		return p.Target().ChildrenPosSet().QueryOne(kw)
 	}
+
 	return p.Target().FatherPosSet().QueryOne(kw)
 }
 
@@ -37,6 +38,7 @@ func (p pos) QueryAll(kw KeyWords) PosSet {
 	if kw.IsToLeafQuery() {
 		return p.Target().ChildrenPosSet().QueryAll(kw)
 	}
+
 	return p.Target().FatherPosSet().QueryAll(kw)
 }
 

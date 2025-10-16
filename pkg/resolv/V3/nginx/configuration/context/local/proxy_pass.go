@@ -97,6 +97,7 @@ func (h *HTTPProxyPass) UnmarshalJSON(bytes []byte) error {
 	h.Protocol = tmp.ProxyPass.Protocol
 	h.Addresses = tmp.ProxyPass.Addresses
 	h.URI = tmp.ProxyPass.URI
+
 	return nil
 }
 
@@ -334,8 +335,10 @@ func (h *HTTPProxyPass) PosVerify() error {
 		if errors.IsCode(err, code.ErrV3CannotQueryFatherPosSetFromMainContext) {
 			return notMatchedError
 		}
+
 		return err
 	}
+
 	return fatherPoses.Map(func(pos context.Pos) (context.Pos, error) {
 		switch pos.Target().Type() {
 		case context_type.TypeLocation:
@@ -348,12 +351,15 @@ func (h *HTTPProxyPass) PosVerify() error {
 				if errors.IsCode(err, code.ErrV3CannotQueryFatherPosSetFromMainContext) {
 					return pos, notMatchedError
 				}
+
 				return pos, err
 			}
+
 			return pos, subFatherPoses.Map(func(pos context.Pos) (context.Pos, error) {
 				if pos.Target().Type() != context_type.TypeLocation {
 					return pos, notMatchedError
 				}
+
 				return pos, nil
 			}).Error()
 		default:
@@ -421,6 +427,7 @@ func (s *StreamProxyPass) UnmarshalJSON(bytes []byte) error {
 	s.Params = tmp.Value
 	s.OriginalAddress = tmp.ProxyPass.OriginalAddress
 	s.Addresses = tmp.ProxyPass.Addresses
+
 	return nil
 }
 
@@ -606,16 +613,20 @@ func (s *StreamProxyPass) PosVerify() error {
 		if errors.IsCode(err, code.ErrV3CannotQueryFatherPosSetFromMainContext) {
 			return notMatchedError
 		}
+
 		return err
 	}
+
 	return fatherPoses.Map(func(pos context.Pos) (context.Pos, error) {
 		if pos.Target().Type() != context_type.TypeServer {
 			return pos, notMatchedError
 		}
+
 		return pos, FatherPosSetWithoutInclude(pos.Target()).Map(func(pos context.Pos) (context.Pos, error) {
 			if pos.Target().Type() != context_type.TypeStream {
 				return pos, notMatchedError
 			}
+
 			return pos, nil
 		}).Error()
 	}).Error()
@@ -649,6 +660,7 @@ func (t *tmpProxyPass) MarshalJSON() ([]byte, error) {
 	if !t.isInitialized {
 		return t.Directive.MarshalJSON()
 	}
+
 	return json.Marshal(p)
 }
 
@@ -702,9 +714,11 @@ func (t *tmpProxyPass) verifyAndInitTo() context.Context {
 				return c
 			}
 			t.isInitialized = true
+
 			return p
 		}
 	}
+
 	return context.ErrContext(errors.New("failed to initialize proxy pass"))
 }
 
@@ -720,6 +734,7 @@ func (t *tmpProxyPass) ReparseParams() error {
 	if p != t {
 		return p.(ProxyPass).ReparseParams()
 	}
+
 	return nil
 }
 

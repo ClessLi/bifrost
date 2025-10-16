@@ -71,6 +71,7 @@ func (c *Config) FatherPosSet() context.PosSet {
 								return true
 							}
 						}
+
 						return false
 					}),
 				)

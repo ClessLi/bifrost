@@ -49,6 +49,7 @@ func TestWatcherManager_Watch(t *testing.T) {
 			got, err := wm.Watch(tt.args.ctx, tt.args.file)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Watch() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			wg := new(sync.WaitGroup)
@@ -60,6 +61,7 @@ func TestWatcherManager_Watch(t *testing.T) {
 					case data := <-got:
 						if data == nil {
 							logV1.Infof("watch stopped")
+
 							return
 						}
 						t.Logf("%s", data)

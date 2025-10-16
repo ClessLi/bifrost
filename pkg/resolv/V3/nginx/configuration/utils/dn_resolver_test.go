@@ -127,6 +127,7 @@ func Test_dnsClient_ResolveToIPv4s(t *testing.T) {
 			gotIpv4s, err := d.ResolveToIPv4s(tt.args.domainName)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ResolveToIPv4s() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if !reflect.DeepEqual(gotIpv4s, tt.wantIpv4s) {
@@ -154,6 +155,7 @@ func Test_hostList_ResolveToIPv4s(t *testing.T) {
 			gotIpv4s, err := tt.h.ResolveToIPv4s(tt.args.domainName)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ResolveToIPv4s() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if !reflect.DeepEqual(gotIpv4s, tt.wantIpv4s) {

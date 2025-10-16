@@ -569,10 +569,12 @@ func FatherPosSetWithoutInclude(ctx context.Context) context.PosSet {
 	if ps.Error() != nil {
 		return ps
 	}
+
 	return ps.MapToPosSet(func(pos context.Pos) context.PosSet {
 		if pos.Target().Type() == context_type.TypeInclude {
 			return FatherPosSetWithoutInclude(pos.Target())
 		}
+
 		return context.NewPosSet().Append(pos)
 	})
 }

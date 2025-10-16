@@ -45,6 +45,9 @@ type GenericGRPCServer struct {
 	// gracefully shutdown returns.
 	ShutdownTimeout time.Duration
 
+	// workContext is the context used for communicating with various service running tasks.
+	workContext context.Context
+
 	healthz         bool
 	enableMetrics   bool
 	enableProfiling bool
@@ -210,91 +213,91 @@ func initGenericGRPCServer(s *GenericGRPCServer) {
 	s.InstallServices()
 }
 
+func (s *GenericGRPCServer) servingRun(isSecure bool) error {
+	var (
+		serverType   string
+		address      string
+		healthServer *health.Server
+		server       *grpc.Server
+	)
+
+	if isSecure {
+		serverType = "secure"
+		address = s.SecureServingInfo.Address()
+		healthServer = s.secureSvrHealthz
+		server = s.secureServer
+	} else {
+		serverType = "insecure"
+		address = s.InsecureServingInfo.Address()
+		healthServer = s.insecureSvrHealthz
+		server = s.insecureServer
+	}
+
+	logV1.Infof("Start to listening the incoming requests on address: %s", address)
+	lis, err := net.Listen("tcp", address)
+	if err != nil {
+		logV1.Errorf(
+			"Failed to listen the incoming requests on address: %s, %s",
+			address,
+			err.Error(),
+		)
+
+		return err
+	}
+
+	if s.healthz {
+		healthServer.Resume()
+		defer healthServer.Shutdown()
+	}
+
+	if err = server.Serve(lis); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
+		logV1.Errorf("Failed to serve the %s server, %s", serverType, err.Error())
+
+		return err
+	}
+
+	logV1.Infof("Server on %s stopped", address)
+
+	return nil
+}
+
 // Run spawns the http server. It only returns when the port cannot be listened on initially.
 func (s *GenericGRPCServer) Run() error {
-	var eg errgroup.Group
+	if s.workContext != nil {
+		return errors.New("work context already set, the generic gRPC server maybe have already started")
+	}
+
+	var done context.CancelFunc
+	s.workContext, done = context.WithCancel(context.Background())
+	defer done()
+
+	eg, _ := errgroup.WithContext(s.workContext)
 
 	// Initializing the server in a goroutine so that
 	// it won't block the graceful shutdown handling below
 	logV1.Debugf("Goroutine start the insecure gRPC server...")
-	// TODO: fix duplicate code for insecure server and secure server startup
-	eg.Go(func() error { //nolint:dupl
-		if s.InsecureServingInfo == nil {
-			logV1.Info("Pass start insecure server")
-
-			return nil
-		}
-
-		logV1.Infof("Start to listening the incoming requests on address: %s", s.InsecureServingInfo.Address())
-		lis, err := net.Listen("tcp", s.InsecureServingInfo.Address())
-		if err != nil {
-			logV1.Errorf(
-				"Failed to listen the incoming requests on address: %s, %s",
-				s.InsecureServingInfo.Address(),
-				err.Error(),
-			)
-
-			return err
-		}
-
-		if s.healthz {
-			s.insecureSvrHealthz.Resume()
-			defer s.insecureSvrHealthz.Shutdown()
-		}
-
-		if err = s.insecureServer.Serve(lis); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
-			logV1.Errorf("Failed to serve the insecure server, %s", err.Error())
-
-			return err
-		}
-
-		logV1.Infof("Server on %s stopped", s.InsecureServingInfo.Address())
-
-		return nil
-	})
+	if s.InsecureServingInfo != nil {
+		eg.Go(func() error { return s.servingRun(false) })
+	} else {
+		logV1.Info("Pass start insecure server")
+	}
 
 	logV1.Debugf("Goroutine start the secure gRPC server...")
-	eg.Go(func() error { //nolint:dupl
-		if s.SecureServingInfo == nil {
-			logV1.Info("Pass start secure server")
-
-			return nil
-		}
-		logV1.Infof("Start to listening the incoming requests on https address: %s", s.SecureServingInfo.Address())
-		lis, err := net.Listen("tcp", s.SecureServingInfo.Address())
-		if err != nil {
-			logV1.Errorf(
-				"Failed to listen the incoming requests on address: %s, %s",
-				s.SecureServingInfo.Address(),
-				err.Error(),
-			)
-
-			return err
-		}
-
-		if s.healthz {
-			s.secureSvrHealthz.Resume()
-			defer s.secureSvrHealthz.Shutdown()
-		}
-		if err = s.secureServer.Serve(lis); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
-			logV1.Errorf("Failed to serve the secure server, %s", err.Error())
-
-			return err
-		}
-
-		logV1.Infof("Server on %s stopped", s.SecureServingInfo.Address())
-
-		return nil
-	})
+	if s.SecureServingInfo != nil {
+		eg.Go(func() error { return s.servingRun(true) })
+	} else {
+		logV1.Info("Pass start secure server")
+	}
 
 	// Ping the server to make sure the router is working.
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 	if s.healthz {
-		logV1.Debugf("Start to run the health check...")
-		if err := s.ping(ctx); err != nil {
-			return err
-		}
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		eg.Go(func() error {
+			logV1.Debugf("Start to run the health check...")
+
+			return s.ping(ctx)
+		})
 	}
 
 	if err := eg.Wait(); err != nil {
@@ -310,47 +313,104 @@ func (s *GenericGRPCServer) Run() error {
 func (s *GenericGRPCServer) Close() {
 	// The context is used to inform the server it has 10 seconds to finish
 	// the request it is currently handling
-	// ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	// defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	if s.registryClient != nil {
-		for _, servicename := range s.registeredService {
-			s.registryClient.DeRegister(servicename+"-"+s.instanceSuffixID, logV1.K())
+	stopeg, stopCtx := errgroup.WithContext(ctx)
+	stopWait := func() {
+		if s.workContext != nil {
+			select {
+			case <-s.workContext.Done():
+			case <-stopCtx.Done():
+			}
 		}
 	}
 
-	if s.secureServer != nil {
-		s.secureServer.GracefulStop()
-		if s.healthz {
-			s.secureSvrHealthz.Shutdown()
-		}
-		logV1.Info("Secure server has been stopped!")
-	}
+	// deregister services
+	stopeg.Go(func() error {
+		defer stopWait()
 
-	if s.insecureServer != nil {
-		s.insecureServer.GracefulStop()
-		if s.healthz {
-			s.insecureSvrHealthz.Shutdown()
+		if s.registryClient != nil {
+			for _, servicename := range s.registeredService {
+				s.registryClient.DeRegister(servicename+"-"+s.instanceSuffixID, logV1.K())
+			}
 		}
-		logV1.Info("Insecure server has been stopped!")
+
+		return nil
+	})
+
+	// stop the secure server
+	stopeg.Go(func() error {
+		defer stopWait()
+
+		if s.secureServer != nil {
+			s.secureServer.GracefulStop()
+			if s.healthz {
+				s.secureSvrHealthz.Shutdown()
+			}
+			logV1.Info("Secure server has been stopped!")
+		}
+
+		return nil
+	})
+
+	// stop the insecure server
+	stopeg.Go(func() error {
+		defer stopWait()
+
+		if s.insecureServer != nil {
+			s.insecureServer.GracefulStop()
+			if s.healthz {
+				s.insecureSvrHealthz.Shutdown()
+			}
+			logV1.Info("Insecure server has been stopped!")
+		}
+
+		return nil
+	})
+
+	if err := stopeg.Wait(); err != nil && !errors.Is(err, context.Canceled) {
+		logV1.Errorf("failed to close the generic grpc server, cased by: %+v", err.Error())
 	}
 }
 
+func (s *GenericGRPCServer) setupPing(isSecure bool) (*healthzclientv1.Client, error) {
+	var (
+		serverType string
+		address    string
+		creds      credentials.TransportCredentials
+		err        error
+	)
+
+	if isSecure {
+		serverType = "secure"
+		address = s.SecureServingInfo.Address()
+		creds, err = credentials.NewClientTLSFromFile(
+			s.SecureServingInfo.CertKey.CertFile,
+			s.SecureServingInfo.BindAddress,
+		)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		serverType = "insecure"
+		address = s.InsecureServingInfo.Address()
+		creds = insecure.NewCredentials()
+	}
+
+	logV1.Debugf("initialization %s server health check...", serverType)
+	if strings.Contains(address, "0.0.0.0") {
+		address = fmt.Sprintf("127.0.0.1:%s", strings.Split(address, ":")[1])
+	}
+
+	return healthzclientv1.NewClient(address, grpc.WithTransportCredentials(creds))
+}
+
 // ping pings the http server to make sure the router is working.
-//
-//nolint:funlen,gocognit
 func (s *GenericGRPCServer) ping(ctx context.Context) error {
 	healthzClients := make(map[string]*healthzclientv1.Client)
 	if s.InsecureServingInfo != nil {
-		logV1.Debugf("initialization insecure server health check...")
-		var address string
-		if strings.Contains(s.InsecureServingInfo.Address(), "0.0.0.0") {
-			address = fmt.Sprintf("127.0.0.1:%s", strings.Split(s.InsecureServingInfo.Address(), ":")[1])
-		} else {
-			address = s.InsecureServingInfo.Address()
-		}
-
-		client, err := healthzclientv1.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		client, err := s.setupPing(false)
 		if err != nil {
 			return err
 		}
@@ -365,22 +425,8 @@ func (s *GenericGRPCServer) ping(ctx context.Context) error {
 		healthzClients["insecure"] = client
 	}
 
-	if s.SecureServingInfo != nil { //nolint:nestif
-		logV1.Debugf("initialization secure server health check...")
-		var address string
-		if strings.Contains(s.SecureServingInfo.Address(), "0.0.0.0") {
-			address = fmt.Sprintf("127.0.0.1:%s", strings.Split(s.SecureServingInfo.Address(), ":")[1])
-		} else {
-			address = s.SecureServingInfo.Address()
-		}
-		creds, err := credentials.NewClientTLSFromFile(
-			s.SecureServingInfo.CertKey.CertFile,
-			s.SecureServingInfo.BindAddress,
-		)
-		if err != nil {
-			return err
-		}
-		client, err := healthzclientv1.NewClient(address, grpc.WithTransportCredentials(creds))
+	if s.SecureServingInfo != nil {
+		client, err := s.setupPing(true)
 		if err != nil {
 			return err
 		}
@@ -412,7 +458,7 @@ func (s *GenericGRPCServer) ping(ctx context.Context) error {
 					continue
 				}
 				healthzOK[tag+" "+svcname] = true
-				logV1.Infof("The '%s' %s-service state is: %v", svcname, tag, healthzclientv1.StatusString(status))
+				logV1.Infof("The `%s` %s-service state is: %v", svcname, tag, healthzclientv1.StatusString(status))
 			}
 		}
 

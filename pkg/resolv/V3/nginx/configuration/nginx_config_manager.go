@@ -1,6 +1,7 @@
 package configuration
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -12,7 +13,7 @@ import (
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	utilsV2 "github.com/ClessLi/bifrost/pkg/resolv/V2/utils"
-	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
+	nginxContext "github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context/local"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
 	utilsV3 "github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/utils"
@@ -20,6 +21,7 @@ import (
 	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 
 	"github.com/marmotedu/errors"
+	"golang.org/x/sync/errgroup"
 )
 
 type NginxConfigManager interface {
@@ -36,9 +38,11 @@ type nginxConfigManager struct {
 	nginxHome               string
 	nginxBinFilePath        string
 	regularlyTaskCycleDelay time.Duration
-	regularlyTaskSignalChan chan int
+	ctx                     context.Context
+	cancel                  context.CancelFunc
 	backupOpts              backupOption
 	wg                      *sync.WaitGroup
+	eg                      *errgroup.Group
 	isRunning               bool
 }
 
@@ -52,38 +56,53 @@ type backupOption struct {
 
 func (m *nginxConfigManager) Start() error {
 	// TODO: Server Port listen state, proxy server connection state
-	if m.isRunning {
-		return errors.WithCode(code.ErrConfigManagerIsRunning, "nginx config manager is already running")
+	if m.isRunning || (m.ctx != nil && m.ctx.Err() == nil) {
+		return errors.WithCode(code.ErrConfigManagerIsRunning, "the nginx config manager is already running")
 	}
+
+	if m.ctx == nil || m.cancel == nil {
+		m.ctx, m.cancel = context.WithCancel(context.Background())
+	}
+	var work context.Context
+	m.eg, work = errgroup.WithContext(m.ctx)
 	// cron jobs
-	m.wg.Add(1)
-	go func() {
+	m.eg.Go(func() error {
 		defer func() {
 			m.isRunning = false
 		}()
-		defer m.wg.Done()
-		err := m.regularlyTask(m.regularlyTaskSignalChan)
-		if err != nil {
-			logV1.Errorf("regularly task start error. %+v", err)
-		}
-	}()
 
-	return nil
+		return m.regularlyTask(work)
+	})
+
+	return m.ctx.Err()
 }
 
 func (m *nginxConfigManager) Stop(timeout time.Duration) error {
 	if !m.isRunning {
-		return errors.WithCode(code.ErrConfigManagerIsNotRunning, "nginx config manager is not running")
+		return errors.WithCode(code.ErrConfigManagerIsNotRunning, "the nginx config manager is not running")
 	}
-	defer m.wg.Wait()
-	select {
-	case <-time.After(timeout):
-		return errors.Errorf("stop nginx config manager time out for more than %d seconds", int(timeout/time.Second))
-	case m.regularlyTaskSignalChan <- 9:
+	stopWork, done := context.WithTimeout(context.TODO(), timeout)
+	defer done()
+	stopeg, _ := errgroup.WithContext(stopWork)
+	stopeg.Go(func() error {
+		defer done()
+		m.cancel()
+
+		return m.eg.Wait()
+	})
+
+	if err := stopeg.Wait(); err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			return errors.Errorf("stop the nginx config manager time out for more than %d seconds", int(timeout/time.Second))
+		} else if !errors.Is(err, context.Canceled) {
+			return errors.Errorf("stop the nginx config manager error. %+v", err)
+		}
 		m.isRunning = false
 
 		return nil
 	}
+
+	return errors.WithCode(code.ErrConfigManagerIsRunning, "failed to stop the nginx config manager")
 }
 
 func (m *nginxConfigManager) NginxConfig() NginxConfig {
@@ -95,8 +114,8 @@ func (m *nginxConfigManager) ServerStatus() (state v1.State) {
 	svrPidFilePath := filepath.Join("logs", "nginx.pid")
 	pidCtx := m.configuration.Main().
 		ChildrenPosSet().
-		QueryOne(context.NewKeyWordsByType(context_type.TypeDirective).
-			SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc).
+		QueryOne(nginxContext.NewKeyWordsByType(context_type.TypeDirective).
+			SetSkipQueryFilter(nginxContext.SkipDisabledCtxFilterFunc).
 			SetRegexpMatchingValue(`pid\s+.*`)).
 		Target()
 	if pidCtx.Error() == nil {
@@ -143,6 +162,7 @@ func (m *nginxConfigManager) ServerBinCMD(arg ...string) *exec.Cmd {
 }
 
 func (m *nginxConfigManager) backup() error {
+	logV1.Debugf("start to backup nginx configs")
 	// 开始备份
 	// 归档日期初始化
 	now := time.Now().In(m.backupOpts.backupTimeZone)
@@ -203,6 +223,7 @@ func (m *nginxConfigManager) backup() error {
 }
 
 func (m *nginxConfigManager) refresh() error {
+	logV1.Debug("start to refresh nginx configs")
 	fsMain, fsFingerprinter, err := m.load()
 	if err != nil {
 		return err
@@ -261,12 +282,14 @@ func (m *nginxConfigManager) refresh() error {
 }
 
 func (m *nginxConfigManager) reparseProxyInfo() error {
-	return m.configuration.Main().ChildrenPosSet().QueryAll(context.NewKeyWords(func(targetCtx context.Context) bool {
+	logV1.Debugf("start to reparse proxy info")
+
+	return m.configuration.Main().ChildrenPosSet().QueryAll(nginxContext.NewKeyWords(func(targetCtx nginxContext.Context) bool {
 		return targetCtx.Type() == context_type.TypeDirHTTPProxyPass ||
 			targetCtx.Type() == context_type.TypeDirStreamProxyPass ||
 			targetCtx.Type() == context_type.TypeDirUninitializedProxyPass
 	})).
-		Map(func(pos context.Pos) (context.Pos, error) {
+		Map(func(pos nginxContext.Pos) (nginxContext.Pos, error) {
 			if err := pos.Target().Error(); err != nil {
 				return pos, err
 			}
@@ -274,12 +297,13 @@ func (m *nginxConfigManager) reparseProxyInfo() error {
 			if !ok {
 				return pos, fmt.Errorf("invalid ProxyPass: %s", pos.Target().Value())
 			}
+
 			return pos, pp.ReparseParams()
 		}).Error()
 }
 
-func (m *nginxConfigManager) regularlyTask(signalChan chan int) error {
-	// regularly backup is disabled, when c.backupCycleDays or c.backupRetentionDays is less equal zero.
+func (m *nginxConfigManager) regularlyTask(ctx context.Context) error {
+	// regularly backup is disabled, when m.backupOpts.backupCycleDays or m.backupOpts.backupRetentionDays is less equal zero.
 	backupIsDisabled := m.backupOpts.backupCycleDays <= 0 || m.backupOpts.backupRetentionDays <= 0
 
 	ticker := time.NewTicker(m.regularlyTaskCycleDelay)
@@ -287,27 +311,42 @@ func (m *nginxConfigManager) regularlyTask(signalChan chan int) error {
 		// 等待触发
 		select {
 		case <-ticker.C:
-		case signal := <-signalChan:
-			if signal == 9 {
-				return nil
-			}
+		case <-ctx.Done():
+			return ctx.Err()
 		}
+
+		taskeg, _ := errgroup.WithContext(ctx)
+		// refresh configs
 		err := m.refresh()
 		if err != nil {
 			logV1.Errorf("refresh nginx config failed, cased by: %+v", err)
 		}
 
+		// backup configs after refreshing
 		if !backupIsDisabled {
-			err = m.backup()
-			if err != nil {
-				logV1.Errorf("backup nginx config failed, cased by: %+v", err)
-			}
+			taskeg.Go(func() error {
+				bakerr := m.backup()
+				if bakerr != nil {
+					logV1.Errorf("backup nginx config failed, cased by: %+v", bakerr)
+				}
+
+				return nil
+			})
 		}
 
-		// proxy information parsing task
-		err = m.reparseProxyInfo()
-		if err != nil {
-			logV1.Errorf("reparse proxy info failed, cased by: %+v", err)
+		// proxy information parsing task after refreshing
+		taskeg.Go(func() error {
+			parseerr := m.reparseProxyInfo()
+			if parseerr != nil {
+				logV1.Errorf("reparse proxy info failed, cased by: %+v", parseerr)
+			}
+
+			return nil
+		})
+
+		err = taskeg.Wait()
+		if err != nil && !errors.Is(err, context.Canceled) {
+			logV1.Errorf("regularly task executed failed, cased by: %+v", err)
 		}
 	}
 }

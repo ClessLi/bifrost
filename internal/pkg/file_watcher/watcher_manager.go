@@ -4,6 +4,8 @@ import (
 	"context"
 	"sync"
 
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
+
 	"github.com/marmotedu/errors"
 )
 
@@ -38,6 +40,7 @@ func (wm *WatcherManager) StopAll() error {
 	wm.mu.Lock()
 	defer wm.mu.Unlock()
 	for filePath, watcher := range wm.watchers {
+		logV1.Infof("stopping watching file '%s'", filePath)
 		err := watcher.Stop()
 		if err != nil {
 			errs = append(errs, errors.Errorf("failed to stop watching file '%s'. %s", filePath, err.Error()))

@@ -3,6 +3,7 @@ package nginx
 import (
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration"
 	utilsV3 "github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/utils"
+
 	"github.com/marmotedu/errors"
 )
 
@@ -39,9 +40,12 @@ func (cc *CompletedConfig) NewConfigsManager() (ConfigsManager, error) {
 		m.managerMap[svrname], err = config.NewNginxConfigManager()
 		errs = append(errs, err)
 	}
-	return m, errors.NewAggregate(errs)
-}
 
-func (cc *CompletedConfig) SetDomainNameResolver() {
+	if aerr := errors.NewAggregate(errs); aerr != nil {
+		return nil, aerr
+	}
+
 	utilsV3.SetDomainNameResolver(utilsV3.NewDNSClient(cc.DomainNameServerIPv4))
+
+	return m, nil
 }

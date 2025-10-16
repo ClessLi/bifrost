@@ -76,7 +76,6 @@ func (cc *CompletedManagerConfig) NewNginxConfigManager() (NginxConfigManager, e
 		nginxHome:               cc.NginxHome,
 		nginxBinFilePath:        cc.NginxBinFilePath,
 		regularlyTaskCycleDelay: cc.RegularlyTaskCycleDelay,
-		regularlyTaskSignalChan: make(chan int),
 		backupOpts: backupOption{
 			backupCycleDays:     cc.BackupCycleDays,
 			backupRetentionDays: cc.BackupRetentionDays,
