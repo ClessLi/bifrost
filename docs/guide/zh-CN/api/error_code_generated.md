@@ -62,6 +62,7 @@ Bifrost 系统支持的错误码列表如下：
 | ErrV3ConversionToContextFailed              | 110019 | 500       | Conversion to context failed                                     |
 | ErrV3DomainNameResolutionFailed             | 110020 | 500       | Domain name resolution failed                                    |
 | ErrV3CannotQueryFatherPosSetFromMainContext | 110021 | 500       | Can not query father pos set from MainContext                    |
+| ErrV3InvalidConfigFingerprints              | 110022 | 400       | Invalid fingerprints of the web server configs                   |
 | ErrStopMonitoringTimeout                    | 110201 | 500       | Stop monitoring timeout                                          |
 | ErrMonitoringServiceSuspension              | 110202 | 500       | Monitoring service suspension                                    |
 | ErrMonitoringStarted                        | 110203 | 500       | Monitoring is already started                                    |

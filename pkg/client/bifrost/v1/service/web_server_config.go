@@ -2,10 +2,12 @@ package service
 
 import (
 	"encoding/json"
+	"strings"
 
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	epv1 "github.com/ClessLi/bifrost/internal/bifrost/endpoint/v1"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context/local"
 	utilsV3 "github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/utils"
 
 	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
@@ -16,6 +18,7 @@ import (
 type WebServerConfigService interface {
 	GetServerNames() (servernames []string, err error)
 	Get(servername string) (config configuration.NginxConfig, originalFingerprinter utilsV3.ConfigFingerprinter, err error)
+	ConnectivityCheckOfProxiedServers(servname string, proxyPass local.ProxyPass, originalFingerprints utilsV3.ConfigFingerprints) (resp local.ProxyPass, err error)
 	Update(servername string, config configuration.NginxConfig, originalFingerprints utilsV3.ConfigFingerprints) error
 }
 
@@ -60,6 +63,32 @@ func (w *webServerConfigService) Get(servername string) (configuration.NginxConf
 	}
 
 	return config, utilsV3.SimpleConfigFingerprinter(ofp), nil
+}
+
+func (w *webServerConfigService) ConnectivityCheckOfProxiedServers(servername string, proxyPass local.ProxyPass, ofp utilsV3.ConfigFingerprints) (resp local.ProxyPass, err error) {
+	ofpdata, err := json.Marshal(ofp)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to unmarshal fingerprints of the web server config")
+	}
+
+	ctxPos, err := local.PosBasedOnConfig(proxyPass)
+	if err != nil {
+		return nil, err
+	}
+
+	respData, err := w.eps.EndpointConnectivityCheckOfProxiedServers()(GetContext(), &v1.WebServerConfigContextPos{
+		ServerName:           &v1.ServerName{Name: servername},
+		ContextPos:           ctxPos,
+		OriginalFingerprints: ofpdata,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	resp = local.NewContext(proxyPass.Type(), strings.Split(proxyPass.Value(), " ")[1]).(local.ProxyPass)
+	err = json.Unmarshal(respData.(*v1.ContextData).JsonData, resp)
+
+	return
 }
 
 func (w *webServerConfigService) Update(servername string, config configuration.NginxConfig, ofp utilsV3.ConfigFingerprints) error {

@@ -49,6 +49,17 @@ func SetPos(father Context, posIdx int) Pos {
 	}
 }
 
+func GetPos(ctx Context) Pos {
+	poses := ctx.Father().ChildrenPosSet().Filter(func(pos Pos) bool {
+		return pos.Target() == ctx
+	})
+	if len(poses.List()) != 1 {
+		return ErrPos(errors.WithCode(code.ErrV3InvalidOperation, "pos of the context not found, or duplicate pos"))
+	}
+
+	return poses.List()[0]
+}
+
 type errPos struct {
 	ctx *ErrorContext
 }

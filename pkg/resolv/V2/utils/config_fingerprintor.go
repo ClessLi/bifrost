@@ -22,10 +22,13 @@ func (f *configFingerprinter) Diff(fingerprinter ConfigFingerprinter) bool {
 				strings.EqualFold(localFingerprint, fingerprint) {
 				continue
 			}
+
 			return true
 		}
+
 		return false
 	}
+
 	return true
 }
 
@@ -53,5 +56,6 @@ func NewConfigFingerprinter(dataMap map[string][]byte) ConfigFingerprinter {
 	for s, bytes := range dataMap {
 		cf.setFingerprint(s, bytes)
 	}
+
 	return cf
 }

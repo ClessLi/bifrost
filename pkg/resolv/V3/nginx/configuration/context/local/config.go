@@ -34,54 +34,54 @@ func (c *Config) isInGraph() bool {
 }
 
 func (c *Config) FatherPosSet() context.PosSet {
-	if c.isInGraph() {
-		// return ErrPosSet, which is result of the MainContext's FatherPosSet(), if config itself is main config
-		mainCtx, err := c.mainContext()
-		if err == nil && mainCtx.MainConfig() == c {
-			return mainCtx.FatherPosSet()
-		}
-
-		// return father Include pos list
-		fatherIncludePosSet := context.NewPosSet()
-		edges, err := mainCtx.graph().(*configGraph).graph.Edges()
-		if err != nil {
-			return context.ErrPosSet(err)
-		}
-
-		for _, edge := range edges {
-			if edge.Target == configHash(c) {
-				fc, err := mainCtx.GetConfig(edge.Source)
-				if err != nil {
-					return context.ErrPosSet(err)
-				}
-				fatherIncludePosSet.AppendWithPosSet(
-					fc.ChildrenPosSet().QueryAll(
-						context.NewKeyWordsByType(context_type.TypeInclude),
-					).Filter(func(pos context.Pos) bool {
-						t := pos.Target()
-						i, ok := t.(*Include)
-						if !ok {
-							return false
-						}
-
-						i.loadLocker.Lock()
-						defer i.loadLocker.Unlock()
-						for _, ic := range i.snapshot.includedConfigs {
-							if ic == c {
-								return true
-							}
-						}
-
-						return false
-					}),
-				)
-			}
-		}
-
-		return fatherIncludePosSet
+	if !c.isInGraph() {
+		return context.NewPosSet()
 	}
 
-	return context.NewPosSet()
+	// return ErrPosSet, which is result of the MainContext's FatherPosSet(), if config itself is main config
+	mainCtx, err := c.mainContext()
+	if err == nil && mainCtx.MainConfig() == c {
+		return mainCtx.FatherPosSet()
+	}
+
+	// return father Include pos list
+	fatherIncludePosSet := context.NewPosSet()
+	edges, err := mainCtx.graph().(*configGraph).graph.Edges()
+	if err != nil {
+		return context.ErrPosSet(err)
+	}
+
+	for _, edge := range edges {
+		if edge.Target == configHash(c) {
+			fc, err := mainCtx.GetConfig(edge.Source)
+			if err != nil {
+				return context.ErrPosSet(err)
+			}
+			fatherIncludePosSet.AppendWithPosSet(
+				fc.ChildrenPosSet().QueryAll(
+					context.NewKeyWordsByType(context_type.TypeInclude),
+				).Filter(func(pos context.Pos) bool {
+					t := pos.Target()
+					i, ok := t.(*Include)
+					if !ok {
+						return false
+					}
+
+					i.loadLocker.Lock()
+					defer i.loadLocker.Unlock()
+					for _, ic := range i.snapshot.includedConfigs {
+						if ic == c {
+							return true
+						}
+					}
+
+					return false
+				}),
+			)
+		}
+	}
+
+	return fatherIncludePosSet
 }
 
 func (c *Config) Clone() context.Context {

@@ -19,6 +19,10 @@ func (w *webServerConfigEndpoints) EndpointGet() endpoint.Endpoint {
 	return w.transport.Get().Endpoint()
 }
 
+func (w *webServerConfigEndpoints) EndpointConnectivityCheckOfProxiedServers() endpoint.Endpoint {
+	return w.transport.ConnectivityCheckOfProxiedServers().Endpoint()
+}
+
 func (w *webServerConfigEndpoints) EndpointUpdate() endpoint.Endpoint {
 	return w.transport.Update().Endpoint()
 }

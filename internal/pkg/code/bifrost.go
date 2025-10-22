@@ -66,6 +66,9 @@ const (
 
 	// ErrV3CannotQueryFatherPosSetFromMainContext - 500: Can not query father pos set from MainContext.
 	ErrV3CannotQueryFatherPosSetFromMainContext
+
+	// ErrV3InvalidConfigFingerprints - 400: Invalid fingerprints of the web server configs.
+	ErrV3InvalidConfigFingerprints
 )
 
 // bifrost: statistics errors.

@@ -1,7 +1,7 @@
 package password
 
 import (
-	// nolint:gosec
+	//nolint:gosec
 	"crypto/sha1"
 	"fmt"
 )

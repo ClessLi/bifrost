@@ -17,6 +17,15 @@ func (w webServerConfig) EncodeRequest(ctx context.Context, req interface{}) (in
 		return &pbv1.Null{}, nil
 	case *v1.ServerName: // encode `Get` request
 		return &pbv1.ServerName{Name: req.Name}, nil
+	case *v1.WebServerConfigContextPos: // encode `ConnectivityCheckOfProxiedServers` request
+		return &pbv1.ServerConfigContextPos{
+			ServerName: req.ServerName.Name,
+			ContextPos: &pbv1.ContextPos{
+				ConfigPath: req.ContextPos.ConfigPath,
+				Pos:        req.ContextPos.PosIndex,
+			},
+			OriginalFingerprints: req.OriginalFingerprints,
+		}, nil
 	case *v1.WebServerConfig: // encode `Update` request
 		return &pbv1.ServerConfig{
 			ServerName:           req.ServerName.Name,

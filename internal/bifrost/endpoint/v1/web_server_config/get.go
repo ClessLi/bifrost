@@ -29,3 +29,13 @@ func (w *webServerConfigEndpoints) EndpointGet() endpoint.Endpoint {
 		return nil, errors.Errorf("invalid get request, need *v1.ServerName, not %T", request)
 	}
 }
+
+func (w *webServerConfigEndpoints) EndpointConnectivityCheckOfProxiedServers() endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		if req, ok := request.(*v1.WebServerConfigContextPos); ok {
+			return w.svc.WebServerConfig().ConnectivityCheckOfProxiedServers(ctx, req)
+		}
+
+		return nil, errors.Errorf("invalid get request, need *v1.WebServerConfigContextPos, not %T", request)
+	}
+}

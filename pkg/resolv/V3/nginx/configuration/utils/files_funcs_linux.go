@@ -14,5 +14,6 @@ func FileModifyTime(filepath string) (*time.Time, error) {
 		return nil, err
 	}
 	tt := time.Unix(fs.Mtim.Sec, fs.Mtim.Nsec)
+
 	return &tt, nil
 }

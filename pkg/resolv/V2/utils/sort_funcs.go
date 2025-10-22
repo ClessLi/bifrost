@@ -27,6 +27,7 @@ func SortInsertUniqInt(slice []int, ints ...int) []int {
 		if n <= 0 {
 			slice = append(slice, num)
 			n++
+
 			continue
 		}
 
@@ -35,6 +36,7 @@ func SortInsertUniqInt(slice []int, ints ...int) []int {
 		} else if slice[n-1] < num {
 			slice = append(slice, num)
 			n++
+
 			continue
 		}
 
@@ -48,6 +50,7 @@ func SortInsertUniqInt(slice []int, ints ...int) []int {
 
 		if slice[i] == num {
 			slice[n-1] = tmp
+
 			continue
 		}
 

@@ -19,13 +19,15 @@ const (
 type WebServerConfigTransport interface {
 	GetServerNames() Client
 	Get() Client
+	ConnectivityCheckOfProxiedServers() Client
 	Update() Client
 }
 
 type webServerConfigTransport struct {
-	getServerNamesClient Client
-	getClient            Client
-	updateClient         Client
+	getServerNamesClient                    Client
+	getClient                               Client
+	connectivityCheckOfProxiedServersClient Client
+	updateClient                            Client
 }
 
 func (w *webServerConfigTransport) GetServerNames() Client {
@@ -34,6 +36,10 @@ func (w *webServerConfigTransport) GetServerNames() Client {
 
 func (w *webServerConfigTransport) Get() Client {
 	return w.getClient
+}
+
+func (w *webServerConfigTransport) ConnectivityCheckOfProxiedServers() Client {
+	return w.connectivityCheckOfProxiedServersClient
 }
 
 func (w *webServerConfigTransport) Update() Client {
@@ -105,6 +111,14 @@ func newWebServerConfigTransport(transport *transport) WebServerConfigTransport 
 			transport.conn,
 			transport.encoderFactory.WebServerConfig().EncodeRequest,
 			transport.decoderFactory.WebServerConfig().DecodeResponse,
+		),
+		connectivityCheckOfProxiedServersClient: grpctransport.NewClient(
+			transport.conn,
+			webServerConfigService,
+			"ConnectivityCheckOfProxiedServers",
+			transport.encoderFactory.WebServerConfig().EncodeRequest,
+			transport.decoderFactory.WebServerConfig().DecodeResponse,
+			new(pbv1.ContextData),
 		),
 		updateClient: grpctransport.NewClient(
 			transport.conn,

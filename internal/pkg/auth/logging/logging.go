@@ -48,6 +48,7 @@ func (mw loggingMiddleware) Login(
 	}
 
 	ret, err = mw.Service.Login(ctx, username, password, unexpired)
+
 	return ret, err
 }
 
@@ -67,6 +68,7 @@ func (mw loggingMiddleware) Verify(ctx context.Context, token string) (ret bool,
 	}
 
 	ret, err = mw.Service.Verify(ctx, token)
+
 	return ret, err
 }
 
@@ -79,6 +81,7 @@ func (mw loggingMiddleware) HealthCheck() (result bool) {
 		)
 	}(time.Now().Local())
 	result = true
+
 	return
 }
 
@@ -92,6 +95,7 @@ func getClientIP(ctx context.Context) (ip string, err error) {
 	}
 	if pr.Addr == net.Addr(nil) {
 		err = fmt.Errorf("getClientIP, peer.Addr is nil")
+
 		return
 	}
 	//fmt.Println(md)
@@ -102,5 +106,6 @@ func getClientIP(ctx context.Context) (ip string, err error) {
 	//}
 	//ip = ips[0]
 	ip = pr.Addr.String()
+
 	return ip, nil
 }

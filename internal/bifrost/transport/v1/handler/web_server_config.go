@@ -15,21 +15,24 @@ import (
 type WebServerConfigHandlers interface {
 	HandlerGetServerNames() grpc.Handler
 	HandlerGet() grpc.Handler
+	HandlerConnectivityCheckOfProxiedServers() grpc.Handler
 	HandlerUpdate() grpc.Handler
 }
 
 var _ WebServerConfigHandlers = &webServerConfigHandlers{}
 
 type webServerConfigHandlers struct {
-	onceGetServerNames             sync.Once
-	onceGet                        sync.Once
-	onceUpdate                     sync.Once
-	singletonHandlerGetServerNames grpc.Handler
-	singletonHandlerGet            grpc.Handler
-	singletonHandlerUpdate         grpc.Handler
-	eps                            epv1.WebServerConfigEndpoints
-	decoder                        decoder.Decoder
-	encoder                        encoder.Encoder
+	onceGetServerNames                                sync.Once
+	onceGet                                           sync.Once
+	onceCheckProxiedServersConnectivity               sync.Once
+	onceUpdate                                        sync.Once
+	singletonHandlerGetServerNames                    grpc.Handler
+	singletonHandlerGet                               grpc.Handler
+	singletonHandlerConnectivityCheckOfProxiedServers grpc.Handler
+	singletonHandlerUpdate                            grpc.Handler
+	eps                                               epv1.WebServerConfigEndpoints
+	decoder                                           decoder.Decoder
+	encoder                                           encoder.Encoder
 }
 
 func (wsc *webServerConfigHandlers) HandlerGetServerNames() grpc.Handler {
@@ -60,6 +63,21 @@ func (wsc *webServerConfigHandlers) HandlerGet() grpc.Handler {
 	}
 
 	return wsc.singletonHandlerGet
+}
+
+func (wsc *webServerConfigHandlers) HandlerConnectivityCheckOfProxiedServers() grpc.Handler {
+	wsc.onceCheckProxiedServersConnectivity.Do(func() {
+		if wsc.singletonHandlerConnectivityCheckOfProxiedServers == nil {
+			wsc.singletonHandlerConnectivityCheckOfProxiedServers = NewHandler(wsc.eps.EndpointConnectivityCheckOfProxiedServers(), wsc.decoder, wsc.encoder)
+		}
+	})
+	if wsc.singletonHandlerConnectivityCheckOfProxiedServers == nil {
+		logV1.Fatal("web server config handler `ConnectivityCheckOfProxiedServers` is nil")
+
+		return nil
+	}
+
+	return wsc.singletonHandlerConnectivityCheckOfProxiedServers
 }
 
 func (wsc *webServerConfigHandlers) HandlerUpdate() grpc.Handler {

@@ -32,5 +32,6 @@ func createLogDir(dirpath string) error {
 	} else {
 		return err
 	}
+
 	return nil
 }

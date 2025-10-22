@@ -2,11 +2,15 @@ package local
 
 import (
 	"encoding/json"
+	"fmt"
+	"net"
 	"regexp"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
+	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
@@ -31,13 +35,74 @@ type ProxyPass interface {
 	context.Context
 	PosVerify() error
 	ReparseParams() error
+	ConnectivityCheck() ProxyPass
 }
 
 type ProxiedAddress struct {
 	DomainName string     `json:"domain-name"`
 	Port       uint16     `json:"port"`
-	IPv4s      []string   `json:"ipv4-list"`
+	Sockets    []*Socket  `json:"sockets"`
 	ResolveErr *JSONError `json:"resolve-err"`
+}
+
+type Socket struct {
+	IPv4            string                 `json:"ipv4"`
+	Port            uint16                 `json:"port"`
+	TCPConnectivity v1.NetworkConnectivity `json:"tcp-connectivity"`
+	UDPConnectivity v1.NetworkConnectivity `json:"udp-connectivity"`
+}
+
+func (s *Socket) valid() error {
+	if s.Port == 0 || fmt.Sprint(net.ParseIP(s.IPv4).To4()) == "<nil>" {
+		return errors.New("invalid address")
+	}
+
+	return nil
+}
+
+func (s *Socket) tcpCheck() error {
+	if err := s.valid(); err != nil {
+		return err
+	}
+	s.TCPConnectivity = utilsV3.SocketConnectivityCheck(utilsV3.TCP, s.IPv4, strconv.Itoa(int(s.Port)), time.Millisecond*100)
+
+	return nil
+}
+
+func (s *Socket) udpCheck() error {
+	if err := s.valid(); err != nil {
+		return err
+	}
+	s.UDPConnectivity = utilsV3.SocketConnectivityCheck(utilsV3.UDP, s.IPv4, strconv.Itoa(int(s.Port)), time.Millisecond*100)
+
+	return nil
+}
+
+func (s *Socket) allCheck() error {
+	err := s.tcpCheck()
+	if err != nil {
+		return err
+	}
+
+	return s.udpCheck()
+}
+
+func newSocket(ipv4 string, port uint16) *Socket {
+	return &Socket{
+		IPv4:            ipv4,
+		Port:            port,
+		TCPConnectivity: v1.NetUnknown,
+		UDPConnectivity: v1.NetUnknown,
+	}
+}
+
+func newSockets(ipv4s []string, port uint16) []*Socket {
+	sockets := make([]*Socket, len(ipv4s))
+	for i, ipv4 := range ipv4s {
+		sockets[i] = newSocket(ipv4, port)
+	}
+
+	return sockets
 }
 
 type HTTPProxyPass struct {
@@ -107,7 +172,7 @@ func (h *HTTPProxyPass) Clone() context.Context {
 		cloneProxiedAddress[i] = ProxiedAddress{
 			DomainName: address.DomainName,
 			Port:       address.Port,
-			IPv4s:      address.IPv4s,
+			Sockets:    address.Sockets,
 		}
 	}
 
@@ -197,14 +262,17 @@ func (h *HTTPProxyPass) ReparseParams() (err error) {
 		proxiedAddrs = append(proxiedAddrs, ProxiedAddress{
 			DomainName: host,
 			Port:       port,
-			IPv4s:      ipv4s,
+			Sockets:    newSockets(ipv4s, port),
 		})
 
 		return nil
 	}
 
 	// parse upstream servers
-	httpCtx := getFatherContextByType(h, context_type.TypeHttp)
+	httpCtx := h.FatherPosSet().
+		QueryOne(context.NewKeyWordsByType(context_type.TypeHttp).
+			SetIsToLeafQuery(false)).
+		Target()
 	if httpCtx.Error() != nil {
 		return errors.WithCode(code.ErrV3InvalidContext, "cannot query father HTTP Context. error: %++v", httpCtx.Error())
 	}
@@ -223,7 +291,7 @@ func (h *HTTPProxyPass) ReparseParams() (err error) {
 		proxiedAddrs = append(proxiedAddrs, ProxiedAddress{
 			DomainName: host,
 			Port:       port,
-			IPv4s:      ipv4s,
+			Sockets:    newSockets(ipv4s, port),
 			ResolveErr: ToJSONError(err),
 		})
 
@@ -273,7 +341,7 @@ func (h *HTTPProxyPass) ReparseParams() (err error) {
 					proxiedAddrs = append(proxiedAddrs, ProxiedAddress{
 						DomainName: srvHost,
 						Port:       srvPort,
-						IPv4s:      srvIPv4s,
+						Sockets:    newSockets(srvIPv4s, srvPort),
 						ResolveErr: ToJSONError(err),
 					})
 					existAddrMap[addr] = true
@@ -368,6 +436,25 @@ func (h *HTTPProxyPass) PosVerify() error {
 	}).Error()
 }
 
+func (h *HTTPProxyPass) ConnectivityCheck() ProxyPass {
+	if err := h.ReparseParams(); err != nil {
+		return newErrProxyPass(err)
+	}
+
+	var errs []error
+	for _, address := range h.Addresses {
+		for _, socket := range address.Sockets {
+			errs = append(errs, socket.tcpCheck())
+		}
+	}
+	err := errors.NewAggregate(errs)
+	if err != nil {
+		return newErrProxyPass(err)
+	}
+
+	return h
+}
+
 func registerHTTPProxyPassBuilder() error {
 	builderMap[context_type.TypeDirHTTPProxyPass] = func(value string) context.Context {
 		if !dirHTTPProxyPassMustCompile.MatchString("proxy_pass " + value) { //nolint:nestif
@@ -437,7 +524,7 @@ func (s *StreamProxyPass) Clone() context.Context {
 		cloneProxiedAddress[i] = ProxiedAddress{
 			DomainName: address.DomainName,
 			Port:       address.Port,
-			IPv4s:      address.IPv4s,
+			Sockets:    address.Sockets,
 		}
 	}
 
@@ -529,7 +616,7 @@ func (s *StreamProxyPass) ReparseParams() (err error) {
 		proxiedAddrs = append(proxiedAddrs, ProxiedAddress{
 			DomainName: host,
 			Port:       port,
-			IPv4s:      ipv4s,
+			Sockets:    newSockets(ipv4s, port),
 			ResolveErr: ToJSONError(err),
 		})
 
@@ -540,7 +627,10 @@ func (s *StreamProxyPass) ReparseParams() (err error) {
 	if len(strings.TrimSpace(upstreamServer)) == 0 {
 		return errors.WithCode(code.ErrV3InvalidOperation, "the upstream server must not be empty")
 	}
-	streamCtx := getFatherContextByType(s, context_type.TypeStream)
+	streamCtx := s.FatherPosSet().
+		QueryOne(context.NewKeyWordsByType(context_type.TypeStream).
+			SetIsToLeafQuery(false)).
+		Target()
 	if streamCtx.Error() != nil {
 		return errors.WithCode(code.ErrV3InvalidContext, "cannot find father Stream Context. error: %++v", streamCtx.Error())
 	}
@@ -588,7 +678,7 @@ func (s *StreamProxyPass) ReparseParams() (err error) {
 						proxiedAddrs = append(proxiedAddrs, ProxiedAddress{
 							DomainName: srvHost,
 							Port:       srvPort,
-							IPv4s:      ipv4s,
+							Sockets:    newSockets(ipv4s, srvPort),
 							ResolveErr: ToJSONError(err),
 						})
 						existAddrMap[addr] = true
@@ -630,6 +720,25 @@ func (s *StreamProxyPass) PosVerify() error {
 			return pos, nil
 		}).Error()
 	}).Error()
+}
+
+func (s *StreamProxyPass) ConnectivityCheck() ProxyPass {
+	if err := s.ReparseParams(); err != nil {
+		return newErrProxyPass(err)
+	}
+
+	var errs []error
+	for _, address := range s.Addresses {
+		for _, socket := range address.Sockets {
+			errs = append(errs, socket.allCheck())
+		}
+	}
+	err := errors.NewAggregate(errs)
+	if err != nil {
+		return newErrProxyPass(err)
+	}
+
+	return s
 }
 
 func registerStreamProxyPassBuilder() error {
@@ -738,6 +847,18 @@ func (t *tmpProxyPass) ReparseParams() error {
 	return nil
 }
 
+func (t *tmpProxyPass) ConnectivityCheck() ProxyPass {
+	p := t.verifyAndInitTo()
+	if err := p.Error(); err != nil {
+		return newErrProxyPass(err)
+	}
+	if p != t {
+		return p.(ProxyPass).ConnectivityCheck()
+	}
+
+	return t
+}
+
 func (t *tmpProxyPass) SetFather(ctx context.Context) error {
 	return t.Directive.SetFather(ctx)
 }
@@ -783,4 +904,24 @@ func registerProxyPassParseFunc() error {
 	}
 
 	return nil
+}
+
+type errProxyPass struct {
+	*context.ErrorContext
+}
+
+func (e errProxyPass) PosVerify() error {
+	return e.Error()
+}
+
+func (e errProxyPass) ReparseParams() error {
+	return e.Error()
+}
+
+func (e errProxyPass) ConnectivityCheck() ProxyPass {
+	return e
+}
+
+func newErrProxyPass(err error) ProxyPass {
+	return &errProxyPass{context.ErrContext(err).(*context.ErrorContext)}
 }

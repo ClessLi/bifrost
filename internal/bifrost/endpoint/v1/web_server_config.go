@@ -7,5 +7,6 @@ import (
 type WebServerConfigEndpoints interface {
 	EndpointGetServerNames() endpoint.Endpoint
 	EndpointGet() endpoint.Endpoint
+	EndpointConnectivityCheckOfProxiedServers() endpoint.Endpoint
 	EndpointUpdate() endpoint.Endpoint
 }

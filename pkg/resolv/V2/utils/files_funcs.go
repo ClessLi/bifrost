@@ -23,6 +23,7 @@ func RemoveFiles(files []string) error {
 		// 判断是否为单元测试
 		if len(os.Args) > 3 && os.Args[1] == "-test.v" && os.Args[2] == "-test.run" {
 			fmt.Printf("remove: %s\n", path)
+
 			continue
 		}
 		err := os.Remove(path)
@@ -33,16 +34,19 @@ func RemoveFiles(files []string) error {
 		fmt.Printf("remove: %s\n", path)
 		// debug test end*/
 	}
+
 	return nil
 }
 
 func getBackupFileRegexp(backupPrefix string) *regexp.Regexp {
 	bakFilePattern := `^` + backupPrefix + `\.(\d{8})\.tgz$`
+
 	return regexp.MustCompile(bakFilePattern)
 }
 
 func GetBackupFileName(backupPrefix string, now time.Time) string {
 	dt := now.Format(backupDateLayout)
+
 	return backupPrefix + "." + dt + ".tgz"
 }
 
@@ -162,5 +166,6 @@ func ReadFile(path string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return fd, nil
 }

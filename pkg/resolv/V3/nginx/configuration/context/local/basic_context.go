@@ -318,16 +318,3 @@ func newBasicContext(ctxType context_type.ContextType, head func(context_type.Co
 		tailStringFunc: tail,
 	}
 }
-
-func getFatherContextByType(ctx context.Context, contextType context_type.ContextType) context.Context {
-	if ctx.Type() == context_type.TypeMain {
-		return errCtxGetFatherCtxFromMainByType
-	}
-
-	father := ctx.Father()
-	if father.Error() != nil || father.Type() == contextType {
-		return father
-	}
-
-	return getFatherContextByType(father, contextType)
-}

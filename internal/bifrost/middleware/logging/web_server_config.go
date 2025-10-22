@@ -2,6 +2,7 @@ package logging
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -49,6 +50,22 @@ func (l loggingWebServerConfigService) Get(
 	}(time.Now().Local())
 
 	return l.svc.Get(ctx, servername)
+}
+
+func (l loggingWebServerConfigService) ConnectivityCheckOfProxiedServers(ctx context.Context, pos *v1.WebServerConfigContextPos) (ctxData *v1.ContextData, err error) {
+	defer func(begin time.Time) {
+		logF := newLogFormatter(ctx, l.svc.ConnectivityCheckOfProxiedServers)
+		logF.SetBeginTime(begin)
+		defer logF.Result()
+		logF.AddInfos(
+			"request server name", pos.ServerName.Name,
+		)
+		if err == nil {
+			logF.SetResult(fmt.Sprintf("check connectivity of proxied servers successfully, position: %v, proxy pass data: %s", pos.ContextPos, ctxData.JsonData))
+		}
+	}(time.Now().Local())
+
+	return l.svc.ConnectivityCheckOfProxiedServers(ctx, pos)
 }
 
 func (l loggingWebServerConfigService) Update(ctx context.Context, config *v1.WebServerConfig) (err error) {

@@ -39,3 +39,13 @@ func (w *webServerConfigServer) Get(r *pbv1.ServerName, stream pbv1.WebServerCon
 	return stream.Send(&pbv1.ServerConfig{ServerName: response.GetServerName()})
 	// return nil
 }
+
+func (w *webServerConfigServer) ConnectivityCheckOfProxiedServers(ctx context.Context, pos *pbv1.ServerConfigContextPos) (*pbv1.ContextData, error) {
+	_, resp, err := w.handler.HandlerConnectivityCheckOfProxiedServers().ServeGRPC(ctx, pos)
+	if err != nil {
+		return nil, err
+	}
+	response := resp.(*pbv1.ContextData)
+
+	return response, nil
+}

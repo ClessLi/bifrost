@@ -25,6 +25,12 @@ func (w webServerConfig) Get(servername *pbv1.ServerName, stream pbv1.WebServerC
 	return nil
 }
 
+func (w webServerConfig) ConnectivityCheckOfProxiedServers(ctx context.Context, pos *pbv1.ServerConfigContextPos) (*pbv1.ContextData, error) {
+	logV1.Info("connectivity check of the proxied servers network")
+
+	return &pbv1.ContextData{JsonData: []byte("")}, nil
+}
+
 func (w webServerConfig) Update(stream pbv1.WebServerConfig_UpdateServer) error {
 	conf, err := stream.Recv()
 	if err != nil && !errors.Is(err, io.EOF) {

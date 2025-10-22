@@ -18,6 +18,7 @@ func DecodeAuthRequest(ctx context.Context, r interface{}) (interface{}, error) 
 			Unexpired:   req.Unexpired,
 		}, nil
 	}
+
 	return nil, errors.New("request has only one type: VerifyRequest")
 }
 
@@ -28,5 +29,6 @@ func DecodeVerifyRequest(ctx context.Context, r interface{}) (interface{}, error
 			Token:       req.Token,
 		}, nil
 	}
+
 	return nil, errors.New("request has only one type: VerifyRequest")
 }

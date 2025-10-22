@@ -64,7 +64,7 @@ install.gotests:
 
 .PHONY: install.protoc-gen-go
 install.protoc-gen-go:
-	@$(GO) install github.com/golang/protobuf/protoc-gen-go@latest
+	@$(GO) install google.golang.org/protobuf/protoc-gen-go@latest
 
 .PHONY: install.cfssl
 install.cfssl:

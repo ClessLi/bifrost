@@ -13,3 +13,7 @@ func (w *webServerConfigService) GetServerNames(ctx context.Context) (*v1.Server
 func (w *webServerConfigService) Get(ctx context.Context, servername *v1.ServerName) (*v1.WebServerConfig, error) {
 	return w.store.WebServerConfig().Get(ctx, servername)
 }
+
+func (w *webServerConfigService) ConnectivityCheckOfProxiedServers(ctx context.Context, pos *v1.WebServerConfigContextPos) (*v1.ContextData, error) {
+	return w.store.WebServerConfig().ConnectivityCheckOfProxiedServers(ctx, pos)
+}

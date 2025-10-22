@@ -7,6 +7,7 @@ service WebServerConfig {
   rpc GetServerNames(Null) returns (ServerNames) {}
   rpc Get(ServerName) returns (stream ServerConfig) {}
   rpc Update(stream ServerConfig) returns (Response) {}
+  rpc ConnectivityCheckOfProxiedServers(ServerConfigContextPos) returns (ContextData) {}
 }
 
 service WebServerStatistics {
@@ -39,6 +40,21 @@ message ServerConfig {
   string ServerName = 1;
   bytes JsonData = 2;
   bytes OriginalFingerprints = 3;
+}
+
+message ServerConfigContextPos {
+  string ServerName = 1;
+  ContextPos ContextPos = 2;
+  bytes OriginalFingerprints = 3;
+}
+
+message ContextPos {
+  string ConfigPath = 1;
+  repeated int32 Pos = 2;
+}
+
+message ContextData {
+  bytes JsonData = 1;
 }
 
 message Response {

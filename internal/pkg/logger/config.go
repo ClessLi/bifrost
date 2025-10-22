@@ -50,6 +50,7 @@ func (c CompletedConfig) NewLogger() (*Logger, error) {
 			}
 
 			v1log.Init(c.InfoLogOpts, c.ErrLogOpts)
+
 			return nil
 		},
 		flush: func() {

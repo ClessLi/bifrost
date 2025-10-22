@@ -91,7 +91,7 @@ func (f *FileWatcher) Start() error {
 				return err
 			}
 		case <-f.ctx.Done(): // FileWatcher Close method has been called
-			logV1.Debugf("watching file '%s' completed")
+			logV1.Debugf("watching file '%s' completed", f.filePath)
 
 			return nil
 		default: // sleep 1ms and return to loop with shut pipe closed check

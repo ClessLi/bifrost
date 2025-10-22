@@ -20,6 +20,15 @@ func (d webServerConfig) DecodeRequest(_ context.Context, r interface{}) (interf
 		return r, nil
 	case *pbv1.ServerName: // decode `Get` request
 		return &v1.ServerName{Name: r.GetName()}, nil
+	case *pbv1.ServerConfigContextPos: // decode `ConnectivityCheckOfProxiedServers` request
+		return &v1.WebServerConfigContextPos{
+			ServerName: &v1.ServerName{Name: r.ServerName},
+			ContextPos: &v1.ContextPos{
+				ConfigPath: r.ContextPos.ConfigPath,
+				PosIndex:   r.ContextPos.Pos,
+			},
+			OriginalFingerprints: r.OriginalFingerprints,
+		}, nil
 	case *pbv1.ServerConfig: // decode `Update` request
 		return &v1.WebServerConfig{
 			ServerName:           &v1.ServerName{Name: r.GetServerName()},

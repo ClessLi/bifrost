@@ -2027,24 +2027,3 @@ func Test_newBasicContext(t *testing.T) {
 		})
 	}
 }
-
-func Test_getFatherContextByType(t *testing.T) {
-	type args struct {
-		ctx         context.Context
-		contextType context_type.ContextType
-	}
-	tests := []struct {
-		name string
-		args args
-		want context.Context
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := getFatherContextByType(tt.args.ctx, tt.args.contextType); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("getFatherContextByType() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}

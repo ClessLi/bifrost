@@ -33,6 +33,7 @@ func (s *grpcServer) Verify(ctx context.Context, r *authpb.VerifyRequest) (*auth
 	if resp != nil {
 		return resp.(*authpb.VerifyResponse), err
 	}
+
 	return nil, err
 }
 

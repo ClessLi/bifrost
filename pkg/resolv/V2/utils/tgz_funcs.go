@@ -37,7 +37,6 @@ func TarGZ(dest string, filenames []string) (err error) {
 
 	// 开始归档
 	for _, f := range filenames {
-
 		// 初始化被归档文件信息
 		relDir, relErr := filepath.Rel(destDir, filepath.Dir(f))
 		if relErr != nil {
@@ -54,9 +53,9 @@ func TarGZ(dest string, filenames []string) (err error) {
 		if compErr != nil {
 			return compErr
 		}
-
 	}
-	return
+
+	return err
 }
 
 // compress, 归档压缩子函数

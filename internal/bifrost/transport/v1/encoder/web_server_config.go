@@ -29,6 +29,8 @@ func (e webServerConfig) EncodeResponse(_ context.Context, r interface{}) (inter
 			JsonData:             r.JsonData,
 			OriginalFingerprints: r.OriginalFingerprints,
 		}, nil
+	case *v1.ContextData: // encode `ConnectivityCheckOfProxiedServers` response
+		return &pbv1.ContextData{JsonData: r.JsonData}, nil
 	case *v1.Response: // encode `Update` response
 		return &pbv1.Response{Msg: []byte(r.Message)}, nil
 	default:

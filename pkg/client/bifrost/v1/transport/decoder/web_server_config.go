@@ -26,6 +26,8 @@ func (w webConfigServer) DecodeResponse(ctx context.Context, resp interface{}) (
 			JsonData:             resp.GetJsonData(),
 			OriginalFingerprints: resp.GetOriginalFingerprints(),
 		}, nil
+	case *pbv1.ContextData: // decode `ConnectivityCheckOfProxiedServers` response
+		return &v1.ContextData{JsonData: resp.JsonData}, nil
 	case *pbv1.Response: // decode `Update` response
 		return &v1.Response{Message: resp.String()}, nil
 	default:

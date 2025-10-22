@@ -11,7 +11,7 @@ import (
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	bifrost_cliv1 "github.com/ClessLi/bifrost/pkg/client/bifrost/v1"
 	healthzclient_v1 "github.com/ClessLi/bifrost/pkg/client/grpc_health_v1"
-	nginx_ctx "github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
+	nginxCtx "github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context/local"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
 	utilsV3 "github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/utils"
@@ -112,6 +112,36 @@ func TestBifrostClient(t *testing.T) {
 			t.Fatalf(err.Error())
 		}
 		t.Logf("get the config original fingerprints: %v", fingerprinter.Fingerprints())
+
+		conf.Main().MainConfig().ChildrenPosSet().
+			QueryAll(nginxCtx.NewKeyWords(func(targetCtx nginxCtx.Context) bool {
+				return targetCtx.Type() == context_type.TypeDirHTTPProxyPass || targetCtx.Type() == context_type.TypeDirStreamProxyPass
+			}).
+				SetSkipQueryFilter(nginxCtx.SkipDisabledCtxFilterFunc)).
+			Map(func(pos nginxCtx.Pos) (nginxCtx.Pos, error) {
+				err := pos.Target().Error()
+				if err != nil {
+					t.Fatal(err.Error())
+				}
+
+				proxyPass := pos.Target().(local.ProxyPass)
+				oj, err := json.Marshal(proxyPass)
+				if err != nil {
+					t.Fatalf(err.Error())
+				}
+				t.Logf("original %s: %s", proxyPass.Type(), oj)
+				respProxyPass, err := client.WebServerConfig().ConnectivityCheckOfProxiedServers(servername, proxyPass, fingerprinter.Fingerprints())
+				if err != nil {
+					t.Fatalf(err.Error())
+				}
+				rj, err := json.Marshal(respProxyPass)
+				if err != nil {
+					t.Fatalf(err.Error())
+				}
+				t.Logf("response %s: %s", respProxyPass.Type(), rj)
+
+				return pos, nil
+			})
 		lines, err := conf.Main().ConfigLines(false)
 		if err != nil {
 			t.Fatalf(err.Error())
@@ -171,6 +201,39 @@ func BenchmarkBifrostClientGet(b *testing.B) {
 	}
 }
 
+func BenchmarkBifrostClientCheckConnectivityOfProxiedServers(b *testing.B) {
+	client, err := bifrost_cliv1.New(serverAddress(), grpc.WithInsecure(), grpc.WithTimeout(time.Second))
+	if err != nil {
+		b.Fatalf(err.Error())
+	}
+
+	conf, ofp, err := client.WebServerConfig().Get("example test")
+	if err != nil {
+		b.Fatalf(err.Error())
+	}
+	for i := 0; i < b.N; i++ {
+		conf.Main().MainConfig().ChildrenPosSet().
+			QueryAll(nginxCtx.NewKeyWords(func(targetCtx nginxCtx.Context) bool {
+				return targetCtx.Type() == context_type.TypeDirHTTPProxyPass || targetCtx.Type() == context_type.TypeDirStreamProxyPass
+			}).
+				SetSkipQueryFilter(nginxCtx.SkipDisabledCtxFilterFunc)).
+			Map(func(pos nginxCtx.Pos) (nginxCtx.Pos, error) {
+				err := pos.Target().Error()
+				if err != nil {
+					b.Fatal(err.Error())
+				}
+
+				proxyPass := pos.Target().(local.ProxyPass)
+				_, err = client.WebServerConfig().ConnectivityCheckOfProxiedServers("example test", proxyPass, ofp.Fingerprints())
+				if err != nil {
+					b.Fatalf(err.Error())
+				}
+
+				return pos, nil
+			})
+	}
+}
+
 func TestBifrostClientOperation(t *testing.T) {
 	client, err := bifrost_cliv1.New(serverAddress(), grpc.WithInsecure(), grpc.WithTimeout(time.Second))
 	if err != nil {
@@ -190,36 +253,36 @@ func TestBifrostClientOperation(t *testing.T) {
 			t.Fatal(err)
 		}
 		ctx, idx := conf.Main().ChildrenPosSet().
-			QueryOne(nginx_ctx.NewKeyWordsByType(context_type.TypeHttp).
-				SetSkipQueryFilter(nginx_ctx.SkipDisabledCtxFilterFunc)).
-			QueryAll(nginx_ctx.NewKeyWordsByType(context_type.TypeServer).
-				SetSkipQueryFilter(nginx_ctx.SkipDisabledCtxFilterFunc)).
+			QueryOne(nginxCtx.NewKeyWordsByType(context_type.TypeHttp).
+				SetSkipQueryFilter(nginxCtx.SkipDisabledCtxFilterFunc)).
+			QueryAll(nginxCtx.NewKeyWordsByType(context_type.TypeServer).
+				SetSkipQueryFilter(nginxCtx.SkipDisabledCtxFilterFunc)).
 			Filter(
-				func(pos nginx_ctx.Pos) bool {
-					return pos.QueryOne(nginx_ctx.NewKeyWordsByType(context_type.TypeDirective).
+				func(pos nginxCtx.Pos) bool {
+					return pos.QueryOne(nginxCtx.NewKeyWordsByType(context_type.TypeDirective).
 						SetCascaded(false).
 						SetStringMatchingValue("server_name test1.com").
-						SetSkipQueryFilter(nginx_ctx.SkipDisabledCtxFilterFunc)).
+						SetSkipQueryFilter(nginxCtx.SkipDisabledCtxFilterFunc)).
 						Target().Error() == nil
 				},
 			).
 			Filter(
-				func(pos nginx_ctx.Pos) bool {
-					return pos.QueryOne(nginx_ctx.NewKeyWordsByType(context_type.TypeDirective).
+				func(pos nginxCtx.Pos) bool {
+					return pos.QueryOne(nginxCtx.NewKeyWordsByType(context_type.TypeDirective).
 						SetCascaded(false).
 						SetRegexpMatchingValue("^listen 80$").
-						SetSkipQueryFilter(nginx_ctx.SkipDisabledCtxFilterFunc)).
+						SetSkipQueryFilter(nginxCtx.SkipDisabledCtxFilterFunc)).
 						Target().Error() == nil
 				},
 			).
-			QueryOne(nginx_ctx.NewKeyWordsByType(context_type.TypeLocation).
+			QueryOne(nginxCtx.NewKeyWordsByType(context_type.TypeLocation).
 				SetRegexpMatchingValue(`^/test1-location$`).
-				SetSkipQueryFilter(nginx_ctx.SkipDisabledCtxFilterFunc)).
-			QueryOne(nginx_ctx.NewKeyWordsByType(context_type.TypeIf).
+				SetSkipQueryFilter(nginxCtx.SkipDisabledCtxFilterFunc)).
+			QueryOne(nginxCtx.NewKeyWordsByType(context_type.TypeIf).
 				SetRegexpMatchingValue(`^\(\$http_api_name != ''\)$`).
-				SetSkipQueryFilter(nginx_ctx.SkipDisabledCtxFilterFunc)).
-			QueryOne(nginx_ctx.NewKeyWordsByType(context_type.TypeDirHTTPProxyPass).
-				SetSkipQueryFilter(nginx_ctx.SkipDisabledCtxFilterFunc)).
+				SetSkipQueryFilter(nginxCtx.SkipDisabledCtxFilterFunc)).
+			QueryOne(nginxCtx.NewKeyWordsByType(context_type.TypeDirHTTPProxyPass).
+				SetSkipQueryFilter(nginxCtx.SkipDisabledCtxFilterFunc)).
 			Position()
 		err = ctx.Insert(local.NewContext(context_type.TypeInlineComment, fmt.Sprintf("[%s]test comments", time.Now().String())), idx+1).Error()
 		if err != nil {
@@ -236,11 +299,10 @@ func TestBifrostClientOperation(t *testing.T) {
 		}
 
 		ppJson, err := json.Marshal(conf.Main().ChildrenPosSet().
-			QueryOne(nginx_ctx.NewKeyWordsByType(context_type.TypeHttp).
-				SetSkipQueryFilter(nginx_ctx.SkipDisabledCtxFilterFunc)).
-			QueryOne(nginx_ctx.NewKeyWordsByType(context_type.TypeDirHTTPProxyPass).
-				SetSkipQueryFilter(nginx_ctx.SkipDisabledCtxFilterFunc).
-				SetStringMatchingValue("baidu.com")).
+			QueryOne(nginxCtx.NewKeyWordsByType(context_type.TypeHttp).
+				SetSkipQueryFilter(nginxCtx.SkipDisabledCtxFilterFunc)).
+			QueryOne(nginxCtx.NewKeyWordsByType(context_type.TypeDirHTTPProxyPass).
+				SetSkipQueryFilter(nginxCtx.SkipDisabledCtxFilterFunc)).
 			Target())
 		if err != nil {
 			t.Fatal(err)
