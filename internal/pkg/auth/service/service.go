@@ -95,8 +95,10 @@ func (s *AuthService) Verify(ctx context.Context, token string) (bool, error) {
 	if err != nil {
 		// err = fmt.Errorf("[%s] Verified failed: %s", ip, err)
 		err = fmt.Errorf("verified failed: %s", err)
+
 		return false, err
 	}
+
 	return true, nil
 }
 

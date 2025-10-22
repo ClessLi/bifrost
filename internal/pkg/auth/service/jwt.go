@@ -39,6 +39,7 @@ func (c *JWTClaims) getToken() (string, error) {
 		// Log(WARN, err.Error())
 		return "", ErrorReasonServerBusy
 	}
+
 	return signedToken, nil
 }
 
@@ -97,6 +98,7 @@ func (s *AuthService) validUser(claims *JWTClaims) bool {
 			return claims.Username == s.AuthConfig.Username && claims.Password == s.AuthConfig.Password
 		} else {
 			fmt.Println("auth server init error!!!")
+
 			return false
 		}
 	}
@@ -109,6 +111,7 @@ func (s *AuthService) validUser(claims *JWTClaims) bool {
 	if err != nil && err != sql.ErrNoRows {
 		// Log(ERROR, err.Error())
 		fmt.Println(err.Error())
+
 		return false
 	} else if err == sql.ErrNoRows {
 		// Log(NOTICE, "user '%s' is not exist in bifrost", c.Username)
