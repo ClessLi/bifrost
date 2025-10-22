@@ -7,7 +7,7 @@
 # 项目介绍
 
 **Bifrost**
-是基于golang语言开发的项目，它目前还处于测试阶段，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用版本为[v1.0.12](https://github.com/ClessLi/bifrost/tree/v1.0.12)
+是基于golang语言开发的项目，它目前还处于测试阶段，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用版本为[v1.1.0-alpha.9](https://github.com/ClessLi/bifrost/tree/v1.1.0-alpha.9)
 
 # 项目特点
 
@@ -75,6 +75,7 @@ grpc:
 
 # Web Server Config 相关配置
 web-server-configs:
+  dns-ipv4: "114.114.114.114"  # dns的ip地址，用于解析被反向代理URL的域名地址
   items:
     - server-name: "bifrost-test"  # WebServer 名称
       server-type: "nginx"  # WebServer 类型，目前暂仅支持 nginx
@@ -149,7 +150,7 @@ Secure serving flags:
 
       --secure.bind-address string
                 The IP address on which to listen for the --secure.bind-port port. The associated interface(s) must be reachable by the rest of the engine, and by CLI/web clients. If blank, all interfaces will be used (0.0.0.0 for all
-                IPv4 interfaces and :: for all IPv6 interfaces). (default "0.0.0.0")
+                IPv4s interfaces and :: for all IPv6 interfaces). (default "0.0.0.0")
       --secure.bind-port int
                 The port on which to serve 12421 with authentication and authorization. Set to zero to disable.
       --secure.tls.cert-dir string
@@ -164,7 +165,7 @@ Secure serving flags:
 Insecure serving flags:
 
       --insecure.bind-address string
-                The IP address on which to serve the --insecure.bind-port (set to 0.0.0.0 for all IPv4 interfaces and :: for all IPv6 interfaces). (default "0.0.0.0")
+                The IP address on which to serve the --insecure.bind-port (set to 0.0.0.0 for all IPv4s interfaces and :: for all IPv6 interfaces). (default "0.0.0.0")
       --insecure.bind-port int
                 The port on which to serve unsecured, unauthenticated access. It is assumed that firewall rules are set up such that this port is not reachable from outside of the deployed machine and that port 12321 on the bifrost public
                 address is proxied to this port. Set to zero to disable. (default 12321)
@@ -182,6 +183,11 @@ GRPC serving flags:
                 Set the max message size in bytes the server can send. Can not less than 100 bytes. (default 1024)
       --grpc.receive-timeout int
                 Set the timeout for receiving data. The unit is per minute. (default 1)
+
+Web server configs flags:
+
+      --web-server-configs.dns-ipv4 string
+                Set Domain Name resolver for resolving the proxy service domain name
 
 Monitor flags:
 
@@ -263,11 +269,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
+	"time"
 
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration"
-	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
+	nginxCtx "github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context/local"
+	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
 )
 
 func main() {
@@ -276,38 +283,37 @@ func main() {
 		panic(err)
 	}
 	ctx, idx := conf.Main().ChildrenPosSet().
-		QueryOne(nginx_ctx.NewKeyWords(context_type.TypeHttp).
-			SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc)).
-		QueryAll(nginx_ctx.NewKeyWords(context_type.TypeServer).
-			SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc)).
+		QueryOne(nginxCtx.NewKeyWordsByType(context_type.TypeHttp).
+			SetSkipQueryFilter(nginxCtx.SkipDisabledCtxFilterFunc)).
+		QueryAll(nginxCtx.NewKeyWordsByType(context_type.TypeServer).
+			SetSkipQueryFilter(nginxCtx.SkipDisabledCtxFilterFunc)).
 		Filter( // filter out `server` context positions, theirs server name is "test1.com"
-			func(pos nginx_ctx.Pos) bool {
-				return pos.QueryOne(context.NewKeyWords(context_type.TypeDirective).
+			func(pos nginxCtx.Pos) bool {
+				return pos.QueryOne(nginxCtx.NewKeyWordsByType(context_type.TypeDirective).
 					SetCascaded(false).
 					SetStringMatchingValue("server_name test1.com").
-					SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc)).
+					SetSkipQueryFilter(nginxCtx.SkipDisabledCtxFilterFunc)).
 					Target().Error() == nil
 			},
 		).
 		Filter( // filter out `server` context positions, theirs listen port is 80
-			func(pos nginx_ctx.Pos) bool {
-				return pos.QueryOne(context.NewKeyWords(context_type.TypeDirective).
+			func(pos nginxCtx.Pos) bool {
+				return pos.QueryOne(nginxCtx.NewKeyWordsByType(context_type.TypeDirective).
 					SetCascaded(false).
 					SetRegexpMatchingValue("^listen 80$").
-					SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc)).
+					SetSkipQueryFilter(nginxCtx.SkipDisabledCtxFilterFunc)).
 					Target().Error() == nil
 			},
 		).
 		// query the "proxy_pass" `directive` context position, which is in `if` context(value: "($http_api_name != '')") and `location` context(value: "/test1-location")
-		QueryOne(nginx_ctx.NewKeyWords(context_type.TypeLocation).
+		QueryOne(nginxCtx.NewKeyWordsByType(context_type.TypeLocation).
 			SetRegexpMatchingValue(`^/test1-location$`).
-			SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc)).
-		QueryOne(nginx_ctx.NewKeyWords(context_type.TypeIf).
+			SetSkipQueryFilter(nginxCtx.SkipDisabledCtxFilterFunc)).
+		QueryOne(nginxCtx.NewKeyWordsByType(context_type.TypeIf).
 			SetRegexpMatchingValue(`^\(\$http_api_name != ''\)$`).
-			SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc)).
-		QueryOne(nginx_ctx.NewKeyWords(context_type.TypeDirective).
-			SetStringMatchingValue("proxy_pass").
-			SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc)).
+			SetSkipQueryFilter(nginxCtx.SkipDisabledCtxFilterFunc)).
+		QueryOne(nginxCtx.NewKeyWordsByType(context_type.TypeDirHTTPProxyPass).
+			SetSkipQueryFilter(nginxCtx.SkipDisabledCtxFilterFunc)).
 		Position()
 	// insert an inline comment after the "proxy_pass" `directive` context
 	err = ctx.Insert(local.NewContext(context_type.TypeInlineComment, fmt.Sprintf("[%s]test comments", time.Now().String())), idx+1).Error()
@@ -335,6 +341,10 @@ func main() {
 	// new comment context
 	newComment := local.NewContext(context_type.TypeComment, "some comments")
 	newInlineComment := local.NewContext(context_type.TypeInlineComment, "some inline comments")
+	// new http type proxy_pass directive
+	newHttpProxyPass := local.NewContext(context_type.TypeDirHTTPProxyPass, "https://example.com/test/")
+	// new stream type proxy_pass directive
+	newStreamProxyPass := local.NewContext(context_type.TypeDirStreamProxyPass, "example.com:22")
 	// new other context
 	newConfig := local.NewContext(context_type.TypeConfig, "conf.d/location.conf")
 	newInclude := local.NewContext(context_type.TypeInclude, "conf.d/*.conf")
