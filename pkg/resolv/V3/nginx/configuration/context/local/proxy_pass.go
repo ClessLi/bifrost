@@ -187,7 +187,7 @@ func (h *HTTPProxyPass) Clone() context.Context {
 
 func (h *HTTPProxyPass) SetValue(v string) (err error) {
 	p := h.Params
-	err = h.Directive.SetValue(v)
+	err = h.Directive.SetValue("proxy_pass " + v)
 	if err != nil {
 		return err
 	}
@@ -197,9 +197,6 @@ func (h *HTTPProxyPass) SetValue(v string) (err error) {
 			h.Params = p
 		}
 	}()
-	if subMatch := dirHTTPProxyPassMustCompile.FindSubmatch([]byte(v)); len(subMatch) != 2 {
-		return errors.WithCode(code.ErrV3InvalidOperation, "the set value does not conform to the syntax rules, the syntax is `proxy_pass <URL>`")
-	}
 
 	return h.ReparseParams()
 }
@@ -481,7 +478,7 @@ func (s *StreamProxyPass) MarshalJSON() ([]byte, error) {
 		ProxyPass   struct {
 			OriginalAddress string           `json:"original-address"`
 			Addresses       []ProxiedAddress `json:"addresses"`
-		}
+		} `json:"proxy-pass,omitempty"`
 	}{
 		Enabled:     s.IsEnabled(),
 		ContextType: context_type.TypeDirStreamProxyPass,
@@ -501,7 +498,7 @@ func (s *StreamProxyPass) UnmarshalJSON(bytes []byte) error {
 		ProxyPass   struct {
 			OriginalAddress string           `json:"original-address"`
 			Addresses       []ProxiedAddress `json:"addresses"`
-		}
+		} `json:"proxy-pass,omitempty"`
 	}{}
 	err := json.Unmarshal(bytes, &tmp)
 	if err != nil {
@@ -537,7 +534,7 @@ func (s *StreamProxyPass) Clone() context.Context {
 
 func (s *StreamProxyPass) SetValue(v string) (err error) {
 	p := s.Params
-	err = s.Directive.SetValue(v)
+	err = s.Directive.SetValue("proxy_pass " + v)
 	if err != nil {
 		return err
 	}
@@ -547,9 +544,6 @@ func (s *StreamProxyPass) SetValue(v string) (err error) {
 			s.Params = p
 		}
 	}()
-	if subMatch := dirStreamProxyPassMustCompile.FindSubmatch([]byte(v)); len(subMatch) != 2 {
-		return errors.WithCode(code.ErrV3InvalidOperation, "the set value does not conform to the syntax rules, the syntax is `proxy_pass <Address>`")
-	}
 
 	return s.ReparseParams()
 }

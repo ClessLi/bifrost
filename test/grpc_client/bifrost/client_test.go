@@ -23,20 +23,20 @@ import (
 func TestRun(t *testing.T) {
 	err := exampleServerRun()
 	if err != nil {
-		t.Fatal(err.Error())
+		t.Fatal(err)
 	}
 }
 
 func TestBifrostClient(t *testing.T) {
 	healthCli, err := healthzclient_v1.NewClient(serverAddress(), grpc.WithInsecure())
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err)
 	}
 
 	retryI := 0
 	for {
 		if retryI >= 10 {
-			t.Fatalf("connect to web server config service timeout.")
+			t.Fatal("connect to web server config service timeout.")
 		}
 		state, err := healthCli.Check(context.Background(), "com.github.ClessLi.api.bifrostpb.WebServerConfig")
 		if err != nil {
@@ -53,14 +53,14 @@ func TestBifrostClient(t *testing.T) {
 
 	client, err := bifrost_cliv1.New(serverAddress(), grpc.WithInsecure(), grpc.WithTimeout(time.Second))
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err)
 	}
 
 	defer client.Close()
 
 	servernames, err := client.WebServerConfig().GetServerNames()
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err)
 	}
 
 	time.Sleep(time.Second * 10)
@@ -73,7 +73,7 @@ func TestBifrostClient(t *testing.T) {
 	// normal grpc client
 	/*cclient, err := grpc.Dial(serverAddress(), grpc.WithInsecure(), grpc.WithTimeout(time.Second))
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err)
 	}
 
 	defer cclient.Close()
@@ -83,7 +83,7 @@ func TestBifrostClient(t *testing.T) {
 		// normal grpc client
 		/*resp, err := c.Get(context.Background(), &pbv1.ServerName{Name: servername})
 		if err != nil {
-			t.Fatalf(err.Error())
+			t.Fatal(err)
 		}
 		buf := bytes.NewBuffer(nil)
 		stop := false
@@ -95,7 +95,7 @@ func TestBifrostClient(t *testing.T) {
 			default:
 				conf, err := resp.Recv()
 				if err != nil && err != io.EOF {
-					t.Fatalf(err.Error())
+					t.Fatal(err)
 				}
 				buf.Write(conf.GetJsonData())
 				if err == io.EOF {
@@ -109,7 +109,7 @@ func TestBifrostClient(t *testing.T) {
 		// go-kit grpc client
 		conf, fingerprinter, err := client.WebServerConfig().Get(servername)
 		if err != nil {
-			t.Fatalf(err.Error())
+			t.Fatal(err)
 		}
 		t.Logf("get the config original fingerprints: %v", fingerprinter.Fingerprints())
 
@@ -121,22 +121,22 @@ func TestBifrostClient(t *testing.T) {
 			Map(func(pos nginxCtx.Pos) (nginxCtx.Pos, error) {
 				err := pos.Target().Error()
 				if err != nil {
-					t.Fatal(err.Error())
+					t.Fatal(err)
 				}
 
 				proxyPass := pos.Target().(local.ProxyPass)
 				oj, err := json.Marshal(proxyPass)
 				if err != nil {
-					t.Fatalf(err.Error())
+					t.Fatal(err)
 				}
 				t.Logf("original %s: %s", proxyPass.Type(), oj)
 				respProxyPass, err := client.WebServerConfig().ConnectivityCheckOfProxiedServers(servername, proxyPass, fingerprinter.Fingerprints())
 				if err != nil {
-					t.Fatalf(err.Error())
+					t.Fatal(err)
 				}
 				rj, err := json.Marshal(respProxyPass)
 				if err != nil {
-					t.Fatalf(err.Error())
+					t.Fatal(err)
 				}
 				t.Logf("response %s: %s", respProxyPass.Type(), rj)
 
@@ -144,7 +144,7 @@ func TestBifrostClient(t *testing.T) {
 			})
 		lines, err := conf.Main().ConfigLines(false)
 		if err != nil {
-			t.Fatalf(err.Error())
+			t.Fatal(err)
 		}
 		t.Logf("get config lines len: %d", len(lines))
 		for _, line := range lines {
@@ -153,7 +153,7 @@ func TestBifrostClient(t *testing.T) {
 
 		statistics, err := client.WebServerStatistics().Get(servername)
 		if err != nil {
-			t.Fatalf(err.Error())
+			t.Fatal(err)
 		}
 		t.Logf("statistics %s:\n\n%+v", servername, statistics)
 
@@ -163,7 +163,7 @@ func TestBifrostClient(t *testing.T) {
 			FilteringRegexpRule: "^test.*$",
 		})
 		if err != nil {
-			t.Fatalf(err.Error())
+			t.Fatal(err)
 		}
 
 		wg.Add(1)
@@ -189,14 +189,14 @@ func TestBifrostClient(t *testing.T) {
 func BenchmarkBifrostClientGet(b *testing.B) {
 	client, err := bifrost_cliv1.New(serverAddress(), grpc.WithInsecure(), grpc.WithTimeout(time.Second))
 	if err != nil {
-		b.Fatalf(err.Error())
+		b.Fatal(err)
 	}
 
 	defer client.Close()
 	for i := 0; i < b.N; i++ {
 		_, _, err := client.WebServerConfig().Get("example test")
 		if err != nil {
-			b.Fatalf(err.Error())
+			b.Fatal(err)
 		}
 	}
 }
@@ -204,12 +204,12 @@ func BenchmarkBifrostClientGet(b *testing.B) {
 func BenchmarkBifrostClientCheckConnectivityOfProxiedServers(b *testing.B) {
 	client, err := bifrost_cliv1.New(serverAddress(), grpc.WithInsecure(), grpc.WithTimeout(time.Second))
 	if err != nil {
-		b.Fatalf(err.Error())
+		b.Fatal(err)
 	}
 
 	conf, ofp, err := client.WebServerConfig().Get("example test")
 	if err != nil {
-		b.Fatalf(err.Error())
+		b.Fatal(err)
 	}
 	for i := 0; i < b.N; i++ {
 		conf.Main().MainConfig().ChildrenPosSet().
@@ -220,13 +220,13 @@ func BenchmarkBifrostClientCheckConnectivityOfProxiedServers(b *testing.B) {
 			Map(func(pos nginxCtx.Pos) (nginxCtx.Pos, error) {
 				err := pos.Target().Error()
 				if err != nil {
-					b.Fatal(err.Error())
+					b.Fatal(err)
 				}
 
 				proxyPass := pos.Target().(local.ProxyPass)
 				_, err = client.WebServerConfig().ConnectivityCheckOfProxiedServers("example test", proxyPass, ofp.Fingerprints())
 				if err != nil {
-					b.Fatalf(err.Error())
+					b.Fatal(err)
 				}
 
 				return pos, nil
@@ -285,6 +285,10 @@ func TestBifrostClientOperation(t *testing.T) {
 				SetSkipQueryFilter(nginxCtx.SkipDisabledCtxFilterFunc)).
 			Position()
 		err = ctx.Insert(local.NewContext(context_type.TypeInlineComment, fmt.Sprintf("[%s]test comments", time.Now().String())), idx+1).Error()
+		if err != nil {
+			t.Fatal(err)
+		}
+		err = ctx.Child(idx).SetValue("http://wrong_proxy.com")
 		if err != nil {
 			t.Fatal(err)
 		}
