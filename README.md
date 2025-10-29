@@ -7,7 +7,7 @@
 # 项目介绍
 
 **Bifrost**
-是基于golang语言开发的项目，它目前还处于测试阶段，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用版本为[v1.1.0-alpha.10](https://github.com/ClessLi/bifrost/tree/v1.1.0-alpha.10)
+是基于golang语言开发的项目，它目前还处于测试阶段，用于对Nginx配置文件解析并提供配置文件展示和修改的接口，支持json、字符串格式与golang结构相互转换。该项目持续更新中。最新可用版本为[v1.1.0-alpha.11](https://github.com/ClessLi/bifrost/tree/v1.1.0-alpha.11)
 
 # 项目特点
 

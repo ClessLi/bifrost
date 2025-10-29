@@ -16,17 +16,20 @@ import (
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
 	utilsV3 "github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/utils"
 
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
+
 	"github.com/marmotedu/errors"
 )
 
 var (
-	dirHTTPProxyPassMustCompile   = regexp.MustCompile(`^\s*proxy_pass\s+("\s*https?://[^";\s#]+"|'\s*https?://[^';\s#]+'|\s*https?://[^;\s#]+)`)
+	dirHTTPProxyPassMustCompile   = regexp.MustCompile(`^\s*proxy_pass\s+("\s*https?://[^";\s#]+"|'\s*https?://[^';\s#]+'|\s*https?://[^;\s#]+|\s*\$)`)
 	dirStreamProxyPassMustCompile = regexp.MustCompile(`^\s*proxy_pass\s+(` + S1 + `)$`)
 	httpURLMustCompile            = regexp.MustCompile(`^(http|https)://([^/]+\S*)$`)
 	addrAndURIMustCompile         = regexp.MustCompile(`^([^/]+)(/\S*)?$`)
 	streamAddrWithPortMustCompile = regexp.MustCompile(`^([^/:\s]+):(\d+)$`)
+	streamVariableAddrMustCompile = regexp.MustCompile(`^[^/\s$]*\$\S+$`)
 	streamUpstreamMustCompile     = regexp.MustCompile(`^([^/\s]+)$`)
-	streamUnixAddrMustCompile     = regexp.MustCompile(`^unix:(/[^/]\s*)$`)
+	streamUnixAddrMustCompile     = regexp.MustCompile(`^unix:(/[^/]\S*)$`)
 	addrWithPortMustCompile       = regexp.MustCompile(`^([^/:\s]+):(\d+)`)
 	upstreamSrvDirMustCompile     = regexp.MustCompile(`^server\s+(\S+)`)
 )
@@ -250,6 +253,11 @@ func (h *HTTPProxyPass) ReparseParams() (err error) {
 		h.URI = uri
 	}()
 
+	// return nil, if unknown protocol
+	if protocol == "unknown" {
+		return nil
+	}
+
 	// parse IPv4s
 	ipv4s, err := utilsV3.ResolveDomainNameToIPv4(host)
 	if err == nil {
@@ -356,6 +364,10 @@ func parseHTTPURL(url string) (protocol, host, uri string, port uint16, err erro
 	if urlMatch := httpURLMustCompile.FindStringSubmatch(url); len(urlMatch) == 3 {
 		protocol = urlMatch[1]
 		addressAndURI = urlMatch[2]
+	} else if url[0] == '$' {
+		protocol = "unknown"
+
+		return protocol, host, uri, port, err
 	} else {
 		err = errors.WithCode(code.ErrV3InvalidOperation, "the URL protocol must be `http` or `https`")
 
@@ -584,6 +596,11 @@ func (s *StreamProxyPass) ReparseParams() (err error) {
 			return errors.WithCode(code.ErrV3InvalidOperation, "the port must be an integer, error: %s", err.Error())
 		}
 		port = uint16(p)
+	case streamVariableAddrMustCompile.MatchString(address):
+		s.OriginalAddress = address
+		s.Addresses = proxiedAddrs
+
+		return nil
 	case streamUpstreamMustCompile.MatchString(address): // pass upstream server, not proxied address
 		upstreamServer = streamUpstreamMustCompile.FindStringSubmatch(address)[1]
 	case streamUnixAddrMustCompile.MatchString(address):
@@ -788,10 +805,12 @@ func (t *tmpProxyPass) verifyAndInitTo() context.Context {
 	var p ProxyPass
 
 	var verifyErr error
+	logV1.Debugf("parsing tmp proxy_pass(%s)", t.Value())
 	if dirHTTPProxyPassMustCompile.MatchString(t.Value()) { //nolint:nestif
 		hp := &HTTPProxyPass{Directive: t.Directive}
 		verifyErr = hp.PosVerify()
 		if verifyErr == nil {
+			logV1.Debugf("tmp proxy_pass(%s) has been parsed to HTTP proxy_pass", t.Value())
 			p = hp
 		}
 	}
@@ -799,6 +818,7 @@ func (t *tmpProxyPass) verifyAndInitTo() context.Context {
 		sp := &StreamProxyPass{Directive: t.Directive}
 		verifyErr = sp.PosVerify()
 		if verifyErr == nil {
+			logV1.Debugf("tmp proxy_pass(%s) has been parsed to Stream proxy_pass", t.Value())
 			p = sp
 		}
 	}
