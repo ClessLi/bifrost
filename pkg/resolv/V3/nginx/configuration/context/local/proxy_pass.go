@@ -260,7 +260,7 @@ func (h *HTTPProxyPass) ReparseParams() (err error) {
 
 	// parse IPv4s
 	ipv4s, err := utilsV3.ResolveDomainNameToIPv4(host)
-	if err == nil {
+	if err == nil && len(ipv4s) > 0 {
 		if port == 0 {
 			port = defaultProxyPassPort
 		}
