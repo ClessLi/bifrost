@@ -284,11 +284,14 @@ func (m *nginxConfigManager) refresh() error {
 func (m *nginxConfigManager) reparseProxyInfo() error {
 	logV1.Debugf("start to reparse proxy info")
 
-	return m.configuration.Main().ChildrenPosSet().QueryAll(nginxContext.NewKeyWords(func(targetCtx nginxContext.Context) bool {
-		return targetCtx.Type() == context_type.TypeDirHTTPProxyPass ||
-			targetCtx.Type() == context_type.TypeDirStreamProxyPass ||
-			targetCtx.Type() == context_type.TypeDirUninitializedProxyPass
-	})).
+	return m.configuration.Main().ChildrenPosSet().QueryAll(
+		nginxContext.NewKeyWords(func(targetCtx nginxContext.Context) bool {
+			return targetCtx.Type() == context_type.TypeDirHTTPProxyPass ||
+				targetCtx.Type() == context_type.TypeDirStreamProxyPass ||
+				targetCtx.Type() == context_type.TypeDirUninitializedProxyPass
+		}).
+			SetSkipQueryFilter(nginxContext.SkipDisabledCtxFilterFunc), // skip reparsing the disabled `ProxyPass`.
+	).
 		Map(func(pos nginxContext.Pos) (nginxContext.Pos, error) {
 			if err := pos.Target().Error(); err != nil {
 				return pos, err
