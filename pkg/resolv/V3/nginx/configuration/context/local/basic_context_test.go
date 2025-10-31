@@ -1794,7 +1794,7 @@ func TestBasicContext_Remove(t *testing.T) {
 			args: args{
 				idx: hasErrChildCtx.Len() - 1,
 			},
-			want: context.ErrContext(errors.WithCode(code.ErrV3SetFatherContextFailed, context.NullContext().(*context.ErrorContext).
+			want: context.ErrContext(errors.WithCode(code.ErrV3SetFatherContextFailed, "%s", context.NullContext().(*context.ErrorContext).
 				AppendError(context.ErrSetFatherToErrorContext).Error().Error())),
 			wantRemovedCtx: hasErrChildCtx.Child(hasErrChildCtx.Len() - 1),
 		},
