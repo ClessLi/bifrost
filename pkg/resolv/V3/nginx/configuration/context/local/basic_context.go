@@ -65,7 +65,7 @@ func (b *BasicContext) Insert(ctx context.Context, idx int) context.Context {
 	// set father for inserted ctx
 	err := ctx.SetFather(b.self)
 	if err != nil {
-		return context.ErrContext(errors.WithCode(code.ErrV3SetFatherContextFailed, err.Error()))
+		return context.ErrContext(errors.WithCode(code.ErrV3SetFatherContextFailed, "%s", err.Error()))
 	}
 
 	return b.self
@@ -81,7 +81,7 @@ func (b *BasicContext) Remove(idx int) context.Context {
 		// release father ctx
 		err := b.Children[idx].SetFather(context.NullContext())
 		if err != nil {
-			return context.ErrContext(errors.WithCode(code.ErrV3SetFatherContextFailed, err.Error()))
+			return context.ErrContext(errors.WithCode(code.ErrV3SetFatherContextFailed, "%s", err.Error()))
 		}
 
 		b.Children = append(b.Children[:idx], b.Children[idx+1:]...)

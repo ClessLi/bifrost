@@ -125,6 +125,14 @@ func fakeProxyPassTestMainCtx() (MainContext, error) {
 					Insert(
 						NewContext(context_type.TypeDirHTTPProxyPass, "http://error.pos.http.proxy.pass2"),
 						8,
+					).
+					Insert(
+						NewContext(context_type.TypeLocation, "~ /disabled-unknown-upstream").
+							Insert(
+								NewContext(context_type.TypeDirHTTPProxyPass, "https://unknown.upstream/localiptest"),
+								0,
+							).Disable(),
+						9,
 					),
 				0,
 			).
@@ -242,6 +250,18 @@ func fakeProxyPassTestMainCtx() (MainContext, error) {
 						0,
 					),
 				7,
+			).
+			Insert(
+				NewContext(context_type.TypeServer, "").
+					Insert(
+						NewContext(context_type.TypeComment, "disabled stream server"),
+						0,
+					).
+					Insert(
+						NewContext(context_type.TypeDirStreamProxyPass, "unknown.domain:9876"),
+						1,
+					).Disable(),
+				8,
 			).
 			Insert(
 				NewContext(context_type.TypeUpstream, "upstream_server").
@@ -1137,20 +1157,22 @@ func TestHTTPProxyPass_MarshalJSON(t *testing.T) {
 						context.NewKeyWordsByType(context_type.TypeDirHTTPProxyPass),
 					).Target().(*HTTPProxyPass),
 			},
-			want: []byte(`{"enabled":true,"context-type":"dir_http_proxy_pass","value":"https://baidu.com","proxy-pass":{"original-url":"https://baidu.com","protocol":"https","addresses":[{"domain-name":"baidu.com","port":443,"ipv4-list":["10.1.11.111","10.1.12.122"],"resolve-err":null}],"uri":""}}`), //nolint:lll
+			want: []byte(`{"enabled":true,"context-type":"dir_http_proxy_pass","value":"https://baidu.com","proxy-pass":{"original-url":"https://baidu.com","protocol":"https","addresses":[{"domain-name":"baidu.com","port":443,"sockets":[{"ipv4":"10.1.11.111","port":443,"tcp-connectivity":0,"udp-connectivity":0},{"ipv4":"10.1.12.122","port":443,"tcp-connectivity":0,"udp-connectivity":0}],"resolve-err":null}],"uri":""}}`), //nolint:lll
 		},
 		{
 			name: "http location proxy pass with some errors",
 			fields: fields{
 				proxyPass: testMain.MainConfig().ChildrenPosSet().
 					QueryOne(
-						context.NewKeyWordsByType(context_type.TypeLocation).SetStringMatchingValue("unknown-upstream"),
+						context.NewKeyWordsByType(context_type.TypeLocation).
+							SetStringMatchingValue("unknown-upstream").
+							SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc),
 					).
 					QueryOne(
 						context.NewKeyWordsByType(context_type.TypeDirHTTPProxyPass),
 					).Target().(*HTTPProxyPass),
 			},
-			want: []byte("{\"enabled\":true,\"context-type\":\"dir_http_proxy_pass\",\"value\":\"http://unknown.upstream/localiptest\",\"proxy-pass\":{\"original-url\":\"http://unknown.upstream/localiptest\",\"protocol\":\"http\",\"addresses\":[{\"domain-name\":\"unknown.upstream\",\"port\":80,\"ipv4-list\":null,\"resolve-err\":{\"message\":\"Domain name resolution failed\",\"error\":\"the domain name resolution record for `unknown.upstream` does not exist\",\"code\":110020}}],\"uri\":\"/localiptest\"}}"), //nolint:lll
+			want: []byte("{\"enabled\":true,\"context-type\":\"dir_http_proxy_pass\",\"value\":\"http://unknown.upstream/localiptest\",\"proxy-pass\":{\"original-url\":\"http://unknown.upstream/localiptest\",\"protocol\":\"http\",\"addresses\":[{\"domain-name\":\"unknown.upstream\",\"port\":80,\"sockets\":[],\"resolve-err\":{\"message\":\"Domain name resolution failed\",\"error\":\"the domain name resolution record for `unknown.upstream` does not exist\",\"code\":110020}}],\"uri\":\"/localiptest\"}}"), //nolint:lll
 		},
 		{
 			name: "http location proxy pass to upstream servers, which have some errors",
@@ -1163,7 +1185,7 @@ func TestHTTPProxyPass_MarshalJSON(t *testing.T) {
 						context.NewKeyWordsByType(context_type.TypeDirHTTPProxyPass),
 					).Target().(*HTTPProxyPass),
 			},
-			want: []byte("{\"enabled\":true,\"context-type\":\"dir_http_proxy_pass\",\"value\":\"http://has_unknown_server/proxy/to/upstreamserver\",\"proxy-pass\":{\"original-url\":\"http://has_unknown_server/proxy/to/upstreamserver\",\"protocol\":\"http\",\"addresses\":[{\"domain-name\":\"test.cn\",\"port\":443,\"ipv4-list\":[\"10.1.12.122\",\"10.1.13.133\"],\"resolve-err\":null},{\"domain-name\":\"example.com\",\"port\":8443,\"ipv4-list\":[\"10.1.12.122\",\"10.1.13.133\"],\"resolve-err\":null},{\"domain-name\":\"127.0.0.1\",\"port\":8080,\"ipv4-list\":[\"127.0.0.1\"],\"resolve-err\":null},{\"domain-name\":\"unknown.domain\",\"port\":8080,\"ipv4-list\":null,\"resolve-err\":{\"message\":\"Domain name resolution failed\",\"error\":\"the domain name resolution record for `unknown.domain` does not exist\",\"code\":110020}}],\"uri\":\"/proxy/to/upstreamserver\"}}"), //nolint:lll
+			want: []byte("{\"enabled\":true,\"context-type\":\"dir_http_proxy_pass\",\"value\":\"http://has_unknown_server/proxy/to/upstreamserver\",\"proxy-pass\":{\"original-url\":\"http://has_unknown_server/proxy/to/upstreamserver\",\"protocol\":\"http\",\"addresses\":[{\"domain-name\":\"test.cn\",\"port\":443,\"sockets\":[{\"ipv4\":\"10.1.12.122\",\"port\":443,\"tcp-connectivity\":0,\"udp-connectivity\":0},{\"ipv4\":\"10.1.13.133\",\"port\":443,\"tcp-connectivity\":0,\"udp-connectivity\":0}],\"resolve-err\":null},{\"domain-name\":\"example.com\",\"port\":8443,\"sockets\":[{\"ipv4\":\"10.1.12.122\",\"port\":8443,\"tcp-connectivity\":0,\"udp-connectivity\":0},{\"ipv4\":\"10.1.13.133\",\"port\":8443,\"tcp-connectivity\":0,\"udp-connectivity\":0}],\"resolve-err\":null},{\"domain-name\":\"127.0.0.1\",\"port\":8080,\"sockets\":[{\"ipv4\":\"127.0.0.1\",\"port\":8080,\"tcp-connectivity\":0,\"udp-connectivity\":0}],\"resolve-err\":null},{\"domain-name\":\"unknown.domain\",\"port\":8080,\"sockets\":[],\"resolve-err\":{\"message\":\"Domain name resolution failed\",\"error\":\"the domain name resolution record for `unknown.domain` does not exist\",\"code\":110020}}],\"uri\":\"/proxy/to/upstreamserver\"}}"), //nolint:lll
 		},
 	}
 	for _, tt := range tests {
@@ -1212,7 +1234,7 @@ func TestStreamProxyPass_MarshalJSON(t *testing.T) {
 						context.NewKeyWordsByType(context_type.TypeDirStreamProxyPass).SetStringMatchingValue("abc.com:22"),
 					).Target().(*StreamProxyPass),
 			},
-			want: []byte(`{"enabled":true,"context-type":"dir_stream_proxy_pass","value":"abc.com:22","ProxyPass":{"original-address":"abc.com:22","addresses":[{"domain-name":"abc.com","port":22,"ipv4-list":["10.2.12.122"],"resolve-err":null}]}}`), //nolint:lll
+			want: []byte(`{"enabled":true,"context-type":"dir_stream_proxy_pass","value":"abc.com:22","proxy-pass":{"original-address":"abc.com:22","addresses":[{"domain-name":"abc.com","port":22,"sockets":[{"ipv4":"10.2.12.122","port":22,"tcp-connectivity":0,"udp-connectivity":0}],"resolve-err":null}]}}`), //nolint:lll
 		},
 		{
 			name: "stream proxy pass to upstream servers, which have unknown server",
@@ -1225,7 +1247,7 @@ func TestStreamProxyPass_MarshalJSON(t *testing.T) {
 						context.NewKeyWordsByType(context_type.TypeDirStreamProxyPass).SetStringMatchingValue("has_unknown_server"),
 					).Target().(*StreamProxyPass),
 			},
-			want: []byte("{\"enabled\":true,\"context-type\":\"dir_stream_proxy_pass\",\"value\":\"has_unknown_server\",\"ProxyPass\":{\"original-address\":\"has_unknown_server\",\"addresses\":[{\"domain-name\":\"test.cn\",\"port\":22,\"ipv4-list\":[\"10.1.12.122\",\"10.1.13.133\"],\"resolve-err\":null},{\"domain-name\":\"example.com\",\"port\":22,\"ipv4-list\":[\"10.1.12.122\",\"10.1.13.133\"],\"resolve-err\":null},{\"domain-name\":\"127.0.0.1\",\"port\":123,\"ipv4-list\":[\"127.0.0.1\"],\"resolve-err\":null},{\"domain-name\":\"unknown.domain\",\"port\":8080,\"ipv4-list\":null,\"resolve-err\":{\"message\":\"Domain name resolution failed\",\"error\":\"the domain name resolution record for `unknown.domain` does not exist\",\"code\":110020}}]}}"), //nolint:lll
+			want: []byte("{\"enabled\":true,\"context-type\":\"dir_stream_proxy_pass\",\"value\":\"has_unknown_server\",\"proxy-pass\":{\"original-address\":\"has_unknown_server\",\"addresses\":[{\"domain-name\":\"test.cn\",\"port\":22,\"sockets\":[{\"ipv4\":\"10.1.12.122\",\"port\":22,\"tcp-connectivity\":0,\"udp-connectivity\":0},{\"ipv4\":\"10.1.13.133\",\"port\":22,\"tcp-connectivity\":0,\"udp-connectivity\":0}],\"resolve-err\":null},{\"domain-name\":\"example.com\",\"port\":22,\"sockets\":[{\"ipv4\":\"10.1.12.122\",\"port\":22,\"tcp-connectivity\":0,\"udp-connectivity\":0},{\"ipv4\":\"10.1.13.133\",\"port\":22,\"tcp-connectivity\":0,\"udp-connectivity\":0}],\"resolve-err\":null},{\"domain-name\":\"127.0.0.1\",\"port\":123,\"sockets\":[{\"ipv4\":\"127.0.0.1\",\"port\":123,\"tcp-connectivity\":0,\"udp-connectivity\":0}],\"resolve-err\":null},{\"domain-name\":\"unknown.domain\",\"port\":8080,\"sockets\":[],\"resolve-err\":{\"message\":\"Domain name resolution failed\",\"error\":\"the domain name resolution record for `unknown.domain` does not exist\",\"code\":110020}}]}}"), //nolint:lll
 		},
 		{
 			name: "stream proxy pass to an address, which with an unknown domain name",
@@ -1235,10 +1257,12 @@ func TestStreamProxyPass_MarshalJSON(t *testing.T) {
 						context.NewKeyWordsByType(context_type.TypeStream),
 					).
 					QueryOne(
-						context.NewKeyWordsByType(context_type.TypeDirStreamProxyPass).SetStringMatchingValue("unknown.domain"),
+						context.NewKeyWordsByType(context_type.TypeDirStreamProxyPass).
+							SetStringMatchingValue("unknown.domain").
+							SetSkipQueryFilter(context.SkipDisabledCtxFilterFunc),
 					).Target().(*StreamProxyPass),
 			},
-			want: []byte("{\"enabled\":true,\"context-type\":\"dir_stream_proxy_pass\",\"value\":\"unknown.domain:9876\",\"ProxyPass\":{\"original-address\":\"unknown.domain:9876\",\"addresses\":[{\"domain-name\":\"unknown.domain\",\"port\":9876,\"ipv4-list\":null,\"resolve-err\":{\"message\":\"Domain name resolution failed\",\"error\":\"the domain name resolution record for `unknown.domain` does not exist\",\"code\":110020}}]}}"), //nolint:lll
+			want: []byte("{\"enabled\":true,\"context-type\":\"dir_stream_proxy_pass\",\"value\":\"unknown.domain:9876\",\"proxy-pass\":{\"original-address\":\"unknown.domain:9876\",\"addresses\":[{\"domain-name\":\"unknown.domain\",\"port\":9876,\"sockets\":[],\"resolve-err\":{\"message\":\"Domain name resolution failed\",\"error\":\"the domain name resolution record for `unknown.domain` does not exist\",\"code\":110020}}]}}"), //nolint:lll
 		},
 	}
 	for _, tt := range tests {
@@ -1639,7 +1663,7 @@ func Test_tmpProxyPass_MarshalJSON(t1 *testing.T) {
 			fields: fields{
 				proxyPass: streamTmp,
 			},
-			want: []byte("{\"enabled\":true,\"context-type\":\"dir_stream_proxy_pass\",\"value\":\"example.com\",\"ProxyPass\":{\"original-address\":\"\",\"addresses\":null}}"),
+			want: []byte("{\"enabled\":true,\"context-type\":\"dir_stream_proxy_pass\",\"value\":\"example.com\",\"proxy-pass\":{\"original-address\":\"\",\"addresses\":null}}"),
 		},
 		{
 			name: "wrong pos stream proxy pass",

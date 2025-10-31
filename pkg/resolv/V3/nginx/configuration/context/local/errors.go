@@ -34,5 +34,5 @@ func (e *JSONError) ToError() error {
 		return errors.New(e.Message)
 	}
 
-	return errors.WithCode(e.Code, e.Message)
+	return errors.WithCode(e.Code, "%s", e.Message)
 }
