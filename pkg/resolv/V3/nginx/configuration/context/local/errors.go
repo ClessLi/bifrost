@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/marmotedu/errors"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 )
 
 type JSONError struct {
@@ -31,8 +31,8 @@ func ToJSONError(err error) *JSONError {
 
 func (e *JSONError) ToError() error {
 	if e.Code == 0 {
-		return errors.New(e.Message)
+		return code.New(e.Message)
 	}
 
-	return errors.WithCode(e.Code, "%s", e.Message)
+	return code.WithCode(e.Code, "%s", e.Message)
 }

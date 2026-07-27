@@ -6,10 +6,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 
 	"github.com/hpcloud/tail"
-	"github.com/marmotedu/errors"
 )
 
 type FileWatcher struct {
@@ -29,7 +29,7 @@ func (f *FileWatcher) Start() error {
 	if f.shuntPipe.IsClosed() {
 		f.cancel()
 
-		return errors.Errorf("failed to start '%s' file watcher, shunt pipe is already closed", f.filePath)
+		return code.Errorf("failed to start '%s' file watcher, shunt pipe is already closed", f.filePath)
 	}
 
 	f.startLocker.Lock()
@@ -86,7 +86,7 @@ func (f *FileWatcher) Start() error {
 			select {
 			case f.shuntPipe.Input() <- []byte(line.Text): // send to shut pipe
 			case <-time.After(time.Second * 30): // send to shut pipe timeout(30s)
-				err = errors.Errorf("send data to shut pipe timeout(30s), file: %s", f.filePath)
+				err = code.Errorf("send data to shut pipe timeout(30s), file: %s", f.filePath)
 
 				return err
 			}
@@ -105,11 +105,11 @@ func (f *FileWatcher) Start() error {
 func (f *FileWatcher) Stop() error {
 	defer f.cancel()
 	if f.shuntPipe.IsClosed() {
-		return errors.Errorf("failed to stop '%s' file watcher, shunt pipe is already closed", f.filePath)
+		return code.Errorf("failed to stop '%s' file watcher, shunt pipe is already closed", f.filePath)
 	}
 
 	if err := f.closePipe(); err != nil {
-		return errors.Errorf("failed to stop '%s' file watcher. %s", f.filePath, err.Error())
+		return code.Errorf("failed to stop '%s' file watcher. %s", f.filePath, err.Error())
 	}
 
 	return nil
@@ -127,7 +127,7 @@ func (f *FileWatcher) closePipe() error {
 
 		return err
 	case <-time.After(time.Second * 30):
-		return errors.New("close pipe timeout(30s)")
+		return code.New("close pipe timeout(30s)")
 	}
 }
 

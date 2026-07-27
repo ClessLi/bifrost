@@ -20,7 +20,6 @@ import (
 
 	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 
-	"github.com/marmotedu/errors"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -57,7 +56,7 @@ type backupOption struct {
 func (m *nginxConfigManager) Start() error {
 	// TODO: Server Port listen state, proxy server connection state
 	if m.isRunning || (m.ctx != nil && m.ctx.Err() == nil) {
-		return errors.WithCode(code.ErrConfigManagerIsRunning, "the nginx config manager is already running")
+		return code.WithCode(code.ErrConfigManagerIsRunning, "the nginx config manager is already running")
 	}
 
 	if m.ctx == nil || m.cancel == nil {
@@ -79,7 +78,7 @@ func (m *nginxConfigManager) Start() error {
 
 func (m *nginxConfigManager) Stop(timeout time.Duration) error {
 	if !m.isRunning {
-		return errors.WithCode(code.ErrConfigManagerIsNotRunning, "the nginx config manager is not running")
+		return code.WithCode(code.ErrConfigManagerIsNotRunning, "the nginx config manager is not running")
 	}
 	stopWork, done := context.WithTimeout(context.TODO(), timeout)
 	defer done()
@@ -92,17 +91,17 @@ func (m *nginxConfigManager) Stop(timeout time.Duration) error {
 	})
 
 	if err := stopeg.Wait(); err != nil {
-		if errors.Is(err, context.DeadlineExceeded) {
-			return errors.Errorf("stop the nginx config manager time out for more than %d seconds", int(timeout/time.Second))
-		} else if !errors.Is(err, context.Canceled) {
-			return errors.Errorf("stop the nginx config manager error. %+v", err)
+		if code.Is(err, context.DeadlineExceeded) {
+			return code.Errorf("stop the nginx config manager time out for more than %d seconds", int(timeout/time.Second))
+		} else if !code.Is(err, context.Canceled) {
+			return code.Errorf("stop the nginx config manager error. %+v", err)
 		}
 		m.isRunning = false
 
 		return nil
 	}
 
-	return errors.WithCode(code.ErrConfigManagerIsRunning, "failed to stop the nginx config manager")
+	return code.WithCode(code.ErrConfigManagerIsRunning, "failed to stop the nginx config manager")
 }
 
 func (m *nginxConfigManager) NginxConfig() NginxConfig {
@@ -169,7 +168,7 @@ func (m *nginxConfigManager) backup() error {
 	backupName := utilsV2.GetBackupFileName(m.backupOpts.backupPrefix, now)
 	archiveDir, err := filepath.Abs(m.NginxConfig().Main().MainConfig().BaseDir())
 	if err != nil {
-		return errors.Wrap(err, "failed to format archive directory")
+		return code.Wrap(err, "failed to format archive directory")
 	}
 	archivePath := filepath.Join(archiveDir, backupName)
 
@@ -236,7 +235,7 @@ func (m *nginxConfigManager) refresh() error {
 
 	if fsFingerprinter.NewerThan(m.configuration.UpdatedTimestamp()) {
 		err := m.configuration.(*nginxConfig).renewMainContext(fsMain)
-		if err != nil && !errors.IsCode(err, code.ErrSameConfigFingerprint) {
+		if err != nil && !code.IsCode(err, code.ErrSameConfigFingerprint) {
 			return err
 		}
 	} else {
@@ -268,7 +267,7 @@ func (m *nginxConfigManager) refresh() error {
 
 			// 回退为原本地磁盘上配置
 			err = m.configuration.(*nginxConfig).renewMainContext(fsMain)
-			if err != nil && !errors.IsCode(err, code.ErrSameConfigFingerprint) {
+			if err != nil && !code.IsCode(err, code.ErrSameConfigFingerprint) {
 				logV1.Errorf("roll back nginx config failed. %+v", err)
 
 				return err
@@ -348,7 +347,7 @@ func (m *nginxConfigManager) regularlyTask(ctx context.Context) error {
 		})
 
 		err = taskeg.Wait()
-		if err != nil && !errors.Is(err, context.Canceled) {
+		if err != nil && !code.Is(err, context.Canceled) {
 			logV1.Errorf("regularly task executed failed, cased by: %+v", err)
 		}
 	}

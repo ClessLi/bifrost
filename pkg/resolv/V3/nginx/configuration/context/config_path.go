@@ -3,7 +3,7 @@ package context
 import (
 	"path/filepath"
 
-	"github.com/marmotedu/errors"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 )
 
 type ConfigPath interface {
@@ -70,7 +70,7 @@ func (a AbsConfigPath) RelativePath() string {
 
 func NewAbsConfigPath(absPath string) (ConfigPath, error) {
 	if !filepath.IsAbs(absPath) {
-		return nil, errors.Errorf("%s is not a absolute path", absPath)
+		return nil, code.Errorf("%s is not a absolute path", absPath)
 	}
 
 	return &AbsConfigPath{filepath.Clean(absPath)}, nil

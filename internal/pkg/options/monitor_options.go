@@ -3,9 +3,9 @@ package options
 import (
 	"time"
 
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/internal/pkg/monitor"
 
-	"github.com/marmotedu/errors"
 	"github.com/spf13/pflag"
 )
 
@@ -40,7 +40,7 @@ func (m *MonitorOptions) Validate() []error {
 	var errs []error
 
 	if m.FrequencyPerCycle <= 0 {
-		errs = append(errs, errors.Errorf("--monitor.frequency-per-cycle %d must great than 0.", m.FrequencyPerCycle))
+		errs = append(errs, code.Errorf("--monitor.frequency-per-cycle %d must great than 0.", m.FrequencyPerCycle))
 	}
 
 	return errs

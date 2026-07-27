@@ -4,8 +4,6 @@ import (
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
-
-	"github.com/marmotedu/errors"
 )
 
 const INDENT = "    "
@@ -26,12 +24,12 @@ type BasicContext struct {
 func (b *BasicContext) Insert(ctx context.Context, idx int) context.Context {
 	// negative index
 	if idx < 0 {
-		return context.ErrContext(errors.WithCode(code.ErrV3ContextIndexOutOfRange, "index(%d) out of range", idx))
+		return context.ErrContext(code.WithCode(code.ErrV3ContextIndexOutOfRange, "index(%d) out of range", idx))
 	}
 
 	// refuse to insert nil
 	if ctx == nil {
-		return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "refuse to insert nil"))
+		return context.ErrContext(code.WithCode(code.ErrV3InvalidOperation, "refuse to insert nil"))
 	}
 
 	// refuse to insert error context and config context
@@ -39,17 +37,17 @@ func (b *BasicContext) Insert(ctx context.Context, idx int) context.Context {
 	case context_type.TypeErrContext:
 		errctx, ok := ctx.(*context.ErrorContext)
 		if ok {
-			return errctx.AppendError(errors.WithCode(code.ErrV3InvalidOperation, "refuse to insert error context"))
+			return errctx.AppendError(code.WithCode(code.ErrV3InvalidOperation, "refuse to insert error context"))
 		}
 
-		return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "refuse to insert invalid context"))
+		return context.ErrContext(code.WithCode(code.ErrV3InvalidOperation, "refuse to insert invalid context"))
 	case context_type.TypeConfig:
 		_, ok := ctx.(*Config)
 		if ok {
-			return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "refuse to insert config context"))
+			return context.ErrContext(code.WithCode(code.ErrV3InvalidOperation, "refuse to insert config context"))
 		}
 
-		return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "refuse to insert invalid context"))
+		return context.ErrContext(code.WithCode(code.ErrV3InvalidOperation, "refuse to insert invalid context"))
 	}
 
 	if idx >= b.Len() {
@@ -65,7 +63,7 @@ func (b *BasicContext) Insert(ctx context.Context, idx int) context.Context {
 	// set father for inserted ctx
 	err := ctx.SetFather(b.self)
 	if err != nil {
-		return context.ErrContext(errors.WithCode(code.ErrV3SetFatherContextFailed, "%s", err.Error()))
+		return context.ErrContext(code.WithCode(code.ErrV3SetFatherContextFailed, "%s", err.Error()))
 	}
 
 	return b.self
@@ -74,14 +72,14 @@ func (b *BasicContext) Insert(ctx context.Context, idx int) context.Context {
 func (b *BasicContext) Remove(idx int) context.Context {
 	// negative index
 	if idx < 0 {
-		return context.ErrContext(errors.WithCode(code.ErrV3ContextIndexOutOfRange, "index(%d) out of range", idx))
+		return context.ErrContext(code.WithCode(code.ErrV3ContextIndexOutOfRange, "index(%d) out of range", idx))
 	}
 
 	if idx < b.Len() {
 		// release father ctx
 		err := b.Children[idx].SetFather(context.NullContext())
 		if err != nil {
-			return context.ErrContext(errors.WithCode(code.ErrV3SetFatherContextFailed, "%s", err.Error()))
+			return context.ErrContext(code.WithCode(code.ErrV3SetFatherContextFailed, "%s", err.Error()))
 		}
 
 		b.Children = append(b.Children[:idx], b.Children[idx+1:]...)
@@ -93,17 +91,17 @@ func (b *BasicContext) Remove(idx int) context.Context {
 func (b *BasicContext) Modify(ctx context.Context, idx int) context.Context {
 	// refuse to modify to nil
 	if ctx == nil {
-		return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "refuse to modify to nil"))
+		return context.ErrContext(code.WithCode(code.ErrV3InvalidOperation, "refuse to modify to nil"))
 	}
 
 	// refuse to modify to error context
 	if ctx.Type() == context_type.TypeErrContext {
 		errctx, ok := ctx.(*context.ErrorContext)
 		if ok {
-			return errctx.AppendError(errors.WithCode(code.ErrV3InvalidOperation, "refuse to modify to error context"))
+			return errctx.AppendError(code.WithCode(code.ErrV3InvalidOperation, "refuse to modify to error context"))
 		}
 
-		return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "refuse to modify to invalid context"))
+		return context.ErrContext(code.WithCode(code.ErrV3InvalidOperation, "refuse to modify to invalid context"))
 	}
 
 	// if the context before and after modification is the same, no modification will be made
@@ -138,7 +136,7 @@ func (b *BasicContext) FatherPosSet() context.PosSet {
 
 func (b *BasicContext) Child(idx int) context.Context {
 	if idx >= b.Len() || idx < 0 {
-		return context.ErrContext(errors.WithCode(code.ErrV3ContextIndexOutOfRange, "index(%d) out of range", idx))
+		return context.ErrContext(code.WithCode(code.ErrV3ContextIndexOutOfRange, "index(%d) out of range", idx))
 	}
 
 	return b.Children[idx]
@@ -244,7 +242,7 @@ func (b *BasicContext) ConfigLines(isDumping bool) ([]string, error) {
 	}
 	for idx, child := range b.Children {
 		if child == nil {
-			return nil, errors.WithCode(code.ErrV3InvalidOperation, "child(index:%d) is nil", idx)
+			return nil, code.WithCode(code.ErrV3InvalidOperation, "child(index:%d) is nil", idx)
 		}
 		clines, err := child.ConfigLines(isDumping)
 		if err != nil {

@@ -5,8 +5,7 @@ import (
 
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
-
-	"github.com/marmotedu/errors"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 )
 
 type webConfigServer struct{}
@@ -31,7 +30,7 @@ func (w webConfigServer) DecodeResponse(ctx context.Context, resp interface{}) (
 	case *pbv1.Response: // decode `Update` response
 		return &v1.Response{Message: resp.String()}, nil
 	default:
-		return nil, errors.Errorf("invalid web server config response: %v", resp)
+		return nil, code.Errorf("invalid web server config response: %v", resp)
 	}
 }
 

@@ -7,8 +7,6 @@ import (
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
-
-	"github.com/marmotedu/errors"
 )
 
 type Directive struct {
@@ -32,15 +30,15 @@ func (d *Directive) MarshalJSON() ([]byte, error) {
 }
 
 func (d *Directive) Insert(ctx context.Context, idx int) context.Context {
-	return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "directive cannot insert context"))
+	return context.ErrContext(code.WithCode(code.ErrV3InvalidOperation, "directive cannot insert context"))
 }
 
 func (d *Directive) Remove(idx int) context.Context {
-	return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "directive cannot remove context"))
+	return context.ErrContext(code.WithCode(code.ErrV3InvalidOperation, "directive cannot remove context"))
 }
 
 func (d *Directive) Modify(ctx context.Context, idx int) context.Context {
-	return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "directive cannot modify context"))
+	return context.ErrContext(code.WithCode(code.ErrV3InvalidOperation, "directive cannot modify context"))
 }
 
 func (d *Directive) Father() context.Context {
@@ -66,7 +64,7 @@ func (d *Directive) FatherPosSet() context.PosSet {
 }
 
 func (d *Directive) Child(idx int) context.Context {
-	return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "directive has no child context"))
+	return context.ErrContext(code.WithCode(code.ErrV3InvalidOperation, "directive has no child context"))
 }
 
 func (d *Directive) ChildrenPosSet() context.PosSet {
@@ -85,7 +83,7 @@ func (d *Directive) Clone() context.Context {
 func (d *Directive) SetValue(v string) error {
 	kv := strings.SplitN(strings.TrimSpace(v), " ", 2)
 	if len(strings.TrimSpace(kv[0])) == 0 {
-		return errors.WithCode(code.ErrV3InvalidOperation, "set value for directive failed, cased by: split null value")
+		return code.WithCode(code.ErrV3InvalidOperation, "set value for directive failed, cased by: split null value")
 	}
 	d.Name = strings.TrimSpace(kv[0])
 	if len(kv) == 2 {
@@ -163,7 +161,7 @@ func registerDirectiveBuilder() error {
 	builderMap[context_type.TypeDirective] = func(value string) context.Context {
 		kv := strings.SplitN(strings.TrimSpace(value), " ", 2)
 		if len(strings.TrimSpace(kv[0])) == 0 {
-			return context.ErrContext(errors.New("null value"))
+			return context.ErrContext(code.New("null value"))
 		}
 		d := &Directive{
 			enabled:       true,

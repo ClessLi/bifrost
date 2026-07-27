@@ -3,9 +3,9 @@ package options
 import (
 	"time"
 
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/internal/pkg/file_watcher"
 
-	"github.com/marmotedu/errors"
 	"github.com/spf13/pflag"
 )
 
@@ -37,7 +37,7 @@ func (w *WebServerLogWatcherOptions) Validate() []error {
 	if w.MaxConnections < 1 {
 		errs = append(
 			errs,
-			errors.Errorf("--web-server-log-watcher.max-connections %d must great than 0", w.MaxConnections),
+			code.Errorf("--web-server-log-watcher.max-connections %d must great than 0", w.MaxConnections),
 		)
 	}
 

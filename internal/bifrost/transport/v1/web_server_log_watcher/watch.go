@@ -7,8 +7,7 @@ import (
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
 	"github.com/ClessLi/bifrost/internal/bifrost/transport/v1/utils"
-
-	"github.com/marmotedu/errors"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 )
 
 func (w *webServerLogWatcherServer) Watch(
@@ -38,10 +37,10 @@ func (w *webServerLogWatcherServer) Watch(
 			err = utils.StreamSendMsg(stream, line, w.options.ChunkSize, func(msg []byte) interface{} {
 				return &pbv1.Response{Msg: msg}
 			})
-			if err != nil && !errors.Is(err, io.EOF) {
+			if err != nil && !code.Is(err, io.EOF) {
 				return err
 			}
-			if errors.Is(err, io.EOF) {
+			if code.Is(err, io.EOF) {
 				return nil
 			}
 		}

@@ -1,9 +1,9 @@
 package options
 
 import (
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/internal/pkg/server"
 
-	"github.com/marmotedu/errors"
 	"github.com/spf13/pflag"
 )
 
@@ -35,11 +35,11 @@ func (g *GRPCServerOptions) Validate() []error {
 	var errs []error
 
 	if g.ChunkSize < 100 {
-		errs = append(errs, errors.Errorf("--grpc.chunksize %d must great equal 100 bytes.", g.ChunkSize))
+		errs = append(errs, code.Errorf("--grpc.chunksize %d must great equal 100 bytes.", g.ChunkSize))
 	}
 
 	if g.ReceiveTimeoutMinutes <= 0 {
-		errs = append(errs, errors.Errorf("--grpc.receive-timeout %d must great than 0.", g.ReceiveTimeoutMinutes))
+		errs = append(errs, code.Errorf("--grpc.receive-timeout %d must great than 0.", g.ReceiveTimeoutMinutes))
 	}
 
 	return errs

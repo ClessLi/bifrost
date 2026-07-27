@@ -11,8 +11,6 @@ import (
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
 	utilsV3 "github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/utils"
-
-	"github.com/marmotedu/errors"
 )
 
 func fakeHostsResolver() utilsV3.DomainNameResolver {
@@ -605,7 +603,7 @@ func TestHTTPProxyPass_ReparseParams(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Errorf("reparseParams() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			if err != nil && !errors.IsCode(err, code.ErrV3DomainNameResolutionFailed) {
+			if err != nil && !code.IsCode(err, code.ErrV3DomainNameResolutionFailed) {
 				t.Logf("Err: %++v", err)
 			} else {
 				aj, err := json.Marshal(h.Addresses)
@@ -701,7 +699,7 @@ func TestHTTPProxyPass_PosVerify(t *testing.T) {
 			h := tt.fields.proxyPass
 			if err := h.PosVerify(); (err != nil) != tt.wantErr {
 				t.Errorf("PosVerify() error = %v, wantErr %v", err, tt.wantErr)
-			} else if err != nil && tt.wantErr && !errors.IsCode(err, tt.wantErrCode) {
+			} else if err != nil && tt.wantErr && !code.IsCode(err, tt.wantErrCode) {
 				t.Errorf("PosVerify() error = %+v, wantErrCode %v", err, tt.wantErrCode)
 			}
 		})
@@ -965,7 +963,7 @@ func TestStreamProxyPass_ReparseParams(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Errorf("reparseParams() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			if err != nil && !errors.IsCode(err, code.ErrV3DomainNameResolutionFailed) {
+			if err != nil && !code.IsCode(err, code.ErrV3DomainNameResolutionFailed) {
 				t.Logf("Err: %++v", err)
 			} else {
 				aj, err := json.Marshal(s.Addresses)
@@ -1037,7 +1035,7 @@ func TestStreamProxyPass_PosVerify(t *testing.T) {
 			s := tt.fields.proxyPass
 			if err := s.PosVerify(); (err != nil) != tt.wantErr {
 				t.Errorf("PosVerify() error = %v, wantErr %v", err, tt.wantErr)
-			} else if err != nil && tt.wantErr && !errors.IsCode(err, tt.wantErrCode) {
+			} else if err != nil && tt.wantErr && !code.IsCode(err, tt.wantErrCode) {
 				t.Errorf("PosVerify() error = %+v, wantErrCode %v", err, tt.wantErrCode)
 			}
 		})
@@ -1429,7 +1427,7 @@ func Test_tmpProxyPass_verifyAndInitTo(t1 *testing.T) {
 			fields: fields{
 				proxyPass: initializedTmp,
 			},
-			want: context.ErrContext(errors.New("ProxyPass is already initialized")),
+			want: context.ErrContext(code.New("ProxyPass is already initialized")),
 		},
 		{
 			name: "excluded to main context",
@@ -1450,7 +1448,7 @@ func Test_tmpProxyPass_verifyAndInitTo(t1 *testing.T) {
 			fields: fields{
 				proxyPass: httpWrongPosTmp,
 			},
-			want: context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "Father context type not supported."+
+			want: context.ErrContext(code.WithCode(code.ErrV3InvalidOperation, "Father context type not supported."+
 				" Only the following types are supported: `Location`, `If` in `Location`, `Limit_except`")),
 		},
 		{
@@ -1465,7 +1463,7 @@ func Test_tmpProxyPass_verifyAndInitTo(t1 *testing.T) {
 			fields: fields{
 				proxyPass: streamWrongPosTmp,
 			},
-			want: context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "Father context type not supported."+
+			want: context.ErrContext(code.WithCode(code.ErrV3InvalidOperation, "Father context type not supported."+
 				" Only the following types are supported: `Server` which is in `Stream`")),
 		},
 	}

@@ -7,8 +7,6 @@ import (
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/utils"
-
-	"github.com/marmotedu/errors"
 )
 
 var (
@@ -133,7 +131,7 @@ func HttpServers(q Querier) (int, map[string][]int) {
 		serverCount++
 		serverNameKeyQueryer, err := serverQueryer.Query("key:sep: :reg: server_name .*")
 		if err != nil {
-			if errors.IsCode(err, code.ErrParserNotFound) {
+			if code.IsCode(err, code.ErrParserNotFound) {
 				return 0, nil
 			}
 

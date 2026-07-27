@@ -6,8 +6,7 @@ import (
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
-
-	"github.com/marmotedu/errors"
+	errors "github.com/ClessLi/bifrost/internal/pkg/code"
 )
 
 type webServerLogWatcher struct{}

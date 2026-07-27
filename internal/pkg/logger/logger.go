@@ -3,7 +3,7 @@ package logger
 import (
 	"os"
 
-	"github.com/marmotedu/errors"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 )
 
 type Logger struct {
@@ -26,7 +26,7 @@ func createLogDir(dirpath string) error {
 			return err
 		}
 	} else if os.IsExist(err) && !info.IsDir() {
-		return errors.Errorf("The path '%s' is exist, and it's not a directory", dirpath)
+		return code.Errorf("The path '%s' is exist, and it's not a directory", dirpath)
 	} else if os.IsExist(err) && info.IsDir() {
 		return nil
 	} else {

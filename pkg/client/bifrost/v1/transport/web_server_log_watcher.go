@@ -7,8 +7,8 @@ import (
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
 
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 	grpctransport "github.com/go-kit/kit/transport/grpc"
-	"github.com/marmotedu/errors"
 	"google.golang.org/grpc"
 )
 
@@ -62,12 +62,12 @@ func newWebServerLogWatcherClient(
 
 func recvWatcherResponse(stream pbv1.WebServerLogWatcher_WatchClient, needClose *bool) []byte {
 	resp, err := stream.Recv()
-	if err != nil && !errors.Is(err, io.EOF) {
+	if err != nil && !code.Is(err, io.EOF) {
 		*needClose = true
 
 		return []byte(err.Error())
 	}
-	if errors.Is(err, io.EOF) {
+	if code.Is(err, io.EOF) {
 		*needClose = true
 
 		return nil

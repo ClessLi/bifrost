@@ -6,8 +6,7 @@ import (
 
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
-
-	"github.com/marmotedu/errors"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 )
 
 type webServerStatistics struct{}
@@ -20,7 +19,7 @@ func (w webServerStatistics) DecodeResponse(ctx context.Context, resp interface{
 
 		return statistics, err
 	default:
-		return nil, errors.Errorf("invalid web server statistics response: %v", resp)
+		return nil, code.Errorf("invalid web server statistics response: %v", resp)
 	}
 }
 

@@ -4,7 +4,8 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/marmotedu/errors"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -47,14 +48,14 @@ func resolveResExhaustedErr(err error) (int, int, error) {
 		if m := sizeMatcher.FindStringSubmatch(err.Error()); len(m) == 3 {
 			s1, e1 := strconv.Atoi(m[1])
 			s2, e2 := strconv.Atoi(m[2])
-			err = errors.NewAggregate([]error{e1, e2})
+			err = code.NewAggregate([]error{e1, e2})
 			if err != nil {
-				return 0, 0, errors.Wrap(err, "failed to resolve valid message size")
+				return 0, 0, code.Wrap(err, "failed to resolve valid message size")
 			}
 
 			return s1, s2, nil
 		} else {
-			return 0, 0, errors.Wrap(err, "failed to resolve gRPC `ResourceExhausted` error")
+			return 0, 0, code.Wrap(err, "failed to resolve gRPC `ResourceExhausted` error")
 		}
 	}
 

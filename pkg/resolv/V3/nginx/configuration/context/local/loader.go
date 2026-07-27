@@ -12,7 +12,6 @@ import (
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
 
 	"github.com/dominikbraun/graph"
-	"github.com/marmotedu/errors"
 )
 
 type Loader interface {
@@ -50,7 +49,7 @@ type fileLoader struct {
 
 func (f *fileLoader) Load() (MainContext, error) {
 	if !filepath.IsAbs(f.mainConfigAbsPath) {
-		return nil, errors.Errorf("%s is not a absolute path", f.mainConfigAbsPath)
+		return nil, code.Errorf("%s is not a absolute path", f.mainConfigAbsPath)
 	}
 
 	main, err := NewMain(f.mainConfigAbsPath)
@@ -71,7 +70,7 @@ func (f *fileLoader) Load() (MainContext, error) {
 func (f *fileLoader) load(config *Config) error {
 	data, err := os.ReadFile(configHash(config))
 	if err != nil {
-		return errors.Wrap(err, "read file failed")
+		return code.Wrap(err, "read file failed")
 	}
 
 	// TODO: Optimize the matching mechanism for comments with no line breaks at the end
@@ -80,7 +79,7 @@ func (f *fileLoader) load(config *Config) error {
 	stackIdx := len(f.contextStack.contexts)
 	err = f.contextStack.push(config)
 	if err != nil {
-		return errors.Wrap(err, "push config context to stack failed")
+		return code.Wrap(err, "push config context to stack failed")
 	}
 
 	for {
@@ -91,13 +90,13 @@ func (f *fileLoader) load(config *Config) error {
 
 		err = parseErrLine(data, &idx, config)
 		if err != nil {
-			return errors.Wrap(err, "has parsed an error line")
+			return code.Wrap(err, "has parsed an error line")
 		}
 
 		if parseBraceEnd(data, &idx) {
 			_, err = f.contextStack.pop()
 			if err != nil {
-				return errors.Wrap(err, "quit context from stack failed")
+				return code.Wrap(err, "quit context from stack failed")
 			}
 
 			continue
@@ -108,16 +107,16 @@ func (f *fileLoader) load(config *Config) error {
 			if ctx != context.NullContext() {
 				father, err := f.contextStack.current()
 				if err != nil {
-					return errors.Wrap(err, "get father context failed")
+					return code.Wrap(err, "get father context failed")
 				}
 				err = father.Insert(ctx, father.Len()).Error()
 				if err != nil {
-					return errors.Wrap(err, "insert context failed")
+					return code.Wrap(err, "insert context failed")
 				}
 
 				err = f.contextStack.push(ctx)
 				if err != nil {
-					return errors.Wrap(err, "push context to stack failed")
+					return code.Wrap(err, "push context to stack failed")
 				}
 				isParsed = true
 
@@ -133,11 +132,11 @@ func (f *fileLoader) load(config *Config) error {
 			if ctx != context.NullContext() {
 				father, err := f.contextStack.current()
 				if err != nil {
-					return errors.Wrap(err, "get father context failed")
+					return code.Wrap(err, "get father context failed")
 				}
 				err = father.Insert(ctx, father.Len()).Error()
 				if err != nil {
-					return errors.Wrap(err, "insert context failed")
+					return code.Wrap(err, "insert context failed")
 				}
 				isParsed = true
 
@@ -155,7 +154,7 @@ func (f *fileLoader) load(config *Config) error {
 		return err
 	}
 	if stackIdx != len(f.contextStack.contexts) {
-		return errors.WithCode(code.ErrParseFailed, "context stack is not empty")
+		return code.WithCode(code.ErrParseFailed, "context stack is not empty")
 	}
 
 	if e := new(commentsToContextConverter).Convert(config).Error(); e != nil {
@@ -181,7 +180,7 @@ func (f *fileLoader) load(config *Config) error {
 			func(pos context.Pos) (context.Pos, error) {
 				// load include configs
 				if err := f.loadInclude(pos.Target().(*Include)); err != nil {
-					return pos, errors.Wrap(err, "load include configs failed")
+					return pos, code.Wrap(err, "load include configs failed")
 				}
 
 				return pos, nil
@@ -228,7 +227,7 @@ func (f *fileLoader) loadInclude(include *Include) error {
 		// adding config into configGraph
 		err = f.configGraph.AddConfig(newconfig)
 		if err != nil {
-			if errors.Is(err, graph.ErrVertexAlreadyExists) {
+			if code.Is(err, graph.ErrVertexAlreadyExists) {
 				continue
 			}
 
@@ -257,7 +256,7 @@ type contextStack struct {
 
 func (s *contextStack) current() (context.Context, error) {
 	if len(s.contexts) == 0 {
-		return context.NullContext(), errors.New("empty context stack")
+		return context.NullContext(), code.New("empty context stack")
 	}
 
 	return s.contexts[len(s.contexts)-1], nil
@@ -275,7 +274,7 @@ func (s *contextStack) pop() (context.Context, error) {
 
 func (s *contextStack) push(ctx context.Context) error {
 	if ctx == nil {
-		return errors.New("input a nil")
+		return code.New("input a nil")
 	}
 	err := ctx.Error()
 	if err != nil {
@@ -316,7 +315,7 @@ func parseErrLine(data []byte, idx *int, config *Config) error {
 			}
 		}
 
-		return errors.WithCode(code.ErrParseFailed, "parse failed at line %d of %s", line, configHash(config))
+		return code.WithCode(code.ErrParseFailed, "parse failed at line %d of %s", line, configHash(config))
 	}
 
 	return nil

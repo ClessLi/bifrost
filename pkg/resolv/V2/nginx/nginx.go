@@ -4,12 +4,11 @@ import (
 	"sync"
 
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/configuration"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loader"
 
 	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
-
-	"github.com/marmotedu/errors"
 )
 
 // ConfigManagerOptions defines options for nginx configuration and manager.
@@ -83,11 +82,11 @@ func (c *configsManager) Stop() error {
 	for servername, manager := range c.cms {
 		err := manager.Stop()
 		if err != nil {
-			errs = append(errs, errors.Wrapf(err, "failed to stop nginx config manager %s", servername))
+			errs = append(errs, code.Wrapf(err, "failed to stop nginx config manager %s", servername))
 		}
 	}
 	if len(errs) > 0 {
-		return errors.NewAggregate(errs)
+		return code.NewAggregate(errs)
 	}
 
 	return nil

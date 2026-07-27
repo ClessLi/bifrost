@@ -4,9 +4,9 @@ import (
 	"context"
 	"sync"
 
-	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 
-	"github.com/marmotedu/errors"
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 )
 
 type WatcherManager struct {
@@ -43,13 +43,13 @@ func (wm *WatcherManager) StopAll() error {
 		logV1.Infof("stopping watching file '%s'", filePath)
 		err := watcher.Stop()
 		if err != nil {
-			errs = append(errs, errors.Errorf("failed to stop watching file '%s'. %s", filePath, err.Error()))
+			errs = append(errs, code.Errorf("failed to stop watching file '%s'. %s", filePath, err.Error()))
 		} else {
 			delete(wm.watchers, filePath)
 		}
 	}
 
-	return errors.NewAggregate(errs)
+	return code.NewAggregate(errs)
 }
 
 func NewWatcherManager(config *Config) *WatcherManager {

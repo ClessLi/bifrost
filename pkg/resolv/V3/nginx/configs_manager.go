@@ -9,8 +9,6 @@ import (
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration"
 
 	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
-
-	"github.com/marmotedu/errors"
 )
 
 type ConfigsManager interface {
@@ -35,7 +33,7 @@ func (m *configsManager) Start() error {
 		errs = append(errs, manager.Start())
 	}
 
-	return errors.NewAggregate(errs)
+	return code.NewAggregate(errs)
 }
 
 func (m *configsManager) Stop(timeout time.Duration) error {
@@ -46,7 +44,7 @@ func (m *configsManager) Stop(timeout time.Duration) error {
 		errs = append(errs, manager.Stop(timeout))
 	}
 
-	return errors.NewAggregate(errs)
+	return code.NewAggregate(errs)
 }
 
 func (m *configsManager) GetConfigs() (configs map[string]configuration.NginxConfig) {
@@ -78,5 +76,5 @@ func (m *configsManager) GenServerBinCMD(servername string, arg ...string) (*exe
 		}
 	}
 
-	return nil, errors.WithCode(code.ErrWebServerNotFound, "nginx server '%v' not found", servername)
+	return nil, code.WithCode(code.ErrWebServerNotFound, "nginx server '%v' not found", servername)
 }

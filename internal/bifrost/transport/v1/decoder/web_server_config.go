@@ -6,8 +6,6 @@ import (
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
-
-	"github.com/marmotedu/errors"
 )
 
 type webServerConfig struct{}
@@ -36,7 +34,7 @@ func (d webServerConfig) DecodeRequest(_ context.Context, r interface{}) (interf
 			OriginalFingerprints: r.GetOriginalFingerprints(),
 		}, nil
 	default:
-		return nil, errors.WithCode(code.ErrDecodingFailed, "invalid request: %v", r)
+		return nil, code.WithCode(code.ErrDecodingFailed, "invalid request: %v", r)
 	}
 }
 

@@ -5,8 +5,6 @@ import (
 
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
-
-	"github.com/marmotedu/errors"
 )
 
 type webServerLogWatcher struct{}
@@ -18,7 +16,7 @@ func (w webServerLogWatcher) EncodeResponse(ctx context.Context, r interface{}) 
 	case *v1.WebServerLog: // return a bytes channel structure(point) *v1.WebServerLog from Watch endpoint, not a *v1.Response
 		return r, nil
 	default:
-		return nil, errors.WithCode(code.ErrEncodingFailed, "invalid web server log watcher response: %v", r)
+		return nil, code.WithCode(code.ErrEncodingFailed, "invalid web server log watcher response: %v", r)
 	}
 }
 

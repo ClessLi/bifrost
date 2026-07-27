@@ -8,8 +8,6 @@ import (
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
-
-	"github.com/marmotedu/errors"
 )
 
 type Comment struct {
@@ -30,15 +28,15 @@ func (c *Comment) MarshalJSON() ([]byte, error) {
 }
 
 func (c *Comment) Insert(ctx context.Context, idx int) context.Context {
-	return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "comment cannot insert context"))
+	return context.ErrContext(code.WithCode(code.ErrV3InvalidOperation, "comment cannot insert context"))
 }
 
 func (c *Comment) Remove(idx int) context.Context {
-	return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "comment cannot remove context"))
+	return context.ErrContext(code.WithCode(code.ErrV3InvalidOperation, "comment cannot remove context"))
 }
 
 func (c *Comment) Modify(ctx context.Context, idx int) context.Context {
-	return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "comment cannot modify context"))
+	return context.ErrContext(code.WithCode(code.ErrV3InvalidOperation, "comment cannot modify context"))
 }
 
 func (c *Comment) Father() context.Context {
@@ -64,7 +62,7 @@ func (c *Comment) FatherPosSet() context.PosSet {
 }
 
 func (c *Comment) Child(idx int) context.Context {
-	return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "comment has no context"))
+	return context.ErrContext(code.WithCode(code.ErrV3InvalidOperation, "comment has no context"))
 }
 
 func (c *Comment) ChildrenPosSet() context.PosSet {
@@ -203,7 +201,7 @@ func (c commentsToContextConverter) convertSubPoses(fatherCtx context.Context, s
 	for _, idx := range subIdxes {
 		cmt, ok := fatherCtx.Child(idx).(*Comment)
 		if !ok {
-			return errors.WithCode(code.ErrV3ConversionToContextFailed, "cannot convert non Comment context")
+			return code.WithCode(code.ErrV3ConversionToContextFailed, "cannot convert non Comment context")
 		}
 		line := cmt.Value()
 
@@ -255,13 +253,13 @@ func (c commentsToContextConverter) convertSubPoses(fatherCtx context.Context, s
 		}
 
 		if matchIndexes := RegErrorHeed.FindIndex(data[idx:]); matchIndexes != nil {
-			return errors.WithCode(code.ErrV3ConversionToContextFailed, "has parsed an error line")
+			return code.WithCode(code.ErrV3ConversionToContextFailed, "has parsed an error line")
 		}
 
 		if parseBraceEnd(data, &idx) {
 			ctx, err := stack.pop()
 			if err != nil {
-				return errors.WithCode(code.ErrV3ConversionToContextFailed, "quit context from stack failed")
+				return code.WithCode(code.ErrV3ConversionToContextFailed, "quit context from stack failed")
 			}
 			if ctx == tmpCtx {
 				// Will split duplicate '}' into independent '# }' comments
@@ -277,16 +275,16 @@ func (c commentsToContextConverter) convertSubPoses(fatherCtx context.Context, s
 			if ctx != context.NullContext() {
 				father, err := stack.current()
 				if err != nil {
-					return errors.WithCode(code.ErrV3ConversionToContextFailed, "get father context failed")
+					return code.WithCode(code.ErrV3ConversionToContextFailed, "get father context failed")
 				}
 				err = father.Insert(ctx, father.Len()).Error()
 				if err != nil {
-					return errors.WithCode(code.ErrV3ConversionToContextFailed, "insert context failed")
+					return code.WithCode(code.ErrV3ConversionToContextFailed, "insert context failed")
 				}
 
 				err = stack.push(ctx)
 				if err != nil {
-					return errors.WithCode(code.ErrV3ConversionToContextFailed, "push context to stack failed")
+					return code.WithCode(code.ErrV3ConversionToContextFailed, "push context to stack failed")
 				}
 				isParsed = true
 
@@ -302,11 +300,11 @@ func (c commentsToContextConverter) convertSubPoses(fatherCtx context.Context, s
 			if ctx != context.NullContext() {
 				father, err := stack.current()
 				if err != nil {
-					return errors.WithCode(code.ErrV3ConversionToContextFailed, "get father context failed")
+					return code.WithCode(code.ErrV3ConversionToContextFailed, "get father context failed")
 				}
 				err = father.Insert(ctx, father.Len()).Error()
 				if err != nil {
-					return errors.WithCode(code.ErrV3ConversionToContextFailed, "insert context failed")
+					return code.WithCode(code.ErrV3ConversionToContextFailed, "insert context failed")
 				}
 				isParsed = true
 
@@ -321,14 +319,14 @@ func (c commentsToContextConverter) convertSubPoses(fatherCtx context.Context, s
 			break
 		}
 
-		return errors.WithCode(code.ErrV3ConversionToContextFailed, "the comments content was not successfully parsed")
+		return code.WithCode(code.ErrV3ConversionToContextFailed, "the comments content was not successfully parsed")
 	}
 	finalCtx, err := stack.pop()
 	if err != nil {
-		return errors.WithCode(code.ErrV3ConversionToContextFailed, "stack exception for conversion and parsing")
+		return code.WithCode(code.ErrV3ConversionToContextFailed, "stack exception for conversion and parsing")
 	}
 	if finalCtx != tmpCtx {
-		return errors.WithCode(code.ErrV3ConversionToContextFailed, "lack of sufficient `context` ending symbols")
+		return code.WithCode(code.ErrV3ConversionToContextFailed, "lack of sufficient `context` ending symbols")
 	}
 
 	// rewrite converted ctx to father ctx
@@ -365,7 +363,7 @@ func (c commentsToContextConverter) Convert(ctx context.Context) context.Context
 		for i := len(conIdxes) - 1; i >= 0; i-- {
 			err = c.convertSubPoses(father, conIdxes[i])
 			if err != nil {
-				if errors.IsCode(err, code.ErrV3ConversionToContextFailed) { // skip conversion when conversion fails
+				if code.IsCode(err, code.ErrV3ConversionToContextFailed) { // skip conversion when conversion fails
 					continue
 				}
 

@@ -1,10 +1,9 @@
 package local
 
 import (
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
-
-	"github.com/marmotedu/errors"
 )
 
 type BuildBasicContextConfig struct {
@@ -17,7 +16,7 @@ func OptsApplyTo(opts context.BuildOptions) (BuildBasicContextConfig, error) {
 	buildConfig := BuildBasicContextConfig{}
 	buildConfig.headStringFunc, buildConfig.tailStringFunc = buildHeadAndTailStringFuncs(opts)
 	if buildConfig.headStringFunc == nil || buildConfig.tailStringFunc == nil {
-		return buildConfig, errors.New("TODO")
+		return buildConfig, code.New("TODO")
 	}
 
 	buildConfig.ContextType = opts.ContextType
@@ -77,7 +76,7 @@ func RegisterBuilder(opts context.BuildOptions, registrar ContextBuilderRegistra
 	}
 	builder := registrar(buildConfig.BasicContext)
 	if builder == nil {
-		return errors.New("the registered context builder is nil")
+		return code.New("the registered context builder is nil")
 	}
 	builderMap[opts.ContextType] = builder
 
@@ -510,7 +509,7 @@ func registerUpstreamParseFunc() error {
 func NewContext(contextType context_type.ContextType, value string) context.Context {
 	builder, has := builderMap[contextType]
 	if !has {
-		return context.ErrContext(errors.Errorf("not found context builder for %s", contextType))
+		return context.ErrContext(code.Errorf("not found context builder for %s", contextType))
 	}
 
 	return builder(value)
@@ -539,7 +538,7 @@ func registerContextBuilders() error {
 		registerStreamProxyPassBuilder(),
 	)
 
-	return errors.NewAggregate(errs)
+	return code.NewAggregate(errs)
 }
 
 func registerContextParseFuncs() error {
@@ -561,7 +560,7 @@ func registerContextParseFuncs() error {
 		registerProxyPassParseFunc(),
 	)
 
-	return errors.NewAggregate(errs)
+	return code.NewAggregate(errs)
 }
 
 func FatherPosSetWithoutInclude(ctx context.Context) context.PosSet {

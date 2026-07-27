@@ -7,8 +7,6 @@ import (
 	storev1 "github.com/ClessLi/bifrost/internal/bifrost/store/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration"
-
-	"github.com/marmotedu/errors"
 )
 
 type webServerStatisticsStore struct {
@@ -20,7 +18,7 @@ func (w *webServerStatisticsStore) Get(ctx context.Context, servername *v1.Serve
 		return statistician.Statistics(), nil
 	}
 
-	return nil, errors.WithCode(code.ErrConfigurationNotFound, "nginx server config '%s' not found", servername.Name)
+	return nil, code.WithCode(code.ErrConfigurationNotFound, "nginx server config '%s' not found", servername.Name)
 }
 
 var _ storev1.WebServerStatisticsStore = &webServerStatisticsStore{}

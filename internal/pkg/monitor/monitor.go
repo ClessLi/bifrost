@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 
-	"github.com/marmotedu/errors"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/disk"
 	"github.com/shirou/gopsutil/mem"
@@ -60,7 +60,7 @@ func (m *monitor) Start() error {
 	m.procLocker.Lock()
 	// check monitor is already start or not.
 	if m.procStarted || (m.ctx != nil && m.ctx.Err() == nil) {
-		return errors.New("the monitor is already start")
+		return code.New("the monitor is already start")
 	}
 	m.procStarted = true
 	defer func() { m.procStarted = false }()
@@ -120,7 +120,7 @@ func (m *monitor) Start() error {
 	m.eg.Go(func() error {
 		logV1.Info("start to collect system information")
 		err := m.watch(work, cycle, interval)
-		if err != nil && !errors.Is(err, context.Canceled) {
+		if err != nil && !code.Is(err, context.Canceled) {
 			logV1.Warnf("collect system information failed: %v", err)
 			err = m.Stop()
 			if err != nil {
@@ -136,7 +136,7 @@ func (m *monitor) Start() error {
 
 func (m *monitor) Stop() error {
 	if m.ctx == nil || m.cancel == nil {
-		return errors.New("the monitor is not started or initialization.")
+		return code.New("the monitor is not started or initialization.")
 	}
 	timeoutC, done := context.WithTimeout(context.TODO(), time.Second*10)
 	defer done()
@@ -145,7 +145,7 @@ func (m *monitor) Stop() error {
 	stopeg.Go(func() (err error) {
 		defer func() {
 			done()
-			if errors.Is(err, context.Canceled) {
+			if code.Is(err, context.Canceled) {
 				logV1.Debugf("the monitor stopped successfully.")
 			}
 		}()
@@ -156,11 +156,11 @@ func (m *monitor) Stop() error {
 	})
 
 	if err := stopeg.Wait(); err != nil {
-		if errors.Is(err, context.DeadlineExceeded) {
+		if code.Is(err, context.DeadlineExceeded) {
 			logV1.Errorf("the monitor stopped timeout")
 
-			return errors.New("the monitor stopped timeout")
-		} else if !errors.Is(err, context.Canceled) {
+			return code.New("the monitor stopped timeout")
+		} else if !code.Is(err, context.Canceled) {
 			logV1.Errorf("the monitor stopped failed: %v", err)
 
 			return err
@@ -171,7 +171,7 @@ func (m *monitor) Stop() error {
 	}
 	logV1.Errorf("the monitor is already running!")
 
-	return errors.New("the monitor is already running!")
+	return code.New("the monitor is already running!")
 }
 
 func (m *monitor) Report() SystemInfo {
@@ -205,11 +205,11 @@ func (m *monitor) infoSync(ctx context.Context) {
 
 	<-work.Done()
 	if err := work.Err(); err != nil {
-		if errors.Is(err, context.DeadlineExceeded) {
+		if code.Is(err, context.DeadlineExceeded) {
 			logV1.Warn("sync the system info to cache timeout!")
 
 			return
-		} else if !errors.Is(err, context.Canceled) {
+		} else if !code.Is(err, context.Canceled) {
 			logV1.Warnf("sync the system info to cache failed: %v", err)
 
 			return

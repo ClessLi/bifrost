@@ -4,8 +4,7 @@ import (
 	"context"
 
 	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
-
-	"github.com/marmotedu/errors"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 )
 
 type webServerStatus struct{}
@@ -15,7 +14,7 @@ func (w webServerStatus) EncodeRequest(ctx context.Context, req interface{}) (in
 	case *pbv1.Null:
 		return req, nil
 	default:
-		return nil, errors.Errorf("invalid web server status request: %v", req)
+		return nil, code.Errorf("invalid web server status request: %v", req)
 	}
 }
 

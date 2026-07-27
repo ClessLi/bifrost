@@ -5,11 +5,10 @@ import (
 	"time"
 
 	storev1 "github.com/ClessLi/bifrost/internal/bifrost/store/v1"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/internal/pkg/file_watcher"
 	"github.com/ClessLi/bifrost/internal/pkg/monitor"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx"
-
-	"github.com/marmotedu/errors"
 )
 
 type webServerStore struct {
@@ -40,7 +39,7 @@ func (w *webServerStore) WebServerBinCMD() storev1.WebServerBinCMDStore {
 }
 
 func (w *webServerStore) Close() error {
-	return errors.NewAggregate([]error{
+	return code.NewAggregate([]error{
 		w.configsManger.Stop(5 * time.Minute),
 		w.monitor.Stop(),
 		w.watcherManager.StopAll(),
@@ -61,7 +60,7 @@ func GetNginxStoreFactory(
 	logWatcherManager *file_watcher.WatcherManager,
 ) (storev1.StoreFactory, error) {
 	if webSvrConfManager == nil && nginxStoreFactory == nil {
-		return nil, errors.New("failed to get web server store factory")
+		return nil, code.New("failed to get web server store factory")
 	}
 
 	once.Do(func() {
@@ -75,7 +74,7 @@ func GetNginxStoreFactory(
 	})
 
 	if nginxStoreFactory == nil {
-		return nil, errors.New("failed to setup nginx store factory")
+		return nil, code.New("failed to setup nginx store factory")
 	}
 
 	return nginxStoreFactory, nil

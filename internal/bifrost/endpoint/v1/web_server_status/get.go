@@ -4,9 +4,9 @@ import (
 	"context"
 
 	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 
 	"github.com/go-kit/kit/endpoint"
-	"github.com/marmotedu/errors"
 )
 
 func (w *webServerStatusEndpoints) EndpointGet() endpoint.Endpoint {
@@ -15,6 +15,6 @@ func (w *webServerStatusEndpoints) EndpointGet() endpoint.Endpoint {
 			return w.svc.WebServerStatus().Get(ctx)
 		}
 
-		return nil, errors.Errorf("invalid get request, need *pbv1.Null, not %T", request)
+		return nil, code.Errorf("invalid get request, need *pbv1.Null, not %T", request)
 	}
 }

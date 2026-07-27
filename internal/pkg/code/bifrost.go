@@ -1,7 +1,5 @@
 package code
 
-//go:generate codegen -type=int -fullname=Bifrost
-
 // bifrost: configuration errors.
 const (
 	// ErrConfigurationTypeMismatch - 500: Configuration type mismatch.

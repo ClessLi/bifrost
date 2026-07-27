@@ -19,7 +19,6 @@ import (
 
 	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 
-	"github.com/marmotedu/errors"
 	"github.com/wxnacy/wgo/arrays"
 )
 
@@ -143,8 +142,8 @@ func (c *configManager) regularlyBackup(duration time.Duration, signalChan chan 
 		// 1) save with check
 		err := c.SaveWithCheck()
 		// 非指纹相同的报错则退出备份
-		if err != nil && !errors.IsCode(err, code.ErrSameConfigFingerprint) &&
-			!errors.IsCode(err, code.ErrSameConfigFingerprints) {
+		if err != nil && !code.IsCode(err, code.ErrSameConfigFingerprint) &&
+			!code.IsCode(err, code.ErrSameConfigFingerprints) {
 			backupErr = err
 
 			continue
@@ -158,7 +157,7 @@ func (c *configManager) regularlyBackup(duration time.Duration, signalChan chan 
 		backupName := utils.GetBackupFileName(backupPrefix, now)
 		archiveDir, err := filepath.Abs(filepath.Dir(c.configuration.Self().GetValue()))
 		if err != nil {
-			backupErr = errors.Wrap(err, "failed to format archive directory")
+			backupErr = code.Wrap(err, "failed to format archive directory")
 
 			continue
 		}
@@ -243,7 +242,7 @@ func (c *configManager) regularlyReload(duration time.Duration, signalChan chan 
 		// 2) 不一致则重载文件配置
 		err = c.configuration.renewConfiguration(config)
 		if err != nil {
-			if !errors.IsCode(err, code.ErrSameConfigFingerprint) {
+			if !code.IsCode(err, code.ErrSameConfigFingerprint) {
 				reloadErr = err
 			}
 
@@ -265,7 +264,7 @@ func (c configManager) load() (conf Configuration, configPaths []string, err err
 	}
 	config, ok := ctx.(*parser.Config)
 	if !ok {
-		return nil, nil, errors.New("not a config file")
+		return nil, nil, code.New("not a config file")
 	}
 	configPaths = c.loader.GetConfigPaths()
 	newConfiguration := NewConfiguration(config, loopPreventer, new(sync.RWMutex))
@@ -305,7 +304,7 @@ func (c *configManager) SaveWithCheck() error {
 
 	// 2) 比较内存配置指纹与old配置指纹是否一致
 	if !c.configuration.getConfigFingerprinter().Diff(oldConfig.getConfigFingerprinter()) {
-		return errors.WithCode(
+		return code.WithCode(
 			code.ErrSameConfigFingerprints,
 			"same config fingerprint between files and configuration",
 		)
@@ -393,7 +392,7 @@ func (c configManager) serverBinCMD(arg ...string) *exec.Cmd {
 
 func (c *configManager) Start() error {
 	if c.isRunning {
-		return errors.WithCode(code.ErrConfigManagerIsRunning, "config manager is already running")
+		return code.WithCode(code.ErrConfigManagerIsRunning, "config manager is already running")
 	}
 	c.waitGroup.Add(3)
 	go func() {
@@ -421,7 +420,7 @@ func (c *configManager) Start() error {
 
 func (c *configManager) Stop() error {
 	if !c.isRunning {
-		return errors.WithCode(code.ErrConfigManagerIsNotRunning, "config manager is not running")
+		return code.WithCode(code.ErrConfigManagerIsNotRunning, "config manager is not running")
 	}
 	errorStr := ""
 	waittime := time.Second * 2
@@ -448,7 +447,7 @@ func (c *configManager) Stop() error {
 	go stopGoroutineFunc("save", c.saveSignalChan, time.After(waittime))
 	c.waitGroup.Wait()
 	if len(errorStr) > 0 {
-		return errors.New(errorStr)
+		return code.New(errorStr)
 	}
 	c.isRunning = false
 

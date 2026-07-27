@@ -222,8 +222,8 @@ linters:
         modules:
           - github.com/pkg/errors:
               recommendations:
-                - github.com/marmotedu/errors
-              reason: '`github.com/marmotedu/errors` is the log package used by marmotedu projects.'
+                - github.com/ClessLi/component-base/pkg/errors
+              reason: '`github.com/ClessLi/component-base/pkg/errors` is the errors package used by component-base projects.'
         versions:
           - github.com/MakeNowJust/heredoc:
               version: '> 2.0.9'

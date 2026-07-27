@@ -2,12 +2,12 @@ package server
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"strings"
 	"time"
 
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/internal/pkg/service_register"
 	healthzclientv1 "github.com/ClessLi/bifrost/pkg/client/grpc_health_v1"
 
@@ -250,7 +250,7 @@ func (s *GenericGRPCServer) servingRun(isSecure bool) error {
 		defer healthServer.Shutdown()
 	}
 
-	if err = server.Serve(lis); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
+	if err = server.Serve(lis); err != nil && !code.Is(err, grpc.ErrServerStopped) {
 		logV1.Errorf("Failed to serve the %s server, %s", serverType, err.Error())
 
 		return err
@@ -264,7 +264,7 @@ func (s *GenericGRPCServer) servingRun(isSecure bool) error {
 // Run spawns the http server. It only returns when the port cannot be listened on initially.
 func (s *GenericGRPCServer) Run() error {
 	if s.workContext != nil {
-		return errors.New("work context already set, the generic gRPC server maybe have already started")
+		return code.New("work context already set, the generic gRPC server maybe have already started")
 	}
 
 	var done context.CancelFunc
@@ -369,7 +369,7 @@ func (s *GenericGRPCServer) Close() {
 		return nil
 	})
 
-	if err := stopeg.Wait(); err != nil && !errors.Is(err, context.Canceled) {
+	if err := stopeg.Wait(); err != nil && !code.Is(err, context.Canceled) {
 		logV1.Errorf("failed to close the generic grpc server, cased by: %+v", err.Error())
 	}
 }

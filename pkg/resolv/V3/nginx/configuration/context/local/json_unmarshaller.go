@@ -4,10 +4,9 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
-
-	"github.com/marmotedu/errors"
 )
 
 type jsonUnmarshalContext struct {
@@ -45,7 +44,7 @@ func (m *mainUnmarshaller) UnmarshalJSON(bytes []byte) error {
 		if configpath != unmarshalMain.MainConfig {
 			config, ok := NewContext(context_type.TypeConfig, configpath).(*Config)
 			if !ok {
-				return errors.Errorf("failed to build config '%v'", configpath)
+				return code.Errorf("failed to build config '%v'", configpath)
 			}
 			config.ConfigPath, err = newConfigPath(m.completedMain, configpath)
 			if err != nil {

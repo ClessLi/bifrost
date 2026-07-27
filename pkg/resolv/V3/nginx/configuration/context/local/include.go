@@ -9,8 +9,6 @@ import (
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
-
-	"github.com/marmotedu/errors"
 )
 
 type includeSnapshot struct {
@@ -29,7 +27,7 @@ type includedConfigPos struct {
 }
 
 func (i *includedConfigPos) Position() (context.Context, int) {
-	return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "undefined position for included config")), -1
+	return context.ErrContext(code.WithCode(code.ErrV3InvalidOperation, "undefined position for included config")), -1
 }
 
 func (i *includedConfigPos) Target() context.Context {
@@ -97,7 +95,7 @@ func (i *Include) parsePatternPath() (main MainContext, fatherConfig *Config, is
 	}
 	mainCtx, ok := fatherConfig.Father().(MainContext)
 	if !ok {
-		return nil, fatherConfig, isEnabled, "", errors.WithCode(code.ErrV3InvalidContext, "this include context is not bound to a main context")
+		return nil, fatherConfig, isEnabled, "", code.WithCode(code.ErrV3InvalidContext, "this include context is not bound to a main context")
 	}
 	if filepath.IsAbs(i.Value()) {
 		return mainCtx, fatherConfig, isEnabled, i.Value(), nil
@@ -180,9 +178,9 @@ func (i *Include) fatherConfig() (isEnabled bool, fatherConfig *Config, err erro
 	for !ok {
 		switch fatherCtx.Type() {
 		case context_type.TypeErrContext:
-			return isEnabled, fatherConfig, fatherCtx.(*context.ErrorContext).AppendError(errors.WithCode(code.ErrV3InvalidContext, "found an error config context")).Error()
+			return isEnabled, fatherConfig, fatherCtx.(*context.ErrorContext).AppendError(code.WithCode(code.ErrV3InvalidContext, "found an error config context")).Error()
 		case context_type.TypeMain:
-			return isEnabled, fatherConfig, errors.WithCode(code.ErrV3InvalidContext, "found an Main context")
+			return isEnabled, fatherConfig, code.WithCode(code.ErrV3InvalidContext, "found an Main context")
 		}
 
 		fatherCtx = fatherCtx.Father()
@@ -204,15 +202,15 @@ func (i *Include) FatherConfig() (*Config, error) {
 }
 
 func (i *Include) Insert(ctx context.Context, idx int) context.Context {
-	return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "include cannot insert by index"))
+	return context.ErrContext(code.WithCode(code.ErrV3InvalidOperation, "include cannot insert by index"))
 }
 
 func (i *Include) Remove(idx int) context.Context {
-	return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "include cannot remove by index"))
+	return context.ErrContext(code.WithCode(code.ErrV3InvalidOperation, "include cannot remove by index"))
 }
 
 func (i *Include) Modify(ctx context.Context, idx int) context.Context {
-	return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "include cannot modify by index"))
+	return context.ErrContext(code.WithCode(code.ErrV3InvalidOperation, "include cannot modify by index"))
 }
 
 func (i *Include) Father() context.Context {
@@ -244,7 +242,7 @@ func (i *Include) FatherPosSet() context.PosSet {
 }
 
 func (i *Include) Child(idx int) context.Context {
-	return context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "include cannot get child config by index"))
+	return context.ErrContext(code.WithCode(code.ErrV3InvalidOperation, "include cannot get child config by index"))
 }
 
 func (i *Include) childrenPosSet() context.PosSet {
@@ -274,7 +272,7 @@ func (i *Include) Clone() context.Context {
 }
 
 func (i *Include) SetValue(v string) error {
-	return errors.WithCode(code.ErrV3InvalidOperation, "setting the value of include context is unsafe")
+	return code.WithCode(code.ErrV3InvalidOperation, "setting the value of include context is unsafe")
 }
 
 func (i *Include) load() error {

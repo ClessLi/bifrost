@@ -4,8 +4,7 @@ import (
 	"context"
 
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
-
-	"github.com/marmotedu/errors"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 )
 
 type webServerLogWatcher struct{}
@@ -15,7 +14,7 @@ func (w webServerLogWatcher) DecodeResponse(ctx context.Context, resp interface{
 	case *v1.WebServerLog: // return a bytes channel structure(point) *v1.WebServerLog from Watch endpoint, not a *pbv1.Response
 		return resp, nil
 	default:
-		return nil, errors.Errorf("invalid web server log watcher response: %v", resp)
+		return nil, code.Errorf("invalid web server log watcher response: %v", resp)
 	}
 }
 

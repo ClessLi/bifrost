@@ -67,7 +67,7 @@ func Start() (err error) {
 			// 捕获panic
 			if r := recover(); r != nil {
 				err = fmt.Errorf("%s", r)
-				Log(CRITICAL, err.Error())
+				Log(CRITICAL, "bifrost panic: %+v", err)
 			}
 			// Log(NOTICE, "bifrost is finished")
 		}()
@@ -101,7 +101,7 @@ func Stop() error {
 	// 判断bifrost进程是否存在
 	process, procErr := getProc(pidFile)
 	if procErr != nil {
-		Log(ERROR, procErr.Error())
+		Log(ERROR, "failed to stop bifrost, cased by: '%s'", procErr)
 
 		return procErr
 	}
@@ -111,7 +111,7 @@ func Stop() error {
 	killErr := process.Signal(syscall.SIGQUIT)
 	if killErr != nil {
 		if sysErr, ok := killErr.(*os.SyscallError); !ok || sysErr.Syscall != "TerminateProcess" {
-			Log(ERROR, killErr.Error())
+			Log(ERROR, "failed to stop bifrost, cased by: '%s'", killErr)
 
 			return killErr
 		} else if ok && sysErr.Syscall == "TerminateProcess" {

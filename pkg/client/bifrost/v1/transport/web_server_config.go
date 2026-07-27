@@ -6,9 +6,9 @@ import (
 	"io"
 
 	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 
 	grpctransport "github.com/go-kit/kit/transport/grpc"
-	"github.com/marmotedu/errors"
 	"google.golang.org/grpc"
 )
 
@@ -69,14 +69,14 @@ func newWebServerConfigGetClient(
 		defer ofpBuffer.Reset()
 		for {
 			d, err := stream.Recv()
-			if err != nil && !errors.Is(err, io.EOF) {
+			if err != nil && !code.Is(err, io.EOF) {
 				return nil, err
 			}
-			if errors.Is(err, io.EOF) {
+			if code.Is(err, io.EOF) {
 				break
 			}
 			if d.GetServerName() != "" && d.GetServerName() != req.(*pbv1.ServerName).GetName() {
-				return nil, errors.Errorf(
+				return nil, code.Errorf(
 					"the web server config is incorrect: got config of `%s`, want config of `%s`",
 					d.GetServerName(),
 					req.(*pbv1.ServerName).GetName(),

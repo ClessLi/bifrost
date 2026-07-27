@@ -12,7 +12,6 @@ import (
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 
-	"github.com/marmotedu/errors"
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/ipv4"
 )
@@ -35,7 +34,7 @@ func ResolveDomainNameToIPv4(name string) ([]string, error) {
 	defer dnResolverRWLock.RUnlock()
 
 	if dnResolver == nil {
-		return nil, errors.WithCode(code.ErrV3InvalidOperation, "Domain Name Resolver not initialized")
+		return nil, code.WithCode(code.ErrV3InvalidOperation, "Domain Name Resolver not initialized")
 	}
 
 	return dnResolver.ResolveToIPv4s(name)

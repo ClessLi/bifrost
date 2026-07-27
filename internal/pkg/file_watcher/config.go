@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"time"
 
-	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 
-	"github.com/marmotedu/errors"
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 )
 
 type Config struct {
@@ -41,7 +41,7 @@ func absFilePath(path string) (string, error) {
 		return "", err
 	}
 	if info.IsDir() {
-		return "", errors.Errorf("%s is a directory", path)
+		return "", code.Errorf("%s is a directory", path)
 	}
 
 	return filepath.Abs(path)
