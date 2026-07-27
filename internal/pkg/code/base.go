@@ -1,7 +1,6 @@
 package code
 
-//go:generate codegen -type=int -fullname=Bifrost
-//go:generate codegen -type=int -fullname=Bifrost -doc -output ../../../docs/guide/zh-CN/api/error_code_generated.md
+//go:generate codegen -type=int -fullname=Bifrost -namespace=Bifrost -doc-output=../../../docs/guide/zh-CN/api/error_code_generated.md -wrapper
 
 // Common: basic errors.
 // Code must start with 1xxxxx.

@@ -7,8 +7,6 @@ import (
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
-
-	"github.com/marmotedu/errors"
 )
 
 func TestMain_Child(t *testing.T) {
@@ -186,7 +184,7 @@ func TestMain_Insert(t *testing.T) {
 				ctx: nil,
 				idx: 0,
 			},
-			want: context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "refuse to insert nil")),
+			want: context.ErrContext(code.WithCode(code.ErrV3InvalidOperation, "refuse to insert nil")),
 		},
 		{
 			name:   "return main context itself",
@@ -410,7 +408,7 @@ func TestMain_Modify(t *testing.T) { //nolint:dupl
 				ctx: nil,
 				idx: 0,
 			},
-			want: context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "refuse to insert nil")),
+			want: context.ErrContext(code.WithCode(code.ErrV3InvalidOperation, "refuse to insert nil")),
 		},
 		{
 			name:   "return main context itself",
@@ -452,7 +450,7 @@ func TestMain_Remove(t *testing.T) {
 			name:   "error context result",
 			fields: testMain,
 			args:   args{idx: -1},
-			want:   context.ErrContext(errors.WithCode(code.ErrV3ContextIndexOutOfRange, "index(%d) out of range", -1)),
+			want:   context.ErrContext(code.WithCode(code.ErrV3ContextIndexOutOfRange, "index(%d) out of range", -1)),
 		},
 		{
 			name:   "return main itself",

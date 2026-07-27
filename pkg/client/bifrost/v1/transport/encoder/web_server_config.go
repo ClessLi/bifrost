@@ -5,8 +5,7 @@ import (
 
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
-
-	"github.com/marmotedu/errors"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 )
 
 type webServerConfig struct{}
@@ -33,7 +32,7 @@ func (w webServerConfig) EncodeRequest(ctx context.Context, req interface{}) (in
 			OriginalFingerprints: req.OriginalFingerprints,
 		}, nil
 	default:
-		return nil, errors.Errorf("invalid web server config request: %v", req)
+		return nil, code.Errorf("invalid web server config request: %v", req)
 	}
 }
 

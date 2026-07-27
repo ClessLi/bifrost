@@ -7,8 +7,6 @@ import (
 
 	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
-
-	"github.com/marmotedu/errors"
 )
 
 func (w *webServerConfigServer) Update(stream pbv1.WebServerConfig_UpdateServer) error {
@@ -28,7 +26,7 @@ func (w *webServerConfigServer) Update(stream pbv1.WebServerConfig_UpdateServer)
 		isTimeout = time.Since(recvStartTime) >= w.options.RecvTimeoutMinutes*time.Minute //nolint:durationcheck
 		in, err = stream.Recv()
 		// 判断是否传入完毕
-		if errors.Is(err, io.EOF) {
+		if code.Is(err, io.EOF) {
 			err = nil //nolint:wastedassign,ineffassign
 
 			break
@@ -43,7 +41,7 @@ func (w *webServerConfigServer) Update(stream pbv1.WebServerConfig_UpdateServer)
 			}
 		} else {
 			if req.ServerName != in.GetServerName() {
-				return errors.WithCode(code.ErrValidation, "need server name: '%s', not '%s'", req.ServerName, in.GetServerName())
+				return code.WithCode(code.ErrValidation, "need server name: '%s', not '%s'", req.ServerName, in.GetServerName())
 			}
 		}
 
@@ -52,18 +50,18 @@ func (w *webServerConfigServer) Update(stream pbv1.WebServerConfig_UpdateServer)
 	}
 
 	if isTimeout {
-		return errors.WithCode(code.ErrRequestTimeout, "receive timeout during data wrap")
+		return code.WithCode(code.ErrRequestTimeout, "receive timeout during data wrap")
 	}
 
 	if req == nil {
-		return errors.WithCode(code.ErrValidation, "update web server config is nil")
+		return code.WithCode(code.ErrValidation, "update web server config is nil")
 	}
 
 	req.JsonData = dataBuffer.Bytes()
 	req.OriginalFingerprints = ofpBuffer.Bytes()
 	_, resp, err := w.handler.HandlerUpdate().ServeGRPC(stream.Context(), req)
 	if err != nil {
-		return errors.Wrapf(
+		return code.Wrapf(
 			err,
 			"failed to handle the update operation of the web server config(json-data) - %s",
 			string(req.GetJsonData()),

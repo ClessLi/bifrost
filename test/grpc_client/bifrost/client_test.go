@@ -9,6 +9,7 @@ import (
 	"time"
 
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 	bifrost_cliv1 "github.com/ClessLi/bifrost/pkg/client/bifrost/v1"
 	healthzclient_v1 "github.com/ClessLi/bifrost/pkg/client/grpc_health_v1"
 	nginxCtx "github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
@@ -16,7 +17,6 @@ import (
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
 	utilsV3 "github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/utils"
 
-	"github.com/marmotedu/errors"
 	"google.golang.org/grpc"
 )
 
@@ -293,7 +293,7 @@ func TestBifrostClientOperation(t *testing.T) {
 			t.Fatal(err)
 		}
 		if err := client.WebServerConfig().Update(servername, conf, utilsV3.NewConfigFingerprinter(conf.Dump()).Fingerprints()); err == nil {
-			t.Fatal(errors.New("the original fingerprint was not used for updating, but the update did not return an error"))
+			t.Fatal(code.New("the original fingerprint was not used for updating, but the update did not return an error"))
 		} else {
 			t.Log("the original fingerprint was not used for updating, and the update return an error")
 		}

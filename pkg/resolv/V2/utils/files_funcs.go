@@ -13,7 +13,7 @@ import (
 
 	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 
-	"github.com/marmotedu/errors"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 )
 
 const backupDateLayout = `20060102`
@@ -93,7 +93,7 @@ func CheckAndCleanBackups(
 				now.Location(),
 			)
 			if tpErr != nil {
-				return false, errors.Wrapf(tpErr, "failed to resolve archive name '%s'", baks[i])
+				return false, code.Wrapf(tpErr, "failed to resolve archive name '%s'", baks[i])
 			}
 
 			// 判断是否需要清理，并清理过期归档
@@ -101,7 +101,7 @@ func CheckAndCleanBackups(
 				logV1.Infof("cleaning up expired archive '%s'", baks[i])
 				rmErr := os.Remove(baks[i])
 				if rmErr != nil {
-					return false, errors.Wrapf(rmErr, "failed to clean up expired archive '%s'", baks[i])
+					return false, code.Wrapf(rmErr, "failed to clean up expired archive '%s'", baks[i])
 				}
 				logV1.Infof("successfully cleaned up expired archive '%s'", baks[i])
 			}
@@ -143,7 +143,7 @@ func GetPid(path string) (int, error) {
 
 		return pid, nil
 	} else { // 不存在
-		return -1, errors.New("process is not running")
+		return -1, code.New("process is not running")
 	}
 }
 

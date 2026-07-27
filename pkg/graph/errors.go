@@ -1,6 +1,6 @@
 package graph
 
-import "errors"
+import "github.com/ClessLi/component-base/pkg/errors"
 
 var (
 	ErrVertexRepeat           = errors.New("vertex repeat error")

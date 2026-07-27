@@ -76,7 +76,7 @@ func getProc(path string) (*os.Process, error) {
 func rmPidFile(path string) {
 	rmPidFileErr := os.Remove(path)
 	if rmPidFileErr != nil {
-		Log(ERROR, rmPidFileErr.Error())
+		Log(ERROR, "failed to remove bifrost.pid, cased by: '%s'", rmPidFileErr)
 	}
 	Log(NOTICE, "bifrost.pid has been removed.")
 }
@@ -92,7 +92,7 @@ func getPid(path string) (int, error) {
 		// 读取pid文件
 		pidBytes, readPidErr := readFile(path)
 		if readPidErr != nil {
-			Log(ERROR, readPidErr.Error())
+			Log(ERROR, "failed to read bifrost.pid, cased by: '%s'", readPidErr)
 
 			return -1, readPidErr
 		}
@@ -103,7 +103,7 @@ func getPid(path string) (int, error) {
 		// 转码pid
 		pid, toIntErr := strconv.Atoi(string(pidBytes))
 		if toIntErr != nil {
-			Log(ERROR, toIntErr.Error())
+			Log(ERROR, "failed to convert pid to int, cased by: '%s'", toIntErr)
 
 			return -1, toIntErr
 		}

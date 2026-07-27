@@ -15,8 +15,6 @@ import (
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_indention"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_position"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_type"
-
-	"github.com/marmotedu/errors"
 )
 
 type Loader interface {
@@ -377,5 +375,5 @@ func parseErrLine(path string, configData *[]byte, index int) error {
 		}
 	}
 
-	return errors.WithCode(code.ErrParseFailed, "parse failed at line %d of %s", line, path)
+	return code.WithCode(code.ErrParseFailed, "parse failed at line %d of %s", line, path)
 }

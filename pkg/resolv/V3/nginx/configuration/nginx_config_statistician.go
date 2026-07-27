@@ -9,8 +9,6 @@ import (
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context/local"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
-
-	"github.com/marmotedu/errors"
 )
 
 type HttpInfo struct {
@@ -119,7 +117,7 @@ func HttpServers(ctx context.Context) (int, map[string][]int) {
 						SetRegexpMatchingValue(context.RegexpMatchingServerNameValue),
 				).Target()
 				if servernameDirective.Error() != nil {
-					if !errors.IsCode(servernameDirective.Error(), code.ErrV3ContextNotFound) {
+					if !code.IsCode(servernameDirective.Error(), code.ErrV3ContextNotFound) {
 						return pos, servernameDirective.Error()
 					}
 

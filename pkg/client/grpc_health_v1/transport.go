@@ -3,7 +3,8 @@ package grpc_health_v1
 import (
 	"context"
 
-	"github.com/marmotedu/errors"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
+
 	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
@@ -21,7 +22,7 @@ func encodeClientRequest(ctx context.Context, r interface{}) (interface{}, error
 		return &grpc_health_v1.HealthCheckRequest{Service: r.Service}, nil
 	}
 
-	return nil, errors.New("invalid request for gRPC health check")
+	return nil, code.New("invalid request for gRPC health check")
 }
 
 func decodeClientResponse(ctx context.Context, r interface{}) (interface{}, error) {
@@ -30,5 +31,5 @@ func decodeClientResponse(ctx context.Context, r interface{}) (interface{}, erro
 		return healthCheckResponse{Status: HealthStatus(r.GetStatus())}, nil
 	}
 
-	return nil, errors.New("invalid health check response from gRPC server")
+	return nil, code.New("invalid health check response from gRPC server")
 }

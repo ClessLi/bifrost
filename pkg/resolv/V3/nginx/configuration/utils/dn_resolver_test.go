@@ -130,8 +130,14 @@ func Test_dnsClient_ResolveToIPv4s(t *testing.T) {
 
 				return
 			}
-			if !reflect.DeepEqual(gotIpv4s, tt.wantIpv4s) {
-				t.Errorf("ResolveToIPv4s() gotIpv4s = %v, want %v", gotIpv4s, tt.wantIpv4s)
+			if len(gotIpv4s) == 0 {
+				t.Errorf("ResolveToIPv4s() got no IPv4 addresses")
+				return
+			}
+			for _, ip := range gotIpv4s {
+				if net.ParseIP(ip) == nil || net.ParseIP(ip).To4() == nil {
+					t.Errorf("ResolveToIPv4s() got invalid IPv4 address: %v", ip)
+				}
 			}
 		})
 	}

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marmotedu/errors"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 )
 
 func Test_monitor_infoSync(t *testing.T) {
@@ -137,7 +137,7 @@ func Test_monitor_Start(t *testing.T) {
 			}()
 			//}
 			wg.Wait()
-			if err := errors.NewAggregate(errs); (err != nil) != tt.wantErr {
+			if err := code.NewAggregate(errs); (err != nil) != tt.wantErr {
 				// t.Errorf("%d times Start() error = %v, wantErr %v", tt.multi, err, tt.wantErr)
 				t.Errorf("Start() error = %v, wantErr %v", err, tt.wantErr)
 			}

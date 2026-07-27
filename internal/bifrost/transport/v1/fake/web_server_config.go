@@ -5,10 +5,9 @@ import (
 	"io"
 
 	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 
 	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
-
-	"github.com/marmotedu/errors"
 )
 
 type webServerConfig struct{}
@@ -33,7 +32,7 @@ func (w webServerConfig) ConnectivityCheckOfProxiedServers(ctx context.Context, 
 
 func (w webServerConfig) Update(stream pbv1.WebServerConfig_UpdateServer) error {
 	conf, err := stream.Recv()
-	if err != nil && !errors.Is(err, io.EOF) {
+	if err != nil && !code.Is(err, io.EOF) {
 		return err
 	}
 

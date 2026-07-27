@@ -11,8 +11,6 @@ import (
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/loop_preventer"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/nginx/parser_type"
 	"github.com/ClessLi/bifrost/pkg/resolv/V2/utils"
-
-	"github.com/marmotedu/errors"
 )
 
 //type Updater interface {
@@ -182,7 +180,7 @@ func (c *configuration) Query(keyword string) (Querier, error) {
 	}
 	foundCtx, index := c.config.Query(parserKeyword)
 	if foundCtx == nil {
-		return nil, errors.WithCode(code.ErrParserNotFound, "query father context failed")
+		return nil, code.WithCode(code.ErrParserNotFound, "query father context failed")
 	}
 	foundParser, err := foundCtx.GetChild(index)
 	if err != nil {
@@ -265,11 +263,11 @@ func (c *configuration) Dump() map[string][]byte {
 
 func (c *configuration) renewConfiguration(conf Configuration) error {
 	if !c.getConfigFingerprinter().Diff(conf.getConfigFingerprinter()) {
-		return errors.WithCode(code.ErrSameConfigFingerprint, "same config fingerprint")
+		return code.WithCode(code.ErrSameConfigFingerprint, "same config fingerprint")
 	}
 	newConf, ok := conf.(*configuration)
 	if !ok {
-		return errors.WithCode(code.ErrConfigurationTypeMismatch, "configuration type mismatch")
+		return code.WithCode(code.ErrConfigurationTypeMismatch, "configuration type mismatch")
 	}
 	c.rwLocker.Lock()
 	defer c.rwLocker.Unlock()

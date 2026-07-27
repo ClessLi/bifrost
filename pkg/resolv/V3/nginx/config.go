@@ -1,10 +1,9 @@
 package nginx
 
 import (
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration"
 	utilsV3 "github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/utils"
-
-	"github.com/marmotedu/errors"
 )
 
 type Config struct {
@@ -24,7 +23,7 @@ func (c *Config) Complete() (*CompletedConfig, error) {
 
 	cc.DomainNameServerIPv4 = c.DomainNameServerIPv4
 
-	return cc, errors.NewAggregate(errs)
+	return cc, code.NewAggregate(errs)
 }
 
 type CompletedConfig struct {
@@ -41,7 +40,7 @@ func (cc *CompletedConfig) NewConfigsManager() (ConfigsManager, error) {
 		errs = append(errs, err)
 	}
 
-	if aerr := errors.NewAggregate(errs); aerr != nil {
+	if aerr := code.NewAggregate(errs); aerr != nil {
 		return nil, aerr
 	}
 

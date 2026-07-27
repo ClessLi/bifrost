@@ -5,8 +5,7 @@ import (
 
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
-
-	"github.com/marmotedu/errors"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 )
 
 type webServerBinCMD struct{}
@@ -20,7 +19,7 @@ func (w webServerBinCMD) DecodeResponse(ctx context.Context, resp interface{}) (
 			StandardError:  resp.Stderr,
 		}, nil
 	default:
-		return nil, errors.Errorf("invalid web server binary command response: %v", resp)
+		return nil, code.Errorf("invalid web server binary command response: %v", resp)
 	}
 }
 

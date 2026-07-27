@@ -7,8 +7,8 @@ import (
 	"time"
 
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 
-	"github.com/marmotedu/errors"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -46,7 +46,7 @@ func (u *udpTest) Close() error {
 	case <-u.ctx.Done():
 		return nil
 	case <-timeout:
-		return errors.New("timeout")
+		return code.New("timeout")
 	}
 }
 

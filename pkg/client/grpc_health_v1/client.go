@@ -1,11 +1,12 @@
 package grpc_health_v1
 
 import (
+	"github.com/ClessLi/bifrost/internal/pkg/code"
+
 	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 	"github.com/ClessLi/skirnir/pkg/discover"
 
 	kitzaplog "github.com/go-kit/kit/log/zap"
-	"github.com/marmotedu/errors"
 	"google.golang.org/grpc"
 )
 
@@ -34,7 +35,7 @@ func NewClientFromConsul(consulHost string, consulPort uint16, opts ...grpc.Dial
 		return client, nil
 	}
 
-	return nil, errors.New("failed to initialize Health Check service client")
+	return nil, code.New("failed to initialize Health Check service client")
 }
 
 func NewClient(svrAddr string, opts ...grpc.DialOption) (*Client, error) {

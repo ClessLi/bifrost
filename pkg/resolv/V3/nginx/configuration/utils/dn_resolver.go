@@ -8,7 +8,6 @@ import (
 
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 
-	"github.com/marmotedu/errors"
 	"github.com/miekg/dns"
 )
 
@@ -20,7 +19,7 @@ type hostList map[string][]string
 
 func (h hostList) ResolveToIPv4s(domainName string) (ipv4s []string, err error) {
 	if h[domainName] == nil {
-		return nil, errors.WithCode(code.ErrV3DomainNameResolutionFailed, "the domain name resolution record for `%s` does not exist", domainName)
+		return nil, code.WithCode(code.ErrV3DomainNameResolutionFailed, "the domain name resolution record for `%s` does not exist", domainName)
 	}
 
 	return h[domainName], nil
@@ -49,7 +48,7 @@ func (d *dnsClient) ResolveToIPv4s(domainName string) (ipv4s []string, err error
 	}
 	r, _, err := client.Exchange(new(dns.Msg).SetQuestion(domainName, dns.TypeA), fmt.Sprintf("%s:%d", d.dnsHost, d.dnsPort))
 	if err != nil {
-		return ipv4s, errors.WithCode(code.ErrV3DomainNameResolutionFailed, err.Error())
+		return ipv4s, code.WithCode(code.ErrV3DomainNameResolutionFailed, "failed to resolve domain name `%s` to IPv4: %v", domainName, err)
 	}
 	for _, rr := range r.Answer {
 		if ar, ok := rr.(*dns.A); ok {

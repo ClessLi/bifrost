@@ -6,8 +6,6 @@ import (
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
-
-	"github.com/marmotedu/errors"
 )
 
 type webServerConfig struct{}
@@ -34,7 +32,7 @@ func (e webServerConfig) EncodeResponse(_ context.Context, r interface{}) (inter
 	case *v1.Response: // encode `Update` response
 		return &pbv1.Response{Msg: []byte(r.Message)}, nil
 	default:
-		return nil, errors.WithCode(code.ErrEncodingFailed, "invalid web server config response: %v", r)
+		return nil, code.WithCode(code.ErrEncodingFailed, "invalid web server config response: %v", r)
 	}
 }
 

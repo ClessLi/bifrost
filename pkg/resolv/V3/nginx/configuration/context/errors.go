@@ -3,24 +3,22 @@ package context
 import (
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
-
-	"github.com/marmotedu/errors"
 )
 
 var (
-	ErrIndexOutOfRange             = errors.New("index out of range")
-	ErrInsertParserTypeError       = errors.New("insert parser type error")
-	ErrInsertIntoErrorContext      = errors.WithCode(code.ErrV3OperationOnErrorContext, "insert context into an error context")
-	ErrRemoveFromErrorContext      = errors.WithCode(code.ErrV3OperationOnErrorContext, "remove context from an error context")
-	ErrModifyFromErrorContext      = errors.WithCode(code.ErrV3OperationOnErrorContext, "modify context from an error context")
-	ErrSetValueToErrorContext      = errors.WithCode(code.ErrV3OperationOnErrorContext, "set value to an error context")
-	ErrSetFatherToErrorContext     = errors.WithCode(code.ErrV3OperationOnErrorContext, "set father to an error context")
-	ErrGetFatherFromErrorContext   = errors.WithCode(code.ErrV3OperationOnErrorContext, "get father from an error context")
-	ErrGetChildFromErrorContext    = errors.WithCode(code.ErrV3OperationOnErrorContext, "get child from an error context")
-	ErrParseConfigFromErrorContext = errors.WithCode(code.ErrV3OperationOnErrorContext, "parse config from an error context")
-	ErrNullPosition                = errors.WithCode(code.ErrV3NullContextPosition, "null position")
+	ErrIndexOutOfRange             = code.New("index out of range")
+	ErrInsertParserTypeError       = code.New("insert parser type error")
+	ErrInsertIntoErrorContext      = code.WithCode(code.ErrV3OperationOnErrorContext, "insert context into an error context")
+	ErrRemoveFromErrorContext      = code.WithCode(code.ErrV3OperationOnErrorContext, "remove context from an error context")
+	ErrModifyFromErrorContext      = code.WithCode(code.ErrV3OperationOnErrorContext, "modify context from an error context")
+	ErrSetValueToErrorContext      = code.WithCode(code.ErrV3OperationOnErrorContext, "set value to an error context")
+	ErrSetFatherToErrorContext     = code.WithCode(code.ErrV3OperationOnErrorContext, "set father to an error context")
+	ErrGetFatherFromErrorContext   = code.WithCode(code.ErrV3OperationOnErrorContext, "get father from an error context")
+	ErrGetChildFromErrorContext    = code.WithCode(code.ErrV3OperationOnErrorContext, "get child from an error context")
+	ErrParseConfigFromErrorContext = code.WithCode(code.ErrV3OperationOnErrorContext, "parse config from an error context")
+	ErrNullPosition                = code.WithCode(code.ErrV3NullContextPosition, "null position")
 
-	ErrNullContext = errors.New("null context")
+	ErrNullContext = code.New("null context")
 )
 
 type ErrorContext struct {
@@ -123,7 +121,7 @@ func (e *ErrorContext) Type() context_type.ContextType {
 }
 
 func (e *ErrorContext) Error() error {
-	return errors.NewAggregate(e.errors)
+	return code.NewAggregate(e.errors)
 }
 
 func (e *ErrorContext) ConfigLines(isDumping bool) ([]string, error) {

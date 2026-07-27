@@ -12,8 +12,6 @@ import (
 	utilsV3 "github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/utils"
 
 	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
-
-	"github.com/marmotedu/errors"
 )
 
 type NginxConfig interface {
@@ -86,7 +84,7 @@ func (n *nginxConfig) renewMainContext(m local.MainContext) error {
 	n.rwLocker.Lock()
 	defer n.rwLocker.Unlock()
 	if !oldFP.Diff(newFP.Fingerprints()) {
-		return errors.WithCode(code.ErrSameConfigFingerprint, "same config fingerprint")
+		return code.WithCode(code.ErrSameConfigFingerprint, "same config fingerprint")
 	}
 	n.mainContext = m
 	n.timestamp = time.Now()
@@ -155,7 +153,7 @@ func dumpMainContext(m local.MainContext) map[string]*bytes.Buffer {
 
 func newNginxConfigWithTimestamp(m local.MainContext, timestamp time.Time) (NginxConfig, error) {
 	if m == nil {
-		return nil, errors.WithCode(code.ErrV3InvalidContext, "new nginx config with a nil main context")
+		return nil, code.WithCode(code.ErrV3InvalidContext, "new nginx config with a nil main context")
 	}
 
 	return &nginxConfig{

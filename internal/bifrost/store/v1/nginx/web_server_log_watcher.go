@@ -11,8 +11,6 @@ import (
 	"github.com/ClessLi/bifrost/internal/pkg/file_watcher"
 
 	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
-
-	"github.com/marmotedu/errors"
 )
 
 type webServerLogWatcherStore struct {
@@ -29,7 +27,7 @@ func (w *webServerLogWatcherStore) Watch(
 	if logDir, ok := w.webServerLogsDirs[request.ServerName.Name]; ok {
 		logPath = filepath.Join(logDir, request.LogName)
 	} else {
-		return nil, errors.WithCode(code.ErrConfigurationNotFound, "web server %s is not exist", request.ServerName.Name)
+		return nil, code.WithCode(code.ErrConfigurationNotFound, "web server %s is not exist", request.ServerName.Name)
 	}
 	outputC, err := w.watcherManager.Watch(ctx, logPath)
 	if err != nil {

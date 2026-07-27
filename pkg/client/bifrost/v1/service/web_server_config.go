@@ -6,13 +6,12 @@ import (
 
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	epv1 "github.com/ClessLi/bifrost/internal/bifrost/endpoint/v1"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context/local"
 	utilsV3 "github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/utils"
 
 	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
-
-	"github.com/marmotedu/errors"
 )
 
 type WebServerConfigService interface {
@@ -46,7 +45,7 @@ func (w *webServerConfigService) Get(servername string) (configuration.NginxConf
 	}
 	response := resp.(*v1.WebServerConfig)
 	if response.ServerName.Name != servername {
-		return nil, nil, errors.Errorf(
+		return nil, nil, code.Errorf(
 			"get incorrect web server config: get `%s`, want `%s`",
 			response.ServerName.Name,
 			servername,
@@ -54,12 +53,12 @@ func (w *webServerConfigService) Get(servername string) (configuration.NginxConf
 	}
 	config, err := configuration.NewNginxConfigFromJsonBytes(response.JsonData)
 	if err != nil {
-		return nil, nil, errors.Wrapf(err, "failed to unmarshal the web server(%s) config", response.ServerName.Name)
+		return nil, nil, code.Wrapf(err, "failed to unmarshal the web server(%s) config", response.ServerName.Name)
 	}
 	var ofp utilsV3.ConfigFingerprints
 	err = json.Unmarshal(response.OriginalFingerprints, &ofp)
 	if err != nil {
-		return nil, nil, errors.Wrapf(err, "failed to unmarshal fingerprints of the web server(%s) config", response.ServerName.Name)
+		return nil, nil, code.Wrapf(err, "failed to unmarshal fingerprints of the web server(%s) config", response.ServerName.Name)
 	}
 
 	return config, utilsV3.SimpleConfigFingerprinter(ofp), nil
@@ -68,7 +67,7 @@ func (w *webServerConfigService) Get(servername string) (configuration.NginxConf
 func (w *webServerConfigService) ConnectivityCheckOfProxiedServers(servername string, proxyPass local.ProxyPass, ofp utilsV3.ConfigFingerprints) (resp local.ProxyPass, err error) {
 	ofpdata, err := json.Marshal(ofp)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to unmarshal fingerprints of the web server config")
+		return nil, code.Wrap(err, "failed to unmarshal fingerprints of the web server config")
 	}
 
 	ctxPos, err := local.PosBasedOnConfig(proxyPass)
@@ -94,7 +93,7 @@ func (w *webServerConfigService) ConnectivityCheckOfProxiedServers(servername st
 func (w *webServerConfigService) Update(servername string, config configuration.NginxConfig, ofp utilsV3.ConfigFingerprints) error {
 	ofpdata, err := json.Marshal(ofp)
 	if err != nil {
-		return errors.Wrap(err, "failed to unmarshal fingerprints of the web server config")
+		return code.Wrap(err, "failed to unmarshal fingerprints of the web server config")
 	}
 	resp, err := w.eps.EndpointUpdate()(GetContext(), &v1.WebServerConfig{
 		ServerName:           &v1.ServerName{Name: servername},

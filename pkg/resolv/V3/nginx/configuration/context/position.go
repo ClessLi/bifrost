@@ -2,8 +2,6 @@ package context
 
 import (
 	"github.com/ClessLi/bifrost/internal/pkg/code"
-
-	"github.com/marmotedu/errors"
 )
 
 type Pos interface {
@@ -54,7 +52,7 @@ func GetPos(ctx Context) Pos {
 		return pos.Target() == ctx
 	})
 	if len(poses.List()) != 1 {
-		return ErrPos(errors.WithCode(code.ErrV3InvalidOperation, "pos of the context not found, or duplicate pos"))
+		return ErrPos(code.WithCode(code.ErrV3InvalidOperation, "pos of the context not found, or duplicate pos"))
 	}
 
 	return poses.List()[0]
@@ -90,7 +88,7 @@ func NullPos() Pos {
 	return nullPos
 }
 
-var notFoundPos = &errPos{ErrContext(errors.WithCode(code.ErrV3ContextNotFound, "queried context not found")).(*ErrorContext)}
+var notFoundPos = &errPos{ErrContext(code.WithCode(code.ErrV3ContextNotFound, "queried context not found")).(*ErrorContext)}
 
 func NotFoundPos() Pos {
 	return notFoundPos
@@ -131,7 +129,7 @@ func (s *posSet) Map(fn func(pos Pos) (Pos, error)) (result PosSet) {
 			return ErrPosSet(err)
 		}
 		if p == nil { // return Null Error PosSet, if the operation function returned a nil item during execution.
-			return ErrPosSet(errors.WithCode(code.ErrV3InvalidOperation, "the execution of the operation function returned a nil item"))
+			return ErrPosSet(code.WithCode(code.ErrV3InvalidOperation, "the execution of the operation function returned a nil item"))
 		}
 		result.Append(p)
 	}
@@ -232,7 +230,7 @@ func (e *errPosSet) MapToPosSet(fn func(pos Pos) PosSet) PosSet {
 }
 
 func (e *errPosSet) QueryOne(kw KeyWords) Pos {
-	return ErrPos(errors.Wrap(e.err, "can not query with error position"))
+	return ErrPos(code.Wrap(e.err, "can not query with error position"))
 }
 
 func (e *errPosSet) QueryAll(kw KeyWords) PosSet {
@@ -252,7 +250,7 @@ func (e *errPosSet) Append(pos ...Pos) PosSet {
 }
 
 func (e *errPosSet) AppendWithPosSet(posSet PosSet) PosSet {
-	return ErrPosSet(errors.NewAggregate([]error{e.err, posSet.Error()}))
+	return ErrPosSet(code.NewAggregate([]error{e.err, posSet.Error()}))
 }
 
 func (e *errPosSet) Error() error {

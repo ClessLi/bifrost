@@ -1,9 +1,9 @@
 package options
 
 import (
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/internal/pkg/server"
 
-	"github.com/marmotedu/errors"
 	"github.com/spf13/pflag"
 )
 
@@ -31,7 +31,7 @@ func (ra *RAOptions) Validate() []error {
 	if len(ra.Host) > 0 && (ra.Port < 1 || ra.Port > 65535) {
 		errs = append(
 			errs,
-			errors.Errorf(
+			code.Errorf(
 				"--ra.port %v must be between 1 and 65535, inclusive. It cannot be turned off with 0",
 				ra.Port,
 			),

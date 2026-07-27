@@ -6,12 +6,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration"
 
 	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 
-	"github.com/marmotedu/errors"
 	"github.com/spf13/pflag"
 )
 
@@ -76,50 +76,50 @@ func (c *WebServerConfigOptions) Validate() []error {
 
 	// validate server-name
 	if len(strings.TrimSpace(c.ServerName)) == 0 {
-		errs = append(errs, errors.New("--web-server-config.server-name cannot be empty."))
+		errs = append(errs, code.New("--web-server-config.server-name cannot be empty."))
 	}
 
 	// validate server-type
 	if c.ServerType != "nginx" {
-		errs = append(errs, errors.Errorf("--web-server-config.server-type %s can only be `nginx`", c.ServerType))
+		errs = append(errs, code.Errorf("--web-server-config.server-type %s can only be `nginx`", c.ServerType))
 	}
 
 	// validate config-path
 	if len(strings.TrimSpace(c.ConfigPath)) != 0 { //nolint:nestif
 		conff, err := os.Stat(c.ConfigPath)
 		if err != nil {
-			errs = append(errs, errors.Wrapf(err, "--web-server-config.config-path %s check failed.", c.ConfigPath))
+			errs = append(errs, code.Wrapf(err, "--web-server-config.config-path %s check failed.", c.ConfigPath))
 		} else {
 			if conff.IsDir() {
-				errs = append(errs, errors.Errorf("--web-server-config.config-path %s cannot be a directory.", c.ConfigPath))
+				errs = append(errs, code.Errorf("--web-server-config.config-path %s cannot be a directory.", c.ConfigPath))
 			}
 		}
 	} else {
-		errs = append(errs, errors.New("--web-server-config.config-path cannot be empty."))
+		errs = append(errs, code.New("--web-server-config.config-path cannot be empty."))
 	}
 
 	// validate verify-exec-path
 	if len(strings.TrimSpace(c.VerifyExecPath)) != 0 { //nolint:nestif
 		vexecf, err := os.Stat(c.VerifyExecPath)
 		if err != nil {
-			errs = append(errs, errors.Wrapf(err, "--web-server-config.verify-exec-path %s check failed.", c.VerifyExecPath))
+			errs = append(errs, code.Wrapf(err, "--web-server-config.verify-exec-path %s check failed.", c.VerifyExecPath))
 		} else {
 			if vexecf.IsDir() {
-				errs = append(errs, errors.Errorf("--web-server-config.verify-exec-path %s cannot be a directory.", c.VerifyExecPath))
+				errs = append(errs, code.Errorf("--web-server-config.verify-exec-path %s cannot be a directory.", c.VerifyExecPath))
 			}
 		}
 	} else {
-		errs = append(errs, errors.New("--web-server-config.verify-exec-path cannot be empty."))
+		errs = append(errs, code.New("--web-server-config.verify-exec-path cannot be empty."))
 	}
 
 	// validate backup-dir
 	if len(strings.TrimSpace(c.BackupDir)) > 0 {
 		dirf, err := os.Stat(c.BackupDir)
 		if err != nil {
-			errs = append(errs, errors.Wrapf(err, "--web-server-config.backup-dir %s check failed.", c.BackupDir))
+			errs = append(errs, code.Wrapf(err, "--web-server-config.backup-dir %s check failed.", c.BackupDir))
 		} else {
 			if !dirf.IsDir() {
-				errs = append(errs, errors.Errorf("--web-server-config.backup-dir %s can only be a directory.", c.BackupDir))
+				errs = append(errs, code.Errorf("--web-server-config.backup-dir %s can only be a directory.", c.BackupDir))
 			}
 		}
 	}
@@ -157,19 +157,19 @@ func (cs *WebServerConfigsOptions) Validate() []error {
 	var errs []error
 
 	if net.ParseIP(cs.DomainNameServerIPv4).String() == "<nil>" {
-		errs = append(errs, errors.Errorf("--web-server-configs.dns-ipv4 %s is not valid", cs.DomainNameServerIPv4))
+		errs = append(errs, code.Errorf("--web-server-configs.dns-ipv4 %s is not valid", cs.DomainNameServerIPv4))
 	}
 
 	if len(cs.WebServerConfigs) == 0 {
-		errs = append(errs, errors.New("web server configs options is null."))
+		errs = append(errs, code.New("web server configs options is null."))
 	}
 
 	for i, c := range cs.WebServerConfigs {
 		suberrs := c.Validate()
 		if len(suberrs) > 0 {
-			aErr := errors.NewAggregate(suberrs)
+			aErr := code.NewAggregate(suberrs)
 			logV1.Errorf("failed to validate the %dst web server config options, cased by %v", i+1, aErr)
-			errs = append(errs, errors.Wrapf(aErr, "failed to validate the %dst web server config options.", i+1))
+			errs = append(errs, code.Wrapf(aErr, "failed to validate the %dst web server config options.", i+1))
 		}
 	}
 

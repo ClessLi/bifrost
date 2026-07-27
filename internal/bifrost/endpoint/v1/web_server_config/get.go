@@ -5,9 +5,9 @@ import (
 
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 
 	"github.com/go-kit/kit/endpoint"
-	"github.com/marmotedu/errors"
 )
 
 func (w *webServerConfigEndpoints) EndpointGetServerNames() endpoint.Endpoint {
@@ -16,7 +16,7 @@ func (w *webServerConfigEndpoints) EndpointGetServerNames() endpoint.Endpoint {
 			return w.svc.WebServerConfig().GetServerNames(ctx)
 		}
 
-		return nil, errors.Errorf("invalid get request, need *pbv1.Null, not %T", request)
+		return nil, code.Errorf("invalid get request, need *pbv1.Null, not %T", request)
 	}
 }
 
@@ -26,7 +26,7 @@ func (w *webServerConfigEndpoints) EndpointGet() endpoint.Endpoint {
 			return w.svc.WebServerConfig().Get(ctx, req)
 		}
 
-		return nil, errors.Errorf("invalid get request, need *v1.ServerName, not %T", request)
+		return nil, code.Errorf("invalid get request, need *v1.ServerName, not %T", request)
 	}
 }
 
@@ -36,6 +36,6 @@ func (w *webServerConfigEndpoints) EndpointConnectivityCheckOfProxiedServers() e
 			return w.svc.WebServerConfig().ConnectivityCheckOfProxiedServers(ctx, req)
 		}
 
-		return nil, errors.Errorf("invalid get request, need *v1.WebServerConfigContextPos, not %T", request)
+		return nil, code.Errorf("invalid get request, need *v1.WebServerConfigContextPos, not %T", request)
 	}
 }

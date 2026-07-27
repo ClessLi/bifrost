@@ -3,9 +3,8 @@ package loop_preventer
 import (
 	"fmt"
 
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/graph"
-
-	"github.com/marmotedu/errors"
 )
 
 type LoopPreventer interface {
@@ -23,7 +22,7 @@ func (l *loopPreventer) CheckLoopPrevent(src, dst string) error {
 
 func (l *loopPreventer) RemoveRoute(src, dst string) error {
 	err := l.graph.DelEdge(src, dst)
-	if errors.Is(err, graph.ErrVertexNotExist) {
+	if code.Is(err, graph.ErrVertexNotExist) {
 		return fmt.Errorf("position of %s is not exist", src)
 	}
 

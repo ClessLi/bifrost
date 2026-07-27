@@ -12,7 +12,7 @@ func TestLoader_LoadFromFilePath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf(string(config.Bytes()))
+	t.Logf("nginx.conf: %s", string(config.Bytes()))
 }
 
 func TestLoader_LoadFromJsonBytes(t *testing.T) {
@@ -33,5 +33,5 @@ func TestLoader_LoadFromJsonBytes(t *testing.T) {
 		t.Fatal()
 	}
 
-	t.Logf(string(testConfig.Bytes()))
+	t.Logf("nginx.conf: %s", string(testConfig.Bytes()))
 }

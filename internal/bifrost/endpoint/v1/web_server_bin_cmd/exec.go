@@ -4,9 +4,9 @@ import (
 	"context"
 
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 
 	"github.com/go-kit/kit/endpoint"
-	"github.com/marmotedu/errors"
 )
 
 func (w *webServerBinCMDEndpoints) EndpointExec() endpoint.Endpoint {
@@ -15,6 +15,6 @@ func (w *webServerBinCMDEndpoints) EndpointExec() endpoint.Endpoint {
 			return w.svc.WebServerBinCMD().Exec(ctx, req)
 		}
 
-		return nil, errors.Errorf("invalid get request, need *pbv1.ExecuteRequest, not %T", request)
+		return nil, code.Errorf("invalid get request, need *pbv1.ExecuteRequest, not %T", request)
 	}
 }

@@ -17,8 +17,6 @@ import (
 	utilsV3 "github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/utils"
 
 	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
-
-	"github.com/marmotedu/errors"
 )
 
 var (
@@ -57,7 +55,7 @@ type Socket struct {
 
 func (s *Socket) valid() error {
 	if s.Port == 0 || fmt.Sprint(net.ParseIP(s.IPv4).To4()) == "<nil>" {
-		return errors.New("invalid address")
+		return code.New("invalid address")
 	}
 
 	return nil
@@ -157,7 +155,7 @@ func (h *HTTPProxyPass) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	if tmp.ContextType != context_type.TypeDirHTTPProxyPass {
-		return errors.WithCode(code.ErrV3InvalidContext, "invalid context-type: %s", tmp.ContextType)
+		return code.WithCode(code.ErrV3InvalidContext, "invalid context-type: %s", tmp.ContextType)
 	}
 	h.enabled = tmp.Enabled
 	h.Params = tmp.Value
@@ -279,7 +277,7 @@ func (h *HTTPProxyPass) ReparseParams() (err error) {
 			SetIsToLeafQuery(false)).
 		Target()
 	if httpCtx.Error() != nil {
-		return errors.WithCode(code.ErrV3InvalidContext, "cannot query father HTTP Context. error: %++v", httpCtx.Error())
+		return code.WithCode(code.ErrV3InvalidContext, "cannot query father HTTP Context. error: %++v", httpCtx.Error())
 	}
 	upstreamPos := httpCtx.ChildrenPosSet().QueryOne(
 		context.NewKeyWordsByType(context_type.TypeUpstream).
@@ -315,7 +313,7 @@ func (h *HTTPProxyPass) ReparseParams() (err error) {
 			func(dirPos context.Pos) (context.Pos, error) {
 				srvSubMatch := upstreamSrvDirMustCompile.FindStringSubmatch(dirPos.Target().Value())
 				if len(srvSubMatch) != 2 {
-					return dirPos, errors.WithCode(code.ErrV3InvalidContext, "the directive `server` must be `server <address> [parameters]`,"+
+					return dirPos, code.WithCode(code.ErrV3InvalidContext, "the directive `server` must be `server <address> [parameters]`,"+
 						" the current is: '%s'", dirPos.Target().Value())
 				}
 				srvAddr := srvSubMatch[1]
@@ -328,7 +326,7 @@ func (h *HTTPProxyPass) ReparseParams() (err error) {
 					srvHost = subMatch[1]
 					sp, err := strconv.Atoi(subMatch[2])
 					if err != nil {
-						return dirPos, errors.WithCode(code.ErrV3InvalidOperation, "the port must be an integer, error: %s", err.Error())
+						return dirPos, code.WithCode(code.ErrV3InvalidOperation, "the port must be an integer, error: %s", err.Error())
 					}
 					srvPort = uint16(sp)
 				} else { // TODO: parse error <address> string
@@ -369,7 +367,7 @@ func parseHTTPURL(url string) (protocol, host, uri string, port uint16, err erro
 
 		return protocol, host, uri, port, err
 	} else {
-		err = errors.WithCode(code.ErrV3InvalidOperation, "the URL protocol must be `http` or `https`")
+		err = code.WithCode(code.ErrV3InvalidOperation, "the URL protocol must be `http` or `https`")
 
 		return protocol, host, uri, port, err
 	}
@@ -381,7 +379,7 @@ func parseHTTPURL(url string) (protocol, host, uri string, port uint16, err erro
 			uri = subMatch[2]
 		}
 	} else {
-		err = errors.WithCode(code.ErrV3InvalidOperation, "the address and URI must match the format `<host>[:<port>]/<URI>`")
+		err = code.WithCode(code.ErrV3InvalidOperation, "the address and URI must match the format `<host>[:<port>]/<URI>`")
 
 		return protocol, host, uri, port, err
 	}
@@ -391,7 +389,7 @@ func parseHTTPURL(url string) (protocol, host, uri string, port uint16, err erro
 		host = subMatch[1]
 		p, err := strconv.Atoi(subMatch[2])
 		if err != nil {
-			err = errors.WithCode(code.ErrV3InvalidOperation, "the port must be an integer, error: %s", err.Error())
+			err = code.WithCode(code.ErrV3InvalidOperation, "the port must be an integer, error: %s", err.Error())
 
 			return protocol, host, uri, port, err
 		}
@@ -405,11 +403,11 @@ func parseHTTPURL(url string) (protocol, host, uri string, port uint16, err erro
 
 func (h *HTTPProxyPass) PosVerify() error {
 	// the father Context must in: Location, If in Location, Limit_except
-	notMatchedError := errors.WithCode(code.ErrV3InvalidOperation, "Father context type not supported."+
+	notMatchedError := code.WithCode(code.ErrV3InvalidOperation, "Father context type not supported."+
 		" Only the following types are supported: `Location`, `If` in `Location`, `Limit_except`")
 	fatherPoses := FatherPosSetWithoutInclude(h)
 	if err := fatherPoses.Error(); err != nil {
-		if errors.IsCode(err, code.ErrV3CannotQueryFatherPosSetFromMainContext) {
+		if code.IsCode(err, code.ErrV3CannotQueryFatherPosSetFromMainContext) {
 			return notMatchedError
 		}
 
@@ -425,7 +423,7 @@ func (h *HTTPProxyPass) PosVerify() error {
 		case context_type.TypeIf:
 			subFatherPoses := FatherPosSetWithoutInclude(pos.Target())
 			if err := subFatherPoses.Error(); err != nil {
-				if errors.IsCode(err, code.ErrV3CannotQueryFatherPosSetFromMainContext) {
+				if code.IsCode(err, code.ErrV3CannotQueryFatherPosSetFromMainContext) {
 					return pos, notMatchedError
 				}
 
@@ -456,7 +454,7 @@ func (h *HTTPProxyPass) ConnectivityCheck() ProxyPass {
 			errs = append(errs, socket.tcpCheck())
 		}
 	}
-	err := errors.NewAggregate(errs)
+	err := code.NewAggregate(errs)
 	if err != nil {
 		return newErrProxyPass(err)
 	}
@@ -467,7 +465,7 @@ func (h *HTTPProxyPass) ConnectivityCheck() ProxyPass {
 func registerHTTPProxyPassBuilder() error {
 	builderMap[context_type.TypeDirHTTPProxyPass] = func(value string) context.Context {
 		if !dirHTTPProxyPassMustCompile.MatchString("proxy_pass " + value) { //nolint:nestif
-			return context.ErrContext(errors.Errorf("invalid value `%s`", value))
+			return context.ErrContext(code.Errorf("invalid value `%s`", value))
 		}
 
 		return &HTTPProxyPass{Directive: *NewContext(context_type.TypeDirective, "proxy_pass "+value).(*Directive)}
@@ -517,7 +515,7 @@ func (s *StreamProxyPass) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	if tmp.ContextType != context_type.TypeDirStreamProxyPass {
-		return errors.WithCode(code.ErrV3InvalidContext, "invalid context-type: %s", tmp.ContextType)
+		return code.WithCode(code.ErrV3InvalidContext, "invalid context-type: %s", tmp.ContextType)
 	}
 	s.enabled = tmp.Enabled
 	s.Params = tmp.Value
@@ -593,7 +591,7 @@ func (s *StreamProxyPass) ReparseParams() (err error) {
 		host = addressMatch[1]
 		p, err := strconv.Atoi(addressMatch[2])
 		if err != nil {
-			return errors.WithCode(code.ErrV3InvalidOperation, "the port must be an integer, error: %s", err.Error())
+			return code.WithCode(code.ErrV3InvalidOperation, "the port must be an integer, error: %s", err.Error())
 		}
 		port = uint16(p)
 	case streamVariableAddrMustCompile.MatchString(address):
@@ -607,7 +605,7 @@ func (s *StreamProxyPass) ReparseParams() (err error) {
 		// TODO: parse UNIX-domain socket
 		return nil
 	default:
-		return errors.WithCode(code.ErrV3InvalidOperation, "the address can be specified as a domain name or IP address, and a port")
+		return code.WithCode(code.ErrV3InvalidOperation, "the address can be specified as a domain name or IP address, and a port")
 	}
 
 	defer func() {
@@ -621,7 +619,7 @@ func (s *StreamProxyPass) ReparseParams() (err error) {
 	// parse proxied address
 	if len(strings.TrimSpace(host)) > 0 {
 		if port == 0 {
-			return errors.WithCode(code.ErrV3InvalidOperation, "the port must be set")
+			return code.WithCode(code.ErrV3InvalidOperation, "the port must be set")
 		}
 		ipv4s, err := utilsV3.ResolveDomainNameToIPv4(host)
 		proxiedAddrs = append(proxiedAddrs, ProxiedAddress{
@@ -636,14 +634,14 @@ func (s *StreamProxyPass) ReparseParams() (err error) {
 
 	// parse upstream server
 	if len(strings.TrimSpace(upstreamServer)) == 0 {
-		return errors.WithCode(code.ErrV3InvalidOperation, "the upstream server must not be empty")
+		return code.WithCode(code.ErrV3InvalidOperation, "the upstream server must not be empty")
 	}
 	streamCtx := s.FatherPosSet().
 		QueryOne(context.NewKeyWordsByType(context_type.TypeStream).
 			SetIsToLeafQuery(false)).
 		Target()
 	if streamCtx.Error() != nil {
-		return errors.WithCode(code.ErrV3InvalidContext, "cannot find father Stream Context. error: %++v", streamCtx.Error())
+		return code.WithCode(code.ErrV3InvalidContext, "cannot find father Stream Context. error: %++v", streamCtx.Error())
 	}
 
 	upstreamPos := streamCtx.ChildrenPosSet().QueryOne(
@@ -654,7 +652,7 @@ func (s *StreamProxyPass) ReparseParams() (err error) {
 			}),
 	)
 	if err = upstreamPos.Target().Error(); err != nil {
-		return errors.WithCode(code.ErrV3InvalidOperation, "unknown upstream server: '%s'. failed to query Upstream(Stream) Context, error: %v", upstreamServer, err)
+		return code.WithCode(code.ErrV3InvalidOperation, "unknown upstream server: '%s'. failed to query Upstream(Stream) Context, error: %v", upstreamServer, err)
 	}
 
 	return upstreamPos.QueryAll(context.NewKeyWordsByType(context_type.TypeDirective).
@@ -674,14 +672,14 @@ func (s *StreamProxyPass) ReparseParams() (err error) {
 						srvHost = subAddrMatch[1]
 						sp, err := strconv.Atoi(subAddrMatch[2])
 						if err != nil {
-							return dirPos, errors.WithCode(code.ErrV3InvalidOperation, "the port must be an integer, error: %s", err.Error())
+							return dirPos, code.WithCode(code.ErrV3InvalidOperation, "the port must be an integer, error: %s", err.Error())
 						}
 						srvPort = uint16(sp)
 					case streamUnixAddrMustCompile.MatchString(srvAddr):
 						// TODO: parse UNIX-domain socket
 						return dirPos, nil
 					default:
-						return dirPos, errors.WithCode(code.ErrV3InvalidContext, "this address in the server directive under the upstream context of the stream context is not standardized")
+						return dirPos, code.WithCode(code.ErrV3InvalidContext, "this address in the server directive under the upstream context of the stream context is not standardized")
 					}
 					addr := srvHost + ":" + strconv.Itoa(int(srvPort))
 					if !existAddrMap[addr] {
@@ -707,11 +705,11 @@ func (s *StreamProxyPass) PosVerify() error {
 		return nil
 	}
 	// the set father Context must be Server in Stream
-	notMatchedError := errors.WithCode(code.ErrV3InvalidOperation, "Father context type not supported."+
+	notMatchedError := code.WithCode(code.ErrV3InvalidOperation, "Father context type not supported."+
 		" Only the following types are supported: `Server` which is in `Stream`")
 	fatherPoses := FatherPosSetWithoutInclude(s)
 	if err := fatherPoses.Error(); err != nil {
-		if errors.IsCode(err, code.ErrV3CannotQueryFatherPosSetFromMainContext) {
+		if code.IsCode(err, code.ErrV3CannotQueryFatherPosSetFromMainContext) {
 			return notMatchedError
 		}
 
@@ -744,7 +742,7 @@ func (s *StreamProxyPass) ConnectivityCheck() ProxyPass {
 			errs = append(errs, socket.allCheck())
 		}
 	}
-	err := errors.NewAggregate(errs)
+	err := code.NewAggregate(errs)
 	if err != nil {
 		return newErrProxyPass(err)
 	}
@@ -755,7 +753,7 @@ func (s *StreamProxyPass) ConnectivityCheck() ProxyPass {
 func registerStreamProxyPassBuilder() error {
 	builderMap[context_type.TypeDirStreamProxyPass] = func(value string) context.Context {
 		if !dirStreamProxyPassMustCompile.MatchString("proxy_pass " + value) { //nolint:nestif
-			return context.ErrContext(errors.Errorf("invalid value `%s`", value))
+			return context.ErrContext(code.Errorf("invalid value `%s`", value))
 		}
 
 		return &StreamProxyPass{Directive: *NewContext(context_type.TypeDirective, "proxy_pass "+value).(*Directive)}
@@ -789,11 +787,11 @@ func (t *tmpProxyPass) verifyAndInitTo() context.Context {
 	defer t.rwLock.Unlock()
 
 	if t.isInitialized {
-		return context.ErrContext(errors.New("ProxyPass is already initialized"))
+		return context.ErrContext(code.New("ProxyPass is already initialized"))
 	}
 
 	// if tmpProxyPass has not been included into the MainContext, skip initializing
-	if t.fatherContext == nil || !errors.IsCode(context.SetPos(t.fatherContext, 0).
+	if t.fatherContext == nil || !code.IsCode(context.SetPos(t.fatherContext, 0).
 		QueryAll(
 			context.NewKeyWordsByType(context_type.TypeMain).
 				SetIsToLeafQuery(false),
@@ -826,7 +824,7 @@ func (t *tmpProxyPass) verifyAndInitTo() context.Context {
 	if verifyErr != nil {
 		return context.ErrContext(verifyErr)
 	} else if p == nil {
-		return context.ErrContext(errors.Errorf("invalid value `%s`", t.Value()))
+		return context.ErrContext(code.Errorf("invalid value `%s`", t.Value()))
 	}
 
 	// initializing ProxyPass instance
@@ -842,7 +840,7 @@ func (t *tmpProxyPass) verifyAndInitTo() context.Context {
 		}
 	}
 
-	return context.ErrContext(errors.New("failed to initialize proxy pass"))
+	return context.ErrContext(code.New("failed to initialize proxy pass"))
 }
 
 func (t *tmpProxyPass) PosVerify() error {
@@ -883,7 +881,7 @@ func (t *tmpProxyPass) Type() context_type.ContextType {
 
 func registerTmpProxyPassBuilder() error {
 	builderMap[context_type.TypeDirUninitializedProxyPass] = func(value string) context.Context {
-		return context.ErrContext(errors.New("cannot build a Directive of UninitializedProxyPass"))
+		return context.ErrContext(code.New("cannot build a Directive of UninitializedProxyPass"))
 	}
 
 	return nil
@@ -898,7 +896,7 @@ func registerProxyPassParseFunc() error {
 	}
 	dirBuilder, ok := inStackParseFuncMap[context_type.TypeDirective]
 	if !ok {
-		return errors.New("directive parse function is not found in stack parse function map")
+		return code.New("directive parse function is not found in stack parse function map")
 	}
 	inStackParseFuncMap[context_type.TypeDirective] = func(data []byte, idx *int) context.Context {
 		dir := dirBuilder(data, idx)

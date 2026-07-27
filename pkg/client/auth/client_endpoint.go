@@ -1,9 +1,9 @@
 package auth
 
 import (
-	"errors"
-
 	"github.com/ClessLi/bifrost/api/protobuf-spec/authpb"
+
+	"github.com/ClessLi/component-base/pkg/errors"
 
 	"github.com/go-kit/kit/endpoint"
 	grpctransport "github.com/go-kit/kit/transport/grpc"

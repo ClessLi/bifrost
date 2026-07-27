@@ -6,8 +6,6 @@ import (
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
-
-	"github.com/marmotedu/errors"
 )
 
 type MainContext interface {
@@ -27,7 +25,7 @@ func (m *Main) graph() ConfigGraph {
 
 func (m *Main) MarshalJSON() ([]byte, error) {
 	if m.ConfigGraph == nil || m.MainConfig() == nil || !m.ConfigGraph.MainConfig().isInGraph() {
-		return nil, errors.New("MainContext is not completed")
+		return nil, code.New("MainContext is not completed")
 	}
 	marshalCtx := struct {
 		MainConfig string             `json:"main-config"`
@@ -49,7 +47,7 @@ func (m *Main) Father() context.Context {
 }
 
 func (m *Main) FatherPosSet() context.PosSet {
-	return context.ErrPosSet(errors.WithCode(code.ErrV3CannotQueryFatherPosSetFromMainContext, "cannot query father pos set from MainContext"))
+	return context.ErrPosSet(code.WithCode(code.ErrV3CannotQueryFatherPosSetFromMainContext, "cannot query father pos set from MainContext"))
 }
 
 func (m *Main) Child(idx int) context.Context {
@@ -70,14 +68,14 @@ func (m *Main) ChildrenPosSet() context.PosSet {
 
 func (m *Main) SetValue(v string) error {
 	if len(m.ListConfigs()) > 1 {
-		return errors.New("cannot set value for MainContext with non empty graph")
+		return code.New("cannot set value for MainContext with non empty graph")
 	}
 
 	return m.MainConfig().SetValue(v)
 }
 
 func (m *Main) SetFather(ctx context.Context) error {
-	return errors.New("cannot set father for MainContext")
+	return code.New("cannot set father for MainContext")
 }
 
 func (m *Main) HasChild() bool {

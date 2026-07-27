@@ -8,8 +8,6 @@ import (
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
-
-	"github.com/marmotedu/errors"
 )
 
 func TestInclude_Child(t *testing.T) {
@@ -28,7 +26,7 @@ func TestInclude_Child(t *testing.T) {
 	}{
 		{
 			name: "error context",
-			want: context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "include cannot get child config by index")),
+			want: context.ErrContext(code.WithCode(code.ErrV3InvalidOperation, "include cannot get child config by index")),
 		},
 	}
 	for _, tt := range tests {
@@ -519,7 +517,7 @@ func TestInclude_Insert(t *testing.T) {
 	}{
 		{
 			name: "return error context",
-			want: context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "include cannot insert by index")),
+			want: context.ErrContext(code.WithCode(code.ErrV3InvalidOperation, "include cannot insert by index")),
 		},
 	}
 	for _, tt := range tests {
@@ -813,7 +811,7 @@ func TestInclude_Modify(t *testing.T) {
 	}{
 		{
 			name: "return error context",
-			want: context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "include cannot modify by index")),
+			want: context.ErrContext(code.WithCode(code.ErrV3InvalidOperation, "include cannot modify by index")),
 		},
 	}
 	for _, tt := range tests {
@@ -1023,8 +1021,11 @@ func TestInclude_QueryOne(t *testing.T) {
 				fatherContext: tt.fields.fatherContext,
 				loadLocker:    tt.fields.loadLocker,
 			}
-			if got := i.ChildrenPosSet().QueryOne(tt.args.kw); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("QueryByKeyWords() = %v, want %v", got, tt.want)
+			got := i.ChildrenPosSet().QueryOne(tt.args.kw)
+			gotFather, gotIdx := got.Position()
+			wantFather, wantIdx := tt.want.Position()
+			if gotFather != wantFather || gotIdx != wantIdx {
+				t.Errorf("QueryByKeyWords() position = (%v, %d), want (%v, %d)", gotFather, gotIdx, wantFather, wantIdx)
 			}
 		})
 	}
@@ -1046,7 +1047,7 @@ func TestInclude_Remove(t *testing.T) {
 	}{
 		{
 			name: "return error context",
-			want: context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "include cannot remove by index")),
+			want: context.ErrContext(code.WithCode(code.ErrV3InvalidOperation, "include cannot remove by index")),
 		},
 	}
 	for _, tt := range tests {

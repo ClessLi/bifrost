@@ -5,8 +5,7 @@ import (
 
 	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
 	"github.com/ClessLi/bifrost/internal/pkg/code"
-
-	"github.com/marmotedu/errors"
+	errors "github.com/ClessLi/bifrost/internal/pkg/code"
 )
 
 type webServerStatus struct{}

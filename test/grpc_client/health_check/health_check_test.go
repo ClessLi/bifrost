@@ -38,13 +38,13 @@ func TestNewClient(t *testing.T) {
 	address := "192.168.220.1:8888"
 	lis, err := net.Listen("tcp", address)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatalf("failed to listen on %s: %v", address, err)
 	}
 
 	go func() {
 		err = server.Serve(lis)
 		if err != nil {
-			t.Fatalf(err.Error())
+			t.Fatalf("failed to serve on %s: %v", address, err)
 		}
 	}()
 	defer server.Stop()
@@ -101,11 +101,11 @@ func TestNewClient(t *testing.T) {
 			healthSvr.SetServingStatus(tt.servicename, grpc_health_v1.HealthCheckResponse_ServingStatus(tt.wantState))
 			got, err := clientv1.NewClient(tt.args.svrAddr, tt.args.opts...)
 			if err != nil {
-				t.Fatalf(err.Error())
+				t.Fatalf("failed to create client: %v", err)
 			}
 			state, _ := got.Check(context.Background(), tt.servicename)
 			if state != tt.wantState {
-				t.Fatalf("got state %s, want %s", clientv1.StatusString(state), clientv1.StatusString(tt.wantState))
+				t.Fatalf("failed to check service %s, want state: %s, got state: %s", tt.servicename, clientv1.StatusString(tt.wantState), clientv1.StatusString(state))
 			}
 			t.Logf("service %s is %s", tt.servicename, clientv1.StatusString(state))
 		})

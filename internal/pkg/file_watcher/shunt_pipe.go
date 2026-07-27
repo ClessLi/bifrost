@@ -5,9 +5,9 @@ import (
 	"sync"
 	"time"
 
-	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 
-	"github.com/marmotedu/errors"
+	logV1 "github.com/ClessLi/component-base/pkg/log/v1"
 )
 
 type ShuntPipe interface {
@@ -42,10 +42,10 @@ func (s *shuntPipe) Output(ctx context.Context) (<-chan []byte, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.ctx.Err() != nil {
-		return nil, errors.Wrap(s.ctx.Err(), "shunt pipe is closed. %s")
+		return nil, code.Wrap(s.ctx.Err(), "shunt pipe is closed. %s")
 	}
 	if s.maxConnections <= len(s.outputs) {
-		return nil, errors.Errorf(
+		return nil, code.Errorf(
 			"the number of connections has reached the maximum (%d/%d)",
 			len(s.outputs),
 			s.maxConnections,
@@ -159,7 +159,7 @@ func (s *shuntPipe) Close() error {
 	case <-s.ctx.Done():
 		return nil
 	case <-time.After(time.Minute * 2):
-		return errors.New("shunt pipe close timeout")
+		return code.New("shunt pipe close timeout")
 	}
 }
 
@@ -167,7 +167,7 @@ func (s *shuntPipe) checkState() error {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	if s.isClosed {
-		return errors.New("shunt pipe is closed")
+		return code.New("shunt pipe is closed")
 	}
 
 	return nil

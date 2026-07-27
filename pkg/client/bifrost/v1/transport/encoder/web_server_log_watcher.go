@@ -6,7 +6,7 @@ import (
 	v1 "github.com/ClessLi/bifrost/api/bifrost/v1"
 	pbv1 "github.com/ClessLi/bifrost/api/protobuf-spec/bifrostpb/v1"
 
-	"github.com/marmotedu/errors"
+	"github.com/ClessLi/bifrost/internal/pkg/code"
 )
 
 type webServerLogWatcher struct{}
@@ -20,7 +20,7 @@ func (w webServerLogWatcher) EncodeRequest(ctx context.Context, req interface{})
 			FilterRule: req.FilteringRegexpRule,
 		}, nil
 	default:
-		return nil, errors.Errorf("invalid web server log watcher request: %v", req)
+		return nil, code.Errorf("invalid web server log watcher request: %v", req)
 	}
 }
 

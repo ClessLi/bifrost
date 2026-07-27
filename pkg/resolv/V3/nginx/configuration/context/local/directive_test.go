@@ -7,8 +7,6 @@ import (
 	"github.com/ClessLi/bifrost/internal/pkg/code"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context"
 	"github.com/ClessLi/bifrost/pkg/resolv/V3/nginx/configuration/context_type"
-
-	"github.com/marmotedu/errors"
 )
 
 func TestDirective_Child(t *testing.T) {
@@ -29,7 +27,7 @@ func TestDirective_Child(t *testing.T) {
 	}{
 		{
 			name: "has no child",
-			want: context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "directive has no child context")),
+			want: context.ErrContext(code.WithCode(code.ErrV3InvalidOperation, "directive has no child context")),
 		},
 	}
 	for _, tt := range tests {
@@ -398,7 +396,7 @@ func TestDirective_Insert(t *testing.T) {
 	}{
 		{
 			name: "cannot insert child",
-			want: context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "directive cannot insert context")),
+			want: context.ErrContext(code.WithCode(code.ErrV3InvalidOperation, "directive cannot insert context")),
 		},
 	}
 	for _, tt := range tests {
@@ -532,7 +530,7 @@ func TestDirective_Modify(t *testing.T) {
 	}{
 		{
 			name: "cannot modify child",
-			want: context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "directive cannot modify context")),
+			want: context.ErrContext(code.WithCode(code.ErrV3InvalidOperation, "directive cannot modify context")),
 		},
 	}
 	for _, tt := range tests {
@@ -640,7 +638,7 @@ func TestDirective_Remove(t *testing.T) {
 	}{
 		{
 			name: "cannot remove child",
-			want: context.ErrContext(errors.WithCode(code.ErrV3InvalidOperation, "directive cannot remove context")),
+			want: context.ErrContext(code.WithCode(code.ErrV3InvalidOperation, "directive cannot remove context")),
 		},
 	}
 	for _, tt := range tests {
